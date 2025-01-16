@@ -69,17 +69,18 @@ The voter whose indexes are in $\mathrm{selector}$ are incentivize to finalize i
 
 ## Threshold
 
-Usually the threshold is 50%+.
-In a rare and unlikely case, it is raised to 60%+.
+The threshold is set in signing policy.
+It is set rounded up one half of the total normalized weight.
+In a rare and unlikely case, it is raised to $12 * \mathrm{threshold} /10$.
 
 Let $v$ be the votingRoundID of the message being finalized.
 Let $r$ be the ID of current active signingPolicy.
-Let $\mathrm{expected}(v)$ be the [expected reward epoch](TODO) for $v$.
+Let $\mathrm{expected}(v)$ be the [expected reward epoch](Epoch.md#reward-epoch) for $v$.
 Let $x$ be the ID of the last initialized signingPolicy.
 
 If $\mathrm{expected}(v) = r$ and $r.\mathrm{StartVotingRoundId}\leq v$, the threshold is normal.
 
-If $\mathrm{expected}(v) > r$ and $x=r$, the threshold is increased.
+If $\mathrm{expected}(v) > r$ and $x=r$, the threshold is increased. TODO
 
 ## Rewarding
 
