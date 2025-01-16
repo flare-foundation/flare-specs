@@ -13,8 +13,7 @@ The addresses are register via EntityManager smart contract by first calling pro
 ## Entity Manager
 
 Entity manager is used for address and node IDs registration.
-
-The registered addresses and nodes have to be set before RandomAcquisitionStarted event to be considered in the signing policy.
+The registered addresses and nodes have to be registered before RandomAcquisitionStarted event to be considered in the signing policy.
 
 ### Node ID
 
@@ -66,7 +65,7 @@ Registration is done on VoterRegistry smart contract using function
 ```
 
 on VoterRegistry smart contract.
-Function can be called from any address, `_voter` has to be the identity address of the voter and `_signature` has to be ECDSA signature of `keccak256(abi.encode(rewardEpochId, _voter));` by private key corresponding to signingPolicyAddress as set on Entity manager before the latest RandomAcquisitionStarted event was emitted.
+Function can be called from any address, `_voter` has to be the identity address of the provider and `_signature` has to be ECDSA signature of `keccak256(abi.encode(rewardEpochId, _voter));` by private key corresponding to signingPolicyAddress as set on Entity manager before the latest RandomAcquisitionStarted event was emitted.
 
 At registration the event
 
@@ -84,6 +83,8 @@ event VoterRegistered(
 ```
 
 is emitted.
+Registration weight is computed based on the amount staked to the provider (registered node IDs) on P-chain and on the amount delegated to the provider (delegation address) on C-chain at VoterPowerBlock.
+The computation is done by FlareSystemCalculator smart contract.
 
 At most 100 providers can be registered.
 If 101st provider tries to register, the provider with the lowest registration weight is removed.
@@ -105,6 +106,46 @@ PreRegistration is done using function
 function preRegisterVoter(address _voter, IIVoterRegistry.Signature calldata _signature) external;
 ```
 
-Providers that are PreRegistered are Registered by Daemon right after the VoterPowerBlockSelected event is emitted.
+The registration of PreRegistered providers is triggered by [Daemon](Daemon.md) right after the VoterPowerBlockSelected event is emitted.
 
-## FlareSystemCalculator
+## Registration weight
+
+Registration weight is calculated at registration using FlareSystemCalculator's function
+
+```Solidity
+function calculateRegistrationWeight(
+    address _voter,
+    uint24 _rewardEpochId,
+    uint256 _votePowerBlockNumber
+)
+    external
+    returns (uint256 _registrationWeight);
+```
+
+with VoterPowerBlockNumber selected for the reward epoch.
+
+The registration weight is calculated as follows:
+
+Let p denote the provider, $W_P(p)$ the amount of FLR staked to their node IDs as shown by [P-Chain mirroring](Mirroring.md) and $W_D(p)$ the amount of WFLR delegated to their delegationAddress.
+Let $W'_D(p) = \min\{W_D(p), 0.025 * \mathrm{totalSupplyWFLR}\}$ be the capped delegation amount (capped to 2.5% of all the WFLR).
+
+The registration weight is
+
+TODO (exact computation)
+
+$$
+W_R(p)= \left(W'_D(p) + W_P(p)\right)^\frac{3}{4}.
+$$
+
+## WNatDelegationFee
+
+Anyone who delegates WFLR to the provider is entitled to a proportional share of their rewards.
+The provider gets a fee from the share in a set percentage.
+
+The percentage is set on WNatDelegationFee smart contract with function
+
+```Solidity
+function setVoterFeePercentage(uint16 _feePercentageBIPS) external returns (uint256);
+```
+
+that has to be called from the identity address.

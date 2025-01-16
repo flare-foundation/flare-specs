@@ -37,7 +37,7 @@ is emitted.
 
 ## Voter Registration
 
-After the VotePowerBlockSelected event, the voters can register on VoterRegistry smart contract using registerVoter functions until:
+After the VotePowerBlockSelected event, the voters can register on [VoterRegistry](VoterRegistration.md#voterregistry) smart contract using registerVoter functions until:
 
 - voterRegistrationDurationTime (30 min) has passed,
 - voterRegistrationDurationBlocks (900 blocks) have passed, and
@@ -47,7 +47,7 @@ The voters that are included in the active signing policy can preregister on Vot
 
 ## Signing Policy Initialization
 
-Signing policy initialization is managed by Flare Daemon.
+Signing policy initialization is managed by [Flare Daemon](Daemon.md).
 
 SigningPolicyInitialized event
 
@@ -69,5 +69,12 @@ is emitted when a signing policy is initialized.
 The uint256 seed is the random seed (obtained in Random Acquisition process).
 The array voters contains signingPolicyAddresses of voters, the position of the address is the voters index.
 The array weights contains normalized weights of voters, the weight at position $i$ corresponds to voter at position $i$.
+
+### Normalized weights
+
+Let $\mathrm{weightSum}$ be the sum of [registrationWeights](VoterRegistration.md#registration-weight) of all registered providers.
+The normalized weight of a provider is $\mathrm{registrationWeight} * \mathrm{maxUint}16 /  \mathrm{weightSum}$ where integer division is used.
+
+Threshold is than one half of norm
 
 ## Uptime Vote Signed

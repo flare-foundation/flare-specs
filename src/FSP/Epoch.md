@@ -17,3 +17,4 @@ The reward epoch with ID $j$ is expected to contain voting epochs with IDs from 
 
 The actual start of the reward epoch is defied by its [Signing Policy](./SigningPolicy.md).
 It starts with voting epoch stated in signing policy and ends with the start of the next reward epoch (as stated in its signing policy).
+It can never happen that a reward epoch starts before the expected start.

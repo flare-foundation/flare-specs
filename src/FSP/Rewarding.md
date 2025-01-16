@@ -7,6 +7,8 @@ A provider has to satisfy certain minimal conditions in each protocol to be elig
 A provider can get punished in one (or more) protocol which and the punishment is deducted from rewards in other protocols.
 In the worst case, a provider gets zero rewards.
 
+## WNatDelegationFee
+
 ## Minimal conditions
 
 A provider is eligible for the rewards only if they fulfill all the minimal conditions.

@@ -67,7 +67,7 @@ Before signing, the message is hashed with keccak256, the hash is prepended with
 `"\x19Ethereum Signed Message:\n32"`
 
 converted to bytes according to utf-8 encoding (note that `\x19` is converted to 0x19, `\n` is converted to 0x10).
-The prepended hash is than hashed again ith keccak256.
+The prepended hash is than hashed again with keccak256 (the prepending and hashing is implemented in go-ethereum function TextAndHash).
 
 The last hash is signed by signingPolicyAddress using ECDSA producing a signature which is concatenation of
 
@@ -83,16 +83,19 @@ PayloadMessage of type 0 includes message, its signature, and potentially an add
 
 - message (38 bytes)
 - signature (65 bytes)
-- unsignedMessage (unsignedMessageSize bytes) - additional protocol specific data. While type defines the length of message and signature, the unsignedMessage occupies the rest of the bytes.
+- unsignedMessage (unsignedMessageSize bytes) - additional protocol specific data.
+  While type defines the length of message and signature, the unsignedMessage occupies the rest of the bytes.
   Since this payload is then packed into a payload message (see above) the payload is easily extractable.
 
 Currently, type 0 is used for FTSO (protocol ID 100)
 
 #### Type 1
 
-PayloadMessage of type 1 the signature of the message, and potentially an additional unsigned message but does not include the actual message.
+PayloadMessage of type 1 consists of the signature of the message, and potentially an additional unsigned message but does not include the actual message.
 
 - signature (65 bytes)
-- unsignedMessage (unsignedMessageSize bytes) - additional protocol specific data. In FDC, this is a consensus bit vector. While type defines the length of message and signature, the unsignedMessage occupies the rest of the bytes. Since this payload is then packed into a payload message (see above) the unsignedMessage is easily extractable.
+- unsignedMessage (unsignedMessageSize bytes) - additional protocol specific data. In FDC, this is a consensus bit vector.
+  While type defines the length of message and signature, the unsignedMessage occupies the rest of the bytes.
+  Since this payload is then packed into a payload message (see above) the unsignedMessage is easily extractable.
 
 Currently, type 1 is used for FDC (protocol ID 200)
