@@ -1,33 +1,44 @@
 # Bit Voting
 
-For a voting round to be successfully finalized, one Merkle root has to be backed by at least 50% of the weight.
+For a voting round to be successfully finalized, a support for one Merkle root must surpass the threshold (roughly 50%+).
 This means that a majority of the data providers have to build the exact same Merkle tree.
 Some attestation requests might be unstable in a sense that some providers have the data to assemble a response and some do not (note that the response is practically unique due to MIC).
 An example is a request related to a transaction on in block which is just being confirmed sufficiently, and some verifiers may perceive the block to be confirmed, while others with small delay may perceive it as unconfirmed.
-A few such unstable requests could prevent successful finalization.
+A few such unstable requests could prevent successful finalization if no further measures were taken.
 The purpose of bit-voting is to reach consensus on which attestation responses should be included in the Merkle tree.
 
-Bit-voting works as follows.
-Each attestation request is assigned the index of arrival in the collect phase.
+## Workflow
+
+Each attestation request is assigned an index of arrival in the [collect phase](VotingProtocol.md#phases-of-a-voting-round).
 If more requests have the same request bytes in one round, they are merged into one request with summed fees and the lowest index of arrival among the requests merged.
-Data providers try to verify the attestations as they arrive and keep track of which get verified.
-Providers assemble a bit vector with 1 on the i-th place (counting from the right), if they can confirm i-th attestation request or 0 otherwise.
+Data providers try to verify the attestation requests as they arrive and keep track of which get verified.
+Providers assemble a bit-vector with 1 on the i-th place (counting from the right), if they can confirm the i-th request or 0 otherwise.
+
 The bit-vector is encoded into hexadecimal and prepended with the number of unique requests (2 bytes).
-For example, in a round with 5 requests (all different) where the first, second and fourth are confirmed we get bitVector $01011$ that is encoded to `0x00050b`.
-The encoded bit-vector is sent in calldata before the deadline of the choose phase in the FSP submit1 transaction.
+For example, in a round with 5 requests (all different) where the first, second and fourth are confirmed we get bit-vector $01011$ that is encoded to `0x00050b`.
+
+The encoded bit-vector is sent in calldata before the deadline of the choose phase in the FSP transaction to [submit2](../FSP/Contracts/Submission.md#submit1-submit2) function of the Submission smart contract.
+
 Each data provider collects bit-vectors submitted by other providers.
-A bitVote is valid if it has the correct number of bits, is posted by a submit address that has a weight according to the signing policy, and is posted inside the choose phase.
-If a provider posts more than one valid bitVote in a round, only the last is considered.
-Valid bitVotes are used to compute the consensus bit-vector.
+A bit-vector is valid if it shows the correct number of requests (with respect to the local view), is posted by a submit address that has a positive weight according to the signing policy, and is posted inside the [choose phase](VotingProtocol.md#phases-of-a-voting-round).
+If a provider posts more than one valid bit-vector in a round, only the last is considered.
+Valid bit-vector are used to compute the consensus bit-vector.
+
+The computation follows the principles:
+
+- The consensus bit-vector has to be supported by more than 50% of the weight.
+- It has to be computed deterministically.
+- It has to be computed in a reasonable time (few seconds at most).
+-
 
 ## Bit Vote algorithm
 
 The algorithm takes the following inputs:
 
-- bit vectors with weight sorted by the index of the voter as defined in the signing policy.
-- array of fees, where i-th fee corresponds to the attestation assigned i-th bit (counted from the right) of bit vectors.
-- total weight.
-- Maximal number of steps.
+- bit-vectors with weight are sorted by the index of the voter as defined in the signing policy
+- array of fees, where $i$-th fee corresponds to the attestation assigned $i$-th bit (counted from the right) of bit-vectors
+- total weight
+- maximal number of steps ($20000000$ is currently used)
 
 ### Pre-Processing
 

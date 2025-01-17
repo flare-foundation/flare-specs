@@ -131,10 +131,14 @@ Let $W'_D(p) = \min\{W_D(p), 0.025 * \mathrm{totalSupplyWFLR}\}$ be the capped d
 
 The registration weight is
 
-TODO (exact computation)
-
 $$
 W_R(p)= \left(W'_D(p) + W_P(p)\right)^\frac{3}{4}.
+$$
+
+The exact computation is done by (we denote $W=W'_D(p) + W_P(p)$):
+
+$$
+W_R(p) = \mathrm{floor}\left(\mathrm{floor}\left(W^\frac{1}{2}\right)^\frac{1}{2}\right)\mathrm{floor}\left(W^\frac{1}{2}\right).
 $$
 
 ## WNatDelegationFee

@@ -75,6 +75,6 @@ The array weights contains normalized weights of voters, the weight at position 
 Let $\mathrm{weightSum}$ be the sum of [registrationWeights](VoterRegistration.md#registration-weight) of all registered providers.
 The normalized weight of a provider is $\mathrm{registrationWeight} * \mathrm{maxUint}16 /  \mathrm{weightSum}$ where integer division is used.
 
-Threshold is than one half of norm
+Threshold is than one half of the sum of the normalized weights rounded up.
 
 ## Uptime Vote Signed

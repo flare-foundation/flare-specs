@@ -1,6 +1,6 @@
 # Daemon
 
-Daemon is an automated agent that triggers a call to FlareDaemon smart contract that subsequently calls all daemonized contracts.
+FlareDaemon is an automatically triggered smart contract that subsequently calls all daemonized contracts.
 FlareDaemon smart contract is deployed at
 `0x1000000000000000000000000000000000000002`.
 The call is triggered at the end of the first successful transaction in every block.

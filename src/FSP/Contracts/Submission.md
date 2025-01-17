@@ -7,9 +7,9 @@ The messages are used by the data providers for the off chain computation in pro
 
 ## Submit1, submit2
 
-The data provider posts messages to these methods with SubmitAddress.
-The first submission in a voting round to a method from the SubmitAddress is subsidized (all the gas is refunded).
-Only the messages from the submitAddress of an entity with a positive weight according to the active signing policy should be considered in protocols.
+The data provider posts messages to these functions with SubmitAddress.
+The first submission in a voting round to a method from the SubmitAddress of a provider included in the active signing policy is subsidized (all the gas cost is refunded).
+Only the messages from the SubmitSignatureAddress of a provider included in the active signing policy should be considered by the data providers.
 
 The message is formed in the following way:
 `tx_data = function_selector + concatenated_data`.
@@ -27,11 +27,11 @@ Payload messages are used in protocols and to decide rewards eligibility
 ## SubmitSignatures
 
 Signatures are used for a finalization of a voting round for a protocol.
-For a [finalization](../Finalization.md), a Merkle root backed the signatures of enough voter weight is required.
+For a [finalization](../Finalization.md), a Merkle root backed by the signatures of enough voter weight is required.
 
-The data provider posts messages to these methods with SubmitSignaturesAddress.
-The first submission in a voting round to a method from the SubmitSignatureAddress is subsidized (all the gas is refunded).
-Only the messages from the SubmitSignatureAddress of an entity with a positive weight according to the active signing policy should be considered by the data providers.
+The data provider posts messages to the function with SubmitSignaturesAddress.
+The first submission in a voting round to a function from the SubmitSignatureAddress of a provider included in the active signing policy is subsidized (all the gas cost is refunded).
+Only the messages from the SubmitSignatureAddress of a provider included in the active signing policy should be considered by the data providers.
 The message is formed in the following way:
 `tx_data = function_selector + concatenated_data`.
 
@@ -53,7 +53,7 @@ The signaturePayload is of the form
 
 #### Signing
 
-Currently both types sign a message of the same from and use the same signature scheme.
+Currently both types sign a message of the same form and use the same signature scheme.
 The message that is signed is of the form:
 message (38 bytes):
 

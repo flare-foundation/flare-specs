@@ -1,11 +1,11 @@
-# Merkle tree
+# Merkle Tree
 
 There are several types of [Merkle trees](https://en.wikipedia.org/wiki/Merkle_tree), depending on their purpose.
 We describe a Merkle tree used by Flare Systems protocols.
 
 For working with Merkle trees, the following "standard" [Open Zeppelin library](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/MerkleProof.sol) can be used.
 
-## Merkle tree structure
+## Structure
 
 A Merkle tree on _n_ sorted hashes is represented by an array of length _2n - 1_, which represents a complete binary tree.
 A complete binary tree is a binary tree in which all levels are completely filled except possibly the lowest one, which is filled from the left.
@@ -46,7 +46,7 @@ where `hash(data)` is a hash function that, given a byte sequence `data`, produc
 
 Basically it means that given two hashes they are first sorted, then joined, and then a hash is produced.
 
-## Building a Merkle tree
+## Building a Merkle Tree
 
 A Merkle tree on _n_ hashes is built as follows:
 
@@ -56,7 +56,7 @@ A Merkle tree on _n_ hashes is built as follows:
 - _n_ hashes are put into the slots from _n - 1_ to _2n - 2_, this is, `M[n-1], ..., M[2n - 2]`.
 - for _i = n - 2_ down to 0, calculate `M[i] = sortedHash( M[left(i)], M[right(i)])`
 
-## Building a Merkle proof
+## Merkle Proof
 
 A Merkle proof for a leaf is the shortest sequence of hashes in the Merkle tree on a path to the Merkle root that enables the calculation of the Merkle root from the leaf (array of values of siblings of the nodes on the path from the leaf to the root.).
 Let `M` be an array representing a Merkle tree on _n_ leaves with _2n - 1_ nodes defined as above.
@@ -79,7 +79,7 @@ getProof(k) {
 }
 ```
 
-## Verifying with a Merkle proof
+### Verifying with a Merkle proof
 
 To verify that a hash is included in a Merkle tree one needs a Merkle proof and a Merkle root.
 The verification is done with the following algorithm (in pseudocode):
