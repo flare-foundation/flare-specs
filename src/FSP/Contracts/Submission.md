@@ -3,13 +3,13 @@
 Subprotocols use the Submission smart contract for messaging.
 Submission contract has methods submit1, submit2, (submit3,) and submitSignatures.
 
-The messages are used by the data providers for the off chain computation in protocols and rewarding.
+The messages are used by entities for the off chain computation in protocols and rewarding.
 
 ## Submit1, submit2
 
-The data provider posts messages to these functions with SubmitAddress.
-The first submission in a voting round to a method from the SubmitAddress of a provider included in the active signing policy is subsidized (all the gas cost is refunded).
-Only the messages from the SubmitSignatureAddress of a provider included in the active signing policy should be considered by the data providers.
+Entities post messages to these functions from submitAddress.
+The first submission in a voting round to a method from the submitAddress of an entity included in the active signing policy is subsidized (all the gas cost is refunded).
+Only the messages from the submitSignatureAddress of an entity included in the active signing policy should be considered in the protocols.
 
 The message is formed in the following way:
 `tx_data = function_selector + concatenated_data`.
@@ -29,9 +29,9 @@ Payload messages are used in protocols and to decide rewards eligibility
 Signatures are used for a finalization of a voting round for a protocol.
 For a [finalization](../Finalization.md), a Merkle root backed by the signatures of enough voter weight is required.
 
-The data provider posts messages to the function with SubmitSignaturesAddress.
-The first submission in a voting round to a function from the SubmitSignatureAddress of a provider included in the active signing policy is subsidized (all the gas cost is refunded).
-Only the messages from the SubmitSignatureAddress of a provider included in the active signing policy should be considered by the data providers.
+Entities post messages to the function from submitSignaturesAddress.
+The first submission in a voting round to a function from the submitSignatureAddress of an entity included in the active signing policy is subsidized (all the gas cost is refunded).
+Only the messages from the submitSignatureAddress of an entity included in the active signing policy should be considered in the protocols.
 The message is formed in the following way:
 `tx_data = function_selector + concatenated_data`.
 

@@ -43,7 +43,7 @@ is emitted.
 
 ## Finalizer Selection
 
-Each round a few providers per protocol are selected for finalization.
+Each round a few entities per protocol are selected for finalization.
 Only they are incentivize to finalize inside the grace period TODO.
 
 The seed is 32 byte hex string, that is compted by solidity code
@@ -52,12 +52,12 @@ The seed is 32 byte hex string, that is compted by solidity code
 bytes32 initialSeed = keccak256(signingPolicySeed,protocolID,votingRoundID);
 ```
 
-where signingPolicySeed is uint256 value as emitted in field seed of SigningPolicyInitialized event for the signing policy active in voting round.
+where signingPolicySeed is uint256 value as emitted in field seed of `SigningPolicyInitialized` event for the signing policy active in voting round.
 
 Start with $\mathrm{seed}= uint256(\mathrm{initialSeed})$, $\mathrm{selectedWeight}=0$, and empty set $\mathrm{selected}$.
 
 Let $W$ be the total (normalized) weight in the active signing policy and let $\mathrm{threshold} = W * 0.05$
-Each voter has an index $i$ and (normalized) weight $w(i)$ assigned by the signing policy.
+Each entity has an index $i$ and (normalized) weight $w(i)$ assigned by the signing policy.
 Let $T(i) = \sum_{j=0}^{i} w(i)$.
 
 While $\mathrm{selectedWeight} < \mathrm{threshold}$ we perform the following:
@@ -65,7 +65,7 @@ Let $\mathrm{selector}=\mathrm{seed}\mod W$ and let $i$ be the smallest index su
 If $i \notin \mathrm{selected}$, we add $i$ to $\mathrm{selected}$ and add $w(i)$ to $\mathrm{selectedWeight}=0$.
 Then update $\mathrm{seed} = keccak255(\mathrm{seed})$.
 
-The voter whose indexes are in $\mathrm{selector}$ are incentivize to finalize in the grace period.
+The entities whose indexes are in $\mathrm{selector}$ are incentivize to finalize in the grace period.
 
 ## Threshold
 
@@ -91,18 +91,18 @@ Let $V$ be the total designated rewards for a protocol in some voting round.
 
 ### In Grace Period
 
-In each round, the selected a provider is rewarded if they make a transaction from signingPolicyAddress inside the grace period that either:
+In each round, the selected entity is rewarded if they make a transaction from signingPolicyAddress inside the grace period that either:
 
 - finalizes the protocol for the round;
 - would finalize the protocol for the round but the protocol is already finalized.
 
-Such provider is rewarded by
+Such an entity is rewarded by
 $
 \frac{V}{|\mathrm{selected}|}
 $
 and the reward is shared among their delegators.
 
-If a selected provider does not make such transaction, their portion gets burned.
+If a selected entity does not make such transaction, their portion gets burned.
 
 ### Outside Grace Period
 
