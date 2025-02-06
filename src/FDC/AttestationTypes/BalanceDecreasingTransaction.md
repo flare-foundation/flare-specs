@@ -37,10 +37,8 @@ Once the transaction is received, the response fields are extracted if the trans
 
 ### UTXO (Bitcoin and Dogecoin)
 
-- `sourceAddressIndicator` is the the index of the transaction input in hex padded to a 0x prefixed 32-byte string.
-  If the indicated input does not exist or the indicated input does not have the address, the attestation request is rejected.
-  In particular, no summary is made for coinbase transactions.
-  The `sourceAddress` is the address of the indicated transaction input.
+- `sourceAddressIndicator` is the [standard address hash](./Reference.md#standard-address-hash) of the address whose balance has been decreased.
+  If the address indicated by `sourceAddressIndicator` is not among the signers of the transaction and the balance of the address was not lowered in the transaction, the attestation request is rejected.
 
 - `spentAmount` is the sum of values of all inputs with `sourceAddress` minus the sum of all outputs with `sourceAddress`.
   Can be negative.
