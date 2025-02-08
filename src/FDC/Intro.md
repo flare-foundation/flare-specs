@@ -1,4 +1,4 @@
-# Introduction
+# FDC Introduction
 
 Flare Data Connector (FDC) attests to data external to the Flare's EVM state, thus provide a guarantee to smart contracts on Flare the data is valid.
 
