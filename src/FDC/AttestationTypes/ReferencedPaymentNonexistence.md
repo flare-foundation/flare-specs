@@ -44,7 +44,7 @@ For `lowestUsedTimestamp`, `minimalBlockTimestamp` is used.
 If zero `standardPaymentReference` is provided, the request is rejected.
 
 If `firstOverflowBlock` cannot be determined or does not have a sufficient number of confirmations (block at the tip has number of confirmations 1), the attestation request is rejected.
-If `firstOverflowBlockNumber` is higher or equal to `minimalBlockNumber`, the request is rejected.
+If `minimalBlockNumber` is higher or equal to `firstOverflowBlockNumber`, the request is rejected.
 The search range are blocks between heights including `minimalBlockNumber` and excluding `firstOverflowBlockNumber`.
 If the verifier does not have a view of all blocks from `minimalBlockNumber` to `firstOverflowBlockNumber`, the attestation request is rejected.
 The request is confirmed if no transaction meeting the specified criteria is found in the search range.
