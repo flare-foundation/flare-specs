@@ -49,8 +49,10 @@ Only they are incentivize to finalize inside the grace period TODO.
 The seed is 32 byte hex string, that is compted by solidity code
 
 ```solidity
-bytes32 initialSeed = keccak256(signingPolicySeed,protocolID,votingRoundID);
+bytes32 initialSeed = keccak256(abi.encode(signingPolicySeed,protocolID,votingRoundID));
 ```
+
+where signingPolicySeed is of type bytes32, protocolID is of type uint8, and votingRoundID is uint32.
 
 where signingPolicySeed is uint256 value as emitted in field seed of `SigningPolicyInitialized` event for the signing policy active in voting round.
 

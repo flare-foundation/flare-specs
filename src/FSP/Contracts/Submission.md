@@ -22,7 +22,7 @@ The concatenated data is a sequence of concatenated payload messages, where each
 - payload (size bytes) - protocol specific data encoded into bytes.
   Payload is formatted and should be encoded according to the specification of the protocol with protocolID.
 
-Payload messages are used in protocols and to decide rewards eligibility
+Payload messages are used in protocols and to decide rewards eligibility.
 
 ## SubmitSignatures
 
@@ -84,7 +84,7 @@ PayloadMessage of type 0 includes message, its signature, and potentially an add
   While type defines the length of message and signature, the unsignedMessage occupies the rest of the bytes.
   Since this payload is then packed into a payload message (see above) the payload is easily extractable.
 
-Currently, type 0 is used for FTSO (protocol ID 100)
+Currently, type 0 is used for FTSO (protocol ID 100).
 
 #### Type 1
 
@@ -95,4 +95,4 @@ PayloadMessage of type 1 consists of the signature of the message, and potential
   While type defines the length of message and signature, the unsignedMessage occupies the rest of the bytes.
   Since this payload is then packed into a payload message (see above) the unsignedMessage is easily extractable.
 
-Currently, type 1 is used for FDC (protocol ID 200)
+Currently, type 1 is used for FDC (protocol ID 200).

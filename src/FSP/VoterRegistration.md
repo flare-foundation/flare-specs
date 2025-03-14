@@ -66,7 +66,8 @@ Registration is done on VoterRegistry smart contract using function
 ```
 
 on VoterRegistry smart contract.
-Function can be called from any address, `_voter` has to be the identityAddress of the entity and `_signature` has to be ECDSA signature of `keccak256(abi.encode(rewardEpochId, _voter));` by private key corresponding to signingPolicyAddress as set on EntityManager smart contract before the latest `RandomAcquisitionStarted` event was emitted.
+Function can be called from any address, `_voter` has to be the identityAddress of the entity and `_signature` has to be ECDSA signature of `keccak256(abi.encode(rewardEpochId, _voter));` prefixed by `"\x19Ethereum Signed Message:\n32"`
+by private key corresponding to signingPolicyAddress as set on EntityManager smart contract before the latest `RandomAcquisitionStarted` event was emitted.
 
 At registration the event
 
