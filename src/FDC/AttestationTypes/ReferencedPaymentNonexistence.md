@@ -58,8 +58,9 @@ Criteria for the transaction:
 
 - It is not coinbase transaction.
 - The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference).
-- The sum of values of all outputs with the specified address minus the sum of values of all inputs with the specified address is greater than `amount` (in practice the sum of all values of the inputs with the specified address is zero).
-- If `checkSourceAddresses` is set to true, TODO
+- The transaction has exactly one output with the specified address.
+- The value of the output with the specified address minus the sum of values of all inputs with the specified address is greater than `amount` (in practice the sum of all values of the inputs with the specified address is zero).
+- If `checkSourceAddresses` is set to true, sourceAddressesRoot of the transaction matches the specified `sourceAddressesRoot`.
 
 Timestamp is `mediantime`.
 
@@ -76,7 +77,7 @@ Criteria for the transaction:
 - One of the following is true:
   - Transaction status is `SUCCESS` and the amount received by the specified destination address is greater than the specified `value`.
   - Transaction status is `RECEIVER_FAILURE` and the specified destination address would receive an amount greater than the specified `value` had the transaction been successful.
-- If `checkSourceAddresses` is set to true, TODO
+- If `checkSourceAddresses` is set to true, sourceAddressesRoot of the transaction matches the specified `sourceAddressesRoot`.
 
 Timestamp is `close_time` converted to UNIX time.
 
