@@ -54,9 +54,9 @@ For Bitcoin a sufficient number of confirmations is at least 6, for Dogecoin it 
 `BlockTimestamp` is the mediantime of the block in which the transaction is included.
 
 If the inducted input or output does not exist, the request is rejected.
-Both the indicated input and output must have an address (they must have a standard locking script), otherwise the request is rejected.
+Both the indicated input and output must have an address (they must have a standard locking script), called source and receiving address respectively, otherwise the request is rejected.
 In particular, requests for coinbase transactions are rejected.
-If a transaction has multiple outputs with receiving address, the request is rejected.
+If a transaction has additional outputs with the receiving address, the request is rejected.
 
 Any transaction included in the block is successful, thus the `status` is always 0.
 
