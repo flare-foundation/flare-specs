@@ -35,4 +35,4 @@ Stake record contains:
 - endTime
 - weight - Amount in Gwei
 
-A stake record R falls into the voting epoch with ID $\mathrm{floor}\left(\frac{R.\mathrm{startTime} - T_0}{D}\right)$.
+A stake record R falls into the voting round with ID $\mathrm{floor}\left(\frac{R.\mathrm{startTime} - T_0}{D}\right)$.

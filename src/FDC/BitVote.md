@@ -93,7 +93,7 @@ $$
 \mathrm{Value}(\mathrm{fees}, \mathrm{weight}) = (\mathrm{cappedWeight} * \mathrm{fees}, \mathrm{weight} * \mathrm{fees}),
 $$
 
-where $$\mathrm{cappedWeight} = \mathrm{min}\{\mathrm{weight}, 0.8 * \mathrm{totalWeight}\}.$$
+where $\mathrm{cappedWeight} = \mathrm{min}\{\mathrm{weight}, 0.8 * \mathrm{totalWeight}\}.$
 
 A node at depth $k$ that is not a leaf has two children:
 

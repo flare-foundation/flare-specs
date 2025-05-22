@@ -70,6 +70,8 @@ The uint256 `seed` is the random seed (obtained in Random Acquisition process).
 The array `voters` contains signingPolicyAddresses of the entities, the position of the address in the array is the entity index.
 The array `weights` contains normalized weights of entities, the weight at position $i$ corresponds to entity at position $i$.
 
+See [SigningPolicy](/src/FSP/Encoding.md#signingpolicy) for the byte encoding of `signingPolicyBytes`.
+
 ### Normalized weights
 
 Let $\mathrm{weightSum}$ be the sum of [registrationWeights](VoterRegistration.md#registration-weight) of all registered entities.

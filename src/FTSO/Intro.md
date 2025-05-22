@@ -1,0 +1,1 @@
+TODO: port content from WP: https://dev.flare.network/pdf/whitepapers/20240223-FlareTimeSeriesOracleV2.pdf
