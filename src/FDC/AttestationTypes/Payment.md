@@ -14,8 +14,8 @@ The provable payments emulate traditional banking payments from entity A to enti
 | Field           | Solidity type | Description                                                                                                            |
 | --------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `transactionId` | `bytes32`     | ID of the transaction.                                                                                                 |
-| `inUtxo`        | `uint256`     | For UTXO chains, this is the index of the transaction input with source address. Always 0 for the non-utxo chains.     |
-| `utxo`          | `uint256`     | For UTXO chains, this is the index of the transaction output with receiving address. Always 0 for the non-utxo chains. |
+| `inUtxo`        | `uint256`     | For UTXO chains, if the value is less than 2**16, this field is the index of the transaction input with the source address. Otherwise, it represents the `standardAddressHash` of the input address for which the payment proof will be constructed. For non-UTXO chains, this is always 0.    |
+| `utxo`          | `uint256`     |  For UTXO chains, if the value is less than 2**16, this field is the index of the transaction output with the receiving address. Otherwise, it represents the `standardAddressHash` of the output address for which the payment proof will be constructed. For non-UTXO chains, this is always 0. |
 
 ## Response body
 
