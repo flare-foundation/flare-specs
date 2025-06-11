@@ -68,7 +68,20 @@ Any transaction included in the block is successful, thus the `status` is always
 `ReceivedAmount` is the sum of values of all outputs with the `receivingAddress` minus the sum of values of all inputs with `receivingAddress`.
 `IntendedReceivedAmount` always matches `ReceivedAmount` and `intendedReceivingAddress` always matches `receivingAddress`.
 
-A transaction is `oneToOne` if and only if there are only inputs with `sourceAddress` and outputs consist only of UTXOs wiring to `receivingAddress`, `sourceAddress` (returning the change) or are `OP_RETURN`.
+A transaction is considered `oneToOne` if and only if **all inputs** are from the `sourceAddress`, and **all outputs** are either:
+
+- UTXOs sent to the `receivingAddress`
+- UTXOs sent back to the `sourceAddress` (as change)
+- or `OP_RETURN` outputs
+
+For example, let’s use addresses `A` (source) and `B` (receiver). The following table shows which transactions are considered `oneToOne`. Any number of `OP_RETURN` outputs does **not** affect this classification.
+| Input addresses | Output addresses | Is OneToOne |
+| - | - | - |
+| A | A,B | True |
+| A | B | True |
+| A | A | False |
+| A,B | A | False |
+| A,B | A,B | False |
 
 `LowestUsedTimestamp` limit for Bitcoin and Dogecoin is $1209600$ (2 weeks).
 
