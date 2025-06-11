@@ -58,4 +58,11 @@ If a transaction with the `transactionId` is in a block on the main branch with 
 The block at the tip is has $1$ confirmation.
 If any indicated event does not exist, the request is rejected.
 
-`LowestUsedTimestamp` is unlimited.
+
+`LowestUsedTimestamp` is limited depending on usual node configurations on different chains.
+
+| Source | `LowestUsedTimestamp` limit |
+| ---------------- | ------------- | 
+| ETH | 26400000 (2_200_000 blocks * 12 sec (usually nodes keep 2_300_000 blocks)) |
+| SGB | unlimited |
+| FLR | unlimited |
