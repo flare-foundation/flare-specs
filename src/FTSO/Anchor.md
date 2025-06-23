@@ -1,0 +1,33 @@
+# Anchor Feeds
+The FTSOv2 protocol takes place in a sequence of *voting rounds*, with each iteration lasting one round, so that each data feed is updated once per round. This produces a sequence of values known as the *anchor feed*. Each voting round begins at the start of a new *voting epoch*, determining the value of each anchor feed for that 90 second epoch. The value of each feed is determined by aggregating value submissions from each participating data provider into a weighted median value. Each round takes place across two *voting epochs*, with rounds and epochs identified by *round ids* and *epoch ids* respectively, with enumeration aligned so that round $$i$$ begins at the same time as epoch $i$. That is, in each voting epoch a new voting round begins, however, the duration of the voting round is longer than the epoch, so that more than one voting round may be proceeding at a time. 
+
+More specifically, each round of the FTSOv2 protocol proceeds in four phases: the *commit* phase, in which the data providers commit to their data vectors for the round, the *reveal* phase, where the data providers reveal the values underlying their respective commits, the *sign* phase, when providers collate data estimates to produce the median data values, and a *finalization* phase, ending the round when a provider collects sufficiently many signatures of the median values for the data estimates to be finalized.
+
+
+## Commit Phase
+The commit phase begins the voting round and lasts the entire 90 second duration of the voting epoch $i$. In this phase, each data provider computes their individual estimate for each data feed and encodes it into a 4-byte vector using offset binary encoding, then publishes a hash commitment to the combination *data* of these vectors. The commitment is calculated as
+
+$$\mathrm{Commit Hash} = \mathrm{Hash}(\mathrm{address}, i, \mathrm{rand}, \mathrm{data})$$
+
+where $\mathrm{rand}$ is a locally generated random number and $\mathrm{address}$ the data provider's address. This random number serves two purposes: it blinds the commit hash of the user from a search attack, and is used later (once revealed) to contribute to on-chain randomness. Each provider's Commit Hash is uploaded to the chain in a commit transaction, which is valid as long as its block timestamp correctly matches up with the voting epoch *i*. 
+
+## Reveal Phase
+Beginning immediately after the commit phase, the reveal phase lasts 45 seconds and requires each provider to reveal their individual estimates committed to in the previous phase. To do so, they each complete a *reveal transaction*, revealing all inputs to their hash commitment. Each provider reveals its estimates *data* and its random number *rand*. A reveal transaction is valid as long as the hash of the revealed data matches up with the hash commitment of the provider; validity of the reveal transaction can be confirmed off-chain, and also requires that the block timestamp of the transaction lies within the Reveal Phase. 
+
+##  Signing Phase
+The sign phase begins as soon as the reveal phase finishes, and has an initial duration of 10 seconds. During this phase, data providers collate submissions from the commit and reveal phases, filter out invalid submissions, and compute the weighted median values and rewards for each anchor feed. Each provider then packages together the valid submissions and results of their computation into a Merkle tree, and publishes a *sign transaction* consisting of the Merkle root and a signature of the root.
+
+## Finalization Phase
+The finalization phase begins at the end of the signing phase, and has an initial duration of 10 seconds.  For this phase, a random selection of providers are chosen to participate, selected sequentially and independently with probability equivalent to their relative weight until more than 5% of the total weight of providers has been selected. Thus, the number of chosen providers varies, with enough providers chosen each round so that at least 5% of the total weight of providers are able to finalize. The results of this sampling are available in advance, so that providers know whether they have been selected for finalization before the phase begins.
+
+Using the available signatures from the signing phase, each of the selected data providers can end the round by collating enough signatures for the same Merkle root and submitting them to the *relay contract*, which verifies that the signatures are valid and that a sufficient voting weight of signatures (at least 50%) have been submitted. Assuming these checks pass, the Merkle root is published on the voting contract for the round. If none of the selected providers have completed the finalization phase after 10 seconds, it is opened to all data providers and concluded once any provider has submitted a finalization.
+
+## Overlapping Phases 
+In practice, there is some overlap between the signing and finalization phases: the finalization process may be completed as soon as enough valid signatures are available for the voting round. In this case, signatures deposited during the signing phase but after finalization is completed are still rewarded as normal. Conversely, assuming finalization is not completed early, signatures deposited after the signing phase ends but before finalization is completed are considered valid and rewarded as usual. 
+
+## Randomness
+The Flare network requires access to on-chain randomness for a variety of cryptographic features, including selecting random providers for the finalization phase and facilitating sortition for the block-latency feeds. This is enabled by the commit-reveal phase of the anchor feeds, which generates a new random number each epoch. The random numbers revealed by each party in the reveal phase are combined into an aggregate random number for the epoch: each of the provider-generated random numbers $\mathrm{rand}_i$ are added together to make a combined random number 
+
+$$\mathrm{rand} = \sum_i \mathrm{rand}_i \mathrm{N}$$
+
+where $N = 2^n$ denotes the maximum possible size of the individual $n$-bit random numbers. As long as all individual randomness contributions are added, and at least one *rand* was random, the resulting output *rand* is a random number. In order to track whether or not any random contributions have been omitted in an attempt to degrade the quality of a random number (for example by a provider failing to complete the reveal phase), the Merkle root contains a Boolean value storing this information.
