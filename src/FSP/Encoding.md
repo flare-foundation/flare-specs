@@ -67,7 +67,7 @@ Contains the resulting data of a voting round, encoded into a Merkle tree root h
 | RewardEpochId   | 3                | Reward epoch identifier.                                      |
 | StartingRoundId | 4                | Starting voting round ID (big-endian).                        |
 | Threshold       | 2                | Minimum signing weight required for finalization.             |
-| RandomSeed      | 32               | Used for randomising the finalizer set selection for a round. |
+| RandomSeed      | 32               | Used for randomizing the finalizer set selection for a round. |
 | Signers         | SignerCount * 22 | Concatenated array of signers (see below).                    |
 
 **Each signer entry:**

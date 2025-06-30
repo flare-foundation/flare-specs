@@ -4,7 +4,7 @@ The FTSOv2 protocol is a stake-based protocol, in the sense that the contributio
 ## FTSO Calculation Weight
 The median calculation for the FTSO uses only the delegation weight of the provider, the amount of wrapped Flare (WFLR) tokens delegated to the provider for participating in the FTSO protocol. If staking weight were taken into account, stake within the system held by providers inactive in the protocol would dilute the impact of WFLR delegation to active providers, potentially compromising the accuracy of the FTSO outputs.
 
-Thus, for provider $i$ with weight $W_{D_i}$ of delegated tokens, the normalized FTSO calculation weight $$W_{i,C}$$ of the provider is equal to
+Thus, for provider $i$ with weight $W_{D_i}$ of delegated tokens, the normalized FTSO calculation weight $W_{i,C}$ of the provider is equal to
 
 $$W_{i,C} = \frac{W_{D_i}}{\sum_i W_{D_i}}.$$
 
