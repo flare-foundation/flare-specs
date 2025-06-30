@@ -38,34 +38,36 @@ For FSP security, infrastructure providers are expected to participate in **all*
 
 Once reward claims are calculated for an epoch, provider submissions are analyzed, and if participation thresholds are not met, the claims for the provider and their delegators might get burnt.
 
-## 2 Reward calculation
-
-### 2.1 Calculation overview
+### 1.5 Calculation overview
 
 The reward calculation process consists of three main phases:
 
-1. **Data retrieval and validation**: Reward epoch metadata and submissions are decoded from transaction and event data provided by the [FSP C-Chain indexer](https://github.com/flare-foundation/flare-system-c-chain-indexer).
+- (2) **Data retrieval and validation**: Reward epoch metadata and submissions are decoded from transaction and event data provided by the [FSP C-Chain indexer](https://github.com/flare-foundation/flare-system-c-chain-indexer).
 
-2. **Per-round reward calculation**: Reward funds and submissions are allocated to their corresponding voting rounds, with reward claims and penalties calculated for each round according to protocol-specific rules.
+- (3) **Reward calculation**: Reward funds and submissions are allocated to their corresponding voting rounds, with reward claims and penalties calculated for each round according to protocol-specific rules.
 
-3. **Aggregation and finalization**: Reward claims are aggregated across all protocols, penalties and minimal participation conditions are applied, and a final set of claims is produced (one claim per beneficiary and type). A Merkle tree is constructed from these final claims to generate an epoch reward hash for signing.
+- (4) **Aggregation and finalization**: Reward claims are aggregated across all protocols, penalties and minimal participation conditions are applied, and a final set of claims is produced (one claim per beneficiary and type). A Merkle tree is constructed from these final claims to generate an epoch reward hash for signing.
 
 Once the reward hash receives majority approval through signatures, providers can begin claiming their rewards.
 
-### 2.2 Fund sources
+## 2 Data retrieval and validation
 
-Reward funds are sourced from inflation allocations and additional protocol-specific streams:
+This phase involves gathering all necessary data for the reward calculation process, including available rewards, epoch metadata, and protocol submission messages from participants.
 
-| Protocol Name                                         | Inflation Share | Additional Sources                       |
-| ----------------------------------------------------- | --------------- | ---------------------------------------- |
-| FTSO Scaling                                          | 24.5%           | Community feed reward offers submissions |
-| FTSO Fast Update                                      | 10.5%           | Volatility incentives                    |
-| FDC                                                   | 35%             | Attestation request fees                 |
-| *Validator Rewards (independent rewarding mechanism)* | *30%*           |                                          |
+### 2.1 Reward sources
+
+Rewards are sourced from inflation allocations and additional protocol-specific streams:
+
+| Protocol Name                                         | Inflation Share | Additional Sources                        |
+| ----------------------------------------------------- | --------------- | ----------------------------------------- |
+| FTSO Scaling                                          | 24.5%           | Community feed reward offers submissions. |
+| FTSO Fast Update                                      | 10.5%           | Volatility incentives.                    |
+| FDC                                                   | 35%             | Attestation request fees.                 |
+| *Validator Rewards (independent rewarding mechanism)* | *30%*           |                                           |
 
 For each protocol, funds from available sources are pooled together and distributed [equally](Operations.md#1-integer-division-with-remainder-distribution) across all voting rounds within the reward epoch.
 
-### 2.3 Epoch metadata
+### 2.2 Epoch metadata TODO
 
 - **Start and end rounds**: The voting round IDs that mark the beginning and end of the epoch.
 - **Signing Policy**: The policy that defines which voters are eligible and how signatures are validated for this epoch.
@@ -83,26 +85,24 @@ For each protocol, funds from available sources are pooled together and distribu
   - `VoterRegistry.VoterRegistered`
   - `FlareSystemsCalculator.VoterRegistrationInfo`
 
-#### 2.3.1 Event Query Time Ranges
-
 The following table specifies the time ranges for querying events in terms of reward epoch start and end times:
 
-| Contract                   | Event Name               | Log Time Range                                                                                   |
-| -------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
-| Relay                      | SigningPolicyInitialized | $[t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$                  |
+| Contract                   | Event Name               | Log Time Range                                                 |
+| -------------------------- | ------------------------ | -------------------------------------------------------------- |
+| Relay                      | SigningPolicyInitialized | $[t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$ |
 | VoterRegistry              | VoterRegistered          | $[t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$ |
-| FlareSystemsCalculator     | VoterRegistrationInfo    | $[t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$                    |
-| FtsoRewardOfferManager     | RewardsOffered           | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                                                   |
-| FtsoRewardOfferManager     | InflationRewardsOffered  | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                                                   |
-| FastUpdateIncentiveManager | InflationRewardsOffered  | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                                                   |
-| FastUpdateIncentiveManager | IncentiveOffered         | $[t_{\text{start}}(e), t_{\text{start}}(e+1))$                                                   |
-| FdcHub                     | InflationRewardsOffered  | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                                                   |
+| FlareSystemsCalculator     | VoterRegistrationInfo    | $[t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$ |
+| FtsoRewardOfferManager     | RewardsOffered           | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                 |
+| FtsoRewardOfferManager     | InflationRewardsOffered  | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                 |
+| FastUpdateIncentiveManager | InflationRewardsOffered  | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                 |
+| FastUpdateIncentiveManager | IncentiveOffered         | $[t_{\text{start}}(e), t_{\text{start}}(e+1))$                 |
+| FdcHub                     | InflationRewardsOffered  | $[t_{\text{start}}(e-1), t_{\text{start}}(e))$                 |
 
 where:
 - $D_{\text{init}}$: Signing policy initialization duration
 - $t_{\text{start}}(e)$: Start time of reward epoch $e$
 
-### 2.4 Submission validation
+### 2.3 Submission validation
 
 Submission transactions are included in reward computation only if they contain a valid protocol message, and transaction timestamp is correct for the specified `votingRoundId`. See [Submission](Contracts/Submission.md) and [Finalization](Finalization.md) pages for transaction reference.
 
@@ -127,9 +127,17 @@ Submissions not deemed valid at this stage are ignored and not used in reward an
 
 Further validation steps are performed on sub-protocol level when extracting protocol-specific messages.
 
-### 2.5 Reward claims
+# 3 Reward calculation
 
-Every rewarded or penalized protocol action results in a **reward claim**, with the following structure:
+This phase allocates funds and valid submissions to their corresponding voting rounds, and calculates individual reward claims and penalties according to protocol-specific rules.
+
+For details on how rewards and penalties are calculated see individual protocol descriptions:
+- [FTSO Rewarding](../FTSO/Rewarding.md).
+- [FDC Rewarding](../FDC/Rewarding.md).
+
+### 3.1 Reward claims
+
+Every rewarded or penalized protocol action results in a **reward claim**, containing the following structure:
 
 | Field       | Description                                                                                    |
 | ----------- | ---------------------------------------------------------------------------------------------- |
@@ -144,35 +152,34 @@ Supported reward claim types:
 - **Wflr** `(2)`: The beneficiary is the delegation address of an eligible entity for the given reward epoch. The amount includes the value to be distributed to the delegators according to their share in $W_D(beneficiary)$
 - **Mirror** `(3)`: The beneficiary is a node ID of an eligible entity for the given reward epoch. The amount includes the value that is to be distributed to the stakers according to their share in the amount staked to the node ID.
 
-For details on how rewards and penalties are calculated see individual protocol descriptions:
-- [FTSO Rewarding](../FTSO/Rewarding.md).
-- [FDC Rewarding](../FDC/Rewarding.md).
+# 4 Aggregation and finalization
 
-### 2.6 Minimal conditions ([FIP-10](https://proposals.flare.network/FIP/FIP_10.html))
+This phase aggregates reward claims across all protocols, applies penalties and minimal participation conditions, and produces the final set of claims with the epoch reward hash for signing.
 
-To achieve Flare's mission as a Layer-1 enshrined-oracle network where all protocols operate under the same trust assumptions as the network, there is an incentive structure to ensure 
-providers participate in all Flare protocols.
+## 4.1 Minimal conditions ([FIP-10](https://proposals.flare.network/FIP/FIP_10.html))
 
-#### 2.6.1 Participation requirements
+To achieve Flare's mission as a Layer-1 enshrined-oracle network where all protocols operate under the same trust assumptions as the network, there is an incentive structure to ensure providers participate in all Flare protocols.
+
+### 4.1.1 Participation requirements
 
 Each protocol will implement the minimum participation requirements, defined across each reward epoch independently.
 
-##### FTSO anchor feeds
+#### FTSO anchor feeds
   - Providers must submit a value estimate that lies within a 0.5% band around the consensus median value in 80% of voting rounds within a reward epoch.
 
-##### FTSO block-latency feeds
+#### FTSO block-latency feeds
   - Providers must submit at least 80% of their expected number of updates within a reward epoch, unless they have very low weight, defined as < 0.2% of the total active weight.
 
-##### FDC
+#### FDC
   - Providers must be rewarded in 60% of voting rounds.
 
-##### Staking
+#### Staking
   - Providers must meet 80% total uptime in the reward epoch with at least 1M FLR in active self-bond. 
   - To earn passes, the provider must have at least 3M FLR in active self-bond and 15M in active stake. Providers with 80% total uptime and at least 1M FLR in active self-bond but not meeting both the 3M FLR active self-bond and 15M active stake requirements neither earn nor lose passes, and still receive eligible rewards.
 
 Not meeting the requirements of even a single protocol will eventually lead to loss of rewards. 
 
-#### 2.6.2 Passes
+### 4.1.2 Passes
 
 To protect against occasional underperformance, a **pass** system is implemented to act as a buffer mechanism:
 
@@ -183,11 +190,11 @@ To protect against occasional underperformance, a **pass** system is implemented
 - For each protocol a provider fails to meet the minimum requirement, they **lose 1 pass**.
   - If the resulting number of held passes falls **below 0**, the provider **loses all rewards** for that epoch. They will start the next epoch with **0 passes**, and are eligible for rewards if all conditions are met.
 
-### 2.7 Results
+## 4.2 Results
 
 Once all reward claims and penalties are computed for all protocols, they are aggregated together and a combined reward hash is produced for signing.
 
-#### 2.7.1 Aggregating claims
+### 4.2.1 Aggregating claims
 
 1. Reward claims from all protocols are merged together, resulting in a single claim for every beneficiary and claim type.
 2. Separately, penalties from all protocols are merged together, resulting in a single penalty claim for every beneficiary and claim type.
@@ -204,15 +211,14 @@ Once all reward claims and penalties are computed for all protocols, they are ag
 
 4. All resulting $R_{\text{burn}}$ amounts are combined and a single **Direct** type reward claim is produced with the burn address as the beneficiary.
 
-#### 2.7.2 Applying minimal conditions
+### 4.2.2 Applying minimal conditions
 
 For every registered data provider, participation statistics are checked against the minimal conditions. If the resulting number of passes is below zero, all reward claims associated with that provider get burnt. This includes the following beneficiaries:
 - Provider's `identityAddress` - fee rewards.
 - Provider's `delegationAddress` - delegator rewards.
 - All of provider's registered validator [node Ids](VoterRegistration.md#node-id).
 
-
-#### 2.7.3 Computing epoch reward hash
+### 4.2.3 Computing epoch reward hash
 
 Each final reward claim is then abi-encoded and hashed as follows:
 
@@ -248,7 +254,7 @@ struct RewardClaimWithProof {
 
 You can see an example reward claim distribution file for an epoch [here](https://github.com/flare-foundation/fsp-rewards/blob/main/flare/290/reward-distribution-data.json).
 
-#### 2.7.4 Signing rewards
+### 4.2.4 Signing rewards
 
 Each participant registered in the reward epoch needs to generate and submit a reward hash signature to the `FlareSystemsManager` contract:
 
