@@ -26,7 +26,7 @@ For more details on reward epochs, see [Epochs](Epoch.md).
 
 FTSO and FDC protocols operate in 90 second voting rounds, which are used to submit and reach consensus on protocol data outputs for that round.
 
-Rewards calculated for every round, and later aggregated for all rounds in the reward epoch for distribution.
+Rewards are calculated for every round, and later aggregated for all rounds in the reward epoch for distribution.
 
 ### 1.3 Incentives and penalties
 
@@ -52,7 +52,7 @@ Once the reward hash receives majority approval through signatures, providers ca
 
 ## 2 Data retrieval and validation
 
-This phase involves gathering all necessary data for the reward calculation process, including available rewards, epoch metadata, and protocol submission messages from participants.
+This phase involves gathering the necessary data for the reward calculation process, including available rewards, epoch metadata, and protocol submission messages from participants. All data is parsed from raw transactions and logs captured by the indexer.
 
 ### 2.1 Reward sources
 
@@ -69,28 +69,28 @@ For each protocol, funds from available sources are pooled together and distribu
 
 ### 2.2 Epoch metadata
 
-The following smart contract events need to retrieved and processed from the indexer logs table:
+The following smart contract events are processed to obtain epoch metadata:
 
-| Event Name               | Contract                   | Transaction Time Range                                               | Description                                                                      |
-| ------------------------ | -------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| SigningPolicyInitialized | Relay                      | $T \in [t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$ | [SigningPolicy](SigningPolicy.md) for the epoch.                                 |
-| VoterRegistered          | VoterRegistry              | $T \in [t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$ | Voter addresses and weights.                                                     |
-| VoterRegistrationInfo    | FlareSystemsCalculator     | $T \in [t_{\text{start}}(e) - D_{\text{init}}, t_{\text{start}}(e))$ | Voter addresses and weights.                                                     |
-| RewardsOffered           | FtsoRewardOfferManager     | $T \in [t_{\text{start}}(e-1), t_{\text{start}}(e))$                 | Community feed reward offers for FTSO.                                           |
-| InflationRewardsOffered  | FtsoRewardOfferManager     | $T \in [t_{\text{start}}(e-1), t_{\text{start}}(e))$                 | Inflation rewards allocation for FTSO Scaling, defines the default set of feeds. |
-| InflationRewardsOffered  | FastUpdateIncentiveManager | $T \in [t_{\text{start}}(e-1), t_{\text{start}}(e))$                 | Inflation rewards allocation for FTSO Fast Updates.                              |
-| IncentiveOffered         | FastUpdateIncentiveManager | $T \in [t_{\text{start}}(e), t_{\text{start}}(e+1))$                 | Volatility incentives for Fast Updates.                                          |
-| InflationRewardsOffered  | FdcHub                     | $T \in [t_{\text{start}}(e-1), t_{\text{start}}(e))$                 | Inflation rewards allocation for FDC.                                            |
+| Event Name               | Contract                   | Query Range                                                                  | Description                                                                      |
+| ------------------------ | -------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| SigningPolicyInitialized | Relay                      | $T \in [t_{\text{start}}(F_{e}) - D_{\text{init}}, t_{\text{start}}(F_{e}))$ | [SigningPolicy](SigningPolicy.md) for the epoch.                                 |
+| VoterRegistered          | VoterRegistry              | $T \in [t_{\text{start}}(F_{e}) - D_{\text{init}}, t_{\text{start}}(F_{e}))$ | Voter addresses and weights.                                                     |
+| VoterRegistrationInfo    | FlareSystemsCalculator     | $T \in [t_{\text{start}}(F_{e}) - D_{\text{init}}, t_{\text{start}}(F_{e}))$ | Voter addresses and weights.                                                     |
+| RewardsOffered           | FtsoRewardOfferManager     | $T \in [t_{\text{start}}(F_{e-1}), t_{\text{start}}(F_{e}))$                 | Community feed reward offers for FTSO.                                           |
+| InflationRewardsOffered  | FtsoRewardOfferManager     | $T \in [t_{\text{start}}(F_{e-1}), t_{\text{start}}(F_{e}))$                 | Inflation rewards allocation for FTSO Scaling, defines the default set of feeds. |
+| InflationRewardsOffered  | FastUpdateIncentiveManager | $T \in [t_{\text{start}}(F_{e-1}), t_{\text{start}}(F_{e}))$                 | Inflation rewards allocation for FTSO Fast Updates.                              |
+| IncentiveOffered         | FastUpdateIncentiveManager | $T \in [t_{\text{start}}(F_{e}), t_{\text{start}}(e+1))$                     | Volatility incentives for Fast Updates.                                          |
+| InflationRewardsOffered  | FdcHub                     | $T \in [t_{\text{start}}(F_{e-1}), t_{\text{start}}(F_{e}))$                 | Inflation rewards allocation for FDC.                                            |
 
 where:
-- $D_{\text{init}}$: Signing policy initialization duration
-- $t_{\text{start}}(e)$: Start time of reward epoch $e$
+- $T$: Transaction timestamp (Unix).
+- $D_{\text{init}}$: Signing policy initialization duration.
+- $t_{\text{start}}(r)$: Start time of round $r$. See [Voting Round](Epoch.md#voting-round).
+- $F_{e}$: Start of the first round of reward epoch $e$, defined by the `SigningPolicyInitialized` event.
 
 ### 2.3 Protocol submissions
 
 For round-based protocols (FTSO Scaling, FDC) submissions are handled by the [Submission](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/Submission.sol#L14) smart contract, and finalizations get processed by [Relay](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/Relay.sol#L10).
-
-
 See [Submission](Contracts/Submission.md) and [Finalization](Finalization.md) pages for exact transaction references.
 
 FTSO Fast Updates uses an independent mechanism via the [FastUpdater](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/fastUpdates/implementation/FastUpdater.sol) contract.
@@ -98,17 +98,31 @@ FTSO Fast Updates uses an independent mechanism via the [FastUpdater](https://gi
 
 #### 2.3.1 Submission transactions
 
-Submission transactions are included in reward computation only if they contain a valid protocol message, and transaction timestamp is correct for the specified `votingRoundId`. 
+The following transactions are processed for round-based protocol submissions:
 
-Let $R$ represent the message `votingRoundId`, and $T$ denote the transaction timestamp (Unix).
+| Method Call          | Contract   | Query Range                                                                   |
+| -------------------- | ---------- | ----------------------------------------------------------------------------- |
+| **submit1**          | Submission | $T \in [t_{\text{start}}(F_{e} - W_{b}), t_{\text{start}}(F_{e+1}+W_{s}))$    |
+| **submit2**          | Submission | $T \in [t_{\text{start}}(F_{e}- W_{b}+1), t_{\text{start}}(F_{e+1}+W_{s}+1))$ |
+| **submitSignatures** | Submission | $T \in [t_{\text{reveal}}(F_{e}+1)+1, t_{\text{start}}(F_{e+1}+1))$           |
+| **relay**            | Relay      | $T \in [t_{\text{reveal}}(F_{e}+1)+1, t_{\text{start}}(F_{e+1}+1))$           |
 
-The validation rules submissions are defined as follows:
-| Submission Type           | **Valid Transaction Time Range**                        | Duplicate Handling                                                    | **Allowed Sender Address** |
+where:
+- $W_{b}$: System parameter `RandomGenerationBenchingWindow`.
+- $W_{s}$: System parameter `FutureSecureRandomWindow`.
+
+
+Submission transactions are included in reward computation only if they contain a valid protocol message and transaction timestamp.
+The validation rules for submissions are defined as follows:
+
+| Submission Type           | **Valid Timestamp Range**                               | Duplicate Handling                                                    | **Allowed Sender Address** |
 | ------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------- |
 | **Submit1**               | $T \in [t_{\text{start}}(R), t_{\text{start}}(R+1))$    | Last valid sender message used.                                       | **submit**                 |
 | **Submit2**               | $T \in [t_{\text{start}}(R+1), t_{\text{reveal}}(R+1))$ | Last valid sender message used.                                       | **submit**                 |
 | **SubmitSignatures**      | $T \in [t_{\text{reveal}}(R+1), t_{\text{start}}(R+2))$ | First valid sender message per hash used.                             | **submitSignatures**       |
 | **Relay** (finalizations) | $T \in [t_{\text{reveal}}(R+1), t_{\text{start}}(R+2))$ | Only the first valid finalization per round per sender is considered. | Any                        |
+
+where $R$ is the voting round id encoded in the submission.
 
 Additional rules for finalizations:
 - Encoded `SigningPolicy` must match the current reward epoch signing policy.
@@ -116,24 +130,22 @@ Additional rules for finalizations:
 - Signatures sign the encoded `ProtocolMerkleRoot` hash.
 
 Submissions not deemed valid at this stage are ignored and not used in reward and penalty computations.
-
 Further validation steps are performed on sub-protocol level when extracting protocol-specific messages.
 
 #### 2.3.2 Fast Updates submissions
 
-Fast Updates submission data is contained in the following events:
+Fast Updates submission data is processed from the following events:
 
-| Event Name               | Contract    | Valid Transaction Time Range                         | Description                                       |
+| Event Name               | Contract    | Query Range                         | Description                                       |
 | ------------------------ | ----------- | ---------------------------------------------------- | ------------------------------------------------- |
 | FastUpdateFeeds          | FastUpdater | $T \in [t_{\text{start}}(R), t_{\text{start}}(R+1))$ | Current feeds values for every round.             |
 | FastUpdateFeedsSubmitted | FastUpdater | $T \in [t_{\text{start}}(R), t_{\text{start}}(R+1))$ | Confirmation of updates submission by a provider. |
 
-where $R$ is the voting round ID encoded in the event.
-
+where $R$ is the voting round id encoded in the event.
 
 # 3 Reward calculation
 
-This phase allocates funds and valid submissions to their corresponding voting rounds, and calculates individual reward claims and penalties according to protocol-specific rules.
+This phase allocates funds and submission data to their corresponding voting rounds, and calculates individual reward claims and penalties according to protocol-specific rules.
 
 For details on how rewards and penalties are calculated see individual protocol descriptions:
 - [FTSO Rewarding](../FTSO/Rewarding.md).

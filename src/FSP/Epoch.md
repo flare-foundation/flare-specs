@@ -19,7 +19,6 @@ All timestamps are in [Unix time](https://en.wikipedia.org/wiki/Unix_time).
 Start and reveal deadline timestamps for a voting round $r$ can be derived as follows:
 
 $$t_{\text{start}}(r) = T_{\text{0}} + r \cdot D_{\text{round}}$$
-<!-- $$t_{\text{end}}(r) = t_{\text{start}}(r+1) - 1$$ -->
 $$t_{\text{reveal}}(r) = t_{\text{start}}(r) + D_{\text{reveal}}$$
 
 
