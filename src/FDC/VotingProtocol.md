@@ -23,7 +23,7 @@ To mitigate this, the following synchronization and safety mechanisms are applie
 
 ### Phases of a Voting Round
 
-The FDC is integrated into FSP and proceeds in [voting rounds](../FSP/Epoch.md#voting-round) with 3 phases. The FDC with ID $i$ starts at $t_{\text{start}}(i)$:
+The FDC is integrated into FSP and proceeds in voting rounds with 3 phases. The FDC with round ID $i$ starts at the beginning of [voting epoch](../FSP/Epoch.md#voting-epoch) $i$, $t_{\text{start}}(i)$:
 
 1. Collect phase: $[t_{\text{start}}(i), t_{\text{start}}(i+1))$. Requests emitted in this time period are considered in the voting round with ID $i$. A Data provider collects the requests, orders them chronologically and starts the verification process for each request.
 2. Choose phase: $[t_{\text{start}}(i + 1), t_{\text{reveal}}(i + 1) )$.

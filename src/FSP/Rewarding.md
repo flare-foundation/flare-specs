@@ -85,7 +85,7 @@ The following smart contract events are processed to obtain epoch metadata:
 where:
 - $T$: Transaction timestamp (Unix).
 - $D_{\text{init}}$: Signing policy initialization duration.
-- $t_{\text{start}}(r)$: Start time of round $r$. See [Voting Round](Epoch.md#voting-round).
+- $t_{\text{start}}(r)$: Start time of round $r$. See [Voting Round](Epoch.md#voting-epoch).
 - $F_{e}$: Start of the first round of reward epoch $e$, defined by the `SigningPolicyInitialized` event.
 
 ### 2.3 Protocol submissions

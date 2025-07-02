@@ -26,7 +26,7 @@ For each reward epoch, there is an assigned amount of inflation.
 For the attestation types backed by the governance, a percent of inflation and a threshold is set.
 If the number of successfully confirmed attestation requests of that type reaches the threshold, the designated inflation is set to be distributed, otherwise it is burned.
 
-Let $I(r)$ be the inflation set to be distributed in the reward epoch $r$ and let $L(r)$ be the length of reward epoch in voting rounds.
+Let $I(r)$ be the inflation set to be distributed in the reward epoch $r$ and let $L(r)$ be the length of reward epoch in voting epochs.
 The amount of inflation rewards for round $j$ in reward epoch $r$ is
 $
 R_I(j) = \frac{I(r)}{L(r)}.
