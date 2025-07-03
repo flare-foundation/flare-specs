@@ -24,7 +24,7 @@ For more details on reward epochs, see [Epochs](Epoch.md).
 
 ### 1.2 Voting Rounds
 
-FTSO and FDC protocols operate in 90 second voting rounds, which are used to submit and reach consensus on protocol data outputs for that round.
+FTSO and FDC protocols operate in sequential voting rounds, during which data is submitted and consensus reached on protocol outputs. 
 
 Rewards are calculated for every round, and later aggregated for all rounds in the reward epoch for distribution.
 
@@ -42,11 +42,11 @@ Once reward claims are calculated for an epoch, provider submissions are analyze
 
 The reward calculation process consists of three main phases:
 
-- (2) **Data retrieval and validation**: Reward epoch metadata and submissions are loaded and decoded from transaction data provided by the [FSP C-Chain indexer](https://github.com/flare-foundation/flare-system-c-chain-indexer).
+- (Section 2) [**Data retrieval and validation**](#2-data-retrieval-and-validation): Reward epoch metadata and submissions are loaded and decoded from transaction data provided by the [FSP C-Chain indexer](https://github.com/flare-foundation/flare-system-c-chain-indexer).
 
-- (3) **Reward calculation**: Reward funds and submissions are allocated to voting rounds, with reward claims and penalties calculated for each round according to protocol-specific rules.
+- (Section 3) [**Reward calculation**](#3-reward-calculation): Reward funds and submissions are allocated to voting rounds, with reward claims and penalties calculated for each round according to protocol-specific rules.
 
-- (4) **Aggregation and finalization**: Reward claims are aggregated across all protocols, penalties and minimal participation conditions are applied, and a final set of claims is produced (one claim per beneficiary and type). A Merkle tree is constructed from these final claims to generate an epoch reward hash for signing.
+- (Section 4) [**Aggregation and finalization**](#4-aggregation-and-finalization): Reward claims are aggregated across all protocols, penalties and minimal participation conditions are applied, and a final set of claims is produced (one claim per beneficiary and type). A Merkle tree is constructed from these final claims to generate an epoch reward hash for signing.
 
 Once the reward hash receives majority approval through signatures, providers can begin claiming their rewards.
 
@@ -147,7 +147,7 @@ where $R$ is the voting round id encoded in the event.
 
 This phase allocates funds and submission data to their corresponding voting rounds, and calculates individual reward claims and penalties according to protocol-specific rules.
 
-For details on how rewards and penalties are calculated see individual protocol descriptions:
+For details on how rewards and penalties are calculated, see individual protocol descriptions:
 - [FTSO Rewarding](../FTSO/Rewarding.md).
 - [FDC Rewarding](../FDC/Rewarding.md).
 
