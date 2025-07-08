@@ -69,7 +69,7 @@ on VoterRegistry smart contract.
 Function can be called from any address, `_voter` has to be the identityAddress of the entity and `_signature` has to be ECDSA signature of `keccak256(abi.encode(rewardEpochId, _voter));` prefixed by `"\x19Ethereum Signed Message:\n32"`
 by private key corresponding to signingPolicyAddress as set on EntityManager smart contract before the latest `RandomAcquisitionStarted` event was emitted.
 
-At registration the [VoterRegistered](Contracts/Events.md#voterregistered) event is emitted. 
+At registration the [VoterRegistered](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/userInterfaces/IVoterRegistry.sol#L23) event is emitted. 
 
 Registration weight of an entity is computed based on the amount staked to the entity (registered node IDs) on P-chain and on the amount delegated to the entity (delegationAddress) on C-chain at VoterPowerBlock.
 The computation is done by FlareSystemCalculator smart contract.
@@ -133,7 +133,7 @@ $$
 
 where $W=W'_D(p) + W_P(p)$.
 
-After the calculation the [VoterRegistrationInfo](Contracts/Events.md#voterregistrationinfo) event is emitted by FlareSystemsCalculator smart contract.
+After the calculation the [VoterRegistrationInfo](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/userInterfaces/IFlareSystemsCalculator.sol#L11) event is emitted by FlareSystemsCalculator smart contract.
 
 ## WNatDelegationFee
 
