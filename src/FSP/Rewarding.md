@@ -136,12 +136,10 @@ Further validation steps are performed on sub-protocol level when extracting pro
 
 Fast Updates submission data is processed from the following events:
 
-| Event Name               | Contract    | Query Range                         | Description                                       |
-| ------------------------ | ----------- | ---------------------------------------------------- | ------------------------------------------------- |
-| FastUpdateFeeds          | FastUpdater | $T \in [t_{\text{start}}(R), t_{\text{start}}(R+1))$ | Current feeds values for every round.             |
-| FastUpdateFeedsSubmitted | FastUpdater | $T \in [t_{\text{start}}(R), t_{\text{start}}(R+1))$ | Confirmation of updates submission by a provider. |
-
-where $R$ is the voting round id encoded in the event.
+| Event Name               | Contract    | Query Range                                                      | Description                                       |
+| ------------------------ | ----------- |------------------------------------------------------------------| ------------------------------------------------- |
+| FastUpdateFeeds          | FastUpdater | $T \in [t_{\text{start}}(F_{e}+1), t_{\text{start}}(F_{e+1}+1))$ | Current feeds values for every round.             |
+| FastUpdateFeedsSubmitted | FastUpdater | $T \in [t_{\text{start}}(F_{e}), t_{\text{start}}(F_{e+1}+1))$   | Confirmation of updates submission by a provider. |
 
 # Reward calculation
 
