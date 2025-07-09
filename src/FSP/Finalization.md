@@ -57,7 +57,7 @@ In a rare and unlikely case, it is raised to $12 * \mathrm{threshold} /10$.
 
 Let $v$ be the votingRoundID of the message being finalized.
 Let $r$ be the ID of current active signingPolicy.
-Let $\mathrm{expected}(v)$ be the [expected reward epoch](Epoch.md#reward-epoch) for $v$.
+Let $\mathrm{expected}(v)$ be the [expected reward epoch](Epochs.md#reward-epoch) for $v$.
 Let $x$ be the ID of the last initialized signingPolicy.
 
 If $\mathrm{expected}(v) = r$ and $r.\mathrm{StartVotingRoundId}\leq v$, the threshold is normal.

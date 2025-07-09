@@ -1,4 +1,4 @@
-# Epoch
+# Epochs
 
 The Flare System Protocol organizes time into discrete **voting** amd **reward epochs** to coordinate network activities and incentivize participation.
 

@@ -17,7 +17,7 @@ Providers assemble a bit-vector with 1 on the i-th place (counting from the righ
 The bit-vector is encoded into hexadecimal and prepended with the number of unique requests (2 bytes).
 For example, in a round with 5 requests (all different) where the first, second and fourth are confirmed we get bit-vector $01011$ that is encoded to `0x00050b`.
 
-The encoded bit-vector is sent in calldata before the deadline of the choose phase in the FSP transaction to [submit2](../FSP/Contracts/Submission.md#submit1-submit2) function of the Submission smart contract.
+The encoded bit-vector is sent in calldata before the deadline of the choose phase in the FSP transaction to [submit2](../FSP/Submission.md#submit1-submit2) function of the Submission smart contract.
 
 Each data provider collects bit-vectors submitted by other providers.
 A bit-vector is valid if it shows the correct number of requests (with respect to the local view), is posted by a submit address that has a positive weight according to the signing policy, and is posted inside the [choose phase](VotingProtocol.md#phases-of-a-voting-round).

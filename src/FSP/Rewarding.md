@@ -20,7 +20,7 @@ A complete list of claims is calculated after the reward epoch ends, and a combi
 - Infrastructure providers must register as participants for every reward epoch. Only registered entities can submit votes in data protocols.
 - Every reward epoch initializes a signing policy on start, with registered participants and their weights. Only those participants (and their delegators) will be rewarded, and reward amounts will be based on relative weights.
 
-For more details on reward epochs, see [Epochs](Epoch.md).
+For more details on reward epochs, see [Epochs](Epochs.md).
 
 ### Voting rounds
 
@@ -65,7 +65,7 @@ Rewards are sourced from inflation allocations and additional protocol-specific 
 | FDC                                                   | 35%             | Attestation request fees.                 |
 | *Validator Rewards (independent rewarding mechanism)* | *30%*           |                                           |
 
-For each protocol, funds from available sources are pooled together and distributed [equally](Operations.md#1-integer-division-with-remainder-distribution) across all voting rounds within the reward epoch.
+For each protocol, funds from available sources are pooled together and distributed [equally](../Utilities/IntOperations.md#integer-division-with-remainder-distribution) across all voting rounds within the reward epoch.
 
 ### Epoch metadata
 
@@ -85,13 +85,13 @@ The following smart contract events are processed to obtain epoch metadata:
 where:
 - $T$: Transaction timestamp (Unix).
 - $D_{\text{init}}$: Signing policy initialization duration.
-- $t_{\text{start}}(r)$: Start time of round $r$. See [Voting Round](Epoch.md#voting-epoch).
+- $t_{\text{start}}(r)$: Start time of round $r$. See [Voting Round](Epochs.md#voting-epoch).
 - $F_{e}$: Start of the first round of reward epoch $e$, defined by the `SigningPolicyInitialized` event.
 
 ### Protocol submissions
 
 For round-based protocols (FTSO Scaling, FDC) submissions are handled by the [Submission](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/Submission.sol#L14) smart contract, and finalizations get processed by [Relay](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/Relay.sol#L10).
-See [Submission](Contracts/Submission.md) and [Finalization](Finalization.md) pages for exact transaction references.
+See [Submission](Submission.md) and [Finalization](Finalization.md) pages for exact transaction references.
 
 FTSO Fast Updates uses an independent mechanism via the [FastUpdater](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/fastUpdates/implementation/FastUpdater.sol) contract.
 
@@ -255,7 +255,7 @@ struct RewardClaim {
 enum ClaimType { DIRECT, FEE, WNAT, MIRROR, CCHAIN }
 ```
 
-A combined epoch **reward hash** (`bytes32`) is then obtained by building a [MerkleTree](../FSP/MerkleTree.md) from the list of individual claim hashes.
+A combined epoch **reward hash** (`bytes32`) is then obtained by building a [MerkleTree](../Utilities/MerkleTree.md) from the list of individual claim hashes.
 
 Each reward claim is the combined with the Merkle proof for its hash, producing a `RewardClaimWithProof` that can be used to claim reward funds via the `RewardManager` smart contract:
 
@@ -294,6 +294,6 @@ struct Signature {
 
 The `noOfWeightBasedClaims` parameter is the number of claims with `type > 1`, i.e. claims for community reward distribution.
 
-A reward hash signature is generated using the [Signing](Operations.md#signing) method.
+A reward hash signature is generated using the [Signing](../Utilities/Signing.md) method.
 
 Once the total weight of submitted signatures for the same hash reaches the signing policy threshold, rewards for the epoch can be claimed.

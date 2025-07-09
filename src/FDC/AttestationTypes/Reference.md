@@ -28,7 +28,7 @@ where standardAddress is of type string.
 
 ## Source Addresses Root
 
-Source Addresses Root of a transaction is the Root of [Merkle tree](../../FSP/MerkleTree.md) of the double keccak256 hashes of all addresses (in standard form) that have provided funds in the transaction.
+Source Addresses Root of a transaction is the Root of [Merkle tree](../../Utilities/MerkleTree.md) of the double keccak256 hashes of all addresses (in standard form) that have provided funds in the transaction.
 If any account without an address has provided funds, a single zero byte32 string is added to the Merkle tree.
 
 In Solidity, double keccak256 hashes of an address is computed by

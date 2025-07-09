@@ -47,7 +47,7 @@ The entities that are included in the active signing policy can [preregister](Vo
 
 ## Signing Policy Initialization
 
-Signing policy initialization is managed by [Flare Daemon](Daemon.md).
+Signing policy initialization is managed by [Flare Daemon](Contracts/Daemon.md).
 
 `SigningPolicyInitialized` event
 

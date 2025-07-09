@@ -21,7 +21,7 @@ Payload messages are used in protocols and to decide rewards eligibility.
 ## SubmitSignatures
 
 Signatures are used for a finalization of a voting round for a protocol.
-For a [finalization](../Finalization.md), a Merkle root backed by the signatures of enough voter weight is required.
+For a [finalization](Finalization.md), a Merkle root backed by the signatures of enough voter weight is required.
 
 Entities post messages to the function from submitSignaturesAddress.
 The first submission in a voting round to a function from the submitSignatureAddress of an entity included in the active signing policy is subsidized (all the gas cost is refunded).
