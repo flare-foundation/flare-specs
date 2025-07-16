@@ -1,7 +1,7 @@
 # Rewarding
-Flare's data providers are rewarded separately for their contributions to the scaling feeds and fast updates feeds. A proportion of Flare's inflationary funds are allocated to the rewarding of the FTSO. In a given voting epoch, denote this quantity $R_{tot}$. These funds are then distributed into $R_{FTSO}$, which are allocated to the scaling feeds, and $R_p$, which are allocated to participation in the fast update feeds. The parameters defining the split of rewards between the two feeds, satisfying the equation
+Flare's data providers are rewarded separately for their contributions to the scaling feeds and fast updates feeds. A proportion of Flare's inflationary funds are allocated to the rewarding of the FTSO. Denote this quantity $R_\mathrm{FTSO}$. These funds are then distributed into $R_\mathrm{scaling}$, which are allocated to the scaling feeds, and $R_\mathrm{fast}$, which are allocated to participation in the fast update feeds. The parameters defining the split of rewards between the two feeds, satisfying the equation
 
-$$R_{tot} = R_{FTSO} + R_p,$$
+$$R_\mathrm{FTSO} = R_\mathrm{scaling} + R_\mathrm{fast},$$
 
 are set by governance, and can be modified by a governance vote.
 
@@ -13,51 +13,51 @@ The first of these rewards handles accuracy, with the other two primarily focuse
 
 ### Selecting a Rewarded Feed
 
-Each round, rewards are determined according to performance in a single randomly selected data feed, rather than an aggregation of performance across all scaling feeds. The choice of data feed is sampled uniformly at random amongst existing data feeds, and is not known in advance. The random seed determining which feed is to be rewarded in a given round is generated as part of the process generating randomness in the round. This prevents providers from only focusing on the feed that is to be rewarded in a round: to maximize expected rewards providers should submit an accurate estimate for each feed. This applies both to assigning accuracy rewards and to determining eligibility for signing and finalization rewards: only one, randomly selected, feed is used.
+Each round, corresponding to a voting epoch, rewards are determined according to performance in a single randomly selected data feed, rather than an aggregation of performance across all scaling feeds. The choice of data feed is sampled uniformly at random amongst existing data feeds, and is not known in advance. The random seed determining which feed is to be rewarded in a given round is generated as part of the process generating randomness in the round. This prevents providers from only focusing on the feed that is to be rewarded in a round: to maximize expected rewards providers should submit an accurate estimate for each feed. This applies both to assigning accuracy rewards and to determining eligibility for signing and finalization rewards: only one, randomly selected, feed is used.
 
 ### Accuracy Rewards
-The majority (80%) of available rewards are allocated for submitting accurate values contributing to the median computation of the FTSO round; these rewards are denoted by $R_{\mathrm{FTSO}}$. FTSO accuracy rewards are allocated according to two criteria: rewards for submitting a value within the weighted interquartile range (called the primary reward band) of submitted values, and rewards for submitting a value within a percentage interval around the weighted median value (referred to as the secondary reward band), whose width is a parameter determined by governance. In the case where a submission lies exactly on the border of the interquartile range (IQR), its eligibility, or lack thereof, for primary band rewards is determined randomly. Note that providers can be eligible for both rewards for the same submission, and the bands typically overlap substantially.
+The majority (80%) of available rewards are allocated for submitting accurate values contributing to the median computation of the FTSO round; in the $j$th voting epoch these rewards are denoted by $R_{\mathrm{med}}(j)$. FTSO accuracy rewards are allocated according to two criteria: rewards for submitting a value within the weighted interquartile range (called the primary reward band) of submitted values, and rewards for submitting a value within a percentage interval around the weighted median value (referred to as the secondary reward band), whose width is a parameter determined by governance. In the case where a submission lies exactly on the border of the interquartile range (IQR), its eligibility, or lack thereof, for primary band rewards is determined randomly. Note that providers can be eligible for both rewards for the same submission, and the bands typically overlap substantially.
 
-Denote by $R_\mathrm{IQR}$ the rewards available for submissions within the primary band and $R_\mathrm{PCT}$ for those in the secondary, satisfying $R_\mathrm{FTSO} = R_\mathrm{IQR} + R_\mathrm{PCT}$. Let $\Sigma_\mathrm{IQR}$ and $\Sigma_\mathrm{PCT}$ denote the total (post capping) weight of providers whose submissions lie in the primary and secondary band respectively. Then, an individual provider $i$ with weight ${W_{i,C}}^*$ whose submission lies within the primary band gets reward ${R_\mathrm{IQR}}^i$ defined as
+Denote by $R_\mathrm{IQR}(j)$ the rewards available for submissions within the primary band and $R_\mathrm{PCT}(j)$ for those in the secondary, satisfying $R_\mathrm{med}(j) = R_\mathrm{IQR}(j) + R_\mathrm{PCT}(j)$. Let $\Sigma_\mathrm{IQR}(j)$ and $\Sigma_\mathrm{PCT}(j)$ denote the total (post capping) weight of providers whose submissions lie in the primary and secondary band for the round respectively. Then, an individual provider $i$ with weight ${W_{i,C}}^*$ whose submission lies within the primary band gets reward ${R_\mathrm{IQR}}(i,j)$ defined as
 
-$${R_\mathrm{IQR}}^i = \frac{{W_{i,C}}^*}{\Sigma_\mathrm{IQR}} \cdot R_\mathrm{IQR},$$
+$${R_\mathrm{IQR}}(i,j) = \frac{{W_{i,C}}^*}{\Sigma_\mathrm{IQR}(j)} \cdot R_\mathrm{IQR}(j),$$
 
-and similarly reward ${R_\mathrm{PCT}}^i$ for submissions within the secondary band
+and similarly reward ${R_\mathrm{PCT}}(i,j)$ for submissions within the secondary band
 
-$${R_\mathrm{PCT}}^i = \frac{{W_{i,C}}^*}{\Sigma_\mathrm{PCT}} \cdot R_\mathrm{PCT},$$
+$${R_\mathrm{PCT}}(i,j) = \frac{{W_{i,C}}^*}{\Sigma_\mathrm{PCT}(j)} \cdot R_\mathrm{PCT}(j),$$
 
 with these rewards split amongst the provider and its delegators proportionally to their contribution to the provider's weight. In the very rare case that the secondary band is empty, which is a theoretical possibility, secondary band rewards for the round are burnt.
 
 ### Signing Rewards
-Signing rewards, denoted $R_\mathrm{sign}$, make up around 10% of the rewards for the round, and are allocated according to the weight of providers who submit valid signatures for the correct Merkle root in the sign phase or before finalization. These rewards are provided to encourage prompt and correct participation in the signing phase. In order to be eligible for signing rewards, a provider must have received accuracy rewards in the given round for the selected feed.
+Signing rewards, denoted $R_\mathrm{sign}(j)$, make up around 10% of the rewards for the round, and are allocated according to the weight of providers who submit valid signatures for the correct Merkle root in the sign phase or before finalization. These rewards are provided to encourage prompt and correct participation in the signing phase. In order to be eligible for signing rewards, a provider must have received accuracy rewards in the given round for the selected feed.
 
-Let $\Sigma_{sign}$ denote the total weight of providers who correctly signed the agreed upon Merkle root in the sign phase or before finalization. Then, an eligible provider with weight $W_{i, \mathrm{sign}}$ who delivered a correct signature receives the reward ${R_\mathrm{sign}}^i$ corresponding to their relative contribution to the total weight,
+Let $\Sigma_{sign}(j)$ denote the total weight of providers who correctly signed the agreed upon Merkle root in the sign phase or before finalization. Then, an eligible provider with weight $W_{i, \mathrm{sign}}$ who delivered a correct signature receives the reward ${R_\mathrm{sign}}(i,j)$ corresponding to their relative contribution to the total weight,
 
-$${R_\mathrm{sign}}^i = \frac{W_{i, \mathrm{sign}}}{\Sigma_\mathrm{sign}} \cdot R_\mathrm{sign}.$$
+$${R_\mathrm{sign}}(i,j) = \frac{W_{i, \mathrm{sign}}}{\Sigma_\mathrm{sign}(i,j)} \cdot R_\mathrm{sign}(j).$$
 
 ### Finalization Rewards
-The finalization rewards $R_\mathrm{fin}$ make up around 10% of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers selected to finalize is $N_\mathrm{fin}$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}^i$ equal to:
+The finalization rewards $R_\mathrm{fin}(j)$ make up around 10% of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers selected to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
 
-$${R_{\mathrm{fin}}}^i = \frac{R_{\mathrm{fin}}}{N_\mathrm{fin}}.$$
+$${R_{\mathrm{fin}}}(i,j) = \frac{R_{\mathrm{fin}}(j)}{N_\mathrm{fin}(j)}.$$
 
 If none of the selected providers submit a valid batch of signatures of a correct Merkle root to the relay contract in the allotted time, then all rewards are instead allocated to the first other provider to do so. These rewards are provided to encourage prompt finalization of the FTSO data feed values.
 
-As with signing rewards, providers are only eligible to receive finalization rewards if they have also received an accuracy reward in the same round. Note that this does not effect the amount of rewards assigned to each eligible provider: if $N_\mathrm{fin}$ providers are initially selected to finalize, each of those who received accuracy rewards and successfully finalizes receives a reward $\dfrac{R_{\mathrm{fin}}}{N_\mathrm{fin}}$ regardless of how many of those providers were both selected to finalize and received the necessary accuracy rewards to be eligible for finalization rewards. Corresponding rewards that would have been assigned to selected providers who did not first receive accuracy rewards are burnt.
+As with signing rewards, providers are only eligible to receive finalization rewards if they have also received an accuracy reward in the same round. Note that this does not effect the amount of rewards assigned to each eligible provider: if $N_\mathrm{fin}(j)$ providers are initially selected to finalize, each of those who received accuracy rewards and successfully finalizes receives a reward $\dfrac{R_{\mathrm{fin}}(i,j)}{N_\mathrm{fin}(j)}$ regardless of how many of those providers were both selected to finalize and received the necessary accuracy rewards to be eligible for finalization rewards. Corresponding rewards that would have been assigned to selected providers who did not first receive accuracy rewards are burnt.
 
 ## Fast Update Feeds
 
 Providers participating in the fast update feeds are rewarded for their updates as long as the fast update data stream is sufficiently close to the next scaling feed value. Rewards are distributed to providers proportionally to the number of updates they submitted in the round. These rewards are derived from two sources: Flare's inflationary pool, and fees paid by users as volatility incentives to increase the number of updates per block.
 
 ### Total Reward and Distribution
-The total rewards on offer for the fast update feeds are in three parts: denoted by $R_p$ the rewards for participation, by $R_a$ for participation in accurate rounds, and by $R_v$ for participation during active volatility incentives. These funds are determined at different intervals as follows:
+The total rewards on offer for the fast update feeds are in three parts: denoted by $R_\mathrm{part}$ the rewards for participation, by $R_\mathrm{acc}$ for participation in accurate rounds, and by $R_\mathrm{vol}$ for participation during active volatility incentives. These funds are determined at different intervals as follows:
 
-- $R_p$ is set at the start of each *reward epoch*. Between reward epochs, reward sizes may be modified. These may be removed at a later date once the fast update feeds are sufficiently established.
-- $R_a$ is calculated at the end of each voting epoch. 
-- $R_v$ varies block-by-block.
+- $R_\mathrm{part}$ is set at the start of each *reward epoch*. Between reward epochs, reward sizes may be modified. These may be removed at a later date once the fast update feeds are sufficiently established.
+- $R_\mathrm{acc}$ is calculated at the end of each voting epoch. 
+- $R_\mathrm{vol}$ varies block-by-block.
 
-Combining these rewards, it follows that during each block the total reward $R_t$ satisfies
+Combining these rewards, it follows that during each block the total reward $R_\mathrm{ftot}$ satisfies
 
-$$R_t = R_p / b_{re} + R_a / b_{pe} + R_v,$$
+$$R_\mathrm{ftot} = R_\mathrm{part} / b_{re} + R_\mathrm{acc} / b_{pe} + R_\mathrm{vol},$$
 
 where $b_{re}$ is the number of blocks in the reward epoch and $b_{pe}$ is the number of blocks in the voting epoch.
 
@@ -65,14 +65,14 @@ Each update in a block is assigned an equal share of the total reward for the bl
 
 ### Triggering Accuracy Rewards
 
-The role of the accuracy reward $R_a$ is to maintain agreement between the fast update and scaling feeds of the FTSO. These rewards are based on the FTSO reward system that defines several *reward bands* around the median value in each voting epoch, which encourage providers to predict the median value closely.
+The role of the accuracy reward $R_\mathrm{acc}$ is to maintain agreement between the fast update and scaling feeds of the FTSO. These rewards are based on the FTSO reward system that defines several *reward bands* around the median value in each voting epoch, which encourage providers to predict the median value closely.
 
-Accuracy rewards are triggered as long as the value of the fast update feed at time $t_\text{start}(i + 1)$ lies within the primary reward band for the scaling feed selected to determine rewards for the $i$th round. As long as this is the case, the reward $R_a$ is released in full.
+Accuracy rewards are triggered as long as the value of the fast update feed at time $t_\text{start}(j + 1)$ lies within the primary reward band for the scaling feed selected to determine rewards for the $j$th round. As long as this is the case, the reward $R_\mathrm{acc}$ is released in full.
 
 
 ### Volatility Rewards
 
-Individuals such as DApps or other customers of the data stream may seek to fund additional volatility by increasing the number of updates made to the scaling feeds. Volatility incentive offers are made with the transfer of a corresponding monetary value $m$.  Each offer has a duration of effect, denoted $T_v$, a parameter controlled by governance that determines the number of blocks for which it is valid for and after which the offer expires.  In each of the blocks within the duration of effect, the total reward $R_v$ is increased by $m/{T_v}$, which is allocated uniformly to updates in that block.
+Individuals such as DApps or other customers of the data stream may seek to fund additional volatility by increasing the number of updates made to the scaling feeds. Volatility incentive offers are made with the transfer of a corresponding monetary value $m$.  Each offer has a duration of effect, denoted $T_v$, a parameter controlled by governance that determines the number of blocks for which it is valid for and after which the offer expires.  In each of the blocks within the duration of effect, the total reward $R_\mathrm{vol}$ is increased by $m/{T_v}$, which is allocated uniformly to updates in that block.
 
 ## Penalization
 Thus far, correct provider behaviour has been assumed. Proper functioning of the FTSO process requires that the data revealed in the reveal phase by each provider correctly hashes to their commitment published in the commit phase. Additionally, in the signing and finalization phases only one root should receive enough signatures to be finalized, requiring that each signer does not sign multiple messages. Finally, it is assumed that providers complete their responsibilities in a timely manner. 
@@ -80,9 +80,9 @@ Thus far, correct provider behaviour has been assumed. Proper functioning of the
 For various reasons, providers may not always act as desired; either for malicious reasons, such as a provider backing out of their commitment, or just due to an honest error. Regardless of the root cause, this is disincentivized by a slashing a chunk of the rewards earned by the offending provider. Details of the various punishments are laid out below.
 
 ### Punishing Explicit Misbehaviour
-Each mismatched reveal or excess signature is punished in the same way: by burning a lump sum of provider rewards. The size of the sum is determined by a combination of a parameter $R_\mathrm{pen}$, the weight of the provider, and the total available accuracy rewards for the round. A provider with (normalized) calculation weight $W_{i,C}$ who requires penalization in a voting round with accuracy rewards $R_{\mathrm{FTSO}}$ is penalized by subtracting an amount
+Each mismatched reveal or excess signature is punished in the same way: by burning a lump sum of provider rewards. The size of the sum is determined by a combination of a parameter $R_\mathrm{pen}$, the weight of the provider, and the total available accuracy rewards for the round. A provider with (normalized) calculation weight $W_{i,C}$ who requires penalization in a voting round with accuracy rewards $R_{\mathrm{scaling}}(j)$ is penalized by subtracting an amount
 
-$${R_{\mathrm{pen}}}^i = R_\mathrm{pen} \cdot ( W_{i,C} \cdot R_{\mathrm{FTSO}})$$
+$${R_{\mathrm{pen}}}(i,j) = R_\mathrm{pen} \cdot ( W_{i,C} \cdot R_{\mathrm{scaling}}(j))$$
 
 of their rewards for the round for each penalization accrued. Penalizations are applied at the end of each reward epoch, so that the maximum penanalization cannot exceed the provider's earnings for the round. However, penalizations can be deducted from earnings in any protocol, so that a provider with penalizations exceeding their earnings in the FTSO may also have some of their rewards for e.g. the FDC burnt as well.
 
