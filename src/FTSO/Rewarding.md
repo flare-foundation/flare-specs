@@ -13,7 +13,17 @@ The first of these rewards handles accuracy, with the other two primarily focuse
 
 ### Selecting a Rewarded Feed
 
-Each round, corresponding to a voting epoch, rewards are determined according to performance in a single randomly selected data feed, rather than an aggregation of performance across all scaling feeds. The choice of data feed is sampled uniformly at random amongst existing data feeds, and is not known in advance. The random seed determining which feed is to be rewarded in a given round is generated as part of the process generating randomness in the round. This prevents providers from only focusing on the feed that is to be rewarded in a round: to maximize expected rewards providers should submit an accurate estimate for each feed. This applies both to assigning accuracy rewards and to determining eligibility for signing and finalization rewards: only one, randomly selected, feed is used.
+Each round, corresponding to a voting epoch, rewards are determined according to performance in a single randomly selected data feed, rather than an aggregation of performance across all scaling feeds. The choice of data feed is sampled uniformly at random amongst existing data feeds, and is not known in advance. This prevents providers from only focusing on the feed that is to be rewarded in a round: to maximize expected rewards, providers should submit an accurate estimate for each feed. This applies both to assigning accuracy rewards and to determining eligibility for signing and finalization rewards: only one, randomly selected, feed is used.
+
+#### Secure Reward Random Number
+
+The rewarded feed random seed in a given round is generated using the earliest protocol secure random number generated in the subsequent voting rounds.
+
+For voting round $V$, let $s$ be the first secure random number generated in round $V + k$ ($k \geq 1$). The secure reward random number for round $V$ is computed as `keccak256(abi.encode(s, V))`.
+If $k > 1$, the same $s$ is used for rounds $V, V+1, \ldots, V+k-1$.
+
+If there is no secure random number within all the remaining voting rounds of the current reward epoch, the first 30 rounds of the next reward epoch are evaluated.
+If a secure random number is still not found, no rewarded feed is chosen and round rewards get burnt for the current and all subsequent rounds of the reward epoch.
 
 ### Accuracy Rewards
 The majority (80%) of available rewards are allocated for submitting accurate values contributing to the median computation of the FTSO round; in the $j$th voting epoch these rewards are denoted by $R_{\mathrm{med}}(j)$. FTSO accuracy rewards are allocated according to two criteria: rewards for submitting a value within the weighted interquartile range (called the primary reward band) of submitted values, and rewards for submitting a value within a percentage interval around the weighted median value (referred to as the secondary reward band), whose width is a parameter determined by governance. In the case where a submission lies exactly on the border of the interquartile range (IQR), its eligibility, or lack thereof, for primary band rewards is determined randomly. Note that providers can be eligible for both rewards for the same submission, and the bands typically overlap substantially.
