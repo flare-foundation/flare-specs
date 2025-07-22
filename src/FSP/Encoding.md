@@ -68,7 +68,7 @@ Contains the resulting data of a voting round, encoded into a Merkle tree root h
 
 **Each signer entry:**
 
-| **Field** | **Size (bytes)** | **Description** |
-| --------- | ---------------- | --------------- |
-| Address   | 20               | Signer address. |
-| Weight    | 2                | Signer weight.  |
+| **Field** | **Size (bytes)** | **Description**                                                                                    |
+| --------- | ---------------- |----------------------------------------------------------------------------------------------------|
+| Address   | 20               | Entity's `signingPolicyAddresses`. The position of the address in the array is the _entity index_. |
+| Weight    | 2                | Entity's normalized signing weight.                                                                |
