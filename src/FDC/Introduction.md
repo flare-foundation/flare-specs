@@ -22,7 +22,7 @@ Then it would [request](./MakingRequest.md) the FDC to attest to the transaction
 The request is batched with other requests and processed by the providers.
 If the request is confirmed, the hash of the attestation data is included in the Merkle tree whose root is stored on the Relay contract.
 
-If the transaction is attested by the FDC, the user can submit the attestation data for the `XYZ` transaction to the contract together with the [Merkle proof](../FSP/MerkleTree.md#merkle-proof), which shows that the transaction was indeed attested to.
+If the transaction is attested by the FDC, the user can submit the attestation data for the `XYZ` transaction to the contract together with the [Merkle proof](../Utilities/MerkleTree.md#merkle-proof), which shows that the transaction was indeed attested to.
 The attestation data and the Merkle proof can be obtained from [Data Availability Layer](../FSP/DataAvailability.md) of any trusted provider.
 
 The contract would check the attestation data against its requirements (e.g., 1 BTC is required to be sent to the specified receiving address, within the expected time window, etc.).

@@ -14,20 +14,14 @@ Only the messages from the submitSignatureAddress of an entity included in the a
 The message is formed in the following way:
 `tx_data = function_selector + concatenated_data`.
 
-The concatenated data is a sequence of concatenated payload messages, where each payload message is of the form:
-
-- protocolId (1 byte) - protocol ID
-- votingRoundId (4 bytes) - ID of the voting round
-- size (2 bytes) - number of bytes in the payload
-- payload (size bytes) - protocol specific data encoded into bytes.
-  Payload is formatted and should be encoded according to the specification of the protocol with protocolID.
+The concatenated data is a sequence of concatenatedSignatures must be concatenated with ascending indexes.s. It is expected that the transaction will contain one payload message per protocol ID. If there is more than one message for a protocol, only the last one in the sequence will be considered.
 
 Payload messages are used in protocols and to decide rewards eligibility.
 
 ## SubmitSignatures
 
 Signatures are used for a finalization of a voting round for a protocol.
-For a [finalization](../Finalization.md), a Merkle root backed by the signatures of enough voter weight is required.
+For a [finalization](Finalization.md), a Merkle root backed by the signatures of enough voter weight is required.
 
 Entities post messages to the function from submitSignaturesAddress.
 The first submission in a voting round to a function from the submitSignatureAddress of an entity included in the active signing policy is subsidized (all the gas cost is refunded).
@@ -35,21 +29,10 @@ Only the messages from the submitSignatureAddress of an entity included in the a
 The message is formed in the following way:
 `tx_data = function_selector + concatenated_data`.
 
-The concatenated data is a sequence of concatenated signature payload messages, where each signature payload message is of the form:
+The concatenated data is a sequence of concatenated [PayloadMessage](/src/FSP/Encoding.md#payloadmessage)s, with the payloads containing protocol specific signatures needed for finalization.
 
-- protocolId (1 byte) - protocol id.
-- votingRoundId (4 bytes) - id of the voting round
-  The protocol specifies which version is required.
-- size (2 bytes) - number of bytes in the signaturePayload
-- signaturePayload (size bytes) - protocol specific signatures needed for finalization.
-  The protocol specifies which version is required.
+It is expected that the transaction will contain one payload message per protocol ID. If there is more than one message for a protocol, only the last one in the sequence will be considered.
 
-### Signature payload
-
-The signaturePayload is of the form
-
-- type (1 byte) - Defines both type of message and signature.
-- payloadMessage - Defined by type
 
 #### Signing
 

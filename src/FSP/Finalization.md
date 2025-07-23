@@ -6,27 +6,7 @@ Finalization of a voting round for a protocol is done on the Relay contract thro
 function relay() external returns (bytes memory);
 ```
 
-The finalization transaction input is formatted as follows:
-
-- relay function selector (4 bytes)
-- signingPolicyBytes - as emitted in SigningPolicyInitialized event
-- protocol message (38 bytes)
-  - protocolID (1 byte)
-  - votingRoundId (4 bytes)
-  - randomQualityScore (1 byte)
-  - Merkle root (32 bytes)
-- signatures
-  - number of signatures (2 bytes)
-  - indexed signatures (number of signatures x 67 bytes)
-
-Each indexed signature is encoded as follows:
-
-- v (1 byte)
-- r (32 bytes)
-- s (32 bytes)
-- index (2 bytes) - index of the signer in the signing policy
-
-Signatures must be concatenated with ascending indexes.
+The finalization transaction input containes the relay function selector (4 bytes), followed by an encoded [Finalization](/src/FSP/Encoding.md#finalization) message.
 
 After a successful finalization an event
 
@@ -77,7 +57,7 @@ In a rare and unlikely case, it is raised to $12 * \mathrm{threshold} /10$.
 
 Let $v$ be the votingRoundID of the message being finalized.
 Let $r$ be the ID of current active signingPolicy.
-Let $\mathrm{expected}(v)$ be the [expected reward epoch](Epoch.md#reward-epoch) for $v$.
+Let $\mathrm{expected}(v)$ be the [expected reward epoch](Epochs.md#reward-epoch) for $v$.
 Let $x$ be the ID of the last initialized signingPolicy.
 
 If $\mathrm{expected}(v) = r$ and $r.\mathrm{StartVotingRoundId}\leq v$, the threshold is normal.

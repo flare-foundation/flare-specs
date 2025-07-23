@@ -1,57 +1,5 @@
 # Voter Registration
 
-An entity has 5 addresses to fully participate in the protocols:
-
-- identityAddress
-- submitAddress
-- submitSignaturesAddress
-- signingPolicyAddress
-- delegationAddress
-
-The addresses are register via EntityManager smart contract by first calling propose...Address from the identityAddress and then calling confirm...Address from proposed address.
-
-## Entity Manager
-
-Entity manager is used for address and node IDs registration.
-The registered addresses and nodes have to be registered before `RandomAcquisitionStarted` event to be considered in the signing policy.
-
-### Node ID
-
-Registering node ID is done by calling
-
-```Solidity
-function registerNodeId(bytes20 _nodeId, bytes calldata _certificateRaw, bytes calldata _signature) external;
-```
-
-from the identityAddress.
-
-A node ID can be unregistered by calling
-
-```Solidity
-function unregisterNodeId(bytes20 _nodeId) external;
-```
-
-from address that has node ID registered to.
-
-### Addresses
-
-The addresses are registered by first calling propose\<addressType>Address from the identity address and
-then calling confirm\<addressType>AddressRegistration from the proposed address.
-
-For example, to set set the submitAddress, an entity first calls
-
-```Solidity
-function proposeSubmitAddress(address _submitAddress) external;
-```
-
-with an that has not been registered before and then
-calls
-
-```Solidity
-function confirmSubmitAddressRegistration(address _voter) external;
-```
-
-from the proposed address with identityAddress as an input.
 
 ## VoterRegistry
 
@@ -69,22 +17,8 @@ on VoterRegistry smart contract.
 Function can be called from any address, `_voter` has to be the identityAddress of the entity and `_signature` has to be ECDSA signature of `keccak256(abi.encode(rewardEpochId, _voter));` prefixed by `"\x19Ethereum Signed Message:\n32"`
 by private key corresponding to signingPolicyAddress as set on EntityManager smart contract before the latest `RandomAcquisitionStarted` event was emitted.
 
-At registration the event
+At registration the [VoterRegistered](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/userInterfaces/IVoterRegistry.sol#L23) event is emitted. 
 
-```Solidity
-event VoterRegistered(
-    address indexed voter,
-    uint24 indexed rewardEpochId,
-    address indexed signingPolicyAddress,
-    address submitAddress,
-    address submitSignaturesAddress,
-    bytes32 publicKeyPart1,
-    bytes32 publicKeyPart2,
-    uint256 registrationWeight
-);
-```
-
-is emitted.
 Registration weight of an entity is computed based on the amount staked to the entity (registered node IDs) on P-chain and on the amount delegated to the entity (delegationAddress) on C-chain at VoterPowerBlock.
 The computation is done by FlareSystemCalculator smart contract.
 
@@ -110,7 +44,7 @@ function preRegisterVoter(address _voter, IIVoterRegistry.Signature calldata _si
 
 The requirements for the input are the same as for the registerVoter function.
 
-The registration of PreRegistered entities is triggered by [Daemon](Daemon.md) right after the `VoterPowerBlockSelected` event is emitted.
+The registration of PreRegistered entities is triggered by [Daemon](Contracts/Daemon.md) right after the `VoterPowerBlockSelected` event is emitted.
 
 ## Registration weight
 
@@ -147,22 +81,7 @@ $$
 
 where $W=W'_D(p) + W_P(p)$.
 
-After the calculation the event
-
-```Solidity
-event VoterRegistrationInfo(
-        address indexed voter,
-        uint24 indexed rewardEpochId,
-        address delegationAddress,
-        uint16 delegationFeeBIPS,
-        uint256 wNatWeight,
-        uint256 wNatCappedWeight,
-        bytes20[] nodeIds,
-        uint256[] nodeWeights
-    );
-```
-
-is emitted by FlareSystemsCalculator smart contract.
+After the calculation the [VoterRegistrationInfo](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/userInterfaces/IFlareSystemsCalculator.sol#L11) event is emitted by FlareSystemsCalculator smart contract.
 
 ## WNatDelegationFee
 

@@ -117,4 +117,4 @@ keccak256(abi.encode(response));
 ```
 
 where the response is a struct of type Response that is defined by the attestation type.
-Hashes of the confirmed attestation are used to construct the [Merkle tree](../FSP/MerkleTree.md) and the Merkle root is used for voting in the voting round.
+Hashes of the confirmed attestation are used to construct the [Merkle tree](../Utilities/MerkleTree.md) and the Merkle root is used for voting in the voting round.

@@ -23,20 +23,13 @@ To mitigate this, the following synchronization and safety mechanisms are applie
 
 ### Phases of a Voting Round
 
-The FDC is integrated into FSP and proceeds in voting rounds with 4 phases:
+The FDC is integrated into FSP and proceeds in voting rounds with 3 phases. The FDC with round ID $i$ starts at the beginning of [voting epoch](../FSP/Epochs.md#voting-epoch) $i$, $t_{\text{start}}(i)$:
 
-The FDC voting round with ID $i$ starts in [voting epoch](../FSP/Epoch.md#voting-epoch) $i$ and has the following phases:
-
-- Collect phase starts at $T_0+iD_V$ and lasts $D_V = 90s$, i.a., it takes place in the time interval $[T_0+i D_V , T_0+(i+1) D_V)$.
-  The request emitted in this time period are considered in the voting round with ID $i$.
-  A Data provider collects the requests, orders them chronologically and starts the verification process for each request.
-- Choose phase starts after the collect phase at $T_0+(i+1) D_V$ and lasts $D_B=45s$ , i.a., it takes place in the time interval $[T_0+(i+1) D_V , T_0+(i+1) D_V+ D_B)$.
+1. Collect phase: $[t_{\text{start}}(i), t_{\text{start}}(i+1))$. Requests emitted in this time period are considered in the voting round with ID $i$. A Data provider collects the requests, orders them chronologically and starts the verification process for each request.
+2. Choose phase: $[t_{\text{start}}(i + 1), t_{\text{reveal}}(i + 1) )$.
   In this phase, a provider finishes verification of the requests collected in the previous phase and computes the bit-vector for the bit-vote.
-  The bit-vector is submitted to the chain using the submit2 function of the [Submission](../FSP/Contracts/Submission.md) smart contract.
+  The bit-vector is submitted to the chain using the submit2 function of the [Submission](../FSP/Submission.md) smart contract.
 
-- Resolution phase starts at the end of Choose phase at $T_0+(i+1) D_V +D_B$.
-  - During this phase, an attestation provider submits the signature of the Merkle root and consensus bitVote.
-    The signature data is submitted to the chain using the submitSignatures function of the [Submission](../FSP/Contracts/Submission.md) smart contract.
-    Providers are encouraged to submit signature in the first $D_{SG} = 10s$ or until the finalization, whichever is later.
-  - The finalization is possible as soon as the threshold weight of signatures for any Merkle root is reached.
-    In the first $D_{FG} = 20s$, only providers chosen by the sortition are encouraged to post collected signatures (as only they are eligible for a reward until then) after that everyone is encouraged to post collected signatures in $45s$.
+1. Resolution phase: $[t_{\text{reveal}}(i + 1), t_{\text{start}}(i + 2) )$.
+   - During this phase, an attestation provider submits the signature of the Merkle root and consensus bitVote. The signature data is submitted to the chain using the submitSignatures function of the [Submission](../FSP/Submission.md) smart contract. Providers are encouraged to submit signature in the first $D_{SG} = 10s$ or until the finalization, whichever is later.
+   - The finalization is possible as soon as the threshold weight of signatures for any Merkle root is reached. In the first $D_{FG} = 20s$, only providers chosen by the sortition are encouraged to post collected signatures (as only they are eligible for a reward until then) after that everyone is encouraged to post collected signatures in $45s$.
