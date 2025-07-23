@@ -14,8 +14,8 @@ The provable payments emulate traditional banking payments from entity A to enti
 | Field           | Solidity type | Description                                                                                                            |
 | --------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `transactionId` | `bytes32`     | ID of the transaction.                                                                                                 |
-| `inUtxo`        | `uint256`     | For UTXO chains, this is the index of the transaction input with source address. Always 0 for the non-utxo chains.     |
-| `utxo`          | `uint256`     | For UTXO chains, this is the index of the transaction output with receiving address. Always 0 for the non-utxo chains. |
+| `inUtxo`        | `uint256`     | For UTXO chains, if the value is less than 2**16, this field is the index of the transaction input with the source address. Otherwise, it represents the `standardAddressHash` of the input address for which the payment proof will be constructed. For non-UTXO chains, this is always 0.    |
+| `utxo`          | `uint256`     |  For UTXO chains, if the value is less than 2**16, this field is the index of the transaction output with the receiving address. Otherwise, it represents the `standardAddressHash` of the output address for which the payment proof will be constructed. For non-UTXO chains, this is always 0. |
 
 ## Response body
 
@@ -68,7 +68,20 @@ Any transaction included in the block is successful, thus the `status` is always
 `ReceivedAmount` is the sum of values of all outputs with the `receivingAddress` minus the sum of values of all inputs with `receivingAddress`.
 `IntendedReceivedAmount` always matches `ReceivedAmount` and `intendedReceivingAddress` always matches `receivingAddress`.
 
-A transaction is `oneToOne` if and only if there are only inputs with `sourceAddress` and outputs consist only of UTXOs wiring to `receivingAddress`, `sourceAddress` (returning the change) or are `OP_RETURN`.
+A transaction is considered `oneToOne` if and only if **all inputs** are from the `sourceAddress`, and **all outputs** are either:
+
+- UTXOs sent to the `receivingAddress`
+- UTXOs sent back to the `sourceAddress` (as change)
+- or `OP_RETURN` outputs
+
+For example, let’s use addresses `A` (source) and `B` (receiver). The following table shows which transactions are considered `oneToOne`. Any number of `OP_RETURN` outputs does **not** affect this classification.
+| Input addresses | Output addresses | Is OneToOne |
+| - | - | - |
+| A | A,B | True |
+| A | B | True |
+| A | A | False |
+| A,B | A | False |
+| A,B | A,B | False |
 
 `LowestUsedTimestamp` limit for Bitcoin and Dogecoin is $1209600$ (2 weeks).
 
