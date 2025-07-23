@@ -19,7 +19,7 @@ Each round, corresponding to a voting epoch, rewards are determined according to
 
 The rewarded feed random seed in a given round is generated using the earliest protocol secure random number generated in the subsequent voting rounds.
 
-For voting round $V$, let $s$ be the first secure random number generated in round $V + k$ ($k \geq 1$). The secure reward random number for round $V$ is computed as `keccak256(abi.encode(s, V))`.
+For voting round $V$, let $s$ be the first secure random number generated in round $V + k$ (for any $k \geq 1$). The secure reward random number for round $V$ is computed as `keccak256(abi.encode(s, V))`.
 If $k > 1$, the same $s$ is used for rounds $V, V+1, \ldots, V+k-1$.
 
 If there is no secure random number within all the remaining voting rounds of the current reward epoch, the first 30 rounds of the next reward epoch are evaluated.

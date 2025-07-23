@@ -4,11 +4,12 @@ The Flare Systems Protocol (FSP) is a foundational infrastructure designed to su
 
 FSP ensures that agreements on offchain data or calculations are reached securely and fairly, enabling the reliable operation of sub-protocols like the Flare Time Series Oracle and the Flare Data Connector.
 
-Key concepts:
-- [Epochs](Epochs.md)
-- [Entities](Entities.md)
-- [Signing Policy](./SigningPolicy.md)
-- [Voter Registration](./VoterRegistration.md)
-- [Submission](./Submission.md)
-- [Finalization](./Finalization.md)
-- [Rewarding](./Rewarding.md)
+<img src="https://dev.flare.network/img/fsp/fsp_light.svg" alt="FSP Architecture" width="600">
+
+Key FSP Features:
+
+- Decentralized Governance: Through a weighted voting system involving a diverse set of voters.
+- Efficient Data Management: By offloading complex calculations offchain and minimizing onchain storage requirements.
+- Robust Reward Mechanisms: Incentivizing participation and penalizing delays or non-compliance to maintain network health.
+- Extensibility: Designed to support additional sub-protocols and future enhancements like C-chain staking.
+- Security: Implements mechanisms to prevent malicious behavior and ensures data integrity through Merkle proofs.

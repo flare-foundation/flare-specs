@@ -1,4 +1,4 @@
-# Mirroring
+# Mirroring (WIP)
 
 The mirroring is currently based on multisig scheme.
 It is expected to be passed on to weighted signature scheme operated by data providers.
