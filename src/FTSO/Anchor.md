@@ -34,8 +34,14 @@ Using the available signatures from the signing phase, each of the selected data
 In practice, there is some overlap between the signing and finalization phases: the finalization process may be completed as soon as enough valid signatures are available for the voting round. In this case, signatures deposited during the signing phase but after finalization is completed are still rewarded as normal. Conversely, assuming finalization is not completed early, signatures deposited after the signing phase ends but before finalization is completed are considered valid and rewarded as usual. 
 
 ## Randomness
-The Flare network requires access to on-chain randomness for a variety of cryptographic features, including selecting random providers for the finalization phase and facilitating sortition for the block-latency feeds. This is enabled by the commit-reveal phase of the scaling feeds, which generates a new random number each epoch. The random numbers revealed by each party in the reveal phase are combined into an aggregate random number for the epoch: each of the provider-generated random numbers $\mathrm{rand}_i$ are added together to make a combined random number 
+The Flare network requires access to on-chain randomness for a variety of cryptographic features, including selecting random providers for the finalization phase and facilitating sortition for the block-latency feeds. This is enabled by the commit-reveal phase of the scaling feeds, which generates a new random number for every voting round. The random numbers revealed by each party in the reveal phase are combined into an aggregate random number for the round: each of the provider-generated 32-byte random value is parsed as a 256-bit unsigned integer $\mathrm{rand}_i$, and added together to make a combined random number for the round:
 
-$$\mathrm{rand} = \sum_i \mathrm{rand}_i \mathrm{N}$$
+$$\mathrm{rand} = \left( \sum_i \mathrm{rand}_i \right) \bmod 2^{256}$$
 
-where $N = 2^n$ denotes the maximum possible size of the individual $n$-bit random numbers. As long as all individual randomness contributions are added, and at least one $\mathrm{rand}_i$ was random, the resulting output is random. In order to track whether or not any random contributions have been omitted in an attempt to degrade the quality of a random number (for example by a provider failing to complete the reveal phase), the Merkle root contains a Boolean value storing this information.
+As long as all individual randomness contributions are added, and at least one $\mathrm{rand}_i$ was generated using a secure random process, the resulting output is a secure random value.
+However, a provider could attempt to manipulate the resulting random number by selectively withholding their contribution (i.e., not revealing their random number in the reveal phase, or providing a value that doesn't match their commitment). A "benching" mechanism is in place to disincentivize this behavior:
+- If a provider fails to reveal their committed random number, they receive a reward penalty and are "benched" for the next 20 voting rounds.
+- If there are any newly benched providers in the current round, the resulting random number is generated, but marked as "insecure".
+- If there are no newly benched providers, and at least **two** unbenched provider contributions are present, the random number is considered "secure".
+
+A Boolean flag specifying whether the generated random number is considered secure is also added to the round output, and is exposed in the smart contract.

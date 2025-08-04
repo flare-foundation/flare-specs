@@ -11,7 +11,7 @@ The **Signing Policy Definition Protocol** is a system protocol that produces th
 
 The protocol works in phases, as follows:
 
-1. **Random Number Acquisition**: 2 hours before the end of the current reward epoch, a random number is fetched through the FTSOv2 Scaling protocol.
+1. **Random Number Acquisition**: 2 hours before the end of the current reward epoch, a [random number](RandomNumber.md) is fetched through the FTSO protocol.
 2. **Vote Power Block Selection**: Once a random number is obtained, a block from the current reward epoch is selected at random. The vote power registered in this selected block will be used for the new reward epoch.
 3. **Voter Registration**: Once a random number is obtained, registration for the new reward epoch can begin. This lasts 30 minutes, allowing self-registration based on the selected block's vote power.
 4. **Signing Policy Snapshot**: When the voter registration phase ends, a snapshot of the data providers' addresses and weights is taken.
@@ -69,10 +69,8 @@ Entities included in the current signing policy can pre-register for the next re
 
 ## Signing Policy Initialization
 
-One the first block for which voter registration is no longer enabled, the signing policy for the next reward epoch is initialized, containing the chosen random seed and registered entities.
+On the first block for which voter registration is no longer enabled, the signing policy for the next reward epoch is initialized, containing the chosen random seed and registered entities.
 This causes the `SigningPolicyInitialized` event to be emitted by the `Relay` smart contract.
-
-the `SigningPolicyInitialized` event is emitted by the `Relay` smart contract.
 
 ### Normalized weights
 
