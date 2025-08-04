@@ -44,4 +44,5 @@ However, a provider could attempt to manipulate the resulting random number by s
 - If there are any newly benched providers in the current round, the resulting random number is generated, but marked as "insecure".
 - If there are no newly benched providers, and at least **two** unbenched provider contributions are present, the random number is considered "secure".
 
-A Boolean flag specifying whether the generated random number is considered secure is also added to the round output, and is exposed in the smart contract.
+A Boolean flag specifying whether the generated random number is considered secure is also added to the round output, and is exposed to consumers in smart contracts.
+Note that the generated random number is not directly exposed. Instead, it is added to the round result Merkle tree, and the Merkle root itself is published on-chain (see [RandomNumber](../FSP/RandomNumber.md)) and can be used as a random value.
