@@ -29,7 +29,8 @@ Contains the resulting data of a voting round, encoded into a Merkle tree root h
 | SignatureCount                            | 2                   | Number of signatures (big-endian).                                                                             |
 | Signatures                                | SignatureCount * 67 | Concatenated array of [ECDSASignatureWithIndex](#ecdsasignaturewithindex). Indices must be in ascending order. |
 
-## SignatureType0
+## SignatureType0 (deprecated)
+Variable size, to be used as `Payload` in a [PayloadMessage](#payloadmessage).
 
 | **Field**                                 | **Size (bytes)** | **Description**                    |
 | ----------------------------------------- | ---------------- | ---------------------------------- |
@@ -39,12 +40,15 @@ Contains the resulting data of a voting round, encoded into a Merkle tree root h
 | UnsignedMessage                           | Variable         | Additional protocol specific data. |
 
 ## SignatureType1
+Variable size, to be used as `Payload` in a [PayloadMessage](#payloadmessage).
+This signature type is currently used for FTSO and FDC protocols.
 
-| **Field**       | **Size (bytes)** | **Description**                    |
-| --------------- | ---------------- | ---------------------------------- |
-| Type            | 1                | Always `1`.                        |
-| Signature       | 65               | ECDSA signature.                   |
-| UnsignedMessage | Variable         | Additional protocol specific data. |
+
+| **Field**       | **Size (bytes)** | **Description**                     |
+| --------------- | ---------------- |-------------------------------------|
+| Type            | 1                | Always `1`.                         |
+| Signature       | 65               | ECDSA signature.                    |
+| UnsignedMessage | Variable         | Additional protocol specific data. In FDC, this is a consensus bit vector |
 
 ## ECDSASignatureWithIndex
 
