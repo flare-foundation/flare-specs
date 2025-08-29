@@ -1,5 +1,7 @@
 # Rewarding
-Flare's data providers are rewarded separately for their contributions to the anchor feeds and block-latency feeds. A proportion of Flare's inflationary funds are allocated to the rewarding of the FTSO. In the $j$th round, correpsonding to the $j$th voting epoch, denote this quantity $R_\mathrm{FTSO}(j)$. These funds are then distributed into $R_\mathrm{anchor}(j)$, which are allocated to the anchor feeds, and $R_\mathrm{block}(j)$, which are allocated to participation in the block-latency feeds. The parameters defining the split of rewards between the two feeds, satisfying the equation
+Flare's data providers are rewarded separately for their contributions to the anchor and block-latency feeds. A proportion of Flare's inflationary funds are allocated to the rewarding of the FTSO.
+
+In the $j$th round, correpsonding to the $j$th voting epoch, denote this quantity $R_\mathrm{FTSO}(j)$. These funds are then distributed into $R_\mathrm{anchor}(j)$, which are allocated to the anchor feeds, and $R_\mathrm{block}(j)$, which are allocated to participation in the block-latency feeds. The parameters defining the split of rewards between the two feeds, satisfying the equation
 
 $$R_\mathrm{FTSO}(j) = R_\mathrm{anchor}(j) + R_\mathrm{block}(j),$$
 
@@ -7,7 +9,7 @@ are set by governance, and can be modified by a governance vote.
 
 ## Selecting a Rewarded Feed
 
-Each round, corresponding to a voting epoch, rewards for both types of feed are determined according to performance in a single randomly selected data feed, rather than an aggregation of performance across all scaling feeds. The choice of data feed is sampled uniformly at random amongst existing data feeds, and is not known in advance. This prevents providers from only focusing on the feed that is to be rewarded in a round. This applies both to assigning accuracy rewards and to determining eligibility for signing and finalization rewards: only one, randomly selected, feed is used.
+Each round, corresponding to a voting epoch, rewards for both types of feed are determined according to performance in a single randomly selected data feed, rather than an aggregation of performance across all anchor feeds. The choice of data feed is sampled uniformly at random amongst existing data feeds, and is not known in advance. This prevents providers from only focusing on the feed that is to be rewarded in a round. This applies both to assigning accuracy rewards and to determining eligibility for signing and finalization rewards: only one, randomly selected, feed is used.
 
 ### Secure Reward Random Number
 
@@ -50,7 +52,7 @@ Let $\Sigma_{sign}(j)$ denote the total weight of providers who correctly signed
 $${R_\mathrm{sign}}(i,j) = \frac{W_{i, \mathrm{sign}}}{\Sigma_\mathrm{sign}(i,j)} \cdot R_\mathrm{sign}(j).$$
 
 ### Finalization Rewards
-The finalization rewards $R_\mathrm{fin}(j)$ make up around 10% of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers selected to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
+The finalization rewards $R_\mathrm{fin}(j)$ make up around 10% of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers [selected](../FSP/Finalization.md#finalizer-selection********) to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
 
 $${R_{\mathrm{fin}}}(i,j) = \frac{R_{\mathrm{fin}}(j)}{N_\mathrm{fin}(j)}.$$
 
@@ -89,20 +91,12 @@ The role of the accuracy reward $R_\mathrm{acc}$ is to maintain agreement betwee
 Individuals such as DApps or other customers of the data stream may seek to fund additional volatility by increasing the number of updates made to the scaling feeds. Volatility incentive offers are made with the transfer of a corresponding monetary value $m$.  Each offer has a duration of effect, denoted $T_v$, a parameter controlled by governance that determines the number of blocks for which it is valid for and after which the offer expires.  In each of the blocks within the duration of effect, the total reward $R_\mathrm{vol}$ is increased by $m/{T_v}$, which is allocated uniformly to updates in that block.
 
 ## Penalization
-Thus far, correct provider behaviour has been assumed. Proper functioning of the FTSO process requires that the data revealed in the reveal phase by each provider correctly hashes to their commitment published in the commit phase. Additionally, in the signing and finalization phases only one root should receive enough signatures to be finalized, requiring that each signer does not sign multiple messages. Finally, it is assumed that providers complete their responsibilities in a timely manner. 
+Thus far, correct provider behaviour has been assumed. Proper functioning of the FTSO process requires that the data revealed in the reveal phase by each provider correctly hashes to their commitment published in the commit phase. Additionally, in the signing and finalization phases only one root should receive enough signatures to be finalized, requiring that each signer does not sign multiple messages. 
 
-For various reasons, providers may not always act as desired; either for malicious reasons, such as a provider backing out of their commitment, or just due to an honest error. Regardless of the root cause, this is disincentivized by a slashing a chunk of the rewards earned by the offending provider. Details of the various punishments are laid out below.
+For various reasons, providers may not always act as desired; either for malicious reasons, such as a provider backing out of their commitment, or just due to an honest error. Regardless of the root cause, this is disincentivized by a slashing a chunk of the rewards earned by the offending provider.
 
-### Punishing Explicit Misbehaviour
-Each mismatched reveal or excess signature is punished in the same way: by burning a lump sum of provider rewards. The size of the sum is determined by a combination of a parameter $R_\mathrm{pen}$, the weight of the provider, and the total available accuracy rewards for the round. A provider with (normalized) calculation weight ${W_{i,C}}^*$ who requires penalization in a voting round with accuracy rewards $R_{\mathrm{anchor}}(j)$ is penalized by subtracting an amount
+Each mismatched reveal or excess signature is punished in the same way: by burning a lump sum of provider rewards. The size of the sum is determined by the combination of a system parameter $R_\mathrm{pen}$, the weight of the provider, and the total available accuracy rewards for the round. A provider with (normalized) calculation weight ${W_{i,C}}^*$ who requires penalization in a voting round with accuracy rewards $R_{\mathrm{anchor}}(j)$ is penalized by subtracting an amount
 
 $${R_{\mathrm{pen}}}(i,j) = R_\mathrm{pen} \cdot ( {W_{i,C}}^* \cdot R_{\mathrm{anchor}}(j))$$
 
 of their rewards for the round for each penalization accrued. Penalizations are applied at the end of each reward epoch, so that the maximum penanalization cannot exceed the provider's earnings for the round. However, penalizations can be deducted from earnings in any protocol, so that a provider with penalizations exceeding their earnings in the FTSO may also have some of their rewards for e.g. the FDC burnt as well.
-
-### Punishing Excessive Latency
-The system punishes providers for failing to participate in this phase in a timely manner. If the signing process has not received enough weight of signatures before a certain number of blocks, $DB_{\mathrm{sign}}$, has passed in the signing phase, a burning process begins. For those providers who have not yet published a correct signature, a proportion of delegation fees are burnt in each subsequent block. Since provider fees are only obtained by providers who are rewarded for accurate data submissions in a given round, this burning procedure only affects successful providers who delay providing a signature. The proportion of fees burnt is quadratic in the number of blocks passed since $DB_{\mathrm{sign}}$, until a maximum block count $DB_{\mathrm{max}}$ is reached, at which point all fees have been burnt. The proportion $P_{\mathrm{burn}}$ of burnt fees by a provider publishing a signature in block $DB_{\mathrm{pub}} > DB_{\mathrm{sign}}$ is defined $P_{\mathrm{burn}} = \mathrm{min}(\mathrm{Burn}, 1)$, where 
-
-$$\mathrm{Burn} = (\dfrac{DB_{\mathrm{pub}} - DB_{\mathrm{sign}}}{DB_{\mathrm{max}} - DB_{\mathrm{sign}}})^2.$$
-
-The parameters of the burning system $DB_{\mathrm{sign}}$ and $DB_{\mathrm{max}}$ are set by governance.
