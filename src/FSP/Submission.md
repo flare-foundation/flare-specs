@@ -18,7 +18,7 @@ Submission transaction calldata is expected to be constructed in the following w
 
 ```tx_data = function_selector + payload```
 
-where `payload` is an abi-encoded sequence of [PayloadMessage](/src/FSP/Encoding.md#payloadmessage)s.
+where `payload` is a concatenation of byte-encoded [PayloadMessage](/src/FSP/Encoding.md#payloadmessage)s.
 It is expected that the transaction will contain one payload message per protocol ID. 
 If there is more than one message for a protocol, only the last one in the sequence will be considered.
 
@@ -32,7 +32,7 @@ Transactions from addresses not recognised by the active signing policy are not 
 
 Signatures are used for finalizing a protocol voting round. For a successful [finalization](Finalization.md), a Merkle root backed by signatures with enough voter weight is required.
 
-Entities are expected to submit data to these functions from their registered `submitSignaturesAddress`.
+Entities are expected to submit data to this function from their registered `submitSignaturesAddress`.
 The first submission in a voting round to a method from the `submitSignaturesAddress` of an entity included in the active signing policy is subsidized (all gas cost is refunded).
 Transactions from addresses not recognised by the active signing policy are not subsidized and should be ignored by protocols.
 
