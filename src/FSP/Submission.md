@@ -1,10 +1,10 @@
 # Submission
 
 Sub-protocol data submissions and provider communication in FSP are facilitated by a specialized `Submission` smart contract.
-It contains a subsidy mechanism to refund gas costs for depositing protocol message transactions to registered entities.
-This logic is embedded at the validator node level.
+It contains a mechanism that refunds submission transaction gas costs incurred by registered entities.
+This is managed at the validator node level.
 
-To save on gast costs and support higher protocol data throughput, the `Submission` contract does not record data on-chain in the traditional sense.
+To save on gas costs and support higher protocol data throughput, the `Submission` contract does not record data on-chain in the traditional sense.
 Instead, it provides a set of placeholder functions (`submitX`) with no parameters as markers, and providers are expected to attach protocol message payloads as additional (very cheap gas-wise) calldata in their transactions.
 
 This data is not accessible by smart contracts, but can be obtained by retrieving and processing raw submitted transactions. 
