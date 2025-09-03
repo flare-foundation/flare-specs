@@ -132,11 +132,13 @@ A node at depth $k$ that is not a leaf has two children:
 
 The tree is then traversed to its leaves to find candidate consensus bit-vectors.
 A bound CurrentBound on the value of the best tested bit-vector is set to an input bound (which could be the empty bound $\mathrm{Value}(0,0)$).
-The branches of the tree are traversed as follows, starting from the root node, until either the whole tree has been searched or the maximum step count is reached:
+ As described below, the branches of the tree are traversed, starting from the root node, until either the whole tree has been searched or the maximum step count is reached. 
+In what follows, the most recently visited node with an unexplored branch is referred to as the *next path* node:
 
-- If the weight of the node is less than half the total weight, return to the root node and begin down the next branch.
-- If a node has a value less than or equal to CurrentBound, return to the root node and begin down the next branch.
-- If a branch is traversed to the leaf, compute its value. If the value is greater than CurrentBound we set CurrentBound to the value. Then, return to the root.
+- If the weight of the node is less than half the total weight, return to the next path node and begin down the unexplored branch.
+- If a node has a value less than or equal to CurrentBound, return to the next path node and begin down the unexplored branch.
+- If a branch is traversed to the leaf, compute its value. If the value is greater than CurrentBound we set CurrentBound to the value. Then, return to the next path node and begin down the unexplored branch.
+
 
 When the search reaches the maximum number of steps or the whole space has been searched, the algorithm outputs the bit-vector corresponding to the visited leaf with the highest value, with ties broken by selecting the first visited.
 If no leaf surpasses the initial bound, an empty solution is returned.
@@ -157,10 +159,10 @@ Again, a node at depth $k$ that is not a leaf has two children; however, this ti
 Once again, the tree is traversed to its leaves to find candidate consensus bit-vectors, starting with an input CurrentBound.
 The branches of the tree are traversed, starting from the root node, until either the whole tree has been searched or the maximum step count is reached:
 
-- If the weight of the node is less than half the total weight or the value less than or equal to current bound, return to the root node and begin down the next branch.
+- If the weight of the node is less than half the total weight or the value less than or equal to current bound, return to the next path node and begin down the next branch.
 - If a branch is traversed to the leaf, compute its value.
   If the value is greater than CurrentBound we set CurrentBound to the value.
-  Then, return to the root.
+  Then, return to the next path node.
 
 Again, when the search reaches the maximum number of steps or the whole space has been searched, the algorithm outputs the visited leaf with the highest value, with ties broken in order of visitation.
 If no leaf surpasses the initial bound, an empty solution is returned.
