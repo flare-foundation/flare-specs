@@ -52,7 +52,7 @@ Let $\Sigma_{sign}(j)$ denote the total weight of providers who correctly signed
 $${R_\mathrm{sign}}(i,j) = \frac{W_{i, \mathrm{sign}}}{\Sigma_\mathrm{sign}(i,j)} \cdot R_\mathrm{sign}(j).$$
 
 ### Finalization Rewards
-The finalization rewards $R_\mathrm{fin}(j)$ make up around 10% of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers [selected](../FSP/Finalization.md#finalizer-selection********) to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
+The finalization rewards $R_\mathrm{fin}(j)$ make up around 10% of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers [selected](../FSP/Finalization.md#finalizer-selection) to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
 
 $${R_{\mathrm{fin}}}(i,j) = \frac{R_{\mathrm{fin}}(j)}{N_\mathrm{fin}(j)}.$$
 
