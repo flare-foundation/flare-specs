@@ -17,13 +17,13 @@ A transaction is considered “balance decreasing” for the address, if the bal
 
 ## Response body
 
-| Field                      | Solidity type | Description                                                                                       |
-| -------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| `blockNumber`              | `uint64`      | The number of the block in which the transaction is included.                                     |
-| `blockTimestamp`           | `uint64`      | The timestamp of the block in which the transaction is included.                                  |
-| `sourceAddressHash`        | `bytes32`     | Standard address hash of the address indicated by the `sourceAddressIndicator`.                   |
-| `spentAmount`              | `int256`      | Amount spent by the source address in minimal units.                                              |
-| `standardPaymentReference` | `bytes32`     | Standard payment reference of the transaction. Zero value if no the transaction has no reference. |
+| Field                      | Solidity type | Description                                                                                    |
+| -------------------------- | ------------- | ---------------------------------------------------------------------------------------------- |
+| `blockNumber`              | `uint64`      | The number of the block in which the transaction is included.                                  |
+| `blockTimestamp`           | `uint64`      | The timestamp of the block in which the transaction is included.                               |
+| `sourceAddressHash`        | `bytes32`     | Standard address hash of the address indicated by the `sourceAddressIndicator`.                |
+| `spentAmount`              | `int256`      | Amount spent by the source address in minimal units.                                           |
+| `standardPaymentReference` | `bytes32`     | Standard payment reference of the transaction. Zero value if the transaction has no reference. |
 
 ## Lowest Used Timestamp
 
@@ -53,5 +53,6 @@ Once the transaction is received, the response fields are extracted if the trans
 - `spentAmount` is the difference between the balance of the indicated address after and before the transaction.
   Can be negative.
 - `blockTimestamp` is the close_time of a ledger converted to unix time.
+- `standardPaymentReference` is zero-valued for transactions of type other than `Payment`.
 
 `LowestUsedTimestamp` limit for Bitcoin and Dogecoin is $1209600$ (2 weeks).
