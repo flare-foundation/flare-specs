@@ -230,7 +230,7 @@ Once all reward claims and penalties are computed for all protocols, they are ag
 For every registered data provider, participation statistics are checked against the minimal conditions. If the resulting number of passes is below zero, all reward claims associated with that provider get burnt. This includes the following beneficiaries:
 - Provider's `identityAddress` - fee rewards.
 - Provider's `delegationAddress` - delegator rewards.
-- All of provider's registered validator [node Ids](VoterRegistration.md#node-id).
+- All of provider's registered validator [node Ids](Voting-draft.md#node-id).
 
 ### Computing epoch reward hash
 

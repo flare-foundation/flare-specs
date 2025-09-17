@@ -11,9 +11,8 @@ This repository contains the technical specifications for Flare's core protocols
 ### Flare Systems Protocol (FSP)
 
 - [Introduction](src/FSP/Introduction.md)
-- [Entities](src/FSP/Entities.md)
 - [Epochs](src/FSP/Epochs.md)
-- [Voter Registration](src/FSP/VoterRegistration.md)
+- [Voters](src/FSP/Voters.md)
 - [Signing Policy](src/FSP/SigningPolicy.md)
 - [Submissions](src/FSP/Submission.md)
 - [Finalizations](src/FSP/Finalization.md)
