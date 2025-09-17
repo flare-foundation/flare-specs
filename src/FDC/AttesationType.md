@@ -1,15 +1,19 @@
 # Attestation type
 
-An attestation type consists of request format, response format and verification rules. Request and response formats are defined by Solidity structs.
+An attestation type consists of request format, response format and verification rules.
+Request and response formats are defined by Solidity structs.
 
 ## Request
 
-The attestation request is a byte sequence encoding of the following structure.
+The attestation request is a byte sequence encoding of the following structure:
 
 - attestationType - (32 bytes) attestation type identifier (ATI).
-- sourceId - (32 bytes) data source identifier (DSI). Essentially it unambiguously identifies the core data source (like Bitcoin blockchain).
-- messageIntegrityCode - (32 bytes) message integrity code (MIC). A hash of the expected response salted with the default string “Flare”
-- requestBody - Solidity struct containing the data of the request body. The definition of the struct depends on the attestation type.
+- sourceId - (32 bytes) data source identifier (DSI).
+  It unambiguously identifies the core data source (like Bitcoin blockchain).
+- messageIntegrityCode - (32 bytes) message integrity code (MIC).
+  A hash of the expected response salted with the string “Flare”.
+- requestBody - Solidity struct containing the data of the request body.
+  The definition of the struct depends on the attestation type.
 
 ### Identifiers
 
@@ -33,7 +37,7 @@ response.votingRound = 0;
 bytes32 mic = keccak256(abi.encode(response,”Flare”));
 ```
 
-For a response to be considered valid, its MIC must match the MIC from the request.
+A response is considered valid if its MIC matches the MIC from the request.
 
 ## Response
 
@@ -51,7 +55,7 @@ struct Response {
 ```
 
 - attestationType - (32 bytes) attestation type identifier (ATI).
-- sourceId - (32 bytes) source identifier
+- sourceId - (32 bytes) data source identifier (DSI).
 - votingRound - (8 bytes) voting round in which the attestation was confirmed.
   The final value is set by the data provider before including the hash of response into the Merkle tree.
 - lowestUsedTimestamp - (8 bytes) the timestamp in Unix epoch format which indicates what was the timestamp of the earliest data that was needed to confirm the response.
