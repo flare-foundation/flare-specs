@@ -41,7 +41,6 @@ This repository contains the technical specifications for Flare's core protocols
 - [Introduction](src/FTSO/Introduction.md)
 - [Anchor](src/FTSO/Anchor.md)
 - [Block Latency](src/FTSO/BlockLatency.md)
-- [Weighting](src/FTSO/Weighting.md)
 - [Rewarding](src/FTSO/Rewarding.md)
 - [Encoding Reference](src/FTSO/Encoding.md)
 
