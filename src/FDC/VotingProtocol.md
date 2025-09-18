@@ -38,4 +38,4 @@ The $i\text{th}$ round of the FDC starts at the beginning of the $i\text{th}$ [v
    At this point eligible data providers should submit a finalization transaction to end the round.
    In the first $20$ seconds of the phase, only data providers selected to finalize by the random selection are rewarded for submitting a finalization transaction.
    If no valid finalization transaction is submitted in this window, finalization is opened up to all providers.
-   The process for the random selection is explained in [todo: cite finalization].
+   The process for the random selection is explained in [Finalization](../FSP/Finalization.md#finalizer-selection).
