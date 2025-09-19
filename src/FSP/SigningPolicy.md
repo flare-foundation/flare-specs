@@ -58,14 +58,21 @@ Once the vote power block number is selected, the `VotePowerBlockSelected` event
 
 ## Voter Registration
 
-Entities can register for the next reward epoch via the [VoterRegistry](VoterRegistration.md#voterregistry) smart contract.
+Entities can register for the next reward epoch via the [VoterRegistry](Voters.md#voterregistry) smart contract.
 Registration is open until the following three conditions governed by system parameters are met:
 
 1) $\mathrm{voterRegistrationMinDurationSeconds}$: minimum duration of the voter registration window (30 min).
 2) $\mathrm{voterRegistrationMinDurationBlocks}$: minimum duration of the voter registration window in blocks (900).
 3) $\mathrm{signingPolicyMinNumberOfVoters}$: minimum number of registered voters required (10).
 
-Entities included in the current signing policy can pre-register for the next reward epoch any time using the [VoterPreRegistry](VoterRegistration.md#voterpreregistry) smart contract.
+Entities included in the current signing policy can pre-register for the next reward epoch any time using the [VoterPreRegistry](Voters.md#voterpreregistry) smart contract.
+
+## Maximum Entity Count
+At most 100 entities can be registered in a single signing policy. If a 101st entity tries to register, the entity with the lowest registration weight is removed. In such case, an event
+```Solidity
+event VoterRemoved(address indexed voter, uint256 indexed rewardEpochId);
+```
+is emitted, indicating the removal of the entity with `voter` corresponding to their `identityAddress`.
 
 ## Signing Policy Initialization
 
@@ -74,7 +81,7 @@ This causes the `SigningPolicyInitialized` event to be emitted by the `Relay` sm
 
 ### Normalized weights
 
-Let $\mathrm{weightSum}$ be the sum of [registrationWeights](VoterRegistration.md#registration-weight) of all registered entities.
+Let $\mathrm{weightSum}$ be the sum of [registrationWeights](Weighting.md#signing-weight) of all registered entities.
 The normalized weight of an entity is
 $$\mathrm{registrationWeight} * \mathrm{maxUint}16 /  \mathrm{weightSum},$$
 where integer division is used.
