@@ -10,9 +10,9 @@ Instead, it provides a set of placeholder functions (`submitX`) with no paramete
 This data is not accessible by smart contracts, but can be obtained by retrieving and processing raw submitted transactions. 
 
 The provided functions are as follows:
-- `submit1()` and `submit2()`: for protocol phase-specific data. For example, and `submit1()` is used for FTSO round commit hashes, `submit2()` for revealing committed data.
-- `submit3()`: reserved for future use.
-- `submitSignatures()`: for signatures for finalization.
+- `submit1` and `submit2`: for protocol phase-specific data. For example, `submit1` is used for FTSO round commit hashes and `submit2` for revealing committed data.
+- `submit3`: reserved for future use.
+- `submitSignatures`: for signatures for finalization.
 
 Submission transaction calldata is expected to be constructed in the following way:
 
@@ -25,7 +25,7 @@ If there is more than one message for a protocol, only the last one in the seque
 ## Submit1, submit2
 
 Entities are expected to submit data to these functions from their registered `submitAddress`.
-The first submission in a voting round to a method from the `submitAddress` of an entity included in the active signing policy is subsidized (all gas cost is refunded).
+The first submission in a voting round to a method from the `submitAddress` of an entity included in the active signing policy is subsidized (the gas cost is refunded).
 Transactions from addresses not recognised by the active signing policy are not subsidized and should be ignored by protocols.
 
 ## SubmitSignatures
@@ -37,4 +37,4 @@ The first submission in a voting round to a method from the `submitSignaturesAdd
 Transactions from addresses not recognised by the active signing policy are not subsidized and should be ignored by protocols.
 
 Each submitted [PayloadMessage](/src/FSP/Encoding.md#payloadmessage) is expected to contain either a [SignatureType0](/src/FSP/Encoding.md#signaturetype0) or a [SignatureType1](/src/FSP/Encoding.md#signaturetype1) message, which
-[signs](../Utilities/Signing.md) the protocol voting round result – a [ProtocolMerkleRoot](/src/FSP/Encoding.md#protocolmerkleroot).
+[signs](../Utilities/Signing.md) the protocol voting round result  [ProtocolMerkleRoot](/src/FSP/Encoding.md#protocolmerkleroot).

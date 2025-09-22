@@ -2,7 +2,7 @@
 
 Flare's enshrined protocols operate using a voting-based consensus mechanism facilitated by the Flare Systems Protocol (
 FSP). 
-To participate in FSP, data providers must register as _entities_, and go through the _voter_ registration process every reward epoch.
+To participate in the FSP, data providers must register as _entities_, and go through the _voter_ registration process every reward epoch.
 
 ## Entity Definition
 
@@ -27,28 +27,27 @@ Each address must be registered via a two-step process on the `EntityManager` sm
 Additionally, then entity must link their validator node(s) by registering the corresponding node IDs.
 This is done by calling `registerNodeId` from the entity's `identityAddress`.
 
-To participate in the FTSO [Block-latency feeds](../FTSO/BlockLatency.md) protocol, the entity must also generate and register a sortition key, which is done by calling `registerPublicKey` from the entity's `identityAddress`.
+To participate in the FTSO [block-latency feeds](../FTSO/BlockLatency.md) protocol, the entity must also generate and register a sortition key, which is done by calling `registerPublicKey` from the entity's `identityAddress`.
 
 ## Voter Definition
 
 An entity can become a _voter_ by registering through the [VoterRegistry](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/VoterRegistry.sol) smart contract.
-A voter is able to participate in sub-protocols by [submitting](Submission.md) and [finalizing](./Finalization.md) voting round data,
-obtaining [rewards](Rewarding.md) for high quality submissions and honest behaviour.
+A voter is able to participate in sub-protocols by [submitting](Submission.md) and [finalizing](./Finalization.md) voting round data, obtaining [rewards](Rewarding.md) for high quality submissions and honest behaviour.
 
 ## Voter Registration
-Voter registration is valid for the duration of a reward epoch (3.5 days). During each reward epoch, there is a specific registration window where entities can register as voters for the _next_ reward epoch. See the [Signing Policy Definition Protocol](SigningPolicy.md) for more details.
+Voter registration is valid for the duration of a reward epoch ($3.5$ days). During each reward epoch, there is a specific registration window where entities can register as voters for the _next_ reward epoch. See the [Signing Policy Definition Protocol](SigningPolicy.md) for more details.
 
 ### VoterRegistry
 Entities can register through the `VoterRegistry` smart contract using the function:
 ```Solidity
  function registerVoter(address _voter, Signature calldata _signature) external
 ```
-It can be called from any address. The `_voter` parameter should be the `identityAddress` of the entity and `_signature` – an ECDSA signature of `abi.encode(rewardEpochId, _voter)`, [signed](../Utilities/Signing.md) by the entity's `signingPolicyAddress` key.
+It can be called from any address. The `_voter` parameter should be the `identityAddress` of the entity and `_signature`, an ECDSA signature of `abi.encode(rewardEpochId, _voter)` [signed](../Utilities/Signing.md) by the entity's `signingPolicyAddress` key.
 
 On successful registration the [VoterRegistered](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/userInterfaces/IVoterRegistry.sol#L23) event is emitted.
 
 ### VoterPreRegistry
-Since the registration window is relatively short (typically less than 1 hour), to reduce the chance of missing registration, a *pre-registration* mechanism is provided.
+Since the registration window is relatively short (typically less than $1 $hour) a *pre-registration* mechanism is provided to reduce the chance of entities missing registration.
 Entities included (registered) in the current signing policy can pre-register for the next reward epoch during almost the entire duration of the current reward epoch (up until the point when the regular registration window starts).
 
 Entities can pre-register through the [VoterPreRegistry](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/VoterPreRegistry.sol) smart contract using the function:

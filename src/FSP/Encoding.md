@@ -6,7 +6,7 @@
 | ------------- | ---------------- | ---------------------------------- |
 | ProtocolId    | 1                | Protocol identifier.               |
 | RoundId       | 4                | Round ID (big-endian).             |
-| PayloadLength | 2                | Number of bytes in the payload     |
+| PayloadLength | 2                | Number of bytes in the payload.     |
 | Payload       | PayloadLength    | Encoded protocol-specific message. |
 
 ## ProtocolMerkleRoot
@@ -48,7 +48,7 @@ This signature type is currently used for FTSO and FDC protocols.
 | --------------- | ---------------- |-------------------------------------|
 | Type            | 1                | Always `1`.                         |
 | Signature       | 65               | ECDSA signature.                    |
-| UnsignedMessage | Variable         | Additional protocol specific data. In FDC, this is a consensus bit vector |
+| UnsignedMessage | Variable         | Additional protocol specific data. In FDC, this is a consensus bit vector. |
 
 ## ECDSASignatureWithIndex
 
