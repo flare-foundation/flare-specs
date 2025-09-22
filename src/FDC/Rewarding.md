@@ -3,8 +3,8 @@
 Rewards for provider participation in the FDC are gathered from two sources: firstly, fees gathered from attestation requests are distributed among contributing providers.
 Secondly, a proportion of Flare's inflationary funds are allocated to the rewarding of the FDC.
 Rewards are distributed for participation in voting and in finalization.
-For the $j\text{th}$ round of the the FDC, let $R_\mathrm{fee}(j)$ denote the total collected fees, and $R_\mathrm{IFDC}(j)$ denote the inflation assigned to the FDC.
-Then, the rewards $R_\mathrm{FDC}(j)$ available for the FDC in the round, referred to as the _value_ of the round, is the sum
+For the $j$th round of the the FDC, let $R_\mathrm{fee}(j)$ denote the total collected fees, and $R_\mathrm{IFDC}(j)$ denote the inflation assigned to the FDC.
+Then, the total reward $R_\mathrm{FDC}(j)$ available for the FDC in the round, referred to as the _value_ of the round, is the sum
 
 $$R_\mathrm{FDC}(j) = R_\mathrm{IFDC}(j) + R_{\mathrm{fee}}(j).$$
 
@@ -13,16 +13,16 @@ These rewards are parameterized by $R_\mathrm{att}(j)$ and $R_\mathrm{fin}(j)$, 
 
 $$R_\mathrm{FDC}(j) = R_\mathrm{att}(j) + R_{\mathrm{fin}}(j)$$
 
-and are set by governance; finalization rewards typically make up around 10% of the total FDC rewards.
+and are set by governance; finalization rewards typically make up around $10\%$ of the total FDC rewards.
 
 ## Triggering Rewards
 
-The quantities $R_{\mathrm{IFDC}}(j)$ and $R_\mathrm{fee}(j)$ are not fixed, but instead determined by events occurring in the round $j$, corresponding to the $j\text{th}$ voting epoch, and in the reward epoch $r$ containing the $j\text{th}$ round.
+The quantities $R_{\mathrm{IFDC}}(j)$ and $R_\mathrm{fee}(j)$ are not fixed, but instead determined by events occurring in the round $j$, corresponding to the $j$th voting epoch, and in the reward epoch $r$ containing the $j$th round.
 These events are summarized below.
 
 ### Fee Based Rewards
 
-The fee reward $R_{\mathrm{fee}}(j)$ is determined on a per-round basis, and is the sum of the fees of all _confirmed_ attestation requests in voting round $j$, based on the consensus bit vector and corresponding Merkle root described in [TODO: ref].
+The fee reward $R_{\mathrm{fee}}(j)$ is determined on a per-round basis, and is the sum of the fees of all _confirmed_ attestation requests in voting round $j$, based on the consensus bit vector and corresponding Merkle root described in [BitVote](./BitVote.md).
 Fees for requests in round $j$ that were not confirmed are burnt.
 
 ### Inflationary Rewards
@@ -72,8 +72,8 @@ In cases where $S(i,j) < 1$, remaining rewards that would be allocated to the pr
 
 ## Finalization Rewards
 
-The finalization rewards $R_\mathrm{fin}(j)$ make up around 10% of the total rewards, and are distributed among the selected providers equally.
-The process is the same as described in [TODO: cite FTSO rewards].
+The finalization rewards $R_\mathrm{fin}(j)$ make up around $10\%$ of the total rewards, and are distributed among the selected providers equally.
+The process is the same as described in the [FTSO](../FTSO/Rewarding).
 In a round where the number of providers selected to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
 
 $${R_{\mathrm{fin}}}(i,j) = \frac{R_{\mathrm{fin}}(j)}{N_\mathrm{fin}(j)}.$$
@@ -87,7 +87,7 @@ As well as rewarded for contributing to the FDC, data providers are punished for
 Providers receive a penalization if they completed any of the following actions:
 
 - Provided a signature of a Merkle root that was different from the finalized one, including providing signatures of multiple Merkle roots.
-- Provided a bitVote from submitAddress inside the choose period which dominated the consensus bitVote but then did not provide a Merkle root in time.
+- Provided a bit-vote from submitAddress inside the choose period which dominated the consensus bit-vote but then did not provide a Merkle root in time.
 
 In such case, the provider receives a penalization
 

@@ -1,6 +1,6 @@
 # Bit Voting
 
-For a voting round to be successfully finalized, support for one Merkle root must surpass the voting threshold of at least 50% of the weight of data providers.
+For a voting round to be successfully finalized, support for one Merkle root must surpass the voting threshold of at least $50\%$ of the weight of data providers.
 This means that a majority of the data providers have to build the exact same Merkle tree, containing the same set of confirmed attestation requests.
 Some attestation requests might be unstable, in the sense that some providers have the data to assemble a response and some do not.
 For example, consider an attestation request related to a transaction on an external chain in a block which has only recently been published: some verifiers may perceive the block to be confirmed, while others may have a small delay and thus view it as unconfirmed.
@@ -14,12 +14,12 @@ Each attestation request is assigned an index of arrival in the [collect phase](
 If multiple requests have the same request bytes in one round, they are merged into one request whose fee is the summed fees of the matching requests and index is the lowest index of arrival among the merged requests.
 
 As attestation requests arrive, data providers try to verify them and keep track of which requests they have successfully verified.
-Once they have checked all the requests, each data provider assembles a binary bit-vector whose entry is 1 on the $i$th place (counting from the right) if they can confirm the $i$th request and a 0 otherwise.
+Once they have checked all the requests, each data provider assembles a binary bit-vector whose entry is $1$ on the $i$th place (counting from the right) if they can confirm the $i$th request and a $0$ otherwise.
 An individual data provider's bit-vector is sometimes referred to as their _bit-vote_.
 
-The bit-vector is encoded into hexadecimal and prepended with the number of unique requests (in 2 bytes).
-For example, in a round with 5 distinct requests where the first, second, and fourth are confirmed, the resulting bit-vector is $01011$ and is encoded as `0x00050b`.
-The provider sends the encoded bit-vector in calldata before the deadline of the choose phase, as part of the FSP transaction to the [submit2](../FSP/Submission.md#submit1-submit2) function of the Submission smart contract.
+The bit-vector is encoded into hexadecimal and prepended with the number of unique requests (in $2$ bytes).
+For example, in a round with $5$ distinct requests where the first, second, and fourth are confirmed, the resulting bit-vector is $01011$ and is encoded as `0x00050b`.
+The provider sends the encoded bit-vector in calldata before the deadline of the choose phase, as part of the FSP transaction to the [`submit2`](../FSP/Submission.md#submit1-submit2) function of the `Submission` smart contract.
 
 Each data provider then collects all valid bit-vectors submitted by other providers.
 A data provider considers another data provider's bit-vector to be valid if it shows the same number of requests as their own, is posted by a submit address corresponding to a data provider in the signing policy, and is posted inside the [choose phase](VotingProtocol.md#phases-of-a-voting-round).
@@ -28,7 +28,7 @@ If a provider posts more than one valid bit-vector in a round, only the last is 
 Each data provider uses the set of valid bit-vectors to compute the consensus bit-vector.
 This off-chain computation computes a large set of requests with wide support among providers, according to the following principles:
 
-- The consensus bit-vector has to be supported by more than 50% of the total weight of providers.
+- The consensus bit-vector has to be supported by more than $50\%$ of the total weight of providers.
 - It has to be computed deterministically.
 - It has to be computed in a reasonable time frame (a few seconds at most).
 
@@ -42,7 +42,7 @@ The bit-voting algorithm takes the following inputs:
 
 - the set of bit-vectors (bit-votes) submitted by data providers together with each provider's weight.
 - an array of request fees, where the $i\text{th}$ fee corresponds to the fees of the attestation request(s) assigned the $i\text{th}$ bit of the bit-vectors.
-- the maximal number of steps, a parameter that is configured by governance. This is currently set to $20000000$.
+- the maximal number of steps, a parameter that is configured by governance. This is currently set to $20$ million.
 
 The algorithm outputs a consensus bit-vector $B$, whose $i\text{th}$ entry is $1$ if the $i\text{th}$ attestation request should be included in the consensus Merkle root, and $0$ otherwise,
 
@@ -64,9 +64,9 @@ This results in 6 relevant sets:
 - AlwaysOutBits
 
 Filtering begins with all bit-votes in RemainingVotes and all bits in RemainingBits.
-The other 4 sets are then filled as follows:
+The other $4$ sets are then filled as follows:
 
-1. Move all bits from RemainingBits that do not have more than 50% support to AlwaysOutBits.
+1. Move all bits from RemainingBits that do not have more than $50\%$ support to AlwaysOutBits.
 2. Move all votes from RemainingVotes that have ones on all the RemainingBits to AlwaysInVotes.
 3. Move all votes from RemainingVotes that have zeros on all RemainingBits to AlwaysOutVotes.
 4. Move all bits that are supported by all RemainingVotes to the AlwaysInBits.
@@ -128,7 +128,7 @@ A node at depth $k$ that is not a leaf has two children:
   Visiting such a node increases the step counter by $2$.
 - child1: has all the votes that do not support the $k$th bit removed and their weights deducted from weight.
   IncludedBits and fees are unchanged.
-  Visiting such a node increases the step counter by $1 + \mathrm{floor}(\#VotesOnParentNode/2)$.
+  Visiting such a node increases the step counter by $1 + \mathrm{floor}(\#\text{VotesOnParentNode}/2)$.
 
 The tree is then traversed to its leaves to find candidate consensus bit-vectors.
 A bound CurrentBound on the value of the best tested bit-vector is set to an input bound (which could be the empty bound $\mathrm{Value}(0,0)$).
@@ -154,7 +154,7 @@ Again, a node at depth $k$ that is not a leaf has two children; however, this ti
   Bits and fees are unchanged from the parent node. Visiting such a node increases the step counter by $2$.
 - child1: has all the bits that are not supported by the $k\text{th}$ vote removed and their fees deducted from the fees.
   Votes and weight are unchanged from the parent node.
-  Visiting such a node increases the step counter by $1 + \mathrm{floor}(\#IncludedBits/2)$.
+  Visiting such a node increases the step counter by $1 + \mathrm{floor}(\#\text{IncludedBits}/2)$.
 
 Once again, the tree is traversed to its leaves to find candidate consensus bit-vectors, starting with an input CurrentBound.
 The branches of the tree are traversed, starting from the root node, until either the whole tree has been searched or the maximum step count is reached:
@@ -177,11 +177,11 @@ The bit voting algorithm proceeds as follows:
     If there are less votes, proceed with two iterations of the branch and bound votes process, with votes ordered as described in step 3.
     Otherwise, proceed with two iterations of the branch and bound bits process, with bits ordered as described in step 3.
 
-3.  The first method is run in parallel with 2 orderings and no initial CurrentBound.
+3.  The first method is run in parallel with $2$ orderings and no initial CurrentBound.
     The strategies for branch and bound on votes are:
 
-    - (a) Order votes in order of descending value ($\mathrm{weight}  * \mathrm{supportedFees}$) and at depth $k$ first explore child1 - branches where $k\text{th}$ vote is included.
-    - (b) Order votes in order of ascending value and at depth $k$ first explore child0 - branches where $k\text{th}$ vote is not included.
+    - (a) Order votes in order of descending value ($\mathrm{weight}  * \mathrm{supportedFees}$) and at depth $k$ first explore child1 - branches where $k$th vote is included.
+    - (b) Order votes in order of ascending value and at depth $k$ first explore child0 - branches where $k$th vote is not included.
 
     For branch and bound on bits, the strategies are:
 
