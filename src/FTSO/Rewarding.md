@@ -15,7 +15,7 @@ Each round, corresponding to a voting epoch, rewards for both types of feed are 
 
 The rewarded feed random seed in a given round is generated using the earliest protocol secure random number generated in the subsequent voting rounds.
 
-For voting round $V$, let $s$ be the first secure random number generated in round $V + k$ ($k \geq 1$). The secure reward random number for round $V$ is computed as `keccak256(abi.encode(s, V))`. If $k > 1$, the same $s$ is used for rounds $V, V+1, \ldots, V+k-1$.
+For voting round $j$, let $s$ be the first secure random number generated in round $j + k$ ($k \geq 1$). The secure reward random number for round $j$ is computed as `keccak256(abi.encode(s, V))`. If $k > 1$, the same $s$ is used for rounds $j, j+1, \ldots, j+k-1$.
 
 If there is no secure random number within all the remaining voting rounds of the current reward epoch, the first 30 rounds of the next reward epoch are evaluated. If a secure random number is still not found, no rewarded feed is chosen and round rewards get burnt for the current and all subsequent rounds of the reward epoch.
 
@@ -23,17 +23,17 @@ If there is no secure random number within all the remaining voting rounds of th
 The aim of the anchor feed rewards is to incentivize the FTSO outputs to be both accurate and prompt. To this end, rewards are split across accurate individual estimations, correct signing, and prompt finalizing. Additionally, as well as being rewarded for correct participation, providers must be punished in cases where they deviate from the expected behaviour of the protocol.
 
 ### Accuracy Rewards
-The majority (80%) of available rewards are allocated for submitting accurate values contributing to the median computation of the FTSO round; in the $j$th voting epoch these rewards are denoted by $R_{\mathrm{med}}(j)$. FTSO accuracy rewards are allocated according to two criteria: rewards for submitting a value within the weighted interquartile range (called the primary reward band) of submitted values, and rewards for submitting a value within a percentage interval around the weighted median value (referred to as the secondary reward band), whose width is determined by a parameter $p$ set by governance that varies by feed. Denote these reward bands 
-$${IQR}(j) = [\argmin_{m: W_m > \lfloor W_C/4 \rfloor} \mathrm{Anchor}_m(j), \argmax_{m: W_m < \lceil 3 \cdot W_C/4 \rceil} \mathrm{Anchor}_m(j)] $$
+The majority ($80\%$) of available rewards are allocated for submitting accurate values contributing to the median computation of the FTSO round; in the $j$th voting epoch these rewards are denoted by $R_{\mathrm{med}}(j)$. FTSO accuracy rewards are allocated according to two criteria: rewards for submitting a value within the weighted interquartile range (called the primary reward band) of submitted values, and rewards for submitting a value within a percentage interval around the weighted median value (referred to as the secondary reward band), whose width is determined by a parameter $p$ set by governance that varies by feed. Denote these reward bands 
+$${IQR}(j) = [\argmin_{k: W_k > \lfloor W_C/4 \rfloor} \mathrm{Anchor}_k(j), \argmax_{k: W_k < \lceil 3 \cdot W_C/4 \rceil} \mathrm{Anchor}_k(j)] $$
 and
 $${PCT}(j) = [\mathrm{Anchor}(j) - p \cdot \mathrm{Anchor}(j), \mathrm{Anchor}(j) + p \cdot \mathrm{Anchor}(j)]$$
 respectively. In the case where a submission lies exactly on the border of the interquartile range (IQR), its eligibility, or lack thereof, for primary band rewards is determined randomly. Note that providers can be eligible for both rewards for the same submission, and the bands typically overlap substantially.
 
 Denote by $R_\mathrm{IQR}(j)$ the rewards available for submissions within the primary band and $R_\mathrm{PCT}(j)$ for those in the secondary, satisfying $R_\mathrm{med}(j) = R_\mathrm{IQR}(j) + R_\mathrm{PCT}(j)$. Let 
-$$\Sigma_\mathrm{IQR}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in IQR(j)}W_{i,C}$$
+$$\Sigma_\mathrm{IQR}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in \mathrm{IQR}(j)}W_{i,C}$$
 
 and 
-$$\Sigma_\mathrm{PCT}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in PCT(j)}W_{i,C}$$
+$$\Sigma_\mathrm{PCT}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in \mathrm{PCT}(j)}W_{i,C}$$
 denote the total calculation weight of providers whose submissions lie in the primary and secondary band for the round respectively. Then, an individual provider $i$ with weight ${W_{i,C}}$ whose submission lies within the primary band gets reward ${R_\mathrm{IQR}}(i,j)$ defined as
 
 $${R_\mathrm{IQR}}(i,j) = \frac{{W_{i,C}}}{\Sigma_\mathrm{IQR}(j)} \cdot R_\mathrm{IQR}(j),$$
@@ -45,14 +45,14 @@ $${R_\mathrm{PCT}}(i,j) = \frac{{W_{i,C}}}{\Sigma_\mathrm{PCT}(j)} \cdot R_\math
 In the very unlikely case that the secondary band is empty, which is a theoretical possibility, secondary band rewards for the round are burnt.
 
 ### Signing Rewards
-Signing rewards, denoted $R_\mathrm{sign}(j)$, make up around 10% of the rewards for the round, and are allocated according to the weight of providers who submit valid signatures for the correct Merkle root in the sign phase or before finalization. These rewards are provided to encourage prompt and correct participation in the signing phase. In order to be eligible for signing rewards, a provider must have received accuracy rewards in the given round for the selected feed.
+Signing rewards, denoted $R_\mathrm{sign}(j)$, make up around $10\%$ of the rewards for the round, and are allocated according to the weight of providers who submit valid signatures for the correct Merkle root in the sign phase or before finalization. These rewards are provided to encourage prompt and correct participation in the signing phase. In order to be eligible for signing rewards, a provider must have received accuracy rewards in the given round for the selected feed.
 
-Let $\Sigma_{sign}(j)$ denote the total weight of providers who correctly signed the agreed upon Merkle root in the sign phase or before finalization. Then, an eligible provider with weight $W_{i, \mathrm{sign}}$ who delivered a correct signature receives the reward ${R_\mathrm{sign}}(i,j)$ corresponding to their relative contribution to the total weight,
+Let $\Sigma_{\mathrm{sign}}(j)$ denote the total weight of providers who correctly signed the agreed upon Merkle root in the sign phase or before finalization for the round. Then, an eligible provider with weight $W_{i, \mathrm{sign}}$ who delivered a correct signature receives the reward ${R_\mathrm{sign}}(i,j)$ corresponding to their relative contribution to the total weight,
 
 $${R_\mathrm{sign}}(i,j) = \frac{W_{i, \mathrm{sign}}}{\Sigma_\mathrm{sign}(i,j)} \cdot R_\mathrm{sign}(j).$$
 
 ### Finalization Rewards
-The finalization rewards $R_\mathrm{fin}(j)$ make up around 10% of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers [selected](../FSP/Finalization.md#finalizer-selection) to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
+The finalization rewards $R_\mathrm{fin}(j)$ make up around $10\%$ of the total rewards, and are distributed among the selected providers equally. That is, in a round where the number of providers [selected](../FSP/Finalization.md#finalizer-selection) to finalize is $N_\mathrm{fin}(j)$, each of these providers that submits a valid finalization in the allotted time period receives the same finalization reward ${R_{\mathrm{fin}}}(i,j)$ equal to:
 
 $${R_{\mathrm{fin}}}(i,j) = \frac{R_{\mathrm{fin}}(j)}{N_\mathrm{fin}(j)}.$$
 
@@ -75,9 +75,9 @@ The rewards $R_\mathrm{part}$ and $R_\mathrm{acc}$ are derived from the inflatio
 
 Combining these rewards, it follows that during each block the total reward $R_\mathrm{ftot}$ satisfies
 
-$$R_\mathrm{ftot} = R_\mathrm{part} / b_{re} + R_\mathrm{acc} / b_{pe} + R_\mathrm{vol},$$
+$$R_\mathrm{ftot} = R_\mathrm{part} / b_{re} + R_\mathrm{acc} / b_{ve} + R_\mathrm{vol},$$
 
-where $b_{re}$ is the number of blocks in the reward epoch and $b_{pe}$ is the number of blocks in the voting epoch.
+where $b_{re}$ is the number of blocks in the reward epoch and $b_{ve}$ is the number of blocks in the voting epoch.
 
 Each update in a block is assigned an equal share of the total reward for the block, allocated to the provider of that update.  Equivalently, the participation reward is allocated in proportion to the number of updates to the block-latency feeds made by a provider during the reward epoch, the accuracy reward in proportion to those made during the voting epoch, and the volatility reward in proportion to the number of updates in each block.
 

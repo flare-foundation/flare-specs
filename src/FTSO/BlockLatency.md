@@ -22,11 +22,12 @@ In practice, it is not feasible to require that eligible providers submit their 
 
 An update for a single fast update feed is a *delta* value, including 0, encoded using the standard *two's complement* format for a signed integer with a fixed number of bits.  The entire set of updates is provided as a packed array of signed-integer deltas, ordered according to a predetermined standard for data feeds.  Deltas are only allowed to have one magnitude, in either direction, or be zero. If larger value variations in single blocks are necessary the volatility incentive provides a mechanism to increase the value of $e$ to make this possible.
 
+### Value of a feed
 The block-latency feeds have a configurable numeric increment, so that $\pm 1$ in a unit delta increment corresponds to an actual value update by a numeric delta.  This is determined by a precision parameter $p$, and is dynamic: when a feed has current value $P$, a unit delta increment $\delta$ updates the value to $\Delta P$, defined as:
 
 $$\Delta P= (1 + p)^\delta P.$$
 
-The precision value is chosen by governance, and is represented as a fixed-point number in the interval $(0,1)$ with a fractional part of 15 bits. Thus, the value $P$ of the block-latency feed in block $n$ is computed by applying each delta increment in block $n$ to the value $P_{n}$ at the start of block $n$,
+The precision value is chosen by governance, and is represented as a fixed-point number in the interval $(0,1)$ with a 15-bit fractional part. Thus, the value $P$ of the block-latency feed in block $n$ is computed by applying each delta increment in block $n$ to the value $P_{n}$ at the start of block $n$,
 
 $$P= \prod_i (1 + p)^{\delta_i} P_{n}$$
 
