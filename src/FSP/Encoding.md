@@ -43,7 +43,6 @@ Variable size, to be used as `Payload` in a [PayloadMessage](#payloadmessage).
 Variable size, to be used as `Payload` in a [PayloadMessage](#payloadmessage).
 This signature type is currently used for FTSO and FDC protocols.
 
-
 | **Field**       | **Size (bytes)** | **Description**                     |
 | --------------- | ---------------- |-------------------------------------|
 | Type            | 1                | Always `1`.                         |

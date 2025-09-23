@@ -4,7 +4,7 @@
 
 # Flare Specifications
 
-This repository contains the technical specifications for Flare's core protocols. All documentation is organized under the `src/` directory.
+This repository contains the technical specifications for Flare's core protocols.
 
 ## Protocols
 
@@ -35,6 +35,7 @@ This repository contains the technical specifications for Flare's core protocols
   - [Payment](src/FDC/AttestationTypes/Payment.md)
   - [ReferencedPaymentNonexistence](src/FDC/AttestationTypes/ReferencedPaymentNonexistence.md)
 - [Rewarding](src/FDC/Rewarding.md)
+- [Encoding Reference](src/FDC/Encoding.md)
 
 ### Flare Time Series Oracle (FTSO)
 
