@@ -23,11 +23,11 @@ This repository contains the technical specifications for Flare's core protocols
 
 ### Flare Data Connector (FDC)
 
-- [Introduction](src/FDC/Introduction.md) 
+- [Introduction](src/FDC/Introduction.md)
 - [Voting Protocol](src/FDC/VotingProtocol.md)
 - [Making Requests](src/FDC/MakingRequest.md)
 - [Bit Voting](src/FDC/BitVote.md)
-- [Attestation Type](src/FDC/AttesationType.md) 
+- [Attestation Type](src/FDC/AttesationType.md)
   - [AddressValidity](src/FDC/AttestationTypes/AddressValidity.md)
   - [BalanceDecreasingTransaction](src/FDC/AttestationTypes/BalanceDecreasingTransaction.md)
   - [ConfirmedBlockHeightExists](src/FDC/AttestationTypes/ConfirmedBlockHeightExists.md)
@@ -55,4 +55,5 @@ Shared cryptographic and mathematical utilities used across protocols:
 
 ## Status
 
-This repository is actively maintained and updated. Some sections may be works in progress as protocols evolve.
+This repository is actively maintained and updated.
+Some sections may be works in progress as protocols evolve.
