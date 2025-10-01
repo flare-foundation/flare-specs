@@ -59,7 +59,6 @@ Starting from the next block, the `Relay` smart contract is polled to retrieve a
 
 If a secure random is acquired, it is used to select the voter power block for the next reward epoch.
 Otherwise, the random and vote power block is re-used from the previous reward epoch.
-For the first reward epoch, the voter power block is selected using an unsecure random number in this case.
 
 Once the vote power block number is selected, the `VotePowerBlockSelected` event is emitted, triggering the start of voter registration.
 
