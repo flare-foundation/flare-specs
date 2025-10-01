@@ -4,7 +4,7 @@
 
 A detection of a transaction that either decreases the balance for some address or is signed by the source address.
 Such an attestation could prove a violation of an agreement and therefore provides grounds to liquidate some funds locked by a smart contract on Flare.
-A transaction is considered “balance decreasing” for the address, if the balance after the transaction is lower than before or the address is among the signers of the transaction (even if its balance is greater than before the transaction).
+A transaction is considered “balance decreasing” for the address, if the balance after the transaction is lower than before or the address is among the initiators of the transaction (even if its balance is not lower than before the transaction).
 
 **Supported sources:** BTC, DOGE, XRP
 
@@ -49,7 +49,7 @@ Once the transaction is received, the response fields are extracted if the trans
 ### XRPL
 
 - `sourceAddressIndicator` is the [standard address hash](./Reference.md#standard-address-hash) of the address whose balance has been decreased.
-  If the address indicated by `sourceAddressIndicator` is not among the signers of the transaction and the balance of the address was not lowered in the transaction, the attestation request is rejected.
+  If the address indicated by `sourceAddressIndicator` is not the account that initiated the transaction and the balance of the address was not lowered in the transaction, the attestation request is rejected.
 - `spentAmount` is the difference between the balance of the indicated address after and before the transaction.
   Can be negative.
 - `blockTimestamp` is the close_time of a ledger converted to unix time.
