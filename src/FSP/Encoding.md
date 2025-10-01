@@ -10,6 +10,7 @@
 | Payload       | PayloadLength    | Encoded protocol-specific message. |
 
 ## ProtocolMerkleRoot
+
 Contains the resulting data of a voting round, encoded into a Merkle tree root hash.
 
 | **Field**    | **Size (bytes)** | **Description**                |
@@ -30,6 +31,7 @@ Contains the resulting data of a voting round, encoded into a Merkle tree root h
 | Signatures                                | SignatureCount * 67 | Concatenated array of [ECDSASignatureWithIndex](#ecdsasignaturewithindex). Indices must be in ascending order. |
 
 ## SignatureType0 (deprecated)
+
 Variable size, to be used as `Payload` in a [PayloadMessage](#payloadmessage).
 
 | **Field**                                 | **Size (bytes)** | **Description**                    |
@@ -40,6 +42,7 @@ Variable size, to be used as `Payload` in a [PayloadMessage](#payloadmessage).
 | UnsignedMessage                           | Variable         | Additional protocol specific data. |
 
 ## SignatureType1
+
 Variable size, to be used as `Payload` in a [PayloadMessage](#payloadmessage).
 This signature type is currently used for FTSO and FDC protocols.
 
