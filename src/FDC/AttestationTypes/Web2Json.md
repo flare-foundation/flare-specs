@@ -2,21 +2,22 @@
 
 ## Description
 
-An attestation type that fetches JSON data from the given URL, applies a jq filter to transform the returned result, and `finally returns the structured data as ABI encoded data.
+An attestation type that fetches JSON data from the given URL, applies a jq filter to transform the returned result, and
+finally returns the structured data encoded with the provided ABI type specification.
 
 **Supported sources:** WEB2
 
 ## Request body
 
-| Field           | Solidity type | Description                                                                                                                                     |
-|-----------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `url`           | `string`      | URL of the data source.                                                                                                                         |
-| `httpMethod`    | `string`      | HTTP method to be used for the request. Supported methods: GET, POST, PUT, PATCH, DELETE.                                                       |
-| `headers`       | `string`      | Stringified key-value pairs representing headers to be used in the request. Use {} if no headers are required.                                  |
-| `queryParams`   | `string`      | Stringified key-value pairs representing query parameters to be appended to the URL of the request. Use {} if no query parameters are required. |                                                          |
-| `body`          | `string`      | Stringified key-value pairs representing the body to be used in the request. Use {} if the body is not required.                                |
-| `postProcessJq` | `string`      | jq filter used to post-process the JSON response from the URL.                                                                                  |
-| `abiSignature`  | `string`      | ABI signature of the struct used to encode the data after jq post-processing.                                                                   |
+| Field           | Solidity type | Description                                                                                                                                         |
+|-----------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `url`           | `string`      | URL of the data source.                                                                                                                             |
+| `httpMethod`    | `string`      | HTTP method to be used for the request. Supported methods: GET, POST, PUT, PATCH, DELETE.                                                           |
+| `headers`       | `string`      | Stringified key-value pairs representing headers to be used in the request.                                                                         |
+| `queryParams`   | `string`      | Stringified key-value pairs representing query parameters to be appended to the URL of the request.                                                 |
+| `body`          | `string`      | Stringified key-value pairs representing the body to be used in the request.                                                                        |
+| `postProcessJq` | `string`      | jq filter used to post-process the JSON response from the URL.                                                                                      |
+| `abiSignature`  | `string`      | ABI signature specifier: either a primitive type string (e.g., "uint256") or a JSON tuple descriptor with named `components` describing the fields. |
 
 ## Response body
 
@@ -24,19 +25,102 @@ An attestation type that fetches JSON data from the given URL, applies a jq filt
 |------------------|---------------|------------------------------------------------------------------|
 | `abiEncodedData` | `bytes`       | Raw binary data encoded to match the function parameters in ABI. |
 
+## Examples
+
+### 1. Retrieve Id & Title of the last Todo item
+
+Request body:
+
+```json
+{
+  "url": "https://jsonplaceholder.typicode.com/todos",
+  "httpMethod": "GET",
+  "headers": "{}",
+  "queryParams": "{}",
+  "body": "{}",
+  "postProcessJq": ".[-1] | { id: .id, title: .title }",
+  "abiSignature": {
+    "type": "tuple",
+    "components": [
+      {
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      }
+    ]
+  }
+}
+```
+
+Response body:
+
+```json
+{
+  "abiEncodedData": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000c80000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000001c697073616d206170657269616d20766f6c757074617465732071756900000000"
+}
+```
+
+### 2. Verify the first Todo item is completed
+
+Request body:
+
+```json
+{
+  "url": "https://jsonplaceholder.typicode.com/todos/1",
+  "httpMethod": "GET",
+  "headers": "{}",
+  "queryParams": "{}",
+  "body": "{}",
+  "postProcessJq": ".completed",
+  "abiSignature": "bool"
+}
+```
+
+Response body:
+
+```json
+{
+  "abiEncodedData": "0x0000000000000000000000000000000000000000000000000000000000000000"
+}
+```
+
 ## Lowest Used Timestamp
 
 For `lowestUsedTimestamp`, `0xffffffffffffffff` ($2^{64}-1$ in hex) is used.
 
 ## Verification
 
-The JSON response is queried from the provided URL source using the specified HTTP method, headers, query parameters, and body.
-If the query is unsuccessful (e.g., attempts to access a disallowed IP or hostname, attempts to redirect, takes longer than 1 second, returns a JSON response with more than 5000 keys or a depth greater than 10, returns a content-type other than "application/json", or does not return a valid JSON response), the request is rejected.
+The request is accepted only if all the following checks pass:
 
-The provided jq filter is applied to the valid JSON response.
-If the jq filter exceeds 5000 characters, if jq filtering fails, or if jq filtering takes longer than 500 milliseconds, the request is rejected.
-
-The provided ABI signature is used to encode the jq-filtered JSON data.
-If encoding fails, the request is rejected.
-
-`LowestUsedTimestamp` is unlimited.
+1) Request validation:
+   - `url` is a non-empty absolute HTTPS URL.
+   - `httpMethod` is one of: GET, POST, PUT, PATCH, DELETE.
+   - `headers`, `queryParams`, and `body` are valid JSON objects when parsed from their string form.
+2) Network fetch constraints:
+   - Target host must be whitelisted.
+   - Any attempt to redirect results in rejection.
+   - End-to-end HTTP request completes within 5 seconds.
+   - HTTP response status indicates success (e.g., 2xx).
+3) Response JSON constraints:
+   - `Content-Type` is `application/json`.
+   - Body parses as valid JSON.
+   - Structural limits: total keys ≤ 5000 and maximum JSON nesting depth ≤ 10.
+4) jq post-processing:
+   - `postProcessJq` length ≤ 5000 characters.
+   - jq evaluation finishes within 1000 milliseconds.
+   - Shape/type compatibility:
+       - If `abiSignature` is a primitive type string, the jq result MUST be a single scalar compatible with that type.
+       - If `abiSignature` is a tuple JSON with named `components`, the jq result MUST be a JSON object containing all
+         component names as keys.
+5) ABI signature constraints:
+   - `abiSignature` length ≤ 5000 characters.
+   - `abiSignature` is either:
+       - a primitive Solidity type string (e.g., `"uint256"`, `"bool"`, `"string"`, etc.), or
+       - a JSON-encoded tuple descriptor with named `components` (no arrays or nested tuples supported).
+   - Any other shape (arrays, nested tuples, or invalid descriptors) is rejected.
+6) ABI encoding:
+   - The jq output is encoded strictly according to the provided `abiSignature` using standard Ethereum ABI rules.
+   - If encoding fails (e.g., type mismatch, missing fields, invalid string/bytes), the request is rejected.
