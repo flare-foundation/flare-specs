@@ -16,8 +16,11 @@ finally returns the structured data encoded with the provided ABI type specifica
 | `headers`       | `string`      | Stringified key-value pairs representing headers to be used in the request.                                                                         |
 | `queryParams`   | `string`      | Stringified key-value pairs representing query parameters to be appended to the URL of the request.                                                 |
 | `body`          | `string`      | Stringified key-value pairs representing the body to be used in the request.                                                                        |
-| `postProcessJq` | `string`      | jq filter used to post-process the JSON response from the URL.                                                                                      |
+| `postProcessJq` | `string`      | [jq](https://jqlang.org/manual/) filter used to post-process the JSON response from the URL.                                                        |
 | `abiSignature`  | `string`      | ABI signature specifier: either a primitive type string (e.g., "uint256") or a JSON tuple descriptor with named `components` describing the fields. |
+
+**Note**: response data consumers should carefully check _all_ fields in the request body as the API endpoint response
+data can be freely manipulated and rearranged during jq and abi encoding post-processing steps.
 
 ## Response body
 
@@ -25,9 +28,46 @@ finally returns the structured data encoded with the provided ABI type specifica
 |------------------|---------------|------------------------------------------------------------------|
 | `abiEncodedData` | `bytes`       | Raw binary data encoded to match the function parameters in ABI. |
 
-## Examples
+## Supported jq features
 
-### 1. Retrieve Id & Title of the last Todo item
+Only a restricted subset of `jq` is supported for the `postProcessJq` filter to ensure security and performance:
+
+|              Feature | Allowed syntax / examples                                                                                                                                                                                                                                                                                                   |
+|---------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|      Builtin filters | `map`, `select`, `flatten`, `length`, `keys`, `to_entries`, `from_entries`, `has`, `contains`, `add`, `join`, `tonumber`, `tostring`, `split`, `gsub`, `match`, `type`, `startswith`, `endswith`, `test`, `explode`, `implode`, `ascii_upcase`, `ascii_downcase`, `sort`, `sort_by`, `reverse`, `first`, `last`, `not`, `.` |
+|            Operators | `\|`, `,`, `//`, `and`, `or`, `==`, `!=`, `<`, `>`, `<=`, `>=`, `+`, `-`, `*`, `/`, `%`                                                                                                                                                                                                                                     |
+|             Identity | `.` or `.field`                                                                                                                                                                                                                                                                                                             |
+|         Conditionals | `if <cond> then <expr> elif <cond2> then <expr2> else <expr3> end`                                                                                                                                                                                                                                                          |
+|            Try/catch | `try <expr> catch <handler>`                                                                                                                                                                                                                                                                                                |
+|     Indexing/slicing | `.arr[0]`, `.posts[0:10]`, `.obj["key"]`                                                                                                                                                                                                                                                                                    |
+|            Iteration | `.items[] \| .id`                                                                                                                                                                                                                                                                                                           |
+|       Arrays/objects | `[expr, expr]`, `{id: .id, name: .name}`                                                                                                                                                                                                                                                                                    |
+| Strings with interp. | `"Hello \(.name)"`                                                                                                                                                                                                                                                                                                          |
+|   Variables (scoped) | `(.a as $x \| $x + 1)`                                                                                                                                                                                                                                                                                                      | 
+
+### Allowed jq filter examples
+
+```jq
+.
+.items | map(.id)
+map(select(.active == true)) | length
+.to_entries | from_entries
+.text | gsub("foo"; "bar") | ascii_upcase
+```
+
+### Disallowed jq filter examples
+
+```jq
+def add(a; b): a + b;         # user function definitions
+.foo = 1                      # assignment/update operators (e.g. =, |=)
+recurse(.)                    # unbounded recursion
+reduce .[] as $x (0; . + $x)  # reduce
+inputs                        # streaming side-effect
+```
+
+## Request examples
+
+### 1. Retrieve `id` & `title` of the last Todo item
 
 Request body:
 
@@ -63,7 +103,7 @@ Response body:
 }
 ```
 
-### 2. Verify the first Todo item is completed
+### 2. Verify the first Todo item is `completed`
 
 Request body:
 
@@ -96,31 +136,31 @@ For `lowestUsedTimestamp`, `0xffffffffffffffff` ($2^{64}-1$ in hex) is used.
 The request is accepted only if all the following checks pass:
 
 1) Request validation:
-   - `url` is a non-empty absolute HTTPS URL.
-   - `httpMethod` is one of: GET, POST, PUT, PATCH, DELETE.
-   - `headers`, `queryParams`, and `body` are valid JSON objects when parsed from their string form.
+    - `url` is a non-empty absolute HTTPS URL.
+    - `httpMethod` is one of: GET, POST, PUT, PATCH, DELETE.
+    - `headers`, `queryParams`, and `body` are valid JSON objects when parsed from their string form.
 2) Network fetch constraints:
-   - Target host must be whitelisted.
-   - Any attempt to redirect results in rejection.
-   - End-to-end HTTP request completes within 5 seconds.
-   - HTTP response status indicates success (e.g., 2xx).
+    - Target host must be whitelisted.
+    - Any attempt to redirect results in rejection.
+    - End-to-end HTTP request completes within 5 seconds.
+    - HTTP response status indicates success (e.g., 2xx).
 3) Response JSON constraints:
-   - `Content-Type` is `application/json`.
-   - Body parses as valid JSON.
-   - Structural limits: total keys ≤ 5000 and maximum JSON nesting depth ≤ 10.
+    - `Content-Type` is `application/json`.
+    - Body parses as valid JSON.
+    - Structural limits: total keys ≤ 5000 and maximum JSON nesting depth ≤ 10.
 4) jq post-processing:
-   - `postProcessJq` length ≤ 5000 characters.
-   - jq evaluation finishes within 1000 milliseconds.
-   - Shape/type compatibility:
-       - If `abiSignature` is a primitive type string, the jq result MUST be a single scalar compatible with that type.
-       - If `abiSignature` is a tuple JSON with named `components`, the jq result MUST be a JSON object containing all
-         component names as keys.
+    - `postProcessJq` length ≤ 5000 characters.
+    - jq evaluation finishes within 500 milliseconds.
+    - Shape/type compatibility:
+        - If `abiSignature` is a primitive type string, the jq result MUST be a single scalar compatible with that type.
+        - If `abiSignature` is a tuple JSON with named `components`, the jq result MUST be a JSON object containing all
+          component names as keys.
 5) ABI signature constraints:
-   - `abiSignature` length ≤ 5000 characters.
-   - `abiSignature` is either:
-       - a primitive Solidity type string (e.g., `"uint256"`, `"bool"`, `"string"`, etc.), or
-       - a JSON-encoded tuple descriptor with named `components` (no arrays or nested tuples supported).
-   - Any other shape (arrays, nested tuples, or invalid descriptors) is rejected.
+    - `abiSignature` length ≤ 5000 characters.
+    - `abiSignature` is either:
+        - a primitive Solidity type string (e.g., `"uint256"`, `"bool"`, `"string"`, etc.), or
+        - a JSON-encoded tuple descriptor with named `components` (no arrays or nested tuples supported).
+    - Any other shape (arrays, nested tuples, or invalid descriptors) is rejected.
 6) ABI encoding:
-   - The jq output is encoded strictly according to the provided `abiSignature` using standard Ethereum ABI rules.
-   - If encoding fails (e.g., type mismatch, missing fields, invalid string/bytes), the request is rejected.
+    - The jq output is encoded strictly according to the provided `abiSignature` using standard Ethereum ABI rules.
+    - If encoding fails (e.g., type mismatch, missing fields, invalid string/bytes), the request is rejected.
