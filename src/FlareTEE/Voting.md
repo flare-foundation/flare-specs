@@ -1,0 +1,78 @@
+# Voting
+In the FlareTEE architecture, *voting* is the process in which enough signatures from data providers and cosigners are collected to prepare an appropriately signed action.
+Data providers and cosigners send their signatures validating an instruction to the TEE proxy; once the proxy has received sufficient weight of signatures, it passes the action to the corresponding TEE machine.
+
+## Voting Process
+A *voting process* is initialized when a data provider sends a signed instruction on an active signing policy to a TEE proxy. 
+Here, active means either of the last two signing policies relayed to the TEE machine. 
+Once a vote process is initialized, it is active for two minutes, or until the vote has passed with enough signatures. 
+The amount of required signatures depends on the corresponding instruction, which includes parameters defining the weight of data provider signatures and number of cosigner signatures required. 
+Once enough signatures have been received, the vote passes successfully, and the instruction can be turned into an action. 
+On the other hand, if the vote process ends via time out, the vote has failed and no action is taken.
+
+The voting process for an instruction is identified by the relevant `instructionHash`.
+ There may be several concurrent voting processes under the same `instructionID`, but only one will reach the signing threshold first and thus be executed by the TEE machine.
+  At that point, each other voting process under the same `instructionID` are invalidated. 
+
+### Tracking a Vote
+The state of a vote process is tracked at the TEE proxy, which stores information given to it by the data provider who started the vote, and tallies the current state of the votes (signatures) received by providers and cosigners. 
+Formally, the data structure stored at the TEE proxy contains:
+
+- `instruction`: The instruction with an empty additionalVariableMessage [why?].
+- `threshold`: Threshold weight of signatures required given the current signing policy. Set on initialization of the voting process, up to a minimum of 30$\%$ weight.
+- `cosigners`: List of cosigners permitted to sign the instruction.
+- `cosignerThreshold`: The threshold number of cosigner signatures required.
+- `weight`: Total accumulated weight of provider and cosigner signatures thus far.
+- `startTime`: The timestamp at which the first vote was received at the TEE proxy, measured up to the second.
+- `endTime`: The timestamp after which no further votes will be accepted, also measured up to the second.
+- `proposer`: The (Flare) address that initialized the voting process.
+- `votes`: Tracks the list of current voters. For each voter, the information `voterAddress` is stored, along with the list (`sequence`, `signature`, `relativeTime`, `additionalVariableMessage`). Relative time is the time after `startTime` that the vote was received, measured in seconds.
+- `signatureCount`: Count of received signatures. This is used internally, to store the `sequence` field in votes.
+- `voteHash`: A hash used to prevent tampering with the voter sequence. See the next section for more details.
+- `status`: Initially set to active when the vote is initialized, then set to closed by the end of the voting process. At this point, no more votes are accepted.
+
+### Voting Transparency
+The voting process requires Flare's data providers to provide votes, including signed instructions, to the TEE proxies.
+Since the data providers are rewarded for completing this process, the TEE proxy must store and provide information about the arrival time of the signatures. 
+This is the information stored in `voteHash`, an iteratively computed hash tracking information about vote arrival. Information about how this data is used for rewarding can be found in [cite rewarding].
+
+On arrival of the first vote, the initial `voteHash` is computed as a hash of an ABI encoding of the Solidity struct containing the instruction ID and hash, as well as the ID of the TEE and reward epoch:
+
+```Solidity
+struct VoteSequenceInit {
+bytes32 instructionId;
+bytes32 instructionHash;
+uint32 rewardEpochId;
+address teeId;
+}
+```
+This `voteHash` is given a sequence number of $0$. 
+On arrival of subsequent votes, a new `voteHash` is computed by hashing the ABI encoding of the Solidity struct `voteSequenceNext` defined as:
+
+``` Solidity
+struct VoteSequenceNext {
+bytes32 voteHash;
+uint64 sequence;
+bytes signature;
+bytes32 additionalVariableMessageHash
+uint64 timestamp;
+}
+```
+with each subsequent vote hash given a sequence number one higher than the previous. 
+The `signature`, `additionalVariableMessageHash`, and `timestamp` fields are those taken from the incoming vote. 
+
+Each time a new vote arrives and a new `voteHash` is computed, the TEE proxy signs a hash of the `VoteReceipt` message, again an ABI encoding of a Solidity struct containing
+
+```Solidity
+struct VoteReceipt {
+bytes32 instructionHash;
+uint64 sequence;
+bytes signature;
+bytes32 additionalVariableMessageHash
+uint64 timestamp;
+bytes32 voteHash;
+}
+```
+with the fields each filled by those of the corresponding vote. 
+Later, the TEE machine itself signs the final `voteHash`; between this signature and the signer data in the action result [reference], all intermediate hashes can be reconstructed. 
+This allows signer data published on-chain for rewarding purposes to be verified.

@@ -1,8 +1,11 @@
 # TEE Ownership
-TEE ownership on Flare is decentralized: operators of TEE machines can register their devices on the network to participate in FlareTEE's protocols. Owners are incentivized to participate in FlareTEE via a rewarding mechanism described in [cite]. This page documents the responsibilities of TEE owners on Flare, including registration, management, and upgrading.
+TEE ownership on Flare is decentralized: operators of TEE machines can register their devices on the network to participate in FlareTEE's protocols. 
+Owners are incentivized to participate in FlareTEE via a rewarding mechanism described in [cite]. 
+This page documents the responsibilities of TEE owners on Flare, including registration, management, and upgrading.
 
 ## Registration
-Registration is the process by which a TEE owner deploys their TEE machine for operation within the Flare network. When a TEE is registered, it is registered to a specific TEE extension [cite], and not the network as a whole. To register a TEE, its owner submits a transaction `register(extensionID, publicKey, teeProxyId, teeURL,codeHash,platform)` to the `TEEMachineRegistry` smart contract with the following information:
+Registration is the process by which a TEE owner deploys their TEE machine for operation within the Flare network.
+When a TEE is registered, it is registered to a specific TEE extension [cite], and not the network as a whole. To register a TEE, its owner submits a transaction `register(extensionID, publicKey, teeProxyId, teeURL,codeHash,platform)` to the `TEEMachineRegistry` smart contract with the following information:
 
 1. **extensionID**: The ID of the extension [ref extension] to which the TEE is registered.
 2. **publicKey**: The public key of the TEE, corresponding to its identity.
@@ -12,7 +15,8 @@ Registration is the process by which a TEE owner deploys their TEE machine for o
 6. **platform**: The attestation platform for the TEE, which determines how an attestation of its state should be encoded.
 
 
-Additionally, to complete registration the TEE needs to provide the `TeeAvailabilityCheck` attestation proof `toProduction(proof)`, confirming that its state is correct, as described in the FTDC section [cite]. If a TEE has attempted to register but has not provided a valid attestation proof, it has the status *pre-registered* on the network; once the attestation proof is received, the status is set to *production*.
+Additionally, to complete registration the TEE needs to provide the `TeeAvailabilityCheck` attestation proof `toProduction(proof)`, confirming that its state is correct, as described in the FTDC section [cite].
+If a TEE has attempted to register but has not provided a valid attestation proof, it has the status *pre-registered* on the network; once the attestation proof is received, the status is set to *production*.
 
 The `TEEMachineRegistry` smart contract keeps a record of each registered TEE, containing the (possibly updated) information in its registration as well as additional data:
 
@@ -22,7 +26,8 @@ The `TEEMachineRegistry` smart contract keeps a record of each registered TEE, c
 
 ## Management
 
-The Flare address of the TEE owner is responsible for managing the TEE on the network. The following set of functions are available to the TEE owner, to be sent to the `TEEMachineRegistry` smart contract:
+The Flare address of the TEE owner is responsible for managing the TEE on the network.
+The following set of functions are available to the TEE owner, to be sent to the `TEEMachineRegistry` smart contract:
 
 1. `register(extensionID, publicKey, teeProxyId, teeURL,codeHash,platform)`: As described above.
 2. `toProduction(proof)`: An FTDC proof that the TEE is running correctly. Upon submitting this transaction, the status of the TEE machine changes from pre-registered to production.
