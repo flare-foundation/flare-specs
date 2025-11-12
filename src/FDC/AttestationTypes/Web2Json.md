@@ -19,8 +19,7 @@ finally returns the structured data encoded with the provided ABI type specifica
 | `postProcessJq` | `string`      | [jq](https://jqlang.org/manual/) filter used to post-process the JSON response from the URL.                                                        |
 | `abiSignature`  | `string`      | ABI signature specifier: either a primitive type string (e.g., "uint256") or a JSON tuple descriptor with named `components` describing the fields. |
 
-**Note**: response data consumers should carefully check _all_ fields in the request body as the API endpoint response
-data can be freely manipulated and rearranged during jq and abi encoding post-processing steps.
+> ⚠️ In addition to HTTP request parameters, response consumers should also carefully verify the `postProcessJq` and `abiSignature` fields, as the API response JSON data can be freely manipulated during the post-processing steps.
 
 ## Response body
 
