@@ -25,14 +25,19 @@ An instruction event emitted on Flare has a specific data structure, as outlined
 - `cosignerThreshold`: The threshold of cosigner signatures required to accept the instruction. [security flaw: providers edit this?]
 - `fee`: Fee paid by the user on Flare for the instruction.
 
-### Thresholds and Cosigners
+### Thresholds
 In order for an instruction to be accepted at the TEE proxy, a threshold of the weight of Flare's data providers must submit the signed instruction.
 The exact weight required depends on the extension and type of instruction, but will typically be any amount in excess of $50\%$ of the weight of data providers.
 
+### Cosigners 
 Similarly, certain extensions and instructions permit the use of *cosigners* to increase security. 
 A cosigner is a Flare address that the user who issued the instruction event assigns to increase the security of the instruction. 
 In an instruction event with `cosigners` and `cosignerThreshold` event included, the TEE proxy will only accept the corresponding TEE instruction upon receiving both the threshold weight of data provider signatures and an amount of cosigner signatures exceeding `cosignerThreshold` from the designated cosigner addresses. 
 The possible addresses valid to be included `cosigners` depends on the extension and instruction; some extensions may indicate valid cosigner addresses, but in other cases any address can be used.
+
+Note that it is in theory possible for a weighted majority of data providers to delete or change the cosigner fields in a given instruction to circumvent the extra security provided.
+Each extension that intends to use cosigner fields must prepare its own protection against such an attack.
+For example, requiring the action response [reference] to include the cosigner signatures allows a contract on Flare to confirm that the cosigners signed the instruction.
 
 ## TEE Instructions
 After an instruction event has been emitted on Flare, it is the duty of the data providers, and any optional cosigners, to respond to the event by first preparing a *TEE instruction*, then signing this new instruction and forwarding it to the appropriate TEE(s). 
@@ -82,4 +87,3 @@ The payload for a direct instruction is simpler than a normal instruction, and c
 - `message`.
 
 Note that in some cases TEEs will still only follow direct instructions that have been signed by an appropriate number of signees; for example, in cases where the governance of an extension is via a multisig, the TEE will only accept a direct instruction in response to receiving a threshold number of signatures for it.
-
