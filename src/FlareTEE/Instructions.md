@@ -20,43 +20,50 @@ An instruction event emitted on Flare has a specific data structure, as outlined
 - `rewardEpochID`: The ID of the reward epoch (and thus signing policy) of the instruction, used by the TEEs for checking that the instruction is signed by enough weight of providers.
 - `opType`: The type of operation issued, from a preset list for the extension.
 - `opCommand`: The type of command issued, letting the data providers know how to process the instruction.
-- `message`: Binary data representing the parameters for the specific command issued; this is the information providers and cosigners use to build the instruction sent to the TEE.
+- `message`: Binary data representing the parameters for the specific command issued; this is the information providers and cosigners use to build the instruction that they send to the TEE.
 - `cosigners`: An optional parameter listing the set of cosigners for the command (see below for more details).
-- `cosignerThreshold`: The threshold of cosigner signatures required to accept the instruction. [security flaw: providers edit this?]
+- `cosignerThreshold`: The threshold of cosigner signatures required to accept the instruction.
 - `fee`: Fee paid by the user on Flare for the instruction.
 
 ### Thresholds
-In order for an instruction to be accepted at the TEE proxy, a threshold of the weight of Flare's data providers must submit the signed instruction.
+In order for an instruction to be accepted at the TEE proxy, and thus sent to the TEE machine, a threshold of the weight of Flare's data providers must submit the signed instruction.
 The exact weight required depends on the extension and type of instruction, but will typically be any amount in excess of $50\%$ of the weight of data providers.
+This process is known as [voting](Voting.MD).
 
 ### Cosigners 
 Similarly, certain extensions and instructions permit the use of *cosigners* to increase security. 
-A cosigner is a Flare address that the user who issued the instruction event assigns to increase the security of the instruction. 
-In an instruction event with `cosigners` and `cosignerThreshold` event included, the TEE proxy will only accept the corresponding TEE instruction upon receiving both the threshold weight of data provider signatures and an amount of cosigner signatures exceeding `cosignerThreshold` from the designated cosigner addresses. 
-The possible addresses valid to be included `cosigners` depends on the extension and instruction; some extensions may indicate valid cosigner addresses, but in other cases any address can be used.
+A cosigner is a Flare address that the user who issued the instruction event assigns to vote to increase the security of the instruction. 
+In an instruction event with the `cosigners` and `cosignerThreshold` fields included, the TEE proxy will only accept the corresponding TEE instruction upon receiving both the threshold weight of data provider signatures and an amount of cosigner signatures exceeding `cosignerThreshold` from the designated cosigner addresses. 
+The possible addresses valid to be included `cosigners` depends on the extension and instruction; some extensions may indicate valid cosigner addresses, but in other cases any addresses can be used.
 
 Note that it is in theory possible for a weighted majority of data providers to delete or change the cosigner fields in a given instruction to circumvent the extra security provided.
 Each extension that intends to use cosigner fields must prepare its own protection against such an attack.
-For example, requiring the action response [reference] to include the cosigner signatures allows a contract on Flare to confirm that the cosigners signed the instruction.
+For example, requiring the [action response](Actions.md) to include the cosigner signatures allows a contract on Flare to confirm that the cosigners signed the instruction.
 
 ## TEE Instructions
-After an instruction event has been emitted on Flare, it is the duty of the data providers, and any optional cosigners, to respond to the event by first preparing a *TEE instruction*, then signing this new instruction and forwarding it to the appropriate TEE(s). 
-A TEE receives this instruction from a data provider (or cosigner) in two parts, a package $\text{data}$ containing the instruction and a signature $\mathrm{sign}_{\mathrm{sk}}$, a signature over the data performed using the senders secret key.
+After an instruction event has been emitted on Flare, it is the duty of the data providers, and any optional cosigners, to respond to the event by preparing a *TEE instruction*, then signing this instruction and forwarding it to the appropriate TEE(s) via their proxy servers. 
+Additionally, the providers and cosigners augment the instruction with the required information needed by the TEE machine to complete the required action.
+
+### Instruction Format
+Thus, a TEE proxy receives this instruction from a data provider (or cosigner) in two parts: firstly a package $\text{data}$ containing the instruction and information needed by the TEE machine to implement it.
+Additionally, the proxy receives a signature $\mathrm{sign}_{\mathrm{sk}}$ over the instruction data performed using the senders secret key.
+
 
 ### Data Format
 The package $\text{data}$ contains all the information that the TEE machine needs to execute the instruction. The information in the package is arranged as 
 
 - `instructionId`: As in the instruction event.
 - `teeID`: The unique identity of the destination TEE machine.
-- `timestamp`: The time stamp of the block in which the instruction was issued.
+- `timestamp`: The timestamp of the block in which the instruction was issued.
 - `rewardEpochID`: The ID of the reward epoch in which the instruction was issued.
 - `opType`: As in the instruction event.
 - `opCommand`: As in the instruction event.
 - `originalMessage`: The `message` from the instruction event.
 - `cosigners`: As in the instruction event.
 - `cosignerThreshold`: As in the instruction event.
-- `additionalFixedMessage`: Binary data depending on the command.
-- `additionalVariableMessage`: Binary data depending on the command [are these two essentially the instruction? Presumably] 
+- `additionalFixedMessage`: Binary data depending on the command, fixed accross all providers and cosigners.
+- `additionalVariableMessage`: Binary data depending on the command, specific to the data provider or cosigner.
+
 
 ### Signature Format
 To compute the signature, first the following struct defining the command is ABI encoded:
@@ -78,9 +85,9 @@ bytes additionalFixedMessage;
 then, the ABI encoding is hashed into `instructionHash`. Finally, the signature is taken over the data $\mathrm{Hash}($`instructionHash`, `additionalVariableMessage`$)$. 
 
 ## Direct Instructions
-In certain circumstances, governance or administrating addresses are able to directly instruct participating TEE machines, circumventing the need for commands to be signed and packaged by data providers and cosigners. 
+In certain circumstances, governance or administrating addresses are able to directly instruct participating TEEs via their proxies, circumventing the need for commands to be signed and packaged by data providers and cosigners. 
 Such a command is known as a *direct instruction*. 
-The payload for a direct instruction is simpler than a normal instruction, and consists of only three parts, defined in the same manner as above:
+The payload for a direct instruction sent to the TEE proxy is simpler than a normal instruction, and consists of only three parts, defined in the same manner as above:
 
 - `opType`
 - `opCommand`
