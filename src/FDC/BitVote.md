@@ -36,6 +36,21 @@ The consensus bit-vector then determines the set of requests that are contained 
 
 ## Bit Vote Algorithm
 
+The goal of Bit Vote algorithm is to to find a set $R$ of request that fulfills the following: Let
+
+$T$ be the total weight of the data providers,
+$S_R$ be the weight of the providers supporting all the requests in set $R$,
+and $F_R$ be the sum of fees of the requests in the set $R$.
+
+We define the value of $R$ as
+
+$$
+V_R = \min{\{0.8 \times T, S_R\}} \times F_R
+$$
+
+we want to find the set with the highest $V_R$.
+The search space can be very large thus we use Branch and Bound technique.
+
 ### Inputs and Outputs
 
 The bit-voting algorithm takes the following inputs:
@@ -108,7 +123,10 @@ The aim of the branch and bound stage is to find the best consensus bit-vector f
 Each node has a value, defined as:
 
 $$
-\mathrm{Value}(\mathrm{fees}, \mathrm{weight}) = (\mathrm{cappedWeight} * \mathrm{fees}, \mathrm{weight} * \mathrm{fees}),
+
+\mathrm{Value}(\mathrm{fees}, \mathrm{weight}) = (\mathrm{cappedWeight} _ \mathrm{fees}, \mathrm{weight} _ \mathrm{fees}),
+
+
 $$
 
 where $\mathrm{cappedWeight} = \mathrm{min}\{\mathrm{weight}, 0.8 * \mathrm{totalWeight}\}.$
@@ -132,13 +150,12 @@ A node at depth $k$ that is not a leaf has two children:
 
 The tree is then traversed to its leaves to find candidate consensus bit-vectors.
 A bound CurrentBound on the value of the best tested bit-vector is set to an input bound (which could be the empty bound $\mathrm{Value}(0,0)$).
- As described below, the branches of the tree are traversed, starting from the root node, until either the whole tree has been searched or the maximum step count is reached. 
-In what follows, the most recently visited node with an unexplored branch is referred to as the *next path* node:
+As described below, the branches of the tree are traversed, starting from the root node, until either the whole tree has been searched or the maximum step count is reached.
+In what follows, the most recently visited node with an unexplored branch is referred to as the _next path_ node:
 
 - If the weight of the node is less than half the total weight, return to the next path node and begin down the unexplored branch.
 - If a node has a value less than or equal to CurrentBound, return to the next path node and begin down the unexplored branch.
 - If a branch is traversed to the leaf, compute its value. If the value is greater than CurrentBound we set CurrentBound to the value. Then, return to the next path node and begin down the unexplored branch.
-
 
 When the search reaches the maximum number of steps or the whole space has been searched, the algorithm outputs the bit-vector corresponding to the visited leaf with the highest value, with ties broken by selecting the first visited.
 If no leaf surpasses the initial bound, an empty solution is returned.
@@ -202,3 +219,4 @@ The bit voting algorithm proceeds as follows:
     In the case of a tie, the solution from the first method is returned.
 
 5.  Return the candidate consensus bit-vector with the highest value according to steps 3 and 4.
+    $$
