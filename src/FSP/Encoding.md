@@ -25,7 +25,6 @@ Contains the resulting data of a voting round, encoded into a Merkle tree root h
 | **Field**                                 | **Size (bytes)**    | **Description**                                                                                                |
 | ----------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
 | SigningPolicy                             | Variable            | Encoded signing policy.                                                                                        |
-| ProtocolId                                | 1                   | Protocol identifier.                                                                                           |
 | [ProtocolMerkleRoot](#protocolmerkleroot) | 38                  |                                                                                                                |
 | SignatureCount                            | 2                   | Number of signatures (big-endian).                                                                             |
 | Signatures                                | SignatureCount * 67 | Concatenated array of [ECDSASignatureWithIndex](#ecdsasignaturewithindex). Indices must be in ascending order. |
