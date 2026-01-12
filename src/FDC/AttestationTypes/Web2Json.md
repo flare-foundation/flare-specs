@@ -5,7 +5,7 @@
 An attestation type that fetches JSON data from the given URL, applies a jq filter to transform the returned result, and
 finally returns the structured data encoded with the provided ABI type specification.
 
-**Supported sources:** WEB2
+**Supported sources:** [Mainnet](https://github.com/flare-foundation/verifier-indexer-api/blob/main/src/config/web2/web2-json-sources.ts), [Testnet](https://github.com/flare-foundation/verifier-indexer-api/blob/main/src/config/web2/web2-json-test-sources.ts)
 
 ## Request body
 
