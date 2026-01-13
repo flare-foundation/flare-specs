@@ -1,15 +1,18 @@
 # Key Management
-In order to ensure availability of the private keys managing PMW accounts on external chains, two systems are in place.
-Firstly, TEEs provide *key existence* proofs to demonstrate the existence of private keys.
-Secondly, in case of any unexpected issues with the TEE machines, a key backup process is in place to restore keys.
+In order to ensure consistent availability of the keys managing PMW accounts on external chains, two systems are in place.
+Firstly, TEEs provide *key existence* proofs to verify the existence of private keys.
+Secondly, in case of any unexpected issues with the TEE machines, a key backup process is in place to restore lost keys.
 This page describes these processes.
 
 ## TEE Key Existence Proof
-Upon generation of a key for a PMW, the TEE machine on which the key was generated returns a key existence proof to the corresponding TEE proxy, from which the proof can be fetched and submitted on Flare.
-The purpose of this proof is to verify that the key exists within the machine's memory.
-Additionally, these proofs are periodically fetched from the machine by the TEE proxy to ensure that the key has not been lost. 
+Upon generation of a key for a PMW, the TEE machine also generates and returns a *key existence proof*.
+A key existence proof is a data structure containing the key and relevant meta data and signed by the TEE that holds the key.
+The TEE machine sends the proof to its TEE proxy, from which the proof can be fetched and submitted on Flare.
+The purpose of the proof is to verify that the key exists within the machine's memory.
+To this end, fresh proofs are periodically requested by the TEE proxy to ensure that the key has not been lost. 
 
-The format of the proof is a signed `TeeKeyExistence` solidity struct, signed by the TEE's public identity.
+### Key Existence Proof Data Structure
+The format of the proof is a signed `TeeKeyExistence` solidity struct signed by the TEE's public identity.
 The format of the solidity struct is
 
 ``` Solidity
@@ -27,22 +30,28 @@ bytes32 settingsVersion;
 bytes settings;
 }
 ```
-where `nonce` is a fresh nonce, `restored` is set to True if the key was restored on to the TEE machine [and otherwise false?], `configConstants` describes configuration of the private key data structure, and the final two fields describe configurations of the TEE settings.
-The rest of the fields are as described and used in [cite projects], identifying properties of the wallet and key.
+where `nonce` is a fresh nonce, `restored` is set to True if the key was restored on to the TEE machine (and otherwise false) ,`configConstants` describes configuration of the private key data structure, and the final two fields describe configurations of the TEEs settings.
+The rest of the fields are defined by the [project](Projects.md) on which the key is active, and identify properties of the wallet and key.
+More details on these fields can be found [here](Projects.md).
 
 ## Key Backup
-TEE machines backup private keys stored in their memory.
-Whenever a new private key is generated, the TEE machine triggers a back up process for the key.
-Similarly, whenever a new signing policy is relayed to it, the TEE machine triggers a new backup process for each key it stores for every PMW it participates in. 
+TEE machines backup keys that they generate for signing operations from PMW addresses.
+Whenever a new key is generated, the TEE machine triggers a back up process for the key.
+Similarly, whenever a new signing policy is relayed to it, the TEE machine triggers a new backup process for each key it stores across all PMW accounts.
 
-The backup process consists of two rounds of secret sharing: first, a $(2,2)$-secret sharing scheme splits the key in to two shares, a data provider share and a key admin share.
-The data provider share is then split among the data providers so that $66\%$ of the weight of data providers are required to recover it.
-The key admin share is also split, with the amount of admins required to recover the key a parameter set by the owner of the corresponding wallet.
-To recover a key on a designated TEE, the providers and admins send their shares to the TEE, which recovers both the data provider and the key admin shares, and thus the original key.
+### Backup Overview
+The backup process for a key is triggered when the key is generated or the signing policy is updated at the TEE machine that holds the key.
+It consists of two rounds of secret sharing: first, a $(2,2)$-secret sharing scheme splits the key in to two shares, a data provider share $S_\mathrm{dp}$ and a key admin share $S_\mathrm{ka}$.
+The two shares are then each split a second time.
+The data provider share $S_\mathrm{dp}$ is split with each provider receiving a proportion of the shares matching their weight, so that a sufficient weight of data providers can recover the key.
+The key admin share $S_\mathrm{dp}$ is split with each admin receiving a single share, such that the amount of admins required to recover the key corresponds to a parameter set by the owner of the wallet.
+To recover a key, a key recovery TEE is designated.
+The providers and admins send their shares to the TEE, which recovers both the data provider and the key admin shares, and then the original key.
 The details are given below.
 
 ### Backup Data and Metadata
-Key backups are identified by three objects: the *backup metadata*, the *backup ID*, and the *backup hash*.
+Data providers and key admins typically store several key backups for different keys. 
+Each key backup is identified by three objects: the *backup metadata*, the *backup ID*, and the *backup hash*.
 These store information regarding the key itself and the TEE machine on which the key is stored. 
 
 The backup metadata consists of the following fields:
@@ -54,12 +63,12 @@ The backup metadata consists of the following fields:
 -  `keyType`: The key type of the private key. 
 - `rewardEpochId`: The ID of the signing policy on which the key was backed up, defining which data providers store backup shares.
 - `publicKey`: The public key of the backed up private key.
--  `configConstants`: The key config constants of the key, which include
-	- `dpThreshold`: The threshold weight required for recovering the data providers? share of the key.
-	- `adminsPublicKeys`: The list of admin public keys
-	- `adminsThreshold`: The threshold for operations with the admin public keys
-	- `cosigners`: The list of cosigner addresses for the key, if included [is this still used?]
-	- `cosignersThreshold`: The threshold for cosigning
+-  `configConstants`: The key config constants of the key, as set by the project owner. These include:
+	- `dpThreshold`: The threshold weight required for recovering the data providers' share of the key.
+	- `adminsPublicKeys`: The list of admin public keys.
+	- `adminsThreshold`: The threshold for operations with the admin public keys.
+	- `cosigners`: The list of cosigner addresses for the key, if included [is this still used?].
+	- `cosignersThreshold`: The threshold for cosigning.
 - `randomNonce`: A random nonce generated by the TEE machine at the time of backup creation.
 
 The backup ID is defined from a set of fields from the backup metadata, specifically:
@@ -80,63 +89,70 @@ uint256 randomNonce;
 The backup hash is then defined as $\mathrm{hash}(\mathrm{backupID})$, where the backup ID is ABI encoded to compute the hash.
 
 ### Backup Procedure
-Along with the key which is being backed up, the backup process on a TEE machine takes as input:
+The backup procedure for a key $K$ on a project $P$ stored on a TEE with identity $\mathrm{TEE}_\mathrm{id}$ is triggered in two cases:
+- When $K$ is generated by the TEE.
+- When the signing policy at $\mathrm{TEE}_\mathrm{id}$ is updated. 
 
-- All fields used in the backup meta data.
-- The signing policy on which the key is to be backed up.
+Alongside the key that is being backed up, the backup process triggered by $\mathrm{TEE}_\mathrm{id}$ takes as input:
 
-On input a secret key $K$ to be backed up, the TEE machine performs the following  procedure:
+- All fields used in the backup metadata.
+- The signing policy on which the key is to be backed up. This is the current signing policy at the TEE when the key is generated or the new signing policy if the backup is triggered by an update.
 
-1. A $(2,2)$-Shamir secret sharing scheme is performed, giving shares $S_{dp}$ and $S_{ka}$, the data provider and key admin shares of the secret.
-2. The data provider share $S_{dp}$ is split into $1000$ shares using a $(1000, \lfloor \mathrm{dpThrehsold} \cdot 1000 \rfloor)$-Shamir secret sharing scheme into shares ${S_{dp}}^1, \dots, {S_{dp}}^{1000}$. Each data provider is then assigned a proportion of these shares relative to its weight in the signing policy, rounded down, such that the $j$th data provider is assigned $\lfloor W_j \cdot 1000 \rfloor$ [check normalization] shares of the secret.
-3. Similarly, the key admin share $S_{ka}$ is split into a number of shares $N_{\text{admin}}$ equal to the number of key admins using an $(N_{\text{admin}}, \mathrm{adminsThreshold})$-Shamir secret sharing scheme. The $i$th admin is assigned a share ${S_{ka}}^i$.
-4. For each data provider and key admin, a packaged is prepared containing share data and some relevant meta data. This package is then encrypted under the receiving entities public key. The encrypted package contains:
-	 - `shareData`: The share or shares for the recipient.
+To backup a key $K$, the TEE machine performs the following  procedure:
+
+1. A $(2,2)$-Shamir secret sharing scheme of $K$ is performed, giving shares $S_\mathrm{dp}$ and $S_\mathrm{ka}$, the data provider and key admin shares of the secret.
+2. The data provider share $S_\mathrm{dp}$ is split into $1000$ shares using a $(1000, \lfloor \mathrm{dpThrehsold} \cdot 1000 \rfloor)$-Shamir secret sharing scheme into shares ${S_\mathrm{dp}}^1, \dots, {S_\mathrm{dp}}^{1000}$. Each data provider is then assigned a proportion of these shares relative to its weight in the signing policy, rounded down, such that the $j$th data provider with weight $W_j$ is assigned $\lfloor W_j \cdot 1000 \rfloor$ shares of the secret.
+3. Similarly, the key admin share $S_\mathrm{ka}$ is split shares $${S_\mathrm{ka}}^1, \dots, {S_\mathrm{ka}}^{N_\text{admin}}$ equal to the number of key admins using an $(N_{\text{admin}}, \mathrm{adminsThreshold})$-Shamir secret sharing scheme. The $i$th admin is assigned a share ${S_\mathrm{ka}}^i$.
+4. For the each data provider and key admin, a package $\mathrm{pack}_i$ is prepared containing share data and relevant meta data. This package is then encrypted under the receiving entities public key $\mathrm{pk}_i$. Formally, the package contains:
+	 - `shareData`: The share or shares for the recipient $i$.
 	 - `backupID`: The ID of the backup.
 	 - `holdersPublicKey`: The public key of the entity receiving the share.
 	 - `signature`: The signature of the above with the private key that is being backed up.
-5. Each encrypted package is combined with the recipients public key into a *holder backup package* for each recipient.
-6. All holder backup packages and metadata are combined with a signature over the backup packages and metadata performed by the key being backed up and a signature performed by the TEE's identity key [of what precisely?] into a single *backup package*:
+5. Each encrypted package is combined with the recipients public key into a *holder backup package*, $\mathrm{Backup}_i = (\text{Enc}_{\mathrm{pk}_i}(\mathrm{pack}_i), \mathrm{pk}_i)$.
+6. All holder backup packages and the backup metadata are combined into a single package, also containing two signatures: one performed by the key being backed up and one by the TEE's identity key into a single *backup package* [check this again later once finalized]:
 	- `holderBackupPackages`
 	- `backupMetadata`
 	- `signature`
 	- `TeeSignature`
-7. The backup package is distributed to the TEE proxy, from which individual shares can be retrieved by the recipients [check].
+7. The backup package is distributed to the TEE proxy, from which it can be retrieved by the recipients.
 
 ### Key Restoration Procedure
-The key restoration process is triggered when [who?] calls the `backupRestore` function, whose parameters are:
+The key restoration process is triggered when any Flare user calls the `backupRestore` function on the `TeeWalletBackupManager`, whose parameters are:
 
 - `backupID`: The ID of backup of the key to be restored.
-- `backupURL`: [unexplained?]
-- `TeeID`: The ID of the machine on which the key is to be restored on. Note that this is not the same as the TEE that backed up the key.
-- `nonce`: [also unexplained?]
+- `backupURL`: The URL on which the backup package is hosted. If no such URL exists, the restoring user fetches the backup package from the TEE proxy and uploads it to the URL.
+- `teeID`: The ID of the machine on which the key is to be restored on. Note that this is not the same as the TEE that backed up the key.
+- `randomNonce`: The nonce used in the backup procedure.
 
-Once the restore function is called, the following procedure is followed:
+The restore function then works as follows:
 
-1. Each data provider and key admin who holds a backup package for the backup URL extracts its holder backup package.
-2. They each decrypt their key share and then encrypt it under the TEE ID of the TEE machine on which the key is being restored.
-3. Once their packages are prepared, they send a message in the form of an instruction to the relevant TEE proxy containing the backup metadata as the `additionalFixedMessage` and the encrypted share as the `additionalVariableMessage`.
-4. The TEE proxy sets the `submissionTag` field in the action structure to `end`, keeping voting open for the maximal possible duration. If it has received enough shares from both data providers and key admins such that key recovery is possible, it prepares the recovery action and submits it to the TEE machine.
-5. The TEE machine completes the action, decrypting all key shares and reassembling the original key. It returns an action response to the TEE proxy, indicating the success (or not) of the recovery process, as well as a list of entities who returned invalid key shares, if any.
-6. The key can now be confirmed using a `TeeKeyExistence` proof.
+1. Each data provider and key admin who holds a backup package for the backup ID extracts its holder backup package.
+2. They each decrypt their key share found in their backup package $\mathrm{Backup}_i$ to recover their key share(s). For example, the $j$th key admin recovers the share ${S_\mathrm{ka}}^j$.
+3. Next, the key share is encrypted under the public key corresponding to TEE ID of the TEE machine on which the key is being restored, e.g. computing $\mathrm{Enc}_{\mathrm{TEE}_\mathrm{id}}({S_\mathrm{ka}}^j)$.
+4. Once their encryption is prepared, they send an [instruction](Instructions) to the relevant TEE proxy containing the backup metadata as the `additionalFixedMessage` and the encrypted share as the `additionalVariableMessage`.
+5. The TEE proxy sets the `submissionTag` field in the action structure to `end`, keeping voting open for the maximal possible duration. At the end of voting, assuming it received enough shares from both data providers and key admins such that key recovery is possible, it prepares the recovery action and submits the encrypted shares to the TEE machine.
+6. The TEE machine completes the action, decrypting all key shares, recovering shares of the initial split $S_\mathrm{dp}$ and $S_\mathrm{ka}$, from which it recovers $K$.
+7. Once the action is complete, the TEE machine returns an action response to the TEE proxy, indicating the success (or not) of the recovery process. Additionally, the machine returns a list of entities who returned invalid key shares, if any.
+8. The key can now be confirmed using a `TeeKeyExistence` proof.
 
-Note that in step 4 the TEE proxy has no way of knowing whether or not the data providers and key admins provided valid key shares or not; hence the action response includes this list.
+Note that in steps 4 and 5 the TEE proxy has no way of knowing whether or not the data providers and key admins provided valid key shares or not; hence the action response includes this list.
 If too many key shares were invalid, key recovery will fail, which is also included in the action response. 
 
 ## Key and Backup Manager Contracts
-Keys and backups stored on TEEs are managed by users through two contracts: the `TeeWalletKeyManager` contract and the `TeeWalletBackupManager` contract.
+Keys and backups are managed by users through two contracts: the `TeeWalletKeyManager` contract and the `TeeWalletBackupManager` contract.
 This section lists the available contract calls.
 
 ### TeeWalletKeyManager Contract Calls
+Unless otherwise specified, calls to the wallet key manager contrat are only valid if made by the owner of the wallet. The calls include:
 
-- `addKey(walletId, teeId)`:  Creates a key definition structure with the next sequential key ID for the wallet ID and issues the `KEY_GENERATE` instruction. This can only be called by the wallet owner.
-- `confirmKey(proof)`: Confirms the existence of a key on a given TEE based on a `TeeKeyExistence` proof. This can only be called by the wallet owner.
--  `deleteKey(teeId, walletId, keyId)`: Deletes the specified key from the specified TEE machine by triggering the `KEY_DELETE` instruction. [it doesnt say that only the owner can trigger this but presumably that is the case?]
-- `cleanUpTeeIds(walletId, keyId)`: Removes TEE IDs from the key definition of the specified key. This can only be called by the wallet owner. 
-- `receivingTeesAndKeys(walletId)`: Returns a list of TEE machine IDs and URLs to which wallet instructions should be sent and also pairs of TEE machines IDs and key IDs that will be used in signing. IF there are less than the usual $n$ signatures available from TEEs (due to a machine being down), a notification is returned. Similarly, if the required $k$ value for the multisig of the wallet cannot be achieved, the transaction reverts [??]. 
+- `addKey(walletId, teeId)`:  Creates a [key definition](Projects.md) structure with the next sequential key ID for the wallet ID and issues the `KEY_GENERATE` instruction. 
+- `confirmKey(proof)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof. 
+-  `deleteKey(teeId, walletId, keyId)`: Deletes the specified key from the specified TEE machine by triggering the `KEY_DELETE` instruction. 
+- `cleanUpTeeIds(walletId, keyId)`: Removes TEE IDs from the key definition of the specified key. 
+- `receivingTeesAndKeys(walletId)`: Returns a list of TEE machine IDs and URLs to which wallet instructions should be sent and also pairs of TEE IDs and key IDs that will be used in signing. If there are less than the usual $n$ signatures available from TEEs (due to a machine being down), a notification is returned. Similarly, if the required $k$ value for the multisig of the wallet cannot be achieved, the transaction reverts. 
 
 Triggered instructions are sent by the wallet manager contract to the instruction contract.
-They are parameterized by
+They are parameterized by:
 
 -   `KEY_GENERATE(teeId, walletId, keyId, opType, opTypeConstants, adminsPublicKeys, adminsThreshold, cosigners, cosignersThreshold)`   
 -   `KEY_DELETE(teeId, walletId, keyId)`.
@@ -144,8 +160,8 @@ They are parameterized by
 ### TeeWalletBackupManager Contract Calls
 Since backups are triggered automatically, the `TeeWalletBackupManager` contract only has a single call:
 
-- `backupRestore(teeId, backupId, backupUrl)`: Triggers the KEY_DATA_PROVIDER_RESTORE instruction, restoring the key backed up by backupID on the TEE with the specified machine ID.
+- `backupRestore(teeId, backupId, backupUrl)`: Triggers the KEY_DATA_PROVIDER_RESTORE instruction, restoring the key backed up by backup ID on the TEE with the specified machine ID.
 
-With the corresponding instruction:
+With the corresponding instruction sent as:
 
 - `KEY_DATA_PROVIDER_RESTORE(teeId, backupId, backupUrl, nonce)`.
