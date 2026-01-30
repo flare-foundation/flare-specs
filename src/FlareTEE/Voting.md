@@ -1,5 +1,5 @@
 # Voting
-In the FlareTEE architecture, *voting* is the process in which enough signatures from data providers and cosigners are collected to prepare an appropriately signed [action](Actions.md).
+In the Flare Confidential Compute architecture, *voting* is the process in which enough signatures from data providers and cosigners are collected to prepare an appropriately signed [action](Actions.md).
 Data providers and cosigners send their signatures validating an instruction to the TEE proxy corresponding to the TEE machine on which the action will take place.
 Once the proxy has received sufficient weight of signatures, it passes the action to the corresponding machine.
 

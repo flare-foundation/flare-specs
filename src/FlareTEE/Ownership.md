@@ -1,10 +1,10 @@
 # TEE Ownership
-TEE ownership on Flare is decentralized: operators of TEE machines can register their devices on the network to participate in FlareTEE's protocols. 
-Owners are incentivized to participate in FlareTEE via a [rewarding mechanism](Rewarding.md). 
+TEE ownership on Flare is decentralized: permitted operators of TEE machines can register their devices on the network to participate in Flare Confidential Compute's protocols. 
+Owners are incentivized to participate in Flare Confidential Compute via a [rewarding mechanism](Rewarding.md). 
 This page documents the responsibilities of TEE owners on Flare, including registration, management, and upgrading.
 
 ## Registration
-Registration is the process by which a TEE owner deploys their TEE machine for operation within FlareTEE.
+Registration is the process by which a TEE owner deploys their TEE machine for operation within Flare Confidential Compute.
 When a TEE is registered, it is registered to a specific TEE [extension](Extension.md), and not the network as a whole. 
 To register a TEE, its owner submits a transaction `register(extensionID, publicKey, teeProxyId, teeURL,codeHash,platform)` to the `teeMachineRegistry` smart contract with the following information:
 

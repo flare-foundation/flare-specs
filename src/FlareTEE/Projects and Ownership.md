@@ -1,7 +1,7 @@
 # Projects and Configuration
 Ownership of Protocol Managed Wallets is sorted in to a system of *projects*.
 A project is a grouping structure for multiple *wallets*.
-A wallet consists of a set of private keys for an address $W_C$ on an external blockchain $C$ stored inside TEE machines on FlareTEE.
+A wallet consists of a set of private keys for an address $W_C$ on an external blockchain $C$ stored inside TEE machines on Flare Confidential Compute.
 Keys are identified by a *wallet key* data structure.
 Each project has an *owner*, a governance address on Flare which handles administration for the project and its wallets and keys.
 

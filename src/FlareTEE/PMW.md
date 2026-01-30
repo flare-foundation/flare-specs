@@ -1,7 +1,7 @@
 # Protocol Managed Wallets
-A Protocol Managed Wallet (PMW) is an application running on Flare that  manages a wallet address on an external blockchain.
-They allow Flare users to submit transactions from the wallet on the external chain by issuing an instruction on FlareTEE.
-They are hosted on the [system extension](SystemExtension.md) of FlareTEE, making use of the TEE network to secure the wallet and its underlying keys.
+A Protocol Managed Wallet (PMW) is an application running on Flare that manages a wallet address on an external blockchain.
+They allow Flare users to submit transactions from the wallet on the external chain by issuing an instruction on Flare Confidential Compute.
+They are hosted on the [system extension](SystemExtension.md) of Confidential Compute, making use of the TEE network to secure the wallet and its underlying keys.
 Additional support is given by Flare's data providers who are responsible for bridging information between Flare, the TEE network, and the external chain.
 
 ## Overview 
@@ -10,7 +10,7 @@ The remainder of this file contains overviews of various aspects of the PMW infr
 ### Wallet Ownership and Management
 A PMW is identified by a unique Wallet ID generated on creation.
 Wallets are sorted by *projects*, data structures containing multiple PMWs owned and operated by the same Flare address, known as the project owner.
-An individual wallet corresponds to an address $W_C$ on an external blockchain $C$ managed on the FlareTEE system extension: its keys are held in TEEs registered to the system extension, and the project owner can order transactions on $C$ via issuing instructions on FlareTEE.
+An individual wallet corresponds to an address $W_C$ on an external blockchain $C$ managed on the Flare Confidential Compute system extension: its keys are held in TEEs registered to the system extension, and the project owner can order transactions on $C$ via issuing instructions on Flare Confidential Compute.
 
 For each wallet, the set of TEE machines that store the corresponding private keys is tracked.
 Wallets are managed by admin addresses specified on creation, who are responsible for handling various configuration and key management options.

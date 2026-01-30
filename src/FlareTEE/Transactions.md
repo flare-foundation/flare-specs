@@ -17,7 +17,7 @@ The argument `payment` has a preset structure for a PMW hosted on Flare that sen
 - `fee`: The transaction fee offered on chain $C$.
 
 From a user perspective, this contract call is all that is required to send a transaction from their wallet.
-The payments contract and Flare's data providers handle the required interaction with the FlareTEE infrastructure.
+The payments contract and Flare's data providers handle the required interaction with the Flare Confidential Compute infrastructure.
 Note that if batching is enabled (see below), the user experience allows for multiple payments to be issued in a single transaction on $C$, with the user sending the payment instructions in quick succession on Flare.
 
 ### Underlying Machinery

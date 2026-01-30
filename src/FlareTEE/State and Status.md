@@ -2,7 +2,7 @@
 TEEs on Flare are each identified by a unique identity $\mathrm{TEE}_\mathrm{ID}. 
 This public identity corresponds to a public key for a digital signature scheme, allowing the TEE to authenticate itself on the network. 
 Alongside this key, TEEs have a variety of state features when deployed on the Flare network, such as keys for PMWs and different versions of code for their extension. 
-This page describes the state and key management procedures of the FlareTEE infrastructure. 
+This page describes the state and key management procedures of the Flare Confidential Compute infrastructure. 
 
 ## Identity Key and Initial Identity
 When a TEE machine is first booted, a public-private key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$ is generated inside the machine. 
@@ -35,3 +35,37 @@ The state of a TEE machine includes:
 - All keys (and key backups) stored in the TEE as part of its participation in any [PMWs](PMW.md).
 - Variables known to the TEE, including the current Flare signing policy, the machine's status, its configuration nonce, and its pausing nonce. [what are these nonces]
 - Any custom state added by the extension to which the TEE is registered.
+
+Note that when a TEE is replicated as part of an upgrade, all features of its state that are stored in the TEEs memory but not part of its code version must be retrieved and duplicated to the new machine before that machine can take over its identity.
+This includes the identity key pair and all keys and backups stored in the TEE as part of the PMW protocol.
+
+## Attestations
+On registration, and periodically during their operation, TEE platform operators will be required to attest to certain aspects of the machine's state. 
+The ability to securely perform this attestation is a crucial property of a TEE machine. 
+The exact response format depends on the TEE platform, as the signed attestation is performed by the operator e.g. Google for Intel TDX and AMD-SEV. 
+
+### Challenge and Response
+A TEE machine operator provides an attestation response to a *challenge*, a $32$-byte string provided by a challenger.
+The challenger can be any entity who wants to confirm the state of the TEE machine.
+Upon receiving the challenge, the TEE machine generates a challenge hash specific to the machine.
+To generate the challenge hash, the following solidity struct is ABI encoded and then hashed
+
+```Solidity
+struct Attestation {
+bytes32 challenge;
+PublicKey publicKey;
+uint32 initialSigningPolicyId;
+bytes32 initialSigningPolicyHash;
+uint32 lastSigningPolicyId;
+bytes32 lastSigningPolicyHash;
+teeState state;
+uint64 teeTimestamp;
+}
+```
+where the public key is the key that corresponds to $\mathrm{TEE}_\mathrm{ID}$.
+The initial and last signing policy refer to the first and most recent signing policy available to the TEE respectively. 
+The state of the TEE `teeState` is encoded as a solidity struct and ABI encoded for compatibility.
+Finally, the timestamp refers to the local timestamp at the TEE machine.
+Thus, the TEE specific challenge is $\mathrm{hash}(\mathrm{Attestation})$, the hash of the given struct.
+
+Once the TEE specific challenge is created, the platform provider signs the challenge and returns the response.

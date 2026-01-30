@@ -1,5 +1,5 @@
 # System Extension
-Each [extension](Extension.MD) within FlareTEE is identified by a unique extensionID.
+Each [extension](Extension.MD) within Flare Confidential Compute is identified by a unique extensionID.
 The *system extension* is the extension with extensionID $0$. This initial extension is implemented by Flare.
 The system extension takes advantage of Flare's data providers to source additional compute and data provision resources. 
 The system extension hosts two system applications, each with a variety of instructions: the Flare TEE Data Connector (FTDC) and the Protocol Managed Wallet (PMW) infrastructure.
@@ -10,7 +10,7 @@ The FDC uses consensus among Flare's data providers to attest to external data.
 In the FTDC, this attestation is performed by data providers then validated by TEEs in response to instruction by the providers.
 More information on the FTDC can be found in its own [file](FTDC.md).
 
-In the context of FlareTEE, the FTDC serves two purposes: firstly, it is the system by which the state of a TEE machine is validated, ensuring that TEEs participating in operations on Flare are running the correctly specified code and state. 
+In the context of Flare Confidential Compute the FTDC serves two purposes: firstly, it is the system by which the state of a TEE machine is validated, ensuring that TEEs participating in operations on Flare are running the correctly specified code and state. 
 Secondly, it offers latency advantages over the FDC, and thus may be preferable for some users who would otherwise want to use the FDC.
 
 ## Protocol Managed Wallets

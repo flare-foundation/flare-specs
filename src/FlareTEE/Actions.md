@@ -1,5 +1,5 @@
 # Actions
-In the FlareTEE architecture, an *action* is a data structure prepared by a TEE proxy for processing by its associated TEE machine.
+In the Flare Confidential Compute architecture, an *action* is a data structure prepared by a TEE proxy for processing by its associated TEE machine.
 Actions are prepared in response to instructions for which the TEE proxy has received the necessary amount of signatures to accept.
 Once pushed to the TEE machine, the command corresponding to the action is executed, with the results returned to the TEE proxy.
 The TEE proxy hosts an API making action results available to interested users. 
@@ -56,7 +56,7 @@ Reward data is included in the action response in the case where the `submission
 In this case, the reward data is included in the result of the action, consisting of the following structure:
 
 - `voteSequence`: Data about the voting for the action containing:
-	- `voteHash`: The hash of the vote queue [cite vote process].
+	- `voteHash`: The hash of the [vote queue](Voting.md).
 	- `instructionID`: The unique ID of the instruction.
 	- `instructionHash`: The hash of the instruction.
 	- `rewardEpochID`: The ID of the reward epoch in which the instruction was issued.

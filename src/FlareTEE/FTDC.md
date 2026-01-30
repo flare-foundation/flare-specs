@@ -12,7 +12,7 @@ This presents two upgrades over the FDC:
 - Latency is improved as requests are handled as they arrive, rather than at the end of a round.
 - Removal of the on-chain voting process means that any request which can be verified by enough data providers will be responded to.
 
-As part of the System Extension of the FlareTEE architecture, the FTDC is responsible for handling specific types of attestation requests relating to the liveness and security of the TEE machines [tbd?].
+As part of the System Extension of the Flare Confidential Compute architecture, the FTDC is responsible for handling specific types of attestation requests relating to the liveness and security of the TEE machines [tbd?].
 
 ## Overview
 The procedure for handling attestations in the FTDC is broadly the same as in the FDC.

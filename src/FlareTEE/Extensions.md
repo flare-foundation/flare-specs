@@ -1,6 +1,5 @@
-# FlareTEE Extensions
-
-Applications within the FlareTEE infrastructure managed via a system of *extensions*.
+# TEE Extensions
+Applications within the Flare Confidential Compute infrastructure managed via a system of *extensions*.
 Each application is run on an extension, defining the code deployed by TEEs participating in the application along with other information. 
 An [initial extension](SystemExtension.md), known as the *system extension*, operates certain TEE protocols necessary for the functionality of the TEE infrastructure. 
 New extensions can be proposed and managed by users on Flare. Functionally, TEE extensions extend the concept of smart contracts on Flare to enable the use of TEE machines.

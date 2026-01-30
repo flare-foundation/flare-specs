@@ -1,5 +1,5 @@
 # Instructions
-Within the FlareTEE infrastructure, messages submitted by Flare users and relayed to the TEEs by Flare's data providers are known as *instructions*, or sometimes *instruction events*.
+Within the Flare Confidential Compute infrastructure, messages submitted by Flare users and relayed to the TEEs by Flare's data providers are known as *instructions*, or sometimes *instruction events*.
 Instructions are issued by Flare's users via smart contracts on Flare, then packaged and augmented by the providers, and possibly cosigners, into a form known as a TEE instruction. 
 Once the TEE instruction is assembled, it is signed and relayed to the TEE machines via their proxy servers. 
 Once a TEE proxy receives a threshold weight of signatures for an instruction, it is packaged as an action and placed in a queue to be performed by the TEE machine. 
