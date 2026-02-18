@@ -45,6 +45,21 @@ This repository contains the technical specifications for Flare's core protocols
 - [Rewarding](src/FTSO/Rewarding.md)
 - [Encoding Reference](src/FTSO/Encoding.md)
 
+### FAssets
+
+- [Introduction](src/FAsset/Introduction.md)
+- [Agents](src/FAsset/Agents.md)
+- [Collateral pool](src/FAsset/CollateralPool.md)
+- [Collateral](src/FAsset/Collateral.md)
+- [Minting](src/FAsset/Minting.md)
+- [Redemption](src/FAsset/Redemption.md)
+- [Failed and blocked payments](src/FAsset/FailedAndBlockedPayments.md)
+- [Liquidation](src/FAsset/Liquidation.md)
+- [Core vault](src/FAsset/CoreVault.md)
+- [Tracking balance on the underlying chain](src/FAsset/TrackingUnderlyingBalance.md)
+- [Upgrading, pausing and winding down](src/FAsset/PauseAndUpgrade.md)
+- [API reference](src/FAsset/ApiReference.md)
+
 ### [Flare Confidential Compute (FCC)](src/FCC/README.md)
 
 - [Architecture](src/FCC/Architecture.md)
