@@ -59,7 +59,7 @@ where protocolID is of type $\mathrm{uint}8$, votingRoundID is $\mathrm{uint}32$
 The threshold value $t$ is set in the signing policy, and is set to $50\%$ of the total signing weight.
 If the total weight is not even, the threshold is rounded up.
 The threshold is fulfilled if the collected weight is above the threshold.
-In the unlikely case where a round is started on one signing policy but expected to be rewarded in another, it is raised by one fifth to $12 * t /10$.
+In the unlikely case where a round is expected to be included in the reward epoch that has not begun yet, the threshold it is raised by one fifth to $12 * t /10$.
 
 Formally, let $v$ be the votingRoundID of the message being finalized, $r$ be the ID of current active signingPolicy, $\mathrm{expected}(v)$ be the [expected reward epoch](Epochs.md#reward-epoch) for $v$, and $x$ be the ID of the last initialized signingPolicy.
 If $\mathrm{expected}(v) = r$ the threshold is the usual $50\%$.
