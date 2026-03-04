@@ -6,24 +6,28 @@ This page details the features and options of the payments system for PMWs.
 ## Payment Instructions
 [diagram: life of payment instruction]
 ### User Experience
-Payment instructions are sent by Flare users to the `TeePayments` contract using the `pay(payment)` function.
-The argument `payment` has a preset structure for a PMW hosted on Flare that sends payments on an external chain $C$:
+Payment instructions are sent by Flare users to the `TeePayments` contract using the `pay(account, paymentInstruction)` function.
+The `account` argument describes the account on the external blockchain as:
 
-- `projectID`: The ID of the project the PMW is on.
-- `walletID`: The ID of the wallet itself.
+- `sourceId`: Identifier of the external chain.
+- `accountAddress`: String denoting the account address from which the transaction is made.
+
+The `paymentInstruction` argument describes the payment itself:
+
 - `recipientAddress`: The address on chain $C$ to which the payment will be made.
-- `amount`: The amount of units to be transferred. 
-- `paymentReference`: The $32$-byte payment reference.
+- `tokenId`: Token identifier (`bytes32`). Currently unused, reserved for future token support.
+- `amount`: The amount of units to be transferred.
 - `fee`: The transaction fee offered on chain $C$.
+- `paymentReference`: The $32$-byte payment reference.
 
 From a user perspective, this contract call is all that is required to send a transaction from their wallet.
 The payments contract and Flare's data providers handle the required interaction with the Flare Confidential Compute infrastructure.
 Note that if batching is enabled (see below), the user experience allows for multiple payments to be issued in a single transaction on $C$, with the user sending the payment instructions in quick succession on Flare.
 
 ### Underlying Machinery
-Upon receiving a payment instruction `pay(payment)`, the `TeePayments` contract and data providers perform the following tasks:
+Upon receiving a payment instruction `pay(account, paymentInstruction)`, the `TeePayments` contract and data providers perform the following tasks:
 
-1. The payments contract calls the `receivingTeesAndKeys(walletId)` function on the `TeeWalletManager` contract for the `walletID` from which the payment is to be sent. This returns a list of TEE machines to which instructions should be sent.
+1. The payments contract calls the `receivingTeesAndKeys(walletId)` function on the `TeeWalletManager` contract for the default project's wallet from which the payment is to be sent. This returns a list of TEE machines to which instructions should be sent.
 2. The payments contract then forms and submits the instruction `paymentInstruction` that sends the payment to the `TeeInstructions` contract. The format of this instruction is listed below.
 3. The data providers and TEEs follow the usual process from an instruction to an [action](Actions.md), with the action result containing the data necessary to submit the signed payment transaction on chain $C$ made available at the relevant TEE proxies.
 4. The signed payment instruction can now be submitted on $C$ by any entity.
@@ -42,19 +46,24 @@ The message is an encoding containing the following information, which can be re
 - `subNonce`: The global sequence number of payments.
 - `batchEndTs`: The batch end time, used if batch size is not reached.
 
-## Batching
+##  Batching and Transaction Settings
 Certain blockchains support issuing multiple payments in a single transaction.
 For PMWs issuing transactions on these blockchains, this is supported by the `TeePayments` contract.
 The process is known as *batching*.
-Batching is configured on a per-wallet basis, with two relevant settings:
+Batching is configured on a per-wallet basis by the wallet owner, alongside other relevant transaction settings.
+The following settings can be set:
 
 - `batchSize`: Sets the maximum amount of payments that can be issued in a single batched transaction.
 - `batchDurationSeconds`: Sets the maximum length of time, measured in seconds, for which transactions can be added to an open batch until no more transactions are included and the batched transactions are submitted.
+-  `minFee`: Sets the minimal transaction fee required for payments from the wallet.
+- `senderAddress`: Sets the address from which payments will be made on the external chain.
+- `initialNonce`: Sets the starting nonce for wallet transactions.
 
 When batching is enabled, each time a user submits a payment and there is no batch open, a new batch is opened.
 All successive payment transactions are placed in the current batch until the batch size is reached or until the maximum batch duration has passed since the first transaction, whichever happens first.
 At this point, the batch is closed and the batched payments are issued by the `TeePayments` contract as an instruction and the process proceeds as usual.
 
+> **Note on Batches and Reward Epochs:** To prevent ambiguity in the use of signing policies, a batch started in one reward epoch that would otherwise extend into the next reward epoch is prematurely closed at the end of the current reward epoch.
 ### Batching Example
 - A transaction $T_0$ arrives at time $t$ seconds while there is no open batch. The wallet settings are such that the maximum batch size is $S$ and batches are open for a maximum of $d$ seconds.
 - A batch $B = (\mathrm{T}_\mathrm{list}, t)$ is initialized, with the initial set of transactions set to $\mathrm{T}_\mathrm{list} = (T_0)$.
@@ -95,5 +104,4 @@ while the response of the attestation request includes:
 - The amount spent, including the fee and the payment itself.
 - The status of the transaction. This value can be successful or nullified, or some other status specific to the underlying chain.
 
-The purpose of such a request is to prove that a payment was either nullified or reverted.
-[more detail tbd]
+The purpose of such a request is to prove that a payment was either nullified or reverted.[more detail tbd]

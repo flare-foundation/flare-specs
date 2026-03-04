@@ -1,0 +1,24 @@
+-   Introduction
+-   Architecture
+-   References
+	-  Smart Contracts
+	-  Commands
+	-   Workflows    
+-   TEE Management
+	-  TEE Proxies  
+	-  TEE Machines
+	-  Key Management
+	-  Registration and Management (previously ownership)
+	-  Configuration API?
+-   Operations
+	-   TEE Instructions
+	-   Action Instructions (currently in one Instructions file) 
+	-   Voting
+	-  Projects and Ownership
+-  Extensions
+	- FCE
+	- System Extension
+	- PMW
+		- Overview    
+		- Transactions
+   -   FTDC

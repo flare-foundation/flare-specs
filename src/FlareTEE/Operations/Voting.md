@@ -25,7 +25,10 @@ At which point, the voting process ends.
 If the cosigner option was enabled on the instruction, then the first end condition (weight of providers) also requires that more cosigners than the cosigner threshold have submitted a vote for the instruction.
 
 If the voting process ends because the threshold weight has been exceeded (and the cosigner threshold reached, if applicable), the vote concludes successfully and the proxy sends the instruction to the TEE machine as an [action](Actions.md).
-If not, the vote fails and no further actions are taken.
+A successful voting process produces two actions with submission tags `"threshold"` (at the point where the threshold is first reached) and `"end"` (at the conclusion of the voting period).
+In some cases, only the `"threshold"` submission is produced.
+
+If the vote fails (the threshold was not reached by `endTime`), the voting process is deleted from the proxy and no further actions are taken.
 
 ### Vote Tally Data Structure
 The voting process for an instruction is identified by the relevant `instructionHash`.
@@ -35,8 +38,8 @@ The voting process for an instruction is identified by the relevant `instruction
 The state of a vote process is tracked at the TEE proxy, which stores information given to it by the data provider who started the vote, and tallies the current state of the votes (signatures) received by providers and cosigners. 
 Formally, the data structure stored at the TEE proxy contains:
 
-- `instruction`: The instruction with an empty additionalVariableMessage [why?].
-- `threshold`: Threshold weight of signatures required given the current signing policy. Fetched on initialization of the voting process from the initial instruction.
+- `instruction`: The instruction with an empty additionalVariableMessage.
+- `threshold`: Threshold weight of signatures required given the current signing policy. Fetched on initialization of the voting process from the initial instruction. Has a minimum value of $30\%$.
 - `cosigners`: List of cosigners permitted to sign the instruction.
 - `cosignerThreshold`: The threshold number of cosigner signatures required.
 - `weight`: Total accumulated weight of provider and count of cosigner signatures thus far.

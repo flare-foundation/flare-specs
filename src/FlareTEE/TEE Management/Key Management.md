@@ -1,11 +1,45 @@
 # Key Management
-In order to ensure consistent availability of the keys managing PMW accounts on external chains, two systems are in place.
+In order to ensure consistent availability of the keys stored inside TEE machines, two systems are in place.
 Firstly, TEEs provide *key existence* proofs to verify the existence of private keys.
 Secondly, in case of any unexpected issues with the TEE machines, a key backup process is in place to restore lost keys.
 This page describes these processes.
+Related content on the data structures surrounding keys can be found [here](Projects and Ownership.md).
+
+## Wallet Private Key Data Structure
+Each private key on a TEE machine is described by the following data structure:
+
+- `walletId`: Wallet ID of the key.
+- `keyId`: Key ID within the wallet.
+- `signingAlgo`: The signing algorithm for the key.
+- `keyType`: Operation type for which the key is intended to be used.
+- `privateKey`: The private key.
+- `restored`: A flag indicating whether the key was generated (`false`) or restored through backup restore (`true`).
+- `configConstants`: Immutable wallet config settings, including:
+	- `adminsPublicKeys`: A list of public keys used for encrypting Shamir secret shares for backup and for multisig confirmation of changes in config settings.
+	- `adminsThreshold`: Threshold for operations with `adminsPublicKeys`.
+	- `cosigners`: An (optional) a list of cosigner addresses. If set, provides additional multisig confirmation needed to execute instructions.
+	- `cosignersThreshold`: The (optional) threshold for cosigning.
+
+All fields except `configConstants` are set at key generation. The `configConstants` are set separately as part of wallet configuration.
+
+### Wallet Key Variables
+
+On a TEE machine there is a persistent mapping of wallet key variables for every key that has ever existed on the machine.
+Even if the key is deleted, the variable values are retained. The mapping is:
+
+$$(\text{walletId}, \text{keyId}) \Rightarrow (\text{nonce}, \text{pauseNonce}, \text{status}, \text{expiry})$$
+
+Where the fields represent:
+
+- `nonce`: The key nonce, used for replay protection in state-changing operations such as `KEY_DELETE`.
+- `pauseNonce`: A randomly generated nonce for `PAUSE` and `RESUME` operations.
+- `status`: The key status (e.g. `active`, `paused`).
+- `expiry`: The expiry time of the key. After the expiry time is reached, the key is automatically deleted from the machine.
+
+> **Note:** When key data is replicated to another machine or backed up, the `configConstants` and wallet key variables are excluded.
 
 ## TEE Key Existence Proof
-Upon generation of a key for a PMW, the TEE machine also generates and returns a *key existence proof*.
+Upon generation of a key for, the TEE machine also generates and returns a *key existence proof*.
 A key existence proof is a data structure containing the key and relevant meta data and signed by the TEE that holds the key.
 The TEE machine sends the proof to its TEE proxy, from which the proof can be fetched and submitted on Flare.
 The purpose of the proof is to verify that the key exists within the machine's memory.
@@ -31,20 +65,22 @@ bytes settings;
 }
 ```
 where `nonce` is a fresh nonce, `restored` is set to True if the key was restored on to the TEE machine (and otherwise false) ,`configConstants` describes configuration of the private key data structure, and the final two fields describe configurations of the TEEs settings.
-The rest of the fields are defined by the [project](Projects.md) on which the key is active, and identify properties of the wallet and key.
-More details on these fields can be found [here](Projects.md).
+The rest of the fields are defined by the [project](Projects and Ownership.md) on which the key is active, and identify properties of the wallet and key.
 
 ## Key Backup
-TEE machines backup keys that they generate for signing operations from PMW addresses.
+TEE machines backup keys that they generate for signing and other operations.
 Whenever a new key is generated, the TEE machine triggers a back up process for the key.
-Similarly, whenever a new signing policy is relayed to it, the TEE machine triggers a new backup process for each key it stores across all PMW accounts.
+Similarly, whenever a new signing policy is relayed to it, the TEE machine triggers a new backup process for each key it stores in its memory.
 
 ### Backup Overview
-The backup process for a key is triggered when the key is generated or the signing policy is updated at the TEE machine that holds the key.
-It consists of two rounds of secret sharing: first, a $(2,2)$-secret sharing scheme splits the key in to two shares, a data provider share $S_\mathrm{dp}$ and a key admin share $S_\mathrm{ka}$.
-The two shares are then each split a second time.
+The backup process for a secret key $K$ is triggered when the key is generated or the signing policy is updated at the TEE machine that holds the key.
+It consists of two rounds of secret sharing: first, a data provider share $S_\mathrm{dp}$ and a key admin share $S_\mathrm{ka}$ are generated at random using modulo addition. These two shares are then each split a second time using Shamir Secret Sharing schemes.
+
+
 The data provider share $S_\mathrm{dp}$ is split with each provider receiving a proportion of the shares matching their weight, so that a sufficient weight of data providers can recover the key.
 The key admin share $S_\mathrm{dp}$ is split with each admin receiving a single share, such that the amount of admins required to recover the key corresponds to a parameter set by the owner of the wallet.
+
+
 To recover a key, a key recovery TEE is designated.
 The providers and admins send their shares to the TEE, which recovers both the data provider and the key admin shares, and then the original key.
 The details are given below.
@@ -64,10 +100,10 @@ The backup metadata consists of the following fields:
 - `rewardEpochId`: The ID of the signing policy on which the key was backed up, defining which data providers store backup shares.
 - `publicKey`: The public key of the backed up private key.
 -  `configConstants`: The key config constants of the key, as set by the project owner. These include:
-	- `dpThreshold`: The threshold weight required for recovering the data providers' share of the key.
+	- `dpThreshold`: The threshold weight required for recovering the data providers' share of the key. This defaults to $66\%$
 	- `adminsPublicKeys`: The list of admin public keys.
 	- `adminsThreshold`: The threshold for operations with the admin public keys.
-	- `cosigners`: The list of cosigner addresses for the key, if included [is this still used?].
+	- `cosigners`: The list of cosigner addresses for the key, if included.
 	- `cosignersThreshold`: The threshold for cosigning.
 - `randomNonce`: A random nonce generated by the TEE machine at the time of backup creation.
 
@@ -100,7 +136,7 @@ Alongside the key that is being backed up, the backup process triggered by $\mat
 
 To backup a key $K$, the TEE machine performs the following  procedure:
 
-1. A $(2,2)$-Shamir secret sharing scheme of $K$ is performed, giving shares $S_\mathrm{dp}$ and $S_\mathrm{ka}$, the data provider and key admin shares of the secret.
+1. A random split of into two shares $K$ is performed by modulo arithmetic, giving shares $S_\mathrm{dp}$ and $S_\mathrm{ka}$, the data provider and key admin shares of the secret. The shares are chosen uniformly at random such that $K = S_\mathrm{dp} + S_\mathrm{ka} \mod N$.
 2. The data provider share $S_\mathrm{dp}$ is split into $1000$ shares using a $(1000, \lfloor \mathrm{dpThrehsold} \cdot 1000 \rfloor)$-Shamir secret sharing scheme into shares ${S_\mathrm{dp}}^1, \dots, {S_\mathrm{dp}}^{1000}$. Each data provider is then assigned a proportion of these shares relative to its weight in the signing policy, rounded down, such that the $j$th data provider with weight $W_j$ is assigned $\lfloor W_j \cdot 1000 \rfloor$ shares of the secret.
 3. Similarly, the key admin share $S_\mathrm{ka}$ is split shares $${S_\mathrm{ka}}^1, \dots, {S_\mathrm{ka}}^{N_\text{admin}}$ equal to the number of key admins using an $(N_{\text{admin}}, \mathrm{adminsThreshold})$-Shamir secret sharing scheme. The $i$th admin is assigned a share ${S_\mathrm{ka}}^i$.
 4. For the each data provider and key admin, a package $\mathrm{pack}_i$ is prepared containing share data and relevant meta data. This package is then encrypted under the receiving entities public key $\mathrm{pk}_i$. Formally, the package contains:
@@ -138,6 +174,10 @@ The restore function then works as follows:
 Note that in steps 4 and 5 the TEE proxy has no way of knowing whether or not the data providers and key admins provided valid key shares or not; hence the action response includes this list.
 If too many key shares were invalid, key recovery will fail, which is also included in the action response. 
 
+> **Note:** The [wallet key variables](#wallet-key-variables) (`nonce`, `pauseNonce`, `status`, `expiry`) are not included in the backup and are not restored. These values are managed independently on each TEE machine.
+
+> **Testing:** The `KEY_DATA_PROVIDER_RESTORE_TEST` command can be used to test the key restoration process without affecting production keys.
+
 ## Key and Backup Manager Contracts
 Keys and backups are managed by users through two contracts: the `TeeWalletKeyManager` contract and the `TeeWalletBackupManager` contract.
 This section lists the available contract calls.
@@ -145,7 +185,7 @@ This section lists the available contract calls.
 ### TeeWalletKeyManager Contract Calls
 Unless otherwise specified, calls to the wallet key manager contrat are only valid if made by the owner of the wallet. The calls include:
 
-- `addKey(walletId, teeId)`:  Creates a [key definition](Projects.md) structure with the next sequential key ID for the wallet ID and issues the `KEY_GENERATE` instruction. 
+- `addKey(walletId, teeId)`:  Creates a [key definition](Projects and Ownership.md) structure with the next sequential key ID for the wallet ID and issues the `KEY_GENERATE` instruction. 
 - `confirmKey(proof)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof. 
 -  `deleteKey(teeId, walletId, keyId)`: Deletes the specified key from the specified TEE machine by triggering the `KEY_DELETE` instruction. 
 - `cleanUpTeeIds(walletId, keyId)`: Removes TEE IDs from the key definition of the specified key. 

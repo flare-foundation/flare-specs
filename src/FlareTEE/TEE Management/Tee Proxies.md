@@ -1,0 +1,159 @@
+# TEE Proxies
+A *TEE Proxy* is a proxy server controlling access to the TEE environment.
+Each TEE machine has a corresponding TEE proxy, which is responsible for ferrying information to and from the TEE machine, so that access to the machine itself is controlled.
+TEE proxies receive instructions and collect signatures from data providers and cosigners, distribute them to the TEE machines, and return the results of the corresponding actions on request. 
+They handle their interactions by a system of internal and external API calls. 
+Additionally, they host a collection of internal logic to manage action queues and logic for instructions.
+
+## Proxy Security
+Each TEE proxy corresponds to a unique TEE machine and has a public identity $\mathrm{Proxy}_\mathrm{ID}$ which defines the public part of a public/private key pair for a digital signature scheme. 
+This identity is registered on Flare in the `TeeRegistry` smart contract, as well as provided in the proxies configuration. 
+The key pair is used by the TEE proxy to sign receipts of its processes.
+
+Both the TEE proxy and machine are owned by the same entity. 
+Thus, the owner of the pair could censor access to the TEE machine via the proxy layer. 
+To ensure that a request submitted to the TEE proxy has been correctly relayed to the TEE machine, the proxy makes confirmation available via an API.
+This API returns a package signed by the TEE machine itself that it has received the request. 
+Until the confirmation is obtained, there is no guarantee that the proxy relayed the request to the TEE machine.
+
+## Signing Policy
+The TEE proxy is responsible for maintaining an up to date copy of Flare's signing policy at both the TEE machine and at the proxy itself.
+Without the signing policy, the TEE proxy and machine are unable to determine when a vote has passed successfully.
+For details on signing policy parameters and its generation and relaying lifecycle, see [Signing Policies](Signing%20Policies.md).
+
+On initialization, the TEE proxy sets the signing policy at the TEE machine using an `initialize_policy` command, proving the current policy.
+As part of its initial [attestation](State and Status.md), the signing policy of the TEE machine is checked on registration by Flare's data providers to ensure that the correct policy was given.
+To remain up to date, the proxy has access to a C-chain indexer to obtain new signing policies and relays them to the TEE machine using an `update_policy` [direct instruction](Instructions.md), ensuring that the TEE machine's policy is up to date.
+
+## Processing Queues
+The TEE proxy is responsible for managing three types of processing queues, with operations labelled according to their appropriate queue type:
+
+1. **Direct Queue**: A queue filled by the proxy itself, usually used for GET type operations 
+2. **Backup Queue**: A queue for backup-related actions.
+3. **Main Action Queues**: A queue for actions of all other types, in particular instructions with sufficient weight of signatures.
+
+The queues are independent, and the TEE proxy may apply specific filtering per queue.
+The proxy can prioritize its own internal requests, especially read operations. 
+All queue data is persistently stored in the REDIS database.
+
+## Proxy State
+The proxy state is managed through the REDIS database and consists of a collection of key-value pairs:
+
+-   **Voting process store**: (`instructionHash` $\rightarrow$ `VotingProcess`), tracks the voting process for a given instruction hash.
+- **Voting process list**: (`instructionId` $\rightarrow$ list of valid `instructionHash`), tracks the concurrent voting processes for the same instruction ID.
+- **Action store**: ([`actionId`, `submissionTag`] $\rightarrow$ `actionData`), tracks the data for a given action identity.
+- **Action result store**: ([`actionId`, `submissionTag`, `result`] $\rightarrow$ `actionResult`), tracks the result for a given action identity.
+- **Signing policy store**: (`rewardEpochId` $\rightarrow$ `signingPolicyData`), tracks the signing policy data for a given reward epoch.
+- **Key data store**: ([`walletId`, `keyId`]$\rightarrow$ `keydata`), tracks the key data for any keys stored in the TEE for [PMW](PMW.md) operations.
+- **Last attestation**: Tracks the last available attestation made through the `Tee_INFO` action. This is updated by the TEE proxy every $30$ seconds, which generates a random challenge and calls the action.
+- **Backup store**: (`backupIdHash` $\rightarrow$ `backupData`), tracks the data related to key backups stored by the TEE machine. Backup packages are extracted from the TEE machine each time `Tee_INFO` is called.
+
+### Key Data Store
+The key data store stores the list of keys stored on the TEE for participation in the PMW protocol.
+This store is updated by calling the `Key_Info` action, which returns a list of `teeKeyExistenceProofs` from the TEE machine, proving the existence of each key.
+Each proof is packaged into a pair (`timestamp`, `proof`) containing the timestamp at the proxy for the most recent update and the proof of existence.
+The `Key_Info` action is called with a refresh period of approximately $5$ minutes.
+Entries in the key data store have a limited REDIS TTL of approximately $10$ minutes (double the refresh period). 
+This mechanism clears deleted keys from the TEE machine.
+
+## TEE Proxy APIs
+Each TEE proxy supports internal and external REST APIs. In a production deployment, the TEE machine and internal TEE proxy APIs are behind a firewall, while the external TEE proxy APIs are public.
+
+APIs return standard HTTP responses. A successful response returns `200 OK` with a JSON body. Error responses include a `description` field for diagnostic purposes. If input data is not parsable or correctly formatted, `400 Bad Request` is returned.
+
+### External Write APIs
+External write APIs are used by data provider clients to contact the TEE proxy.
+All API requests contain a random challenge and all responses return confirmation receipts signed by the TEE machine public keys.
+This section lists the possible API calls.
+
+- **`POST /instruction`**: Submits a signed instruction from a data provider or cosigner. The proxy collects signatures and triggers queuing the corresponding action only when signing thresholds are reached. The resulting actions are placed into the main action queue. Returns:
+
+	- **Request**: `instruction`, the TEE instruction.
+
+	- **200 OK**: Returns a receipt containing `instructionHash`, `sequence`, `signature`, `additionalVariableMessage`, `timestamp`, `voteHash`, and a `signature` by the proxy identity.
+
+	- **403 Forbidden**: The sender is not allowed to start a voting process (not a data provider). The sender should retry after a short delay.
+
+	- **429 Too Many Requests**: The data provider is rejected due to too many started requests. The relay client should retry.
+
+	- **500 Internal Server Error**: Other errors, with the exception message given as `description`.
+
+- **`POST /direct-instruction`**: Submits a direct instruction with a sufficient set of signatures. The submission can be done by anyone. Depending on the operation, a certain set of signatures must be provided (e.g. a threshold of governance signers' signatures for banning a code version). The possible responses are:
+
+	- **Request**: `directInstruction` the direct instruction consisting of both the message and the signatures.
+
+	- **200 OK**: Returns a receipt containing `directInstruction` and `actionId`, signed by the proxy identity.
+
+	- **429 Too Many Requests**: The corresponding action is or was already in the queue.
+
+	- **500 Internal Server Error**: Other errors.
+
+### External Read APIs
+
+These APIs are used to read data and results from the TEE proxy.
+
+- **`GET /info`**: Returns the latest attestation data from the proxy. Reads from the last attestation store. Returns:
+
+	- **200 OK**: Returns `teeInfo` (containing `challenge`, `publicKey`, `initialSigningPolicyId`, `initialSigningPolicyHash`, `lastSigningPolicyId`, `lastSigningPolicyHash`, `state`, `teeTimestamp`, `platform`, `attestation`, and `proxySignature`).
+
+	- **404 Not Found**: No latest attestation available (can occur at proxy startup).
+
+- **`GET /wallet/<walletId>/<keyId>`**: Returns the latest key info from the key data store. Returns:
+
+	- **200 OK**: Returns `info` (decoded `TeeKeyExistence` in JSON format) and `proof` (containing ABI-encoded `keyExistence` and its TEE identity `signature`).
+
+	- **400 Bad Request**: Malformed `walletId` or `keyId`.
+
+	- **404 Not Found**: No data for the given key.
+
+- **`GET /action/result/<actionId>?submissionTag=<tag>`**: Returns the result of an action. The default submission tag is `threshold`. Returns:
+
+	- **200 OK**:  `data` (the action result) and `proxySignature`, the signature over `hash(hash(data.data), actionId, submissionTag)`.
+
+	- **400 Bad Request**: Malformed `actionId` or `submissionTag` was received.
+
+	- **404 Not Found**: No data in database.
+
+- **`GET /action/status/<rewardEpochId>/<instructionId>`**: Returns diagnostic data about voting processes related to the given `instructionId` from the specified `rewardEpochId`. Returns:
+
+	- **200 OK**:  `instructionId`, `finalizedHash` (zero-valued if none finalized), and `voteResults`, a list of entries each containing `instructionHash`, `weight`, `totalWeight`, `threshold`, `cosignersVoted`, and `cosignersThreshold`.
+
+	- **400 Bad Request**: Malformed `rewardEpochId` or `instructionId` was received.
+
+	- **404 Not Found**: No data about the instruction.
+
+- **`GET /backup/<backupIdHash>`**: Returns a backup package by backup ID hash. Returns:
+
+	- **200 OK**: Returns `backupId` and `backup` (byte-encoded, JSON marshaled).
+
+	- **404 Not Found**: No data in backup store.
+
+- **`GET /backup/<walletId>/<keyId>`**: Returns the last available backup for a given private key. Returns:
+
+	- **200 OK**: `backupId` and `backup` (byte-encoded, JSON marshaled).
+
+	- **404 Not Found**: No data in backup store.
+
+### Internal APIs
+
+Internal APIs are behind a firewall, accessible only to the owner and the TEE machine.
+
+- **`POST /queue/<queueId>`**: Pops the first item from the specified [processing queue](#processing-queues). Returns:
+
+	- **200 OK**: `data` from the action at the beginning of the queue.
+
+	- **400 Bad Request**: Invalid `queueId`.
+
+	- **404 Not Found**: Empty queue.
+
+- **`POST /result`**: Pushes an action result back to the TEE proxy for the pair (`actionId`, `submissionTag`). Returns:
+
+	- **Request**: `result`, the action result.
+
+	- **200 OK**: Successful post.
+
+- **`GET /healthy`**: Health check endpoint. Returns `200 OK` if the proxy is healthy.
+
+- **`GET /startup`**: Startup probe endpoint. Returns `200 OK` if the proxy has completed startup.
+
+- **`GET /ready`**: Readiness probe endpoint. Returns `200 OK` if the proxy is ready to accept traffic.

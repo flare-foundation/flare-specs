@@ -1,6 +1,6 @@
 # Flare TEE Data Connector
 The Flare TEE Data Connector (FTDC) is an application on the [system extension](SystemExtension.md).
-It is a TEE-based alternative to the FDC [outward link to FDC].
+It is a TEE-based alternative to the FDC [outward link to FDC], managed via the `FtdcHub` smart contract (see [Smart Contracts](Smart Contracts.md)).
 In the FTDC, users submit attestation requests as an [instruction](Instructions.md) on the System Extension, indicating a collection of TEE machines on which the attestation is to be confirmed. 
 As in the FDC, Flare's data providers are responsible for confirming the attestations.
 
@@ -47,6 +47,7 @@ bytes requestBody;
 ```
 containing two parts: a `header` providing information about the attestation and a `requestBody` containing the payload data.
 Additionally, when issuing an attestation request instruction, a pair  $\mathrm{TEE}_\mathrm{list}$ = (`numberOfTees`, `TeeIds`) is included as part of the instruction, indicating the number (in uint8) and identities of the TEE machines on which voting is to be performed.
+If `numberOfTees` is set to $0$, the `FtdcHub` smart contract chooses a fixed number of TEE machines randomly from the set of registered machines.
 
 As it contains the data to be imported onto Flare, the content of `requestBody` varies depending on the exact request, and it is the responsibility of the data providers and cosigners to confirm the validity of the data.
 
@@ -62,6 +63,8 @@ uint64 cosignersThreshold;
 }
 ```
 where the `cosigners` and `cosignersThreshold` fields are optional, denoting the amount of cosigners and cosigner threshold used in the voting process in step 5 of the process. 
+Note that when the attestation request is submitted on-chain, the `cosigners` and `cosignersThreshold` may be included at the instruction event level rather than in the `FtdcRequestHeader` itself, depending on how the `sendInstructions` call is structured.
+The TEE proxy extracts these values from the instruction event and applies them during the voting process.
 The `attestationType` and `sourceID` fields denote the attestation type of the attestation and the data source of the attestation. 
 The `thresholdBIPS` field denotes the weight of data provider signatures required in step 5, and must exceed $40\%$.
 
@@ -88,9 +91,9 @@ The format of the third part, the response body, is a Solidity struct whose exac
 
 Data providers, cosigners, and the TEE machine each need to sign the attestation response.
 To do so, the response header, request body, and response body are each separately ABI encoded and hashed, then the outputs of the three hashes are hashed together. 
-Finally, this hash is pre-pended with the string `?0x010000000000?` and hashed a final time. That is, the signed hash is:
+Finally, this hash is pre-pended with the  38-byte sequence `0x010000000000` and hashed a final time. That is, the signed hash is:
 ```
-hash(?0x010000000000?,
+hash(0x010000000000,
 hash(
 hash(ABIencode(response_header)),
 hash(ABIencode(requestBody)),
@@ -98,7 +101,7 @@ hash(ABIencode(responseBody))
 )
 )
 ```
-
+> **Note on Interoparability:** The 38-byte sequence entering the final hash matches the format of a 38-byte protocol message with a Merkle root (with `protocolId = 1`, `votingRoundId = 0`, and `isSecureRandom = 0`). This ensures interoperability with the existing Relay contract verification used in the FDC.
 ### Instruction Format
 In the [instruction](Instructions.md) sent to the TEE proxy as part of handling the attestation, the data providers and cosigners must propagate certain fields in the instruction correctly. 
 These include

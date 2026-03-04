@@ -1,8 +1,11 @@
 # Instructions
-Within the Flare Confidential Compute infrastructure, messages submitted by Flare users and relayed to the TEEs by Flare's data providers are known as *instructions*, or sometimes *instruction events*.
-Instructions are issued by Flare's users via smart contracts on Flare, then packaged and augmented by the providers, and possibly cosigners, into a form known as a TEE instruction. 
-Once the TEE instruction is assembled, it is signed and relayed to the TEE machines via their proxy servers. 
-Once a TEE proxy receives a threshold weight of signatures for an instruction, it is packaged as an action and placed in a queue to be performed by the TEE machine. 
+Within the Flare Confidential Compute infrastructure, messages are sent to the TEE machines via a system of *instructions*.
+Instructions come in two types:
+- Messages submitted by Flare users to be relayed to the TEEs by Flare's data providers are known as *instruction events*, or sometimes *action instructions*.
+- Instruction events are then then packaged, augmented, and signed by the providers, and possibly cosigners, into a corresponding *TEE instruction*, which are relayed to the TEEs. 
+
+Once a TEE instruction is assembled by a data provider or cosigner, it is signed and relayed to the TEE machines via their proxy servers. 
+Once a TEE proxy receives a threshold weight of signatures for a TEE instruction, it is packaged as an [action](Actions.md) and placed in a queue to be performed by the TEE machine. 
 This page documents these features.
 
 [Diagram: instruction on flare -> Tee instruction -> TEE proxy -> action queue]
@@ -10,9 +13,11 @@ This page documents these features.
 
 ## Instruction Events
 An instruction event is the method by which a Flare user submits an instruction to one or more TEEs on a specific extension, instructing those machines to perform a certain action. 
+They do so by submitting an instruction event to the `teeExtensionRegistry` smart contract on Flare.
+
 Instruction events do not need to contain all required information to complete the action; rather, data providers and cosigners pick up the instruction on Flare, and are responsible for packaging it together with the necessary information to perform the action and their signature before relaying it to the TEEs.
 
-An instruction event emitted on Flare has a specific data structure, as outlined below
+An instruction event emitted on Flare has the following data structure:
 
 - `instructionID`: A unique index for the instruction issued.
 - `extensionID`: The ID of the extension on which the instruction is issued.
@@ -28,7 +33,7 @@ An instruction event emitted on Flare has a specific data structure, as outlined
 ### Thresholds
 In order for an instruction to be accepted at the TEE proxy, and thus sent to the TEE machine, a threshold of the weight of Flare's data providers must submit the signed instruction.
 The exact weight required depends on the extension and type of instruction, but will typically be any amount in excess of $50\%$ of the weight of data providers.
-This process is known as [voting](Voting.MD).
+This process is known as [voting](Voting.md).
 
 ### Cosigners 
 Similarly, certain extensions and instructions permit the use of *cosigners* to increase security. 
@@ -39,6 +44,8 @@ The possible addresses valid to be included `cosigners` depends on the extension
 Note that it is in theory possible for a weighted majority of data providers to delete or change the cosigner fields in a given instruction to circumvent the extra security provided.
 Each extension that intends to use cosigner fields must prepare its own protection against such an attack.
 For example, requiring the [action response](Actions.md) to include the cosigner signatures allows a contract on Flare to confirm that the cosigners signed the instruction.
+
+For a detailed discussion of how cosigner enforcement is handled at the system and extension level, including mitigation against 50%+ data provider attacks, see [Cosigner Enforcement](Actions.md#cosigner-enforcement)
 
 ## TEE Instructions
 After an instruction event has been emitted on Flare, it is the duty of the data providers, and any optional cosigners, to respond to the event by preparing a *TEE instruction*, then signing this instruction and forwarding it to the appropriate TEE(s) via their proxy servers. 
@@ -84,9 +91,17 @@ bytes additionalFixedMessage;
 ```
 then, the ABI encoding is hashed into `instructionHash`. Finally, the signature is taken over the data $\mathrm{Hash}($`instructionHash`, `additionalVariableMessage`$)$. 
 
+> **Note on `instructionHash` vs `instructionId`:** Instructions are typically identified by `instructionId` (the unique event index from the smart contract), but for counting confirmations during the [voting process](Voting.md) on the TEE proxy, `instructionHash` is used instead. The `instructionHash` is defined as the hash of the instruction data excluding `additionalVariableMessage`, allowing the proxy to match votes from different providers on the same instruction content regardless of their individual variable messages.
+
 ## Direct Instructions
 In certain circumstances, governance or administrating addresses are able to directly instruct participating TEEs via their proxies, circumventing the need for commands to be signed and packaged by data providers and cosigners. 
 Such a command is known as a *direct instruction*. 
+Typically direct instructions are not triggered by a specific message on smart contracts. 
+They are used for specific configurations or setups such as upgrade version approvals or banning by governance signers, direct configurations, and similar administrative operations.
+
+Direct instructions are submitted to the TEE proxy via the `/direct-instruction` API route. 
+The signature collection for direct instructions occurs out-of-band, with the sender responsible for gathering the required signatures before submission.
+
 The payload for a direct instruction sent to the TEE proxy is simpler than a normal instruction, and consists of only three parts, defined in the same manner as above:
 
 - `opType`
@@ -94,3 +109,4 @@ The payload for a direct instruction sent to the TEE proxy is simpler than a nor
 - `message`.
 
 Note that in some cases TEEs will still only follow direct instructions that have been signed by an appropriate number of signees; for example, in cases where the governance of an extension is via a multisig, the TEE will only accept a direct instruction in response to receiving a threshold number of signatures for it.
+If the number and identities of signatures meet the required criteria (e.g. threshold of a specific multisig), the direct instruction is packed into an action and placed into either the main action queue or the governance queue for further processing.

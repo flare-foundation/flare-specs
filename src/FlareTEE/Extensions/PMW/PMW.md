@@ -1,7 +1,7 @@
 # Protocol Managed Wallets
 A Protocol Managed Wallet (PMW) is an application running on Flare that manages a wallet address on an external blockchain.
 They allow Flare users to submit transactions from the wallet on the external chain by issuing an instruction on Flare Confidential Compute.
-They are hosted on the [system extension](SystemExtension.md) of Confidential Compute, making use of the TEE network to secure the wallet and its underlying keys.
+They are hosted on the [system extension](System Extension.md) of Confidential Compute, making use of the TEE network to secure the wallet and its underlying keys.
 Additional support is given by Flare's data providers who are responsible for bridging information between Flare, the TEE network, and the external chain.
 
 ## Overview 
@@ -15,7 +15,7 @@ An individual wallet corresponds to an address $W_C$ on an external blockchain $
 For each wallet, the set of TEE machines that store the corresponding private keys is tracked.
 Wallets are managed by admin addresses specified on creation, who are responsible for handling various configuration and key management options.
 Optionally, wallets can have a set of cosigners (and a cosigner threshold) who must provide signatures to confirm transactions issued by the address.
-More details can be found [here](Projects.md).
+More details can be found [here](Projects and Ownership.md).
 
 ### Submitting Transactions
 A transaction on a PMW is an example of an [instruction](Instructions.md), and thus follows a similar flow: a user who owns a PMW issues a transaction instruction on Flare, which is picked up by Flare's data providers.
@@ -31,6 +31,15 @@ A transaction proceeds as follows:
 ### Key Management and Backups
 Since transactions are sent to the TEEs to be signed, Keys stored on TEEs participating in the PMW protocol do not leave the TEEs secure memory.
 Thus, PMW transactions issued as instructions on Flare are secured by the combination of the TEE machines and the voting process on the system extension.
-In order to ensure keys are not inaccessible or lost in instances where TEEs are either temporarily or permanently disabled, keys are securely [backed up](KeyManagement.md) using a secret sharing scheme.
+In order to ensure keys are not inaccessible or lost in instances where TEEs are either temporarily or permanently disabled, keys are securely [backed up](Key Management.md) using a secret sharing scheme.
 The key shares are distributed to other participating TEEs and cosigners in a manner that ensures that secrets can only be recovered in appropriate circumstances.
 Additionally, TEEs provide `TEEKeyExistence` proofs to confirm the existence of keys corresponding to appropriate wallets.
+### Functionality
+PMW handles these functions by implementing the following specific functionalities:
+
+1. **Multisig account operations**: The PMW infrastructure leverages native multisig capabilities of external blockchains (XRPL). A wallet represents a set of multiple keys on different TEE machines, which are signers on $k$-of-$n$ native multisig accounts on external blockchains.
+2. **Nonce (transaction sequence) management**: Careful management guarantees that each payment instruction can be issued with a particular nonce only. 
+3. **Reissuance or nullification**: A stuck transaction with a specific nonce can be reissued with the same data on a different (higher) fee, or nullified by a trivial transaction that consumes the nonce at minimal cost.
+4. **Proving transaction execution status**: A proof of execution status through an FDC attestation can be obtained once the nonce is consumed, allowing protocols to verify payment outcomes and handle errors automatically.
+
+> **Note:** BTC support is planned but not yet implemented.
