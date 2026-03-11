@@ -12,7 +12,7 @@ To register a TEE, its owner submits a transaction:
 register(machineData, signature, teeProxyId, teeUrl)
 ```
 to the `teeMachineRegistry` smart contract.
-Here, `signature` is the signature over the `machineData` performed by the TEE's identity key pair and the `teeProxyId` the identity of the TEE's [proxy](TEEProxies.md).
+Here, `signature` is the signature over the `machineData` performed by the TEE's identity key pair and the `teeProxyId` the identity of the TEE's [proxy](Tee Proxies.md).
 The `machineData` field is in the following format:
 
 1. **extensionId**: The ID of the extension to which the TEE is registered.
@@ -41,7 +41,7 @@ A registered TEE machine can have one of seven statuses:
 
 1. `INITIALIZED`: Initial status after registration, indicating that the machine is not yet verified and operational. Allows either triggering `REPLICATE_FROM` or transitioning to `PRODUCTION` via `toProduction()`.
 2. `PRODUCTION`: The machine is fully operational and accepts all instructions. Allows pausing and pausing for upgrade.
-3. `PAUSED_WITH_PROOF`: The machine has been paused based on a non-availability proof (`TeeAvailabilityCheck` attestation). Can be resumed by providing a new valid proof.
+3. `SUSPENDED`: The machine has been paused based on a non-availability proof (`TeeAvailabilityCheck` attestation). Can be resumed by providing a new valid proof.
 4. `PAUSED`: The machine has been paused by the owner or a pausing address. Prevents receiving any instructions. Can be reverted to `PRODUCTION` by providing a new availability proof.
 5. `PAUSED_FOR_UPGRADE`: The machine is not operational but can be used as a replication source for a TEE machine with a newer code version. This status is triggered by the `TO_PAUSE_FOR_UPGRADE` [instruction](Instructions.md). Allows repeated calls to `toPauseForUpgrade(teeId)` and nothing else.
 6. `REPLICATING`: The machine is currently being replicated to  another machine as part of an upgrade.
@@ -49,27 +49,35 @@ A registered TEE machine can have one of seven statuses:
 
 ### Availability Deadline
 When a machine enters `PRODUCTION` status via `toProduction(proof)`, it is considered in production only up to a certain timestamp (`availabilityCheckValidityEndTs`).
-Before this deadline, a proof that the machine is still available must be submitted using `confirmAvailability(proof)`, which extends the deadline.
-This function can be called by anyone. 
+Before this deadline, a proof that the machine is still available must be submitted using `confirmAvailability(proof)` on the `teeVerification` contract, which extends the deadline.
+This function can be called by anyone.
 If the deadline passes without confirmation, the actions of the TEE machine no longer entitle its owner to rewards.
 
 ## Management
 The Flare address of the TEE owner is responsible for managing the TEE's activities on the network.
-The following set of management functions are available to the TEE owner at the `teeMachineRegistry` smart contract:
+Management functions are spread across three contracts: `teeMachineRegistry`, `teeVerification`, and `teeReplication`.
+
+### `teeMachineRegistry` Functions
 
 1. `register(machineData, signature, teeProxyId, teeUrl)`: Registers the TEE machine as described above.
-2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE id data, the status permits it, and the code version is still supported. Can only be called by the owner.
-3. `confirmAvailability(proof)`: Given a valid `TeeAvailabilityCheck` proof, extends the availability deadline. Can be called by anyone.
-4. `pause(teeId)`: Changes the status to `PAUSED`. Only available when the machine status is `PRODUCTION`. Can be called by the owner, or by anyone if the current TEE code version is no longer supported.
-5. `pauseWithProof(proof)`: Pauses the TEE machine based on a non-availability proof using the `TeeAvailabilityCheck` attestation type. The timestamp of the proof must not be older than 10 minutes. Can be called by anyone.
-6. `toPauseForUpgrade(teeId)`: Changes the status to `PAUSED_FOR_UPGRADE` and triggers the `TO_PAUSE_FOR_UPGRADE` command. Status must be `PAUSED` or `PAUSED_FOR_UPGRADE`. If the status is `PAUSED`, can only be called after 10 minutes from the last status change. Can only be called by the owner.
-7. `replicateFrom(oldTeeId, proof, signedUpgradePath)`: Triggers the `REPLICATE_FROM` command. The status of the new machine must be `INITIALIZED` or `REPLICATING`. The provided `proof` is the availability check proof for the new machine.
-8. `confirmReplicate(newTeeId, proof)`: Confirms a successful replication. The proof must be for the new machine with the old TEE ID at the new machine's URL, and must be later than the timestamps for both machines.
-9. `proposeNewOwner(teeId, newOwner)`: Proposes a new owner for the TEE machine. Can only be called by the current owner.
-10. `confirmOwnership(teeId)`: Called by the proposed new ownership of the machine. When called after `proposeNewOwner(teeId, newOwner)`, the ownership of the TEE machine on Flare is changed to `newOwner`.
-11. `updateTeeMachineSettings(teeId, teeProxyId, url)`: Updates the proxy ID and URL of the TEE machine. Any change puts the machine on pause and a proof is needed to return it to production.
-12. `ban(teeId)`: Bans a TEE machine, setting its status to `BANNED`. Can only be called by governance.
-13. `unban(teeId)`: Unbans a previously banned TEE machine. Can only be called by governance.
+2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported. Can only be called by the owner.
+3. `pause(teeId)`: Changes the status to `PAUSED`. Only available when the machine status is `PRODUCTION`. Can be called by the owner, or by anyone if the current TEE code version is no longer supported.
+4. `pauseWithProof(proof)`: Pauses the TEE machine based on a non-availability proof using the `TeeAvailabilityCheck` attestation type. The timestamp of the proof must not be older than $10$ minutes. Can be called by anyone.
+5. `proposeNewOwner(teeId, newOwner)`: Proposes a new owner for the TEE machine. Can only be called by the current owner.
+6. `confirmOwnership(teeId)`: Called by the proposed new owner of the machine. When called after `proposeNewOwner(teeId, newOwner)`, the ownership of the TEE machine on Flare is changed to `newOwner`.
+7. `updateTeeMachineSettings(teeId, teeProxyId, url)`: Updates the proxy ID and URL of the TEE machine. Any change puts the machine on pause and a proof is needed to return it to production.
+8. `ban(teeId)`: Bans a TEE machine, setting its status to `BANNED`. Can only be called by governance.
+9. `unban(teeId)`: Unbans a previously banned TEE machine. Can only be called by governance.
+
+### `teeVerification` Functions
+
+1. `confirmAvailability(proof)`: Given a valid `TeeAvailabilityCheck` proof, extends the availability deadline. Can be called by anyone.
+
+### `teeReplication` Functions
+
+1. `toPauseForUpgrade(teeId)`: Changes the status to `PAUSED_FOR_UPGRADE` and triggers the `TO_PAUSE_FOR_UPGRADE` command. Status must be `PAUSED` or `PAUSED_FOR_UPGRADE`. If the status is `PAUSED`, can only be called after $10$ minutes from the last status change. Can only be called by the owner.
+2. `replicateFrom(oldTeeId, proof, signedUpgradePath)`: Triggers the `REPLICATE_FROM` command. The status of the new machine must be `INITIALIZED` or `REPLICATING`. The provided `proof` is the availability check proof for the new machine.
+3. `confirmReplicate(newTeeId, proof)`: Confirms a successful replication. The proof must be for the new machine with the old TEE ID at the new machine's URL, and must be later than the timestamps for both machines.
 
 When any function changes the machine status, the `lastStatusChangeTs` is updated to the current `block.timestamp`.
 Note that once an owner registers a TEE ID and the proof has been provided, the machine belongs to that owner.

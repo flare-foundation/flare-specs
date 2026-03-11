@@ -10,17 +10,30 @@ Each private key on a TEE machine is described by the following data structure:
 
 - `walletId`: Wallet ID of the key.
 - `keyId`: Key ID within the wallet.
-- `signingAlgo`: The signing algorithm for the key.
-- `keyType`: Operation type for which the key is intended to be used.
+- `signingAlgo`: The signing algorithm for the key (see [Signing Algorithms](#signing-algorithms)).
+- `keyType`: The key type (see [Key Types](#key-types)).
 - `privateKey`: The private key.
 - `restored`: A flag indicating whether the key was generated (`false`) or restored through backup restore (`true`).
 - `configConstants`: Immutable wallet config settings, including:
 	- `adminsPublicKeys`: A list of public keys used for encrypting Shamir secret shares for backup and for multisig confirmation of changes in config settings.
 	- `adminsThreshold`: Threshold for operations with `adminsPublicKeys`.
-	- `cosigners`: An (optional) a list of cosigner addresses. If set, provides additional multisig confirmation needed to execute instructions.
+	- `cosigners`: An (optional) list of cosigner addresses. If set, provides additional multisig confirmation needed to execute instructions.
 	- `cosignersThreshold`: The (optional) threshold for cosigning.
 
 All fields except `configConstants` are set at key generation. The `configConstants` are set separately as part of wallet configuration.
+
+### Signing Algorithms
+Three signing algorithms are supported, each identified by a `bytes32` hash of the algorithm string:
+
+1. `keccak256-secp256k1-ecdsa`: ECDSA signing for EVM-compatible chains.
+2. `sha512half-secp256k1-ecdsa`: ECDSA signing for XRP Ledger transactions.
+3. `keccak256-secp256k1-vrf`: VRF proof generation (see [VRF Keys](#vrf-keys)).
+
+### Key Types
+Two key types are supported:
+
+1. `EVM`: Keys intended for EVM-compatible signing operations.
+2. `XRP`: Keys intended for XRP Ledger signing operations.
 
 ### Wallet Key Variables
 
@@ -32,9 +45,11 @@ $$(\text{walletId}, \text{keyId}) \Rightarrow (\text{nonce}, \text{pauseNonce}, 
 Where the fields represent:
 
 - `nonce`: The key nonce, used for replay protection in state-changing operations such as `KEY_DELETE`.
-- `pauseNonce`: A randomly generated nonce for `PAUSE` and `RESUME` operations.
+- `pauseNonce`: A randomly generated nonce reserved for `PAUSE` and `RESUME` operations.
 - `status`: The key status (e.g. `active`, `paused`).
 - `expiry`: The expiry time of the key. After the expiry time is reached, the key is automatically deleted from the machine.
+
+> **Note:** The `PAUSE` and `RESUME` commands are planned but not yet active in the current code version. The `pauseNonce` field is present in the data structure but no corresponding command processors are registered.
 
 > **Note:** When key data is replicated to another machine or backed up, the `configConstants` and wallet key variables are excluded.
 
@@ -66,6 +81,34 @@ bytes settings;
 ```
 where `nonce` is a fresh nonce, `restored` is set to True if the key was restored on to the TEE machine (and otherwise false) ,`configConstants` describes configuration of the private key data structure, and the final two fields describe configurations of the TEEs settings.
 The rest of the fields are defined by the [project](Projects and Ownership.md) on which the key is active, and identify properties of the wallet and key.
+
+## VRF Keys
+In addition to standard ECDSA signing keys, a TEE machine can hold *VRF keys* for verifiable random number generation. VRF keys use the `keccak256-secp256k1-vrf` signing algorithm and are generated and managed through the same `KEY_GENERATE` and `KEY_DELETE` instructions as other wallet keys.
+
+### VRF Proof Generation
+The `VRF` command under `op.Wallet` generates a verifiable randomness proof. The instruction takes as input:
+
+- `walletId` (`bytes32`): The wallet ID of the VRF key.
+- `keyId` (`uint64`): The key ID within the wallet.
+- `nonce` (`bytes`): An arbitrary nonce binding the proof to a specific request.
+
+The TEE loads the private key, verifies that its signing algorithm is `keccak256-secp256k1-vrf`, and computes a VRF proof using the ECVRF scheme on secp256k1, based on "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099).
+
+### VRF Proof Structure
+The proof output consists of:
+
+- `gamma`: A curve point $(\gamma_x, \gamma_y)$, the VRF output point.
+- `c`: The challenge scalar.
+- `s`: The response scalar.
+- `u`: Witness point $c \cdot \mathrm{pk} + s \cdot G$.
+- `cGamma`: Witness point $c \cdot \gamma$.
+- `v`: Witness point $c \cdot \gamma + s \cdot H$.
+- `zInv`: Field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
+
+The witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM. The on-chain `TeeVRFVerifier` contract verifies the proof using `ecrecover`.
+
+### Randomness Extraction
+The final random value is derived as $\mathrm{keccak256}(\gamma_x \| \gamma_y)$, where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma point coordinates.
 
 ## Key Backup
 TEE machines backup keys that they generate for signing and other operations.
@@ -99,12 +142,11 @@ The backup metadata consists of the following fields:
 -  `keyType`: The key type of the private key. 
 - `rewardEpochId`: The ID of the signing policy on which the key was backed up, defining which data providers store backup shares.
 - `publicKey`: The public key of the backed up private key.
--  `configConstants`: The key config constants of the key, as set by the project owner. These include:
-	- `dpThreshold`: The threshold weight required for recovering the data providers' share of the key. This defaults to $66\%$
-	- `adminsPublicKeys`: The list of admin public keys.
-	- `adminsThreshold`: The threshold for operations with the admin public keys.
-	- `cosigners`: The list of cosigner addresses for the key, if included.
-	- `cosignersThreshold`: The threshold for cosigning.
+- `providersThreshold`: The threshold weight required for recovering the data providers' share of the key. This defaults to $666/1000$ (approximately $66\%$). This is a backup-specific parameter, not part of the wallet's `configConstants`.
+- `adminsPublicKeys`: The list of admin public keys.
+- `adminsThreshold`: The threshold for operations with the admin public keys.
+- `cosigners`: The list of cosigner addresses for the key, if included.
+- `cosignersThreshold`: The threshold for cosigning.
 - `randomNonce`: A random nonce generated by the TEE machine at the time of backup creation.
 
 The backup ID is defined from a set of fields from the backup metadata, specifically:
@@ -137,7 +179,7 @@ Alongside the key that is being backed up, the backup process triggered by $\mat
 To backup a key $K$, the TEE machine performs the following  procedure:
 
 1. A random split of into two shares $K$ is performed by modulo arithmetic, giving shares $S_\mathrm{dp}$ and $S_\mathrm{ka}$, the data provider and key admin shares of the secret. The shares are chosen uniformly at random such that $K = S_\mathrm{dp} + S_\mathrm{ka} \mod N$.
-2. The data provider share $S_\mathrm{dp}$ is split into $1000$ shares using a $(1000, \lfloor \mathrm{dpThrehsold} \cdot 1000 \rfloor)$-Shamir secret sharing scheme into shares ${S_\mathrm{dp}}^1, \dots, {S_\mathrm{dp}}^{1000}$. Each data provider is then assigned a proportion of these shares relative to its weight in the signing policy, rounded down, such that the $j$th data provider with weight $W_j$ is assigned $\lfloor W_j \cdot 1000 \rfloor$ shares of the secret.
+2. The data provider share $S_\mathrm{dp}$ is split into $1000$ shares using a $(1000, \mathrm{providersThreshold})$-Shamir secret sharing scheme into shares ${S_\mathrm{dp}}^1, \dots, {S_\mathrm{dp}}^{1000}$. Each data provider is then assigned a proportion of these shares relative to its weight in the signing policy, rounded down, such that the $j$th data provider with weight $W_j$ is assigned $\lfloor W_j \cdot 1000 \rfloor$ shares of the secret.
 3. Similarly, the key admin share $S_\mathrm{ka}$ is split shares $${S_\mathrm{ka}}^1, \dots, {S_\mathrm{ka}}^{N_\text{admin}}$ equal to the number of key admins using an $(N_{\text{admin}}, \mathrm{adminsThreshold})$-Shamir secret sharing scheme. The $i$th admin is assigned a share ${S_\mathrm{ka}}^i$.
 4. For the each data provider and key admin, a package $\mathrm{pack}_i$ is prepared containing share data and relevant meta data. This package is then encrypted under the receiving entities public key $\mathrm{pk}_i$. Formally, the package contains:
 	 - `shareData`: The share or shares for the recipient $i$.
