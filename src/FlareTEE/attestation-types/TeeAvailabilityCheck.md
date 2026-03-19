@@ -70,15 +70,20 @@ The `challenge` from the request body is matched against the challenge from the 
 
 The `teeProxyId` from the request body is matched against the address recovered from the `proxySignature` of the TEE proxy info response.
 
+### URL Validation
+
+Before contacting the TEE proxy, the verifier validates the proxy URL against SSRF attacks, blocking private IP ranges, link-local addresses, multicast addresses, cloud metadata endpoints, and Teredo tunnels.
+
 ### JWT Token and Claims Validation
 
-The JWT token is verified using Google Cloud Confidential Computing PKI attestation. Claims are extracted and validated:
+The JWT token is verified using Google Cloud Confidential Computing PKI attestation. The verification includes:
 
-1. **Hash verification** — Create a hash from the returned TEE proxy data and compare it with the `eat_nonce` claim.
-2. **Production mode** — Verify that `dbgstat` equals `disabled-since-boot`.
+1. **Certificate revocation** — The verifier fetches and checks Certificate Revocation Lists (CRLs) for both leaf and intermediate certificates before validating the JWT token.
+2. **Hash verification** — Create a hash from the returned TEE proxy data and compare it with the `eat_nonce` claim.
+3. **Production mode** — Verify that `dbgstat` equals `disabled-since-boot`.
    - Note: The `ALLOW_TEE_DEBUG` configuration must be `false` in production. When `true`, only debug TEE images are accepted (production TEEs are rejected), intended solely for development environments.
-3. **Running software** — Verify that `swname` equals `CONFIDENTIAL_SPACE`.
-4. **Security version** — Verify that `submods.confidential_space.support_attributes` contains `STABLE`.
+4. **Running software** — Verify that `swname` equals `CONFIDENTIAL_SPACE`.
+5. **Security version** — Verify that `submods.confidential_space.support_attributes` contains `STABLE`. If this check fails but all other checks pass, the status is `OBSOLETE`.
 
 ### TEE Identity Check
 
@@ -117,9 +122,10 @@ On each poll:
 
 ### Status Determination
 
-To reliably detect a `DOWN` status, the poller must observe only `INVALID` samples for at least 5 minutes.
+To reliably detect a `DOWN` status, the poller must have collected at least $5$ samples (at $1$-minute intervals) and all of them must be `INVALID`.
 
-- If all entries hold sample state `INVALID` → status is set to `DOWN`.
+- If there are fewer than $5$ samples → status is `INDETERMINATE` (insufficient data).
+- If all $5$ entries hold sample state `INVALID` → status is set to `DOWN`.
 - Otherwise → status is `INDETERMINATE`.
 
 ### Evaluating Availability with Attestation

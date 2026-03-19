@@ -23,9 +23,9 @@ Attestation request body:
 Attestation response body:
 
 - `recipientAddress` — Recipient address (from `PaymentInstructionMessage` on C-Chain).
-- `tokenId` — Token ID (e.g. address) for the payment; `bytes32(0)` means native token (from C-Chain).
+- `tokenId` — Token ID (variable-length `bytes`); empty means native token (from C-Chain).
 - `amount` — Amount in minimal units to be sent (from C-Chain).
-- `fee` — Fee in minimal units to be paid for the transaction (from C-Chain).
+- `maxFee` — Maximum fee in minimal units that can be paid for the transaction (from C-Chain).
 - `paymentReference` — Payment reference (from C-Chain).
 - `transactionStatus`:
   - `0` (success) — Transaction is recorded on-chain and was successful.
@@ -60,10 +60,11 @@ struct PaymentInstructionMessage {
     bytes32 sourceId;
     string senderAddress;
     string recipientAddress;
-    bytes32 tokenId;
+    bytes tokenId;
     uint256 amount;
-    uint256 fee;
+    uint256 maxFee;
     bytes32 paymentReference;
+    bytes feeSchedule;
     uint64 nonce;
     uint64 subNonce;
     uint64 batchEndTs;
@@ -79,7 +80,7 @@ struct PaymentInstructionMessage {
 
 **Transaction not found:**
 
-- Cannot prove anything → return `UNDETERMINED` / `NOT_FOUND`.
+- Cannot prove anything → the verifier returns an error, which the service layer translates to an HTTP error response.
 
 **XRP — Transaction successful:**
 

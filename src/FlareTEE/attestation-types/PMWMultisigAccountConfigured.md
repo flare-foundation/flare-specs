@@ -14,10 +14,10 @@ Attestation request body:
 
 Attestation response body:
 
-- `status`:
-  - `ok` — Account is correctly configured.
-  - `error` — Account is incorrectly configured.
-- `sequence` — Sequence number of the account.
+- `status` (`PMWMultisigAccountStatus` enum):
+  - `OK` ($0$) — Account is correctly configured.
+  - `ERROR` ($1$) — Account is incorrectly configured or the RPC query to the external chain failed validation checks.
+- `sequence` (`uint64`) — Sequence number of the account. Set to $0$ when status is `ERROR`.
 
 ## Trust Model
 
@@ -27,7 +27,7 @@ Each data provider uses its own XRP node for verification, so the system does no
 
 ### XRP Ledger
 
-1. Query [`account_info`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_info) on an XRP node for the given `accountAddress`.
+1. Query [`account_info`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_info) on an XRP node for the given `accountAddress`, with `ledger_index: "validated"` and `signer_lists: true`.
 
 2. **Validate signer list:**
    - Check [`signer_lists`](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/signerlist) to obtain signer addresses and their weights.
@@ -51,8 +51,9 @@ Each data provider uses its own XRP node for verification, so the system does no
 
 ### Result
 
-- If all checks pass: `status` = `ok`, `sequence` = `result.account_data.Sequence`.
-- Otherwise: `status` = `error`, `sequence` = 0.
+- If all checks pass: `status` = `OK`, `sequence` = `result.account_data.Sequence`.
+- If any validation check fails: `status` = `ERROR`, `sequence` = $0$. The response is still returned successfully (not an HTTP error).
+- If the XRP RPC call itself fails (network error, node unreachable): an error is returned to the caller.
 
 ## Example
 
