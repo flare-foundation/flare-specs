@@ -28,7 +28,7 @@ The workflows build on each other. Complete earlier workflows before attempting 
      │                   │
      ├────────────────┐  │
      ▼                ▼  ▼
-  xrpl-multisig-   key-management
+  xrpl-multisig-   key-add / key-delete / key-restore
   configuration
      │
      ▼
@@ -65,7 +65,9 @@ The workflows build on each other. Complete earlier workflows before attempting 
 | [wallet-setup.md](wallet-setup.md) | Create a project and configure a wallet through to PRODUCTION | `TeeWalletProjectManager`, `TeeWalletManager`, `TeeWalletKeyManager` | [Projects and Ownership](../Operations/Projects%20and%20Ownership.md) |
 | [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) | Bind an XRPL multisig account to a TEE-managed wallet | `TeePayments`, `TeeVerification` | [PMW](../Extensions/PMW/PMW.md), [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) |
 | [xrp-payment.md](xrp-payment.md) | Execute, reissue, or nullify XRP payments through a TEE wallet | `TeePayments` | [Transactions](../Extensions/PMW/Transactions.md), [PMWPaymentStatus](../attestation-types/PMWPaymentStatus.md) |
-| [key-management.md](key-management.md) | Key deletion, backup, restoration, and migration between TEEs | `TeeWalletKeyManager`, `TeeWalletBackupManager` | [Key Management](../TEE%20Management/Key%20Management.md) |
+| [key-add.md](key-add.md) | Add a new signing key to a TEE machine | `TeeWalletKeyManager` | [Key Management](../TEE%20Management/Key%20Management.md) |
+| [key-delete.md](key-delete.md) | Delete a key from a TEE machine and clean up stale TEE IDs | `TeeWalletKeyManager` | [Key Management](../TEE%20Management/Key%20Management.md) |
+| [key-restore.md](key-restore.md) | Restore a key from backup onto a new TEE machine | `TeeWalletKeyManager`, `TeeWalletBackupManager` | [Key Management](../TEE%20Management/Key%20Management.md) |
 | [machine-lifecycle.md](machine-lifecycle.md) | Post-registration machine operations: pause, resume, upgrade, ownership transfer | `TeeMachineRegistry` | [Ownership](../TEE%20Management/Ownership.md), [State and Status](../TEE%20Management/State%20and%20Status.md) |
 | [extension-instructions.md](extension-instructions.md) | Send custom instructions to extensions (EVM signing, RNG, direct actions) | `TeeExtensionRegistry` | SDK and Development (not yet published), [Extensions](../Extensions/Extensions.md) |
 | [vrf-proof.md](vrf-proof.md) | Generate and verify a VRF proof using a TEE-managed VRF key | `TeeWalletKeyManager`, `TeeVRFVerifier` | [Key Management](../TEE%20Management/Key%20Management.md), [F_WALLET--VRF](../commands/F_WALLET--VRF.md) |

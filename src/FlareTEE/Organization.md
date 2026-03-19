@@ -28,7 +28,9 @@
 	- Machine Registration
 	- Machine Lifecycle
 	- Wallet Setup
-	- Key Management
+	- Key Add
+	- Key Delete
+	- Key Restore
 	- VRF Proof
 	- XRP Payment
 	- Extension Configuration
