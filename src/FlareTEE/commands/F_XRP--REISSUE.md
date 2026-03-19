@@ -16,10 +16,11 @@ struct PaymentInstructionMessage {
     bytes32 sourceId;
     string senderAddress;
     string recipientAddress;
-    bytes32 tokenId;
+    bytes tokenId;
     uint256 amount;
-    uint256 fee;
+    uint256 maxFee;
     bytes32 paymentReference;
+    bytes feeSchedule;
     uint64 nonce;
     uint64 subNonce;
     uint64 batchEndTs;
@@ -40,4 +41,4 @@ struct PaymentInstructionMessage {
 
 ## Action result
 
-Same as [PAY](F_XRP--PAY.md) -- JSON of the XRP Ledger transaction with filled `Signers` field.
+Same as [PAY](F_XRP--PAY.md) — JSON of the XRP Ledger transaction with filled `Signers` field.

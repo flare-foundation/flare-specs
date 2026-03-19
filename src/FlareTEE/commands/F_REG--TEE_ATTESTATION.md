@@ -6,7 +6,15 @@ Calculates TEE attestation for a given challenge and returns the attestation res
 
 ## Event message
 
+The instruction event is decoded into a `TeeAttestation` struct wrapping the machine data and challenge:
+
 ```solidity
+// Source: ITeeVerification.sol
+struct TeeAttestation {
+    TeeMachineWithAttestationData teeMachine; // TEE machine data
+    bytes32 challenge;                         // random challenge
+}
+
 // Source: ITeeMachineRegistry.sol
 struct TeeMachineWithAttestationData {
     address teeId;        // TEE machine id
@@ -17,8 +25,7 @@ struct TeeMachineWithAttestationData {
 }
 ```
 
-- `teeData` -- TEE machine data (struct above)
-- `challenge` -- random challenge (`bytes32`)
+> **Note:** The command only produces a result on the `Threshold` submission tag. On the `End` submission tag, no result is returned.
 
 ## Fixed message
 

@@ -10,7 +10,7 @@ This page provides an index of all implemented TEE commands. Each command is ide
 | `F_WALLET` | `KEY_GENERATE` | Instruction | Yes | Triggers key generation on the TEE machine. |
 | `F_WALLET` | `KEY_DELETE` | Instruction | Yes | Deletes a key from the TEE machine. |
 | `F_WALLET` | `KEY_DATA_PROVIDER_RESTORE` | Instruction | Yes | Initializes key restoration from a backup. |
-| `F_WALLET` | `KEY_DATA_PROVIDER_RESTORE_TEST` | Instruction | Yes | Tests the key restoration process. |
+| `F_WALLET` | `KEY_DATA_PROVIDER_RESTORE_TEST` | Instruction | Yes | Tests the key restoration process. **(not yet implemented)** |
 | `F_WALLET` | `VRF` | Instruction | Yes | Generates a verifiable randomness proof. |
 | `F_GET` | `KEY_INFO` | Direct | — | Returns information about all keys on the TEE machine. |
 | `F_GET` | `TEE_BACKUP` | Direct | — | Returns the latest backup package. |
@@ -34,6 +34,7 @@ Commands with *immediate result* set to Yes return their result synchronously as
 
 The following command types are defined in contracts but do not have active TEE-node command processors:
 
+- `F_WALLET` / `KEY_DATA_PROVIDER_RESTORE_TEST`: Defined in `validSystemPairs` but no processor is registered. See [F_WALLET--KEY_DATA_PROVIDER_RESTORE_TEST.md](F_WALLET--KEY_DATA_PROVIDER_RESTORE_TEST.md) for intended behavior.
 - `F_BTC` (`PAY`, `REISSUE`): Bitcoin payment operations. Defined in `validSystemPairs` but no processor is registered.
 - `F_GOVERNANCE` (`BAN_VERSIONS`, `PAUSE`, `RESUME`, `SET_PAUSING_ADDRESSES`, `UPGRADE_PATH`): Governance commands. Not defined in the TEE-node operation types.
 - `F_REG` / `REPLICATE_FROM`, `TO_PAUSE_FOR_UPGRADE`: Commented out in the codebase. Contract functions exist but TEE-side processors are not registered.

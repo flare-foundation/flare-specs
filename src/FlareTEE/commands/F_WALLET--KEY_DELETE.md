@@ -4,7 +4,7 @@
 
 Deletes the key from the machine state, if present.
 
-Any key that was ever in the machine state holds a nonce record. An action is valid if the nonce record for the key is present and is strictly lower than the action's nonce. A valid action deletes the key from the state, if present, and updates the nonce record. If the key is not present, only the nonce record is updated.
+Any key that was ever in the machine state holds a nonce record. An action is valid if the nonce record for the key is present and is strictly lower than the action's nonce. A valid action deletes the key from the state, if present, and updates the nonce record. If the key is not present, only the nonce record is updated and the action result includes an `additionalResultStatus` of `"key not stored"`.
 
 Note that on the TEE machine the nonce related to `(walletId, keyId)` is kept and reused if later the same key gets restored to the TEE machine (or its upgrade).
 
@@ -36,12 +36,14 @@ struct KeyDelete {
 
 Marshalled key ID pair:
 
-```solidity
-// Source: ITeeIdKeyIdPair.sol
-struct TeeIdKeyIdPair {
-    address teeId; // TEE machine id
-    uint64 keyId;  // key id
+```go
+// Source: tee-node/pkg/wallets/wallets.go
+type KeyIDPair struct {
+    WalletID common.Hash `json:"walletId"` // wallet id
+    KeyID    uint64      `json:"keyId"`    // key id
 }
 ```
 
 The result contains the `walletId` and `keyId` of the deleted key.
+
+On the `End` submission tag, the TEE verifies that the deletion was processed and the nonce was consumed, ensuring consistency between the threshold and end-of-voting results.
