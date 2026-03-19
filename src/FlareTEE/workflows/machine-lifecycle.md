@@ -2,7 +2,7 @@
 
 ## Overview
 
-After a TEE machine is registered and moved to `PRODUCTION` status (see [machine-registration.md](machine-registration.md)), the machine owner and other parties can perform a variety of management operations. These include pausing, updating settings, transferring ownership, confirming periodic availability, upgrading to new code versions, and governance-level banning.
+After a TEE machine is registered and moved to `PRODUCTION` status (see [machine-registration.md](machine-registration.md)), the machine owner and other parties can perform a variety of management operations. These include pausing, updating settings, transferring ownership, confirming periodic availability, and governance-level banning.
 
 All management functions are available on the `TeeMachineRegistry` smart contract. When any function changes the machine status, `lastStatusChangeTs` is updated to the current `block.timestamp`.
 
@@ -19,66 +19,54 @@ For full details, see the [Ownership specification](../TEE%20Management/Ownershi
 
 ## Status Transition Diagram
 
-The following diagram shows all 7 machine statuses and the transitions between them:
+The following diagram shows the implemented machine statuses and the transitions between them:
 
 ```
                           register()
                               |
                               v
                         INITIALIZED
-                       /           \
-          toProduction(proof)    replicateFrom() [NOT IMPLEMENTED]
-                     /                 \
-                    v                   v
-              PRODUCTION           REPLICATING
-             /    |    \
-            /     |     \
-           v      v      v
-    SUSPENDED  PAUSED  updateTeeMachineSettings()
-       |         |          |
-       |         |          v
-       |         |        PAUSED
-       |         |
-       |    toPauseForUpgrade() [NOT IMPLEMENTED]
-       |         |
-       |         v
-       |   PAUSED_FOR_UPGRADE [NOT IMPLEMENTED]
-       |         |
-       |    replicateFrom() [NOT IMPLEMENTED]
-       |         |
-       |         v
-       |    REPLICATING [NOT IMPLEMENTED]
-       |
-       +--pause()--> PAUSED
-       |
-    PAUSED --- toProduction(proof) ---> PRODUCTION
-       ^
-       |
-   SUSPENDED --- pause() ---> PAUSED
+                              |
+                    toProduction(proof)
+                              |
+                              v
+                        PRODUCTION
+                       /    |    \
+                      /     |     \
+                     v      v      v
+              SUSPENDED  PAUSED  updateTeeMachineSettings()
+                 |         |          |
+                 |         |          v
+                 |         |        PAUSED
+                 |         |
+                 +--pause()--> PAUSED
+                 |
+              PAUSED --- toProduction(proof) ---> PRODUCTION
+                 ^
+                 |
+             SUSPENDED --- pause() ---> PAUSED
 
-          PAUSED, SUSPENDED, or PRODUCTION
-                  |
-              ban() (governance)
-                  |
-                  v
-               BANNED
-                  |
-              unban() (governance)
-                  |
-                  v
-               PAUSED
+                PAUSED, SUSPENDED, or PRODUCTION
+                        |
+                    ban() (governance)
+                        |
+                        v
+                     BANNED
+                        |
+                    unban() (governance)
+                        |
+                        v
+                     PAUSED
 ```
 
 **Status summary:**
 
 | Status | Description |
 |--------|-------------|
-| `INITIALIZED` | After registration, not yet verified. Can transition to `PRODUCTION` (or `REPLICATING`, but not implemented). |
+| `INITIALIZED` | After registration, not yet verified. Can transition to `PRODUCTION`. |
 | `PRODUCTION` | Fully operational, accepts all instructions. Can be paused, suspended, or banned. |
 | `SUSPENDED` | Paused via `pauseWithProof()` based on a non-availability proof. Can transition to `PAUSED` via `pause()` or be banned. |
 | `PAUSED` | Paused by owner, unsupported code version, settings update, or unban. Can return to `PRODUCTION` with a new availability proof. |
-| `PAUSED_FOR_UPGRADE` | Not operational but can serve as replication source. **Contract exists but TEE command NOT IMPLEMENTED.** |
-| `REPLICATING` | Currently being replicated to from another machine during an upgrade. **Contract exists but TEE command NOT IMPLEMENTED.** |
 | `BANNED` | Banned by governance. Can only be reversed by `unban()`, which moves to `PAUSED`. |
 
 ---
@@ -254,102 +242,9 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 ---
 
-## Step 7: Machine Upgrade Workflow
+## Step 7: Ban and Unban -- `TeeMachineRegistry.ban()` and `TeeMachineRegistry.unban()`
 
-> **NOT IMPLEMENTED:** The machine upgrade workflow is planned but not yet implemented. The following documents the intended design from the specification.
->
-> **Implementation Status Note:** The `REPLICATE_FROM` and `TO_PAUSE_FOR_UPGRADE` TEE-node commands are not yet active in the current code version. While the corresponding smart contract functions (`toPauseForUpgrade()`, `replicateFrom()`, `confirmReplicate()`) exist on the `teeReplication` contract on-chain, the TEE-side command processors for these operations are not registered in the node software (they are commented out in `op.go`). Attempting to trigger these workflows will result in the contract emitting instructions that the TEE node cannot process.
-
-The upgrade procedure allows an owner to migrate a TEE machine to a new code version by replicating its state to a new machine. The essential parts of state that are replicated include the identity private key and all wallet private keys (excluding machine-specific variables such as nonces).
-
-### Step 7a: Pause for Upgrade -- `toPauseForUpgrade()`
-
-> **Not Yet Active:** The `TO_PAUSE_FOR_UPGRADE` command processor is not registered in the current TEE node code (commented out in `op.go`). The contract function exists but the TEE-side handling is inactive.
-
-**Who can call:** The machine owner.
-
-**Parameters:**
-
-- `teeId` (`address`) -- the TEE identity address of the old machine.
-
-**Requirements:**
-
-- The machine status must be `PAUSED` or `PAUSED_FOR_UPGRADE`.
-- If the status is `PAUSED`, can only be called after 10 minutes from the last status change.
-
-**What happens:**
-
-1. The owner calls `toPauseForUpgrade(oldMachineTeeId)` on the old machine.
-2. The machine enters `PAUSED_FOR_UPGRADE` status.
-3. The `TO_PAUSE_FOR_UPGRADE` [instruction](../Operations/Instructions.md) command is triggered.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
-5. This is a final status -- the machine can only serve as a replication source from this point.
-
-**Events emitted:** Status change event.
-
-### Step 7b: Replicate From -- `replicateFrom()`
-
-> **Not Yet Active:** The `REPLICATE_FROM` command processor is not registered in the current TEE node code (commented out in `op.go`). The contract function exists but the TEE-side handling is inactive.
-
-**Who can call:** The machine owner (on the new machine).
-
-**Parameters:**
-
-- `oldTeeId` (`address`) -- the TEE identity of the old machine to replicate from.
-- `proof` (`ITeeAvailabilityCheckProof`) -- availability check proof for the new machine.
-- `signedUpgradePath` -- signed upgrade path from the old to the new code version (see Governance -- not yet published).
-
-**Requirements:**
-
-- The new machine's status must be `INITIALIZED` or `REPLICATING` (for retries).
-- The old machine must be in `PAUSED_FOR_UPGRADE` status.
-- The proof must be valid for the new machine.
-
-**What happens:**
-
-1. The owner triggers the `REPLICATE_FROM` command on the new machine.
-2. The new machine enters `REPLICATING` status.
-3. The new machine receives the old machine's state (identity key, wallet keys).
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
-
-**Events emitted:** Status change event and replication initiation event.
-
-### Step 7c: Confirm Replicate -- `confirmReplicate()`
-
-**Who can call:** The machine owner.
-
-**Parameters:**
-
-- `newTeeId` (`address`) -- the TEE identity of the new machine.
-- `proof` (`ITeeAvailabilityCheckProof`) -- proof for the new machine with the old TEE id at the new machine's URL. The proof must have a timestamp later than both machines' timestamps.
-
-**Requirements:**
-
-- The new machine must be in `REPLICATING` status.
-- The proof must show the new machine's URL with the old TEE id.
-
-**What happens:**
-
-1. The owner confirms that replication was successful.
-2. The new machine is registered with the old TEE id.
-3. The new machine's status changes to `PRODUCTION`.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
-
-**Events emitted:** Status change event and replication confirmation event.
-
-### Full Upgrade Sequence
-
-1. Register a new machine with the updated code version.
-2. Call `toPauseForUpgrade(oldMachineTeeId)` -- old machine enters `PAUSED_FOR_UPGRADE`.
-3. Call `replicateFrom(oldTeeId, proof, signedUpgradePath)` -- new machine enters `REPLICATING`.
-4. The new machine identifies with the replicated identity.
-5. Call `confirmReplicate(newTeeId, proof)` -- new machine enters `PRODUCTION` with the old TEE id.
-
----
-
-## Step 8: Ban and Unban -- `TeeMachineRegistry.ban()` and `TeeMachineRegistry.unban()`
-
-### Step 8a: Ban -- `ban()`
+### Step 7a: Ban -- `ban()`
 
 **Who can call:** Governance only.
 
@@ -371,7 +266,7 @@ The upgrade procedure allows an owner to migrate a TEE machine to a new code ver
 
 **Events emitted:** Status change event (ban).
 
-### Step 8b: Unban -- `unban()`
+### Step 7b: Unban -- `unban()`
 
 **Who can call:** Governance only.
 

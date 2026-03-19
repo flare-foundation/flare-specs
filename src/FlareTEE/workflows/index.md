@@ -92,11 +92,9 @@ Status transitions are denoted with arrows:
 |--------|---------|
 | `INITIALIZED` | Registered but not yet verified |
 | `PRODUCTION` | Fully operational |
-| `SUSPENDED` | Paused due to non-availability proof |
-| `PAUSED` | Paused by owner |
-| `PAUSED_FOR_UPGRADE` | Ready as replication source |
-| `REPLICATING` | Being replicated to new machine |
-| `BANNED` | Permanently disabled (governance only) |
+| `SUSPENDED` | Suspended due to non-availability proof |
+| `PAUSED` | Paused by owner, unsupported code version, settings update, or unban |
+| `BANNED` | Banned by governance, reversible via unban |
 
 ### Wallet Statuses
 

@@ -133,8 +133,6 @@ The full backup metadata contains all `BackupId` fields plus:
 6. The TEE returns an action response indicating success or failure. If any share holders submitted invalid shares, the response includes a list of those entities.
 7. If too many shares were invalid, key recovery fails, and this is indicated in the action response.
 
-> **Testing:** The `KEY_DATA_PROVIDER_RESTORE_TEST` command can be used to test the key restoration process without affecting production keys. It simultaneously restores the key, signs a test message, and deletes the key.
-
 ---
 
 ## Step 4: Confirm Restored Key — `TeeWalletKeyManager.confirmKey()`

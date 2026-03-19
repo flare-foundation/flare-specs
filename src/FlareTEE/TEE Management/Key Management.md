@@ -44,13 +44,11 @@ $$(\text{walletId}, \text{keyId}) \Rightarrow (\text{nonce}, \text{pauseNonce}, 
 Where the fields represent:
 
 - `nonce`: The key nonce, used for replay protection in state-changing operations such as `KEY_DELETE`.
-- `pauseNonce`: A randomly generated nonce reserved for `PAUSE` and `RESUME` operations.
+- `pauseNonce`: A randomly generated nonce reserved for future `PAUSE` and `RESUME` operations.
 - `status`: The key status (e.g. `active`, `paused`).
 - `expiry`: The expiry time of the key. After the expiry time is reached, the key is automatically deleted from the machine.
 
-> **Note:** The `PAUSE` and `RESUME` commands are planned but not yet active in the current code version. The `pauseNonce` field is present in the data structure but no corresponding command processors are registered.
-
-> **Note:** When key data is replicated to another machine or backed up, the `configConstants` and wallet key variables are excluded.
+> **Note:** When key data is backed up, the `configConstants` and wallet key variables are excluded.
 ## TEE Key Existence Proof
 Upon generation of a key for, the TEE machine also generates and returns a *key existence proof*.
 A key existence proof is a data structure containing the key and relevant meta data and signed by the TEE that holds the key.
@@ -215,8 +213,6 @@ Note that in steps 4 and 5 the TEE proxy has no way of knowing whether or not th
 If too many key shares were invalid, key recovery will fail, which is also included in the action response. 
 
 > **Note:** The [wallet key variables](#wallet-key-variables) (`nonce`, `pauseNonce`, `status`, `expiry`) are not included in the backup and are not restored. These values are managed independently on each TEE machine.
-
-> **Testing:** The `KEY_DATA_PROVIDER_RESTORE_TEST` command can be used to test the key restoration process without affecting production keys.
 
 ## Key and Backup Manager Contracts
 Keys and backups are managed by users through two contracts: the `TeeWalletKeyManager` contract and the `TeeWalletBackupManager` contract.
