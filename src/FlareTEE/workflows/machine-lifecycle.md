@@ -6,12 +6,12 @@ After a TEE machine is registered and moved to `PRODUCTION` status (see [machine
 
 All management functions are available on the `TeeMachineRegistry` smart contract. When any function changes the machine status, `lastStatusChangeTs` is updated to the current `block.timestamp`.
 
-For full details, see the [Ownership specification](../Ownership.md) and [State and Status specification](../State%20and%20Status.md).
+For full details, see the [Ownership specification](../TEE%20Management/Ownership.md) and [State and Status specification](../TEE%20Management/State%20and%20Status.md).
 
 ## Prerequisites
 
 - The TEE machine must be registered on the `TeeMachineRegistry` smart contract.
-- For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [machine-registration.md](machine-registration.md)).
+- For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [machine-registration.md](machine-registration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid `TeeAvailabilityCheck` proof and a supported code version.
 - The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
 - For proof-based operations, a valid `TeeAvailabilityCheck` FTDC proof is required (see [ftdc-attestation.md](ftdc-attestation.md)).
 
@@ -27,30 +27,36 @@ The following diagram shows all 7 machine statuses and the transitions between t
                               v
                         INITIALIZED
                        /           \
-          toProduction(proof)    replicateFrom()
+          toProduction(proof)    replicateFrom() [NOT IMPLEMENTED]
                      /                 \
                     v                   v
               PRODUCTION           REPLICATING
              /    |    \
             /     |     \
-           /      |      \
-          v       v       v
-  PAUSED_WITH  PAUSED  PAUSED_FOR
-    _PROOF              _UPGRADE
-      |          |          |
-      |          |          v
-      |          |     REPLICATING (via replicateFrom on new machine)
-      |          |
-      |     toPauseForUpgrade()
-      |          |
-      |          v
-      |    PAUSED_FOR_UPGRADE
-      |
-      +--- toProduction(proof) ---> PRODUCTION
-      |
-   PAUSED --- toProduction(proof) ---> PRODUCTION
+           v      v      v
+    SUSPENDED  PAUSED  updateTeeMachineSettings()
+       |         |          |
+       |         |          v
+       |         |        PAUSED
+       |         |
+       |    toPauseForUpgrade() [NOT IMPLEMENTED]
+       |         |
+       |         v
+       |   PAUSED_FOR_UPGRADE [NOT IMPLEMENTED]
+       |         |
+       |    replicateFrom() [NOT IMPLEMENTED]
+       |         |
+       |         v
+       |    REPLICATING [NOT IMPLEMENTED]
+       |
+       +--pause()--> PAUSED
+       |
+    PAUSED --- toProduction(proof) ---> PRODUCTION
+       ^
+       |
+   SUSPENDED --- pause() ---> PAUSED
 
-               any status
+          PAUSED, SUSPENDED, or PRODUCTION
                   |
               ban() (governance)
                   |
@@ -67,13 +73,13 @@ The following diagram shows all 7 machine statuses and the transitions between t
 
 | Status | Description |
 |--------|-------------|
-| `INITIALIZED` | After registration, not yet verified. Can transition to `PRODUCTION` or `REPLICATING`. |
-| `PRODUCTION` | Fully operational, accepts all instructions. Can be paused or paused for upgrade. |
-| `PAUSED_WITH_PROOF` | Paused based on a non-availability proof. Can return to `PRODUCTION` with a new valid proof. |
-| `PAUSED` | Paused by owner or pausing address. Can return to `PRODUCTION` with a new availability proof. |
-| `PAUSED_FOR_UPGRADE` | Not operational but can serve as replication source. This is a final status. |
-| `REPLICATING` | Currently being replicated to from another machine during an upgrade. |
-| `BANNED` | Banned by governance. Terminal status (can only be reversed by `unban()`). |
+| `INITIALIZED` | After registration, not yet verified. Can transition to `PRODUCTION` (or `REPLICATING`, but not implemented). |
+| `PRODUCTION` | Fully operational, accepts all instructions. Can be paused, suspended, or banned. |
+| `SUSPENDED` | Paused via `pauseWithProof()` based on a non-availability proof. Can transition to `PAUSED` via `pause()` or be banned. |
+| `PAUSED` | Paused by owner, unsupported code version, settings update, or unban. Can return to `PRODUCTION` with a new availability proof. |
+| `PAUSED_FOR_UPGRADE` | Not operational but can serve as replication source. **Contract exists but TEE command NOT IMPLEMENTED.** |
+| `REPLICATING` | Currently being replicated to from another machine during an upgrade. **Contract exists but TEE command NOT IMPLEMENTED.** |
+| `BANNED` | Banned by governance. Can only be reversed by `unban()`, which moves to `PAUSED`. |
 
 ---
 
@@ -94,7 +100,7 @@ The following diagram shows all 7 machine statuses and the transitions between t
 
 1. The caller submits a `TeeAvailabilityCheck` proof demonstrating that the target machine is unavailable.
 2. The contract validates the proof timestamp is within the 10-minute window.
-3. The machine status changes to `PAUSED_WITH_PROOF`.
+3. The machine status changes to `SUSPENDED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** Status change event for the TEE machine.
@@ -124,7 +130,7 @@ The FTDC verifier TEE challenges the target machine and determines its availabil
 
 **Requirements:**
 
-- The machine must be in `PRODUCTION` status.
+- The machine must be in `PRODUCTION` or `SUSPENDED` status.
 
 **What happens:**
 
@@ -139,9 +145,9 @@ The FTDC verifier TEE challenges the target machine and determines its availabil
 
 ## Step 3: Batch Pause Inactive Machines
 
-Batch pausing is not a single dedicated contract function. Instead, the `pause()` function can be called by anyone when a machine's code version is no longer supported by the extension. In practice, an operator or automated process can iterate over machines with unsupported code versions and call `pause(teeId)` for each one, effectively performing a batch pause of inactive or obsolete machines.
+Batch pausing is not a single dedicated contract function. Instead, the `pause()` function can be called by anyone when a machine's code version is no longer supported by the extension. In practice, an operator or automated process can iterate over machines with unsupported code versions and call `pause(teeId)` for each one, effectively performing a batch pause of inactive or obsolete machines. Note that `pause()` works from both `PRODUCTION` and `SUSPENDED` statuses.
 
-Additionally, `pauseWithProof()` can be called by anyone with a valid non-availability proof, allowing community-driven pausing of machines that have gone offline.
+Additionally, `pauseWithProof()` can be called by anyone with a valid non-availability proof, allowing community-driven suspension of machines that have gone offline (moves `PRODUCTION` to `SUSPENDED`).
 
 ---
 
@@ -158,13 +164,13 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 **Requirements:**
 
 - The caller must be the machine owner.
-- The machine must be in a status that allows settings updates.
+- The machine must be in `PRODUCTION` or `SUSPENDED` status.
 
 **What happens:**
 
 1. The owner submits updated proxy ID and URL for the machine.
 2. The contract updates the machine record with the new `teeProxyId` and `url`.
-3. Any change puts the machine on pause. A new `TeeAvailabilityCheck` proof is required to return it to `PRODUCTION` via `toProduction(proof)`.
+3. The machine status changes to `PAUSED`. A new `TeeAvailabilityCheck` proof is required to return it to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** Status change event and settings update event for the TEE machine.
@@ -220,9 +226,11 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 ---
 
-## Step 6: Periodic Availability Confirmation -- `TeeMachineRegistry.confirmAvailability()`
+## Step 6: Periodic Availability Confirmation -- `TeeVerification.confirmAvailability()`
 
 **Who can call:** Anyone.
+
+**Contract:** `TeeVerification` (not `TeeMachineRegistry`).
 
 **Parameters:**
 
@@ -235,14 +243,14 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **What happens:**
 
-1. The caller submits a `TeeAvailabilityCheck` proof for the machine.
+1. The caller submits a `TeeAvailabilityCheck` proof for the machine to the `TeeVerification` contract.
 2. The contract validates the proof.
 3. The `availabilityCheckValidityEndTs` deadline is extended.
-4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares (see [Rewarding](../Rewarding.md)).
+4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares (see Rewarding -- not yet published).
 
 **Events emitted:** Availability confirmation event.
 
-Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. The `confirmAvailability()` function must be called periodically before this deadline to maintain eligibility.
+Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. The `confirmAvailability()` function on the `TeeVerification` contract must be called periodically before this deadline to maintain eligibility.
 
 ---
 
@@ -250,7 +258,7 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 > **NOT IMPLEMENTED:** The machine upgrade workflow is planned but not yet implemented. The following documents the intended design from the specification.
 >
-> **Implementation Status Note:** The `REPLICATE_FROM` and `TO_PAUSE_FOR_UPGRADE` TEE-node commands are not yet active in the current code version. While the corresponding smart contract functions (`toPauseForUpgrade()`, `replicateFrom()`, `confirmReplicate()`) exist on-chain, the TEE-side command processors for these operations are not registered in the node software (they are commented out in `op.go`). Attempting to trigger these workflows will result in the contract emitting instructions that the TEE node cannot process.
+> **Implementation Status Note:** The `REPLICATE_FROM` and `TO_PAUSE_FOR_UPGRADE` TEE-node commands are not yet active in the current code version. While the corresponding smart contract functions (`toPauseForUpgrade()`, `replicateFrom()`, `confirmReplicate()`) exist on the `teeReplication` contract on-chain, the TEE-side command processors for these operations are not registered in the node software (they are commented out in `op.go`). Attempting to trigger these workflows will result in the contract emitting instructions that the TEE node cannot process.
 
 The upgrade procedure allows an owner to migrate a TEE machine to a new code version by replicating its state to a new machine. The essential parts of state that are replicated include the identity private key and all wallet private keys (excluding machine-specific variables such as nonces).
 
@@ -273,7 +281,7 @@ The upgrade procedure allows an owner to migrate a TEE machine to a new code ver
 
 1. The owner calls `toPauseForUpgrade(oldMachineTeeId)` on the old machine.
 2. The machine enters `PAUSED_FOR_UPGRADE` status.
-3. The `TO_PAUSE_FOR_UPGRADE` [instruction](../Instructions.md) command is triggered.
+3. The `TO_PAUSE_FOR_UPGRADE` [instruction](../Operations/Instructions.md) command is triggered.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 5. This is a final status -- the machine can only serve as a replication source from this point.
 
@@ -289,7 +297,7 @@ The upgrade procedure allows an owner to migrate a TEE machine to a new code ver
 
 - `oldTeeId` (`address`) -- the TEE identity of the old machine to replicate from.
 - `proof` (`ITeeAvailabilityCheckProof`) -- availability check proof for the new machine.
-- `signedUpgradePath` -- signed upgrade path from the old to the new code version (see [Governance](../Governance.md)).
+- `signedUpgradePath` -- signed upgrade path from the old to the new code version (see Governance -- not yet published).
 
 **Requirements:**
 
@@ -352,11 +360,12 @@ The upgrade procedure allows an owner to migrate a TEE machine to a new code ver
 **Requirements:**
 
 - The caller must have governance privileges.
+- The machine must be in `PAUSED`, `SUSPENDED`, or `PRODUCTION` status.
 
 **What happens:**
 
 1. Governance calls `ban(teeId)`.
-2. The machine status changes to `BANNED` regardless of its current status.
+2. The machine status changes to `BANNED`.
 3. The machine cannot operate in any capacity.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
@@ -378,8 +387,8 @@ The upgrade procedure allows an owner to migrate a TEE machine to a new code ver
 **What happens:**
 
 1. Governance calls `unban(teeId)`.
-2. The machine status changes from `BANNED` to a paused state.
-3. A new `TeeAvailabilityCheck` proof is required to return the machine to `PRODUCTION`.
+2. The machine status changes from `BANNED` to `PAUSED`.
+3. A new `TeeAvailabilityCheck` proof is required to return the machine to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** Status change event (unban).

@@ -180,7 +180,7 @@ See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [ftdc-a
 - [xrp-payment.md](xrp-payment.md) -- single-TEE XRP payment flow.
 - [ftdc-attestation.md](ftdc-attestation.md) -- FTDC attestation sub-workflow for TeeAvailabilityCheck, PMWMultisigAccountConfigured, and PMWPaymentStatus.
 - [key-management.md](key-management.md) -- key deletion, backup, and restoration operations.
-- [Key Management specification](../Key%20Management.md) -- backup and restore security model.
+- [Key Management specification](../TEE%20Management/Key%20Management.md) -- backup and restore security model.
 
 ---
 

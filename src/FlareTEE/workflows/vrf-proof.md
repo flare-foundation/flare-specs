@@ -1,0 +1,144 @@
+# VRF Proof Generation
+
+## Overview
+
+This workflow describes the process of generating a verifiable random number using a VRF key held inside a TEE machine. A data provider submits a VRF instruction referencing a wallet key with the `keccak256-secp256k1-vrf` signing algorithm, the instruction is voted on, and the TEE computes an ECVRF proof over the provided nonce. The result can be verified on-chain by the `TeeVRFVerifier` contract using `ecrecover`.
+
+## Prerequisites
+
+- **TEE machine in PRODUCTION status** — the machine holding the VRF key must be registered and operational (see [machine-registration.md](machine-registration.md))
+- **Wallet with a VRF key** — a key with signing algorithm `keccak256-secp256k1-vrf` must already be generated and confirmed via the [wallet-setup workflow](wallet-setup.md)
+- **Key must be active** — the key must not be paused or expired; if the key has been deleted from the machine, the request will fail
+
+---
+
+## Step 1: Submit VRF Instruction
+
+**Who initiates:** A data provider (or any authorized submitter)
+
+A VRF proof request is submitted as an instruction with `opType = F_WALLET` and `opCommand = VRF`. The instruction's event message is a `VrfInstructionMessage` containing:
+
+- `walletId` (`bytes32`) — the wallet ID of the VRF key
+- `keyId` (`uint64`) — the key ID within the wallet
+- `nonce` (`bytes`) — an arbitrary bytes value binding the proof to a specific request
+
+```solidity
+// Source: ITeeVrf.sol
+struct VrfInstructionMessage {
+    bytes32 walletId;
+    bytes32 keyId;
+    bytes nonce;
+}
+```
+
+**Requirements:**
+- The `nonce` must be non-empty; the TEE rejects requests with an empty nonce.
+- The specified `(walletId, keyId)` pair must exist on the target TEE machine.
+
+> **Note:** This command has `immediateResult = true`, meaning the TEE produces the proof as soon as it processes the action, without waiting for an additional retrieval step.
+
+---
+
+## Step 2: Voting
+
+Data providers vote on the instruction following the standard voting process (see [extension-instructions.md](extension-instructions.md)). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
+
+---
+
+## Step 3: TEE Processing
+
+Once the voting threshold is reached, the TEE proxy delivers the action to the TEE machine. The TEE then:
+
+1. **Parses** the `VrfInstructionMessage` from the action's fixed data.
+2. **Loads** the private key for the specified `(walletId, keyId)` pair from wallet storage.
+3. **Validates** that the key's signing algorithm is `keccak256-secp256k1-vrf`. Any other algorithm is rejected.
+4. **Computes** the ECVRF proof using the secp256k1 curve:
+   - Hashes the nonce to a curve point $H = \mathrm{HashToCurve}(\mathrm{nonce})$ via iterative Keccak-256 hashing until a valid x-coordinate is found.
+   - Computes the VRF output $\gamma = \mathrm{sk} \cdot H$.
+   - Samples a random scalar $k$ and computes commitment points $U = k \cdot G$ and $V = k \cdot H$.
+   - Derives the challenge $c = \mathrm{HashToZn}(\mathrm{Pack}(G, H, \mathrm{pk}, \gamma, U, V))$ using ABI-encoded Keccak-256 reduced modulo $N$.
+   - Computes the response $s = k - \mathrm{sk} \cdot c \mod N$.
+   - Pre-computes witness points for on-chain verification: $c\gamma$, and $z_{\mathrm{inv}} = (\mathrm{cGamma}_x - V_x)^{-1} \mod P$.
+5. **Returns** the JSON-encoded result to the TEE proxy.
+
+---
+
+## Step 4: Retrieve Result
+
+The action result is available from the TEE proxy. The response is a JSON object containing:
+
+```json
+{
+    "walletId": "bytes32",
+    "keyId": "uint64",
+    "nonce": "bytes",
+    "proof": {
+        "gamma": { "x": "uint256", "y": "uint256" },
+        "c": "uint256",
+        "s": "uint256",
+        "u": { "x": "uint256", "y": "uint256" },
+        "cGamma": { "x": "uint256", "y": "uint256" },
+        "v": { "x": "uint256", "y": "uint256" },
+        "zInv": "uint256"
+    }
+}
+```
+
+Where:
+
+- `gamma` — curve point $(\gamma_x, \gamma_y)$, the VRF output: $\gamma = \mathrm{sk} \cdot \mathrm{HashToCurve}(\mathrm{nonce})$.
+- `c` — the challenge scalar.
+- `s` — the response scalar: $s = k - \mathrm{sk} \cdot c \mod N$.
+- `u` — witness point $c \cdot \mathrm{pk} + s \cdot G$.
+- `cGamma` — witness point $c \cdot \gamma$.
+- `v` — witness point $c \cdot \gamma + s \cdot H$.
+- `zInv` — field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
+
+The four witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM.
+
+---
+
+## Step 5: On-chain Verification
+
+The proof can be verified on-chain by submitting it to the `TeeVRFVerifier` contract. The contract performs $4$ independent checks using `ecrecover`:
+
+1. $U = c \cdot \mathrm{pk} + s \cdot G$ — proves the TEE knows the secret key $\mathrm{sk}$ such that $\mathrm{pk} = \mathrm{sk} \cdot G$.
+2. $c\gamma = c \cdot \gamma$ — confirms that `cGamma` is correctly derived.
+3. $V = c\gamma + s \cdot H$ — confirms that $V$ is correctly derived from $\gamma$, $H$, $c$, and $s$.
+4. $c = \mathrm{HashToZn}(\mathrm{Pack}(G, H, \mathrm{pk}, \gamma, U, V))$ — confirms the challenge is consistent with all public values.
+
+Once verified, the final random value is extracted as:
+
+$$\mathrm{randomness} = \mathrm{keccak256}(\gamma_x \| \gamma_y)$$
+
+where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma point coordinates.
+
+---
+
+## Error Conditions
+
+| Condition | Result |
+|-----------|--------|
+| Empty nonce | Rejected by TEE processor |
+| Key not found for `(walletId, keyId)` | Action fails |
+| Signing algorithm is not `keccak256-secp256k1-vrf` | Rejected by TEE processor |
+| `HashToCurve` fails (no valid point found in $256$ iterations) | Proof generation fails |
+| Zero denominator for `zInv` (probability $\approx 1/P$) | Proof generation fails; extremely unlikely |
+
+---
+
+## Cryptographic Reference
+
+The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
+
+---
+
+## Further Resources
+
+| Topic | Reference |
+|-------|-----------|
+| VRF command specification | [F_WALLET--VRF.md](../commands/F_WALLET--VRF.md) |
+| Key management (VRF keys) | [Key Management.md](../TEE%20Management/Key%20Management.md) |
+| Wallet setup workflow | [wallet-setup.md](wallet-setup.md) |
+| VRF proof generation (Go) | `tee-node/pkg/wallets/vrf/vrf.go` |
+| VRF instruction processor (Go) | `tee-node/internal/processors/instructions/vrfutils/processor.go` |

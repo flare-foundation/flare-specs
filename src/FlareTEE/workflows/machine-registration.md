@@ -106,7 +106,7 @@ curl --location '<TEE_MACHINE_IP>:5500/initial-owner' \
 **What happens:**
 
 1. The owner sends a POST request to `<TEE_MACHINE_IP>:5500/extension-id` with the extension ID.
-2. The TEE node stores the extension ID. The machine will be registered to this specific [extension](../Extensions.md), not the network as a whole.
+2. The TEE node stores the extension ID. The machine will be registered to this specific [extension](../Extensions/Extensions.md), not the network as a whole.
 
 **Example:**
 
@@ -280,7 +280,7 @@ For more details on the FTDC attestation process, see [ftdc-attestation.md](ftdc
   - `responseBody` — the availability check response (contains `status`, `teeTimestamp`, `codeHash`, `platform`, signing policy IDs, `state`)
 
 **Requirements:**
-- The machine must be in `INITIALIZED` status (or `PAUSED` / `PAUSED_WITH_PROOF` for re-activation)
+- The machine must be in `INITIALIZED` or `PAUSED` status (for re-activation)
 - The proof must be a valid `TeeAvailabilityCheck` proof matching the TEE's identity and data
 - The code version referenced in the proof must still be supported on the extension
 

@@ -61,11 +61,11 @@ The following set of management functions are available to the TEE owner:
 ### teeMachineRegistry Functions
 1. `register(machineData, signature, teeProxyId, teeUrl)`: Registers the TEE machine as described above.
 2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported. Can only be called by the owner.
-3. `pause(teeId)`: Changes the status to `PAUSED`. Only available when the machine status is `PRODUCTION`. Can be called by the owner, or by anyone if the current TEE code version is no longer supported.
-4. `pauseWithProof(proof)`: Pauses the TEE machine based on a non-availability proof using the `TeeAvailabilityCheck` attestation type. The timestamp of the proof must not be older than $10$ minutes. Can be called by anyone.
+3. `pause(teeId)`: Changes the status to `PAUSED`. Available when the machine status is `PRODUCTION` or `SUSPENDED`. Can be called by the owner, or by anyone if the current TEE code version is no longer supported.
+4. `pauseWithProof(proof)`: Suspends the TEE machine (sets status to `SUSPENDED`) based on a non-availability proof using the `TeeAvailabilityCheck` attestation type. The timestamp of the proof must not be older than $10$ minutes. Can be called by anyone.
 5. `proposeNewOwner(teeId, newOwner)`: Proposes a new owner for the TEE machine. Can only be called by the current owner.
 6. `confirmOwnership(teeId)`: Called by the proposed new owner of the machine. When called after `proposeNewOwner(teeId, newOwner)`, the ownership of the TEE machine on Flare is changed to `newOwner`.
-7. `updateTeeMachineSettings(teeId, teeProxyId, url)`: Updates the proxy ID and URL of the TEE machine. Any change puts the machine on pause and a proof is needed to return it to production.
+7. `updateTeeMachineSettings(teeId, teeProxyId, url)`: Updates the proxy ID and URL of the TEE machine. Available when the machine is in `PRODUCTION` or `SUSPENDED` status. Any change sets the status to `PAUSED`, and a new proof is needed to return it to `PRODUCTION`.
 8. `ban(teeId)`: Bans a TEE machine, setting its status to `BANNED`. Can only be called by governance.
 9. `unban(teeId)`: Unbans a previously banned TEE machine. Can only be called by governance.
 

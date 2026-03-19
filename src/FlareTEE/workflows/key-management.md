@@ -4,7 +4,7 @@
 
 This workflow covers managing wallet keys after initial setup -- deletion, backup, restoration, and migration between TEE machines. The key backup system uses a two-round Shamir secret sharing scheme to ensure keys can be recovered even if a TEE machine becomes unavailable. Key restoration requires cooperation from both data providers and key admins, preserving the distributed trust model.
 
-For full details on key data structures and backup cryptography, see the [Key Management specification](../Key%20Management.md).
+For full details on key data structures and backup cryptography, see the [Key Management specification](../TEE%20Management/Key%20Management.md).
 
 ## Prerequisites
 
@@ -259,5 +259,5 @@ Key migration moves a key from one TEE machine to another. This is a composite w
 - [wallet-setup.md](wallet-setup.md) -- initial key creation via `addKey()` and `confirmKey()` during wallet setup.
 - [machine-lifecycle.md](machine-lifecycle.md) -- TEE machine registration, production status, and decommissioning.
 - [ftdc-attestation.md](ftdc-attestation.md) -- `TeeAvailabilityCheck` attestation required for target TEE during restoration.
-- [Key Management specification](../Key%20Management.md) -- full specification of key data structures, backup cryptography, and security model.
-- [Projects and Ownership](../Projects%20and%20Ownership.md) -- key definitions, key types, and project configuration.
+- [Key Management specification](../TEE%20Management/Key%20Management.md) -- full specification of key data structures, backup cryptography, and security model.
+- [Projects and Ownership](../Operations/Projects%20and%20Ownership.md) -- key definitions, key types, and project configuration.

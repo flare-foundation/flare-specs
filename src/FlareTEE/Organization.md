@@ -29,6 +29,8 @@
 	- Machine Lifecycle
 	- Wallet Setup
 	- Key Management
+	- VRF Proof
+	- XRP Payment
 	- Extension Configuration
 	- Extension Instructions
 	- FTDC Attestation

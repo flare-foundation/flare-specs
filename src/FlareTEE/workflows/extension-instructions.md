@@ -2,7 +2,7 @@
 
 ## Overview
 
-Custom [extensions](../Extensions.md) receive and process instructions through the Flare Confidential Compute infrastructure. When an instruction is sent to an extension, it flows from the blockchain through the TEE proxy to the TEE node, which forwards non-system actions to the compute extension app for processing. The extension can use the FCC node app's internal endpoints to sign data, retrieve key information, and post results back.
+Custom [extensions](../Extensions/Extensions.md) receive and process instructions through the Flare Confidential Compute infrastructure. When an instruction is sent to an extension, it flows from the blockchain through the TEE proxy to the TEE node, which forwards non-system actions to the compute extension app for processing. The extension can use the FCC node app's internal endpoints to sign data, retrieve key information, and post results back.
 
 This document covers sending instructions to custom extensions, processing them, and retrieving the results. Two concrete examples are demonstrated: EVM transaction signing and random number generation.
 
@@ -207,7 +207,7 @@ The TEE identity signature on the `ActionResponse` confirms the result originate
 
 ## Step 4: Extension SDK Interface Reference
 
-The [FCC SDK](../SDK%20and%20Development.md) defines two sets of internal HTTP endpoints for communication between the FCC node app and the compute extension app.
+The FCC SDK (SDK and Development -- not yet published) defines two sets of internal HTTP endpoints for communication between the FCC node app and the compute extension app.
 
 ### FCC Node App Internal Endpoints (port 8888)
 
@@ -292,18 +292,18 @@ Instructions can be sent to the compute extension directly without smart contrac
 
 The returned `action` object includes the assigned action ID needed to retrieve results later.
 
-> **Note:** Direct actions do not go through the data provider signing process. The compute extension is responsible for validating the legitimacy of direct actions based on the action data itself. See [Key Access Authorization](../SDK%20and%20Development.md) for guidance on enforcing cosigner requirements within extensions.
+> **Note:** Direct actions do not go through the data provider signing process. The compute extension is responsible for validating the legitimacy of direct actions based on the action data itself. See Key Access Authorization (SDK and Development -- not yet published) for guidance on enforcing cosigner requirements within extensions.
 
 ---
 
 ## Cross-References
 
-- [Extensions](../Extensions.md) -- Extension lifecycle and management functions
-- [System Extension](../System%20Extension.md) -- System extension (ID 0) with PMW and FTDC
-- [SDK and Development](../SDK%20and%20Development.md) -- Full SDK documentation, deployment procedures, and GCP setup
-- [TEE Configuration API](../TEE%20Configuration%20API.md) -- Configuration endpoints on port 5500
-- [Actions](../Actions.md) -- Action structure, processing queues, and response format
-- [Instructions](../Instructions.md) -- Instruction event format, TEE instructions, and thresholds
+- [Extensions](../Extensions/Extensions.md) -- Extension lifecycle and management functions
+- [System Extension](../Extensions/System%20Extension.md) -- System extension (ID 0) with PMW and FTDC
+- SDK and Development -- Full SDK documentation, deployment procedures, and GCP setup (not yet published)
+- TEE Configuration API -- Configuration endpoints on port 5500 (not yet published)
+- [Actions](../Operations/Actions.md) -- Action structure, processing queues, and response format
+- [Instructions](../Operations/Instructions.md) -- Instruction event format, TEE instructions, and thresholds
 - [Extension Configuration](extension-configuration.md) -- Registering and configuring an extension
 - [Machine Registration](machine-registration.md) -- Registering TEE machines and moving to production
 - [Wallet Setup](wallet-setup.md) -- Creating wallet projects, wallets, and keys

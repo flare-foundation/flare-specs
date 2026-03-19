@@ -4,13 +4,13 @@
 
 The Flare TEE Data Connector (FTDC) is a TEE-based alternative to the FDC for verifying external data on Flare. Unlike the FDC, which uses 90-second rounds and on-chain bit-voting, the FTDC processes requests as they arrive, with data providers voting by submitting attestations directly to participating TEE machines. This yields lower latency and broader request coverage.
 
-The FTDC is managed via the `FtdcHub` smart contract and operates as an application on the [System Extension](../System%20Extension.md). It supports three attestation types used across machine lifecycle and PMW workflows:
+The FTDC is managed via the `FtdcHub` smart contract and operates as an application on the [System Extension](../Extensions/System%20Extension.md). It supports three attestation types used across machine lifecycle and PMW workflows:
 
 - **TeeAvailabilityCheck** -- verifies TEE machine liveness, code integrity, and platform freshness.
 - **PMWMultisigAccountConfigured** -- proves correct multisig configuration on an external chain.
 - **PMWPaymentStatus** -- verifies the status of a payment transaction on an external chain.
 
-For full details, see the [FTDC specification](../FTDC.md).
+For full details, see the [FTDC specification](../Extensions/FTDC.md).
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ All FTDC attestation types follow the same process. The specific request and res
 
 ### Step 1: Submit Attestation Request (User Action)
 
-Submit an attestation request as an [instruction](../Instructions.md) on the System Extension. The request contains:
+Submit an attestation request as an [instruction](../Operations/Instructions.md) on the System Extension. The request contains:
 
 ```solidity
 struct FtdcAttestationRequest {
@@ -54,7 +54,7 @@ Once the attestation request is submitted on-chain, the following steps happen a
 
 **Step 4: Submit to TEE Proxies** — Each provider sends the signed TEE instruction to the TEE proxies corresponding to the TEE machines listed in `TEE_list`.
 
-**Step 5: TEE Voting** — The [voting process](../Voting.md) for an FTDC request follows the standard instruction voting rules. Upon receiving sufficient weight of data provider signatures (and cosigner signatures exceeding the cosigner threshold), each TEE machine signs the attestation response with its identity key.
+**Step 5: TEE Voting** — The [voting process](../Operations/Voting.md) for an FTDC request follows the standard instruction voting rules. Upon receiving sufficient weight of data provider signatures (and cosigner signatures exceeding the cosigner threshold), each TEE machine signs the attestation response with its identity key.
 
 **Step 6: TEE Returns Action Result** — The TEE returns the action result to the TEE proxy, including:
 - The list of data provider signatures over the attestation response.

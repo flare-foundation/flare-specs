@@ -34,6 +34,11 @@ The workflows build on each other. Complete earlier workflows before attempting 
      ▼
   xrp-payment
 
+  wallet-setup (with VRF key)
+              │
+              ▼
+        vrf-proof
+
   extension-configuration + wallet-setup
               │
               ▼
@@ -54,15 +59,16 @@ The workflows build on each other. Complete earlier workflows before attempting 
 
 | Workflow | Description | Key Contracts | Spec References |
 |----------|-------------|---------------|-----------------|
-| [ftdc-attestation.md](ftdc-attestation.md) | FTDC attestation sub-workflow — not standalone; invoked from within machine, multisig, and payment workflows | `FtdcHub`, `TeeVerification` | [FTDC](../FTDC.md), [attestation-types/](../attestation-types/) |
-| [extension-configuration.md](extension-configuration.md) | Register and configure a custom TEE extension (extensionId > 0) | `TeeExtensionRegistry` | [Extensions](../Extensions.md), [System Extension](../System%20Extension.md), [SDK and Development](../SDK%20and%20Development.md) |
-| [machine-registration.md](machine-registration.md) | Deploy a TEE machine from VM boot to PRODUCTION status | `TeeMachineRegistry`, `TeeExtensionRegistry`, `TeeVerification` | [Ownership](../Ownership.md), [State and Status](../State%20and%20Status.md), [TEE Configuration API](../TEE%20Configuration%20API.md) |
-| [wallet-setup.md](wallet-setup.md) | Create a project and configure a wallet through to PRODUCTION | `TeeWalletProjectManager`, `TeeWalletManager`, `TeeWalletKeyManager` | [Projects and Ownership](../Projects%20and%20Ownership.md) |
-| [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) | Bind an XRPL multisig account to a TEE-managed wallet | `TeePayments`, `TeeVerification` | [PMW](../PMW.md), [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) |
-| [xrp-payment.md](xrp-payment.md) | Execute, reissue, or nullify XRP payments through a TEE wallet | `TeePayments` | [Transactions](../Transactions.md), [PMWPaymentStatus](../attestation-types/PMWPaymentStatus.md) |
-| [key-management.md](key-management.md) | Key deletion, backup, restoration, and migration between TEEs | `TeeWalletKeyManager`, `TeeWalletBackupManager` | [Key Management](../Key%20Management.md) |
-| [machine-lifecycle.md](machine-lifecycle.md) | Post-registration machine operations: pause, resume, upgrade, ownership transfer | `TeeMachineRegistry` | [Ownership](../Ownership.md), [State and Status](../State%20and%20Status.md) |
-| [extension-instructions.md](extension-instructions.md) | Send custom instructions to extensions (EVM signing, RNG, direct actions) | `TeeExtensionRegistry` | [SDK and Development](../SDK%20and%20Development.md), [Extensions](../Extensions.md) |
+| [ftdc-attestation.md](ftdc-attestation.md) | FTDC attestation sub-workflow — not standalone; invoked from within machine, multisig, and payment workflows | `FtdcHub`, `TeeVerification` | [FTDC](../Extensions/FTDC.md), [attestation-types/](../attestation-types/) |
+| [extension-configuration.md](extension-configuration.md) | Register and configure a custom TEE extension (extensionId > 0) | `TeeExtensionRegistry` | [Extensions](../Extensions/Extensions.md), [System Extension](../Extensions/System%20Extension.md), SDK and Development (not yet published) |
+| [machine-registration.md](machine-registration.md) | Deploy a TEE machine from VM boot to PRODUCTION status | `TeeMachineRegistry`, `TeeExtensionRegistry`, `TeeVerification` | [Ownership](../TEE%20Management/Ownership.md), [State and Status](../TEE%20Management/State%20and%20Status.md), TEE Configuration API (not yet published) |
+| [wallet-setup.md](wallet-setup.md) | Create a project and configure a wallet through to PRODUCTION | `TeeWalletProjectManager`, `TeeWalletManager`, `TeeWalletKeyManager` | [Projects and Ownership](../Operations/Projects%20and%20Ownership.md) |
+| [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) | Bind an XRPL multisig account to a TEE-managed wallet | `TeePayments`, `TeeVerification` | [PMW](../Extensions/PMW/PMW.md), [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) |
+| [xrp-payment.md](xrp-payment.md) | Execute, reissue, or nullify XRP payments through a TEE wallet | `TeePayments` | [Transactions](../Extensions/PMW/Transactions.md), [PMWPaymentStatus](../attestation-types/PMWPaymentStatus.md) |
+| [key-management.md](key-management.md) | Key deletion, backup, restoration, and migration between TEEs | `TeeWalletKeyManager`, `TeeWalletBackupManager` | [Key Management](../TEE%20Management/Key%20Management.md) |
+| [machine-lifecycle.md](machine-lifecycle.md) | Post-registration machine operations: pause, resume, upgrade, ownership transfer | `TeeMachineRegistry` | [Ownership](../TEE%20Management/Ownership.md), [State and Status](../TEE%20Management/State%20and%20Status.md) |
+| [extension-instructions.md](extension-instructions.md) | Send custom instructions to extensions (EVM signing, RNG, direct actions) | `TeeExtensionRegistry` | SDK and Development (not yet published), [Extensions](../Extensions/Extensions.md) |
+| [vrf-proof.md](vrf-proof.md) | Generate and verify a VRF proof using a TEE-managed VRF key | `TeeWalletKeyManager`, `TeeVRFVerifier` | [Key Management](../TEE%20Management/Key%20Management.md), [F_WALLET--VRF](../commands/F_WALLET--VRF.md) |
 | [multi-tee-operations.md](multi-tee-operations.md) | Distributed workflows with multiple TEE machines sharing a wallet | All of the above | All of the above |
 
 ## Common Conventions
@@ -84,7 +90,7 @@ Status transitions are denoted with arrows:
 |--------|---------|
 | `INITIALIZED` | Registered but not yet verified |
 | `PRODUCTION` | Fully operational |
-| `PAUSED_WITH_PROOF` | Paused due to non-availability proof |
+| `SUSPENDED` | Paused due to non-availability proof |
 | `PAUSED` | Paused by owner |
 | `PAUSED_FOR_UPGRADE` | Ready as replication source |
 | `REPLICATING` | Being replicated to new machine |
