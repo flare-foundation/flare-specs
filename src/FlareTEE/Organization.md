@@ -21,6 +21,7 @@
 	- TeeAvailabilityCheck
 	- PMWPaymentStatus
 	- PMWMultisigAccountConfigured
+	- PMWFeeProof
 -   Commands
 	- Command Reference (index)
 	- Individual command documentation (F_REG, F_WALLET, F_GET, F_POLICY, F_XRP, F_FDC2)
