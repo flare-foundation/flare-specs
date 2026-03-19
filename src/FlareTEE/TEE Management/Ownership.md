@@ -55,10 +55,10 @@ If the deadline passes without confirmation, the actions of the TEE machine no l
 
 ## Management
 The Flare address of the TEE owner is responsible for managing the TEE's activities on the network.
-Management functions are spread across three contracts: `teeMachineRegistry`, `teeVerification`, and `teeReplication`.
+Management functions are spread across three contracts: `teeMachineRegistry`, `teeVerification`, and `teeReplication`. 
+The following set of management functions are available to the TEE owner:
 
-### `teeMachineRegistry` Functions
-
+### teeMachineRegistry Functions
 1. `register(machineData, signature, teeProxyId, teeUrl)`: Registers the TEE machine as described above.
 2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported. Can only be called by the owner.
 3. `pause(teeId)`: Changes the status to `PAUSED`. Only available when the machine status is `PRODUCTION`. Can be called by the owner, or by anyone if the current TEE code version is no longer supported.
@@ -69,11 +69,11 @@ Management functions are spread across three contracts: `teeMachineRegistry`, `t
 8. `ban(teeId)`: Bans a TEE machine, setting its status to `BANNED`. Can only be called by governance.
 9. `unban(teeId)`: Unbans a previously banned TEE machine. Can only be called by governance.
 
-### `teeVerification` Functions
+### teeVerification Functions
 
 1. `confirmAvailability(proof)`: Given a valid `TeeAvailabilityCheck` proof, extends the availability deadline. Can be called by anyone.
 
-### `teeReplication` Functions
+### teeReplication Functions
 
 1. `toPauseForUpgrade(teeId)`: Changes the status to `PAUSED_FOR_UPGRADE` and triggers the `TO_PAUSE_FOR_UPGRADE` command. Status must be `PAUSED` or `PAUSED_FOR_UPGRADE`. If the status is `PAUSED`, can only be called after $10$ minutes from the last status change. Can only be called by the owner.
 2. `replicateFrom(oldTeeId, proof, signedUpgradePath)`: Triggers the `REPLICATE_FROM` command. The status of the new machine must be `INITIALIZED` or `REPLICATING`. The provided `proof` is the availability check proof for the new machine.

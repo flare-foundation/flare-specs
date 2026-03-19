@@ -10,8 +10,8 @@ Each private key on a TEE machine is described by the following data structure:
 
 - `walletId`: Wallet ID of the key.
 - `keyId`: Key ID within the wallet.
-- `signingAlgo`: The signing algorithm for the key (see [Signing Algorithms](#signing-algorithms)).
-- `keyType`: The key type (see [Key Types](#key-types)).
+- `signingAlgo`: The [signing algorithm](#signing-algorithms) for the key.
+- `keyType`: The [key type](#key-type).
 - `privateKey`: The private key.
 - `restored`: A flag indicating whether the key was generated (`false`) or restored through backup restore (`true`).
 - `configConstants`: Immutable wallet config settings, including:
@@ -27,7 +27,7 @@ Three signing algorithms are supported, each identified by a `bytes32` hash of t
 
 1. `keccak256-secp256k1-ecdsa`: ECDSA signing for EVM-compatible chains.
 2. `sha512half-secp256k1-ecdsa`: ECDSA signing for XRP Ledger transactions.
-3. `keccak256-secp256k1-vrf`: VRF proof generation (see [VRF Keys](#vrf-keys)).
+3. `keccak256-secp256k1-vrf`: Signing for VRF proof generation (see [VRF Keys](#vrf-keys)).
 
 ### Key Types
 Two key types are supported:
@@ -36,7 +36,6 @@ Two key types are supported:
 2. `XRP`: Keys intended for XRP Ledger signing operations.
 
 ### Wallet Key Variables
-
 On a TEE machine there is a persistent mapping of wallet key variables for every key that has ever existed on the machine.
 Even if the key is deleted, the variable values are retained. The mapping is:
 
@@ -52,7 +51,6 @@ Where the fields represent:
 > **Note:** The `PAUSE` and `RESUME` commands are planned but not yet active in the current code version. The `pauseNonce` field is present in the data structure but no corresponding command processors are registered.
 
 > **Note:** When key data is replicated to another machine or backed up, the `configConstants` and wallet key variables are excluded.
-
 ## TEE Key Existence Proof
 Upon generation of a key for, the TEE machine also generates and returns a *key existence proof*.
 A key existence proof is a data structure containing the key and relevant meta data and signed by the TEE that holds the key.
@@ -83,21 +81,22 @@ where `nonce` is a fresh nonce, `restored` is set to True if the key was restore
 The rest of the fields are defined by the [project](Projects and Ownership.md) on which the key is active, and identify properties of the wallet and key.
 
 ## VRF Keys
-In addition to standard ECDSA signing keys, a TEE machine can hold *VRF keys* for verifiable random number generation. VRF keys use the `keccak256-secp256k1-vrf` signing algorithm and are generated and managed through the same `KEY_GENERATE` and `KEY_DELETE` instructions as other wallet keys.
+In addition to standard ECDSA signing keys, a TEE machine can hold *VRF keys*, used for verifiable random number generation.
+VRF keys use the `keccak256-secp256k1-vrf` signing algorithm and are generated and managed through the same `KEY_GENERATE` and `KEY_DELETE` instructions as other wallet keys.
 
 ### VRF Proof Generation
 The `VRF` command under `op.Wallet` generates a verifiable randomness proof. The instruction takes as input:
 
-- `walletId` (`bytes32`): The wallet ID of the VRF key.
-- `keyId` (`uint64`): The key ID within the wallet.
-- `nonce` (`bytes`): An arbitrary nonce binding the proof to a specific request.
+1. `walletId` (`bytes32`): The wallet ID of the VRF key.
+2. `keyId` (`uint64`): The key ID within the wallet.
+3. `nonce` (`bytes`): An arbitrary nonce binding the proof to a specific request.
 
-The TEE loads the private key, verifies that its signing algorithm is `keccak256-secp256k1-vrf`, and computes a VRF proof using the ECVRF scheme on secp256k1, based on "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099).
+On receiving the input, the TEE loads the private key, verifies that its signing algorithm is `keccak256-secp256k1-vrf`, and computes a VRF proof `proof` using the [ECVRF scheme](https://eprint.iacr.org/2017/099).
 
 ### VRF Proof Structure
-The proof output consists of:
+The proof output `proof` consists of the following fields:
 
-- `gamma`: A curve point $(\gamma_x, \gamma_y)$, the VRF output point.
+- `gamma`: A curve point $(\gamma_x, \gamma_y)$, the VRF output.
 - `c`: The challenge scalar.
 - `s`: The response scalar.
 - `u`: Witness point $c \cdot \mathrm{pk} + s \cdot G$.
@@ -105,7 +104,8 @@ The proof output consists of:
 - `v`: Witness point $c \cdot \gamma + s \cdot H$.
 - `zInv`: Field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
 
-The witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM. The on-chain `TeeVRFVerifier` contract verifies the proof using `ecrecover`.
+The witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM. 
+The on-chain `TeeVRFVerifier` contract verifies the proof using `ecrecover`.
 
 ### Randomness Extraction
 The final random value is derived as $\mathrm{keccak256}(\gamma_x \| \gamma_y)$, where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma point coordinates.
@@ -119,10 +119,8 @@ Similarly, whenever a new signing policy is relayed to it, the TEE machine trigg
 The backup process for a secret key $K$ is triggered when the key is generated or the signing policy is updated at the TEE machine that holds the key.
 It consists of two rounds of secret sharing: first, a data provider share $S_\mathrm{dp}$ and a key admin share $S_\mathrm{ka}$ are generated at random using modulo addition. These two shares are then each split a second time using Shamir Secret Sharing schemes.
 
-
 The data provider share $S_\mathrm{dp}$ is split with each provider receiving a proportion of the shares matching their weight, so that a sufficient weight of data providers can recover the key.
 The key admin share $S_\mathrm{dp}$ is split with each admin receiving a single share, such that the amount of admins required to recover the key corresponds to a parameter set by the owner of the wallet.
-
 
 To recover a key, a key recovery TEE is designated.
 The providers and admins send their shares to the TEE, which recovers both the data provider and the key admin shares, and then the original key.
@@ -142,7 +140,7 @@ The backup metadata consists of the following fields:
 -  `keyType`: The key type of the private key. 
 - `rewardEpochId`: The ID of the signing policy on which the key was backed up, defining which data providers store backup shares.
 - `publicKey`: The public key of the backed up private key.
-- `providersThreshold`: The threshold weight required for recovering the data providers' share of the key. This defaults to $666/1000$ (approximately $66\%$). This is a backup-specific parameter, not part of the wallet's `configConstants`.
+- `providersThreshold`: The threshold weight required for recovering the data providers' share of the key. This defaults to $666/1000$ (approximately $66\%$).
 - `adminsPublicKeys`: The list of admin public keys.
 - `adminsThreshold`: The threshold for operations with the admin public keys.
 - `cosigners`: The list of cosigner addresses for the key, if included.
@@ -179,7 +177,7 @@ Alongside the key that is being backed up, the backup process triggered by $\mat
 To backup a key $K$, the TEE machine performs the following  procedure:
 
 1. A random split of into two shares $K$ is performed by modulo arithmetic, giving shares $S_\mathrm{dp}$ and $S_\mathrm{ka}$, the data provider and key admin shares of the secret. The shares are chosen uniformly at random such that $K = S_\mathrm{dp} + S_\mathrm{ka} \mod N$.
-2. The data provider share $S_\mathrm{dp}$ is split into $1000$ shares using a $(1000, \mathrm{providersThreshold})$-Shamir secret sharing scheme into shares ${S_\mathrm{dp}}^1, \dots, {S_\mathrm{dp}}^{1000}$. Each data provider is then assigned a proportion of these shares relative to its weight in the signing policy, rounded down, such that the $j$th data provider with weight $W_j$ is assigned $\lfloor W_j \cdot 1000 \rfloor$ shares of the secret.
+2. The data provider share $S_\mathrm{dp}$ is split into $1000$ shares using a $(1000, \lfloor \mathrm{providersThreshold} \cdot 1000 \rfloor)$-Shamir secret sharing scheme into shares ${S_\mathrm{dp}}^1, \dots, {S_\mathrm{dp}}^{1000}$. Each data provider is then assigned a proportion of these shares relative to its weight in the signing policy, rounded down, such that the $j$th data provider with weight $W_j$ is assigned $\lfloor W_j \cdot 1000 \rfloor$ shares of the secret.
 3. Similarly, the key admin share $S_\mathrm{ka}$ is split shares $${S_\mathrm{ka}}^1, \dots, {S_\mathrm{ka}}^{N_\text{admin}}$ equal to the number of key admins using an $(N_{\text{admin}}, \mathrm{adminsThreshold})$-Shamir secret sharing scheme. The $i$th admin is assigned a share ${S_\mathrm{ka}}^i$.
 4. For the each data provider and key admin, a package $\mathrm{pack}_i$ is prepared containing share data and relevant meta data. This package is then encrypted under the receiving entities public key $\mathrm{pk}_i$. Formally, the package contains:
 	 - `shareData`: The share or shares for the recipient $i$.
