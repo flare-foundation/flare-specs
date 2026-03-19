@@ -61,7 +61,7 @@ The TEE proxy and Flare TEE logic would then not be aware of the requirement for
 Mitigations for this are up to the extension in question:
 
 - For system extension instructions that result in actions that use keys on the machine (except the `teeId` key), the existence of a threshold of cosigner signatures is checked and enforced by the Flare TEE node app.
-- FCE extensions are responsible for their own cosigner enforcement. They can use the same mechanism as the system extension to authorize usage of private keys. Additionally, enforcement may be done externally, for example by requiring that action results contain both the TEE machine signature and the cosigner signatures as part of the result. For example, the `F_FTDC PROVE` command allows a verifying contract to require signatures from multiple TEE machines and multiple cosigners.
+- FCE extensions are responsible for their own cosigner enforcement. They can use the same mechanism as the system extension to authorize usage of private keys. Additionally, enforcement may be done externally, for example by requiring that action results contain both the TEE machine signature and the cosigner signatures as part of the result. For example, the `F_FDC2 PROVE` command allows a verifying contract to require signatures from multiple TEE machines and multiple cosigners.
 
 ## Responses
 After a TEE machine processes an action, it returns an *action response* to the corresponding TEE proxy.

@@ -1,24 +1,36 @@
 -   Introduction
 -   Architecture
--   References
-	-  Smart Contracts
-	-  Commands
-	-   Workflows    
 -   TEE Management
-	-  TEE Proxies  
+	-  TEE Proxies
 	-  TEE Machines
 	-  Key Management
-	-  Registration and Management (previously ownership)
-	-  Configuration API?
+	-  Registration and Management
 -   Operations
 	-   TEE Instructions
-	-   Action Instructions (currently in one Instructions file) 
+	-   Actions
 	-   Voting
 	-  Projects and Ownership
 -  Extensions
 	- FCE
 	- System Extension
 	- PMW
-		- Overview    
+		- Overview
 		- Transactions
-   -   FTDC
+	-   FTDC
+-   Attestation Types
+	- TeeAvailabilityCheck
+	- PMWPaymentStatus
+	- PMWMultisigAccountConfigured
+-   Commands
+	- Command Reference (index)
+	- Individual command documentation (F_REG, F_WALLET, F_GET, F_POLICY, F_XRP, F_FDC2)
+-   Workflows
+	- Machine Registration
+	- Machine Lifecycle
+	- Wallet Setup
+	- Key Management
+	- Extension Configuration
+	- Extension Instructions
+	- FTDC Attestation
+	- XRPL Multisig Configuration
+	- Multi-TEE Operations
