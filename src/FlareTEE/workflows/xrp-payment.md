@@ -187,15 +187,3 @@ If a payment fails (e.g., due to a low fee or chain-level issues), the transacti
 
 **Nullification:** To nullify a payment instead of reissuing it, set the `nullify` flag to `true` for the corresponding instruction. This produces a cheap `AccountSet` transaction that consumes the blockchain nonce without transferring funds. Nullification is useful when the original payment should be cancelled rather than retried.
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Step 1 (submit payment) | `e2e/pkg/utils/xrp.go` (`PayXRP`) |
-| Steps 4-5 (retrieve + submit) | `e2e/pkg/utils/tee_calls.go` (`GetXRPPaymentSignature`), `e2e/pkg/xrp/` (`SubmitMultisigPayment`) |
-| Step 6 (verify payment) | `e2e/pkg/utils/xrp.go` (`VerifyPMWPayment`) |
-| Step 7 (reissuance) | `e2e/pkg/utils/xrp.go` (`ReissueXRP`) |
-| Full single-TEE flow | `e2e/cmd/xrp/xrp_pay.go` |
-| Full multi-TEE flow | `e2e/cmd/xrp/multi/multi.go` |

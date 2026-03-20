@@ -308,11 +308,3 @@ The returned `action` object includes the assigned action ID needed to retrieve 
 - [Machine Registration](machine-registration.md) -- Registering TEE machines and moving to production
 - [Wallet Setup](wallet-setup.md) -- Creating wallet projects, wallets, and keys
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Steps 1-2 (EVM signing, RNG) | `tee-extension-example/` (reference extension) |
-| Instruction sender contract | `e2e/cmd/setup/extension/deploy_instruction_sender/` |

@@ -288,10 +288,3 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 **Events emitted:** Status change event (unban).
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Step 1 (pause with proof) | `e2e/pkg/utils/pause.go` (`PauseNode`) |

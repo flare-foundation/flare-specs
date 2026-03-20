@@ -131,14 +131,3 @@ where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma 
 
 The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
 
----
-
-## Further Resources
-
-| Topic | Reference |
-|-------|-----------|
-| VRF command specification | [F_WALLET--VRF.md](../commands/F_WALLET--VRF.md) |
-| Key management (VRF keys) | [Key Management.md](../TEE%20Management/Key%20Management.md) |
-| Wallet setup workflow | [wallet-setup.md](wallet-setup.md) |
-| VRF proof generation (Go) | `tee-node/pkg/wallets/vrf/vrf.go` |
-| VRF instruction processor (Go) | `tee-node/internal/processors/instructions/vrfutils/processor.go` |

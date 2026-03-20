@@ -404,12 +404,3 @@ To resume, call `enableWallet(walletId)` as described in Step 11 (transitions fr
 - **What happens:**
   - Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Steps 1-11 (full wallet flow) | `e2e/pkg/utils/wallet.go` (`InitializeWallet`) |
-| Steps 9-10 (add + confirm key) | `e2e/pkg/utils/wallet.go` (`AddKeys`) |
-

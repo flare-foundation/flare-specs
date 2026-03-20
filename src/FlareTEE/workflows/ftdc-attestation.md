@@ -357,12 +357,3 @@ The XRP indexer supports finding transactions via `sourceAddress` and `nonce`, a
 
 The PMWPaymentStatus attestation is used to verify completed payments. For the complete procedure including request submission, proof retrieval, and verification, see [xrp-payment.md](xrp-payment.md) Step 4.
 
----
-
-## Further Resources
-
-| Attestation Type | Reference Implementation |
-|-----------------|------------------------|
-| TeeAvailabilityCheck | `go-verifier-api/` (verifier server) |
-| PMWMultisigAccountConfigured | `e2e/pkg/utils/xrp.go` (`RequestAndVerifyMultisigProof`) |
-| PMWPaymentStatus | `e2e/pkg/utils/xrp.go` (`VerifyPMWPayment`) |

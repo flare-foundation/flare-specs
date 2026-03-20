@@ -321,12 +321,3 @@ For more details on the machine lifecycle after production, see [machine-lifecyc
 
 **Events emitted:** Availability confirmed event
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Steps 7-10 (register → production) | `e2e/pkg/utils/setup.go` (`RegisterNode`) |
-| Steps 8-9 (attestation + FTDC) | `e2e/pkg/utils/registration.go` |
-

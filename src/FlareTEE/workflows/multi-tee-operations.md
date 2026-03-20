@@ -184,13 +184,3 @@ See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [ftdc-a
 - [key-restore.md](key-restore.md) -- restoring keys from backup.
 - [Key Management specification](../TEE%20Management/Key%20Management.md) -- backup and restore security model.
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Step 1 (multi-machine registration) | `e2e/cmd/setup/multi/multi.go`, `e2e/pkg/utils/setup.go` |
-| Step 2 (multi-TEE wallet) | `e2e/cmd/wallet/multi/multi.go`, `e2e/pkg/utils/wallet.go` |
-| Step 3 (distributed multisig) | `e2e/cmd/xrp/multi/multi.go`, `e2e/pkg/utils/xrp.go` |
-| Step 4 (distributed payment) | `e2e/cmd/xrp/multi/multi.go`, `e2e/pkg/utils/xrp.go` |

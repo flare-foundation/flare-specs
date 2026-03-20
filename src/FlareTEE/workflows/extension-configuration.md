@@ -249,10 +249,3 @@ After completing extension configuration, proceed to:
 - [Wallet Setup](wallet-setup.md) -- Create wallet projects, wallets, and keys for the extension
 - [Extension Instructions](extension-instructions.md) -- Send custom instructions to the extension and retrieve results
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Steps 1-5 (extension setup) | `e2e/cmd/setup/extension/extension.go` |

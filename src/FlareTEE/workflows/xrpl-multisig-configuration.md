@@ -230,12 +230,3 @@ The following account flags are checked via the `account_flags` field from `acco
 
 See [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) for the full attestation type specification.
 
----
-
-## Further Resources
-
-| Step | Reference Implementation |
-|------|------------------------|
-| Step 1 (derive XRP addresses) | `go-flare-common/pkg/xrpl/address.go` |
-| Step 2 (create multisig) | `e2e/pkg/utils/xrp.go` (`SetupMultisig`) |
-| Steps 3-5 (attestation + link) | `e2e/pkg/utils/xrp.go` (`RequestAndVerifyMultisigProof`) |
