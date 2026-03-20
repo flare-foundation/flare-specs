@@ -1,3 +1,4 @@
 .vscode/settings.json
 .sol
 .env
+.DS_Store
