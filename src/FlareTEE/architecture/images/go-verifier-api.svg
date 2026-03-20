@@ -1,0 +1,101 @@
+<svg width="760" height="520" viewBox="0 0 760 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .heading { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; }
+    .subtext { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 400; }
+    .label { fill: #c10f45; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 600; }
+    .box { fill: none; stroke: #c10f45; stroke-width: 2; }
+    .nested-box { fill: none; stroke: #c10f45; stroke-width: 1.5; }
+    .dashed-box { fill: none; stroke: #c10f45; stroke-width: 2; stroke-dasharray: 8 4; }
+    .connector { stroke: #c10f45; stroke-width: 1.2; fill: none; }
+    .arrowhead { fill: #c10f45; }
+  </style>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" class="arrowhead" />
+    </marker>
+  </defs>
+
+  <!-- Verifier API boundary -->
+  <rect x="30" y="15" width="700" height="330" rx="6" class="dashed-box" />
+  <text x="55" y="38" class="heading">Go Verifier API</text>
+
+  <!-- HTTP Server: 20px inner padding -->
+  <rect x="50" y="50" width="660" height="45" rx="4" class="box" />
+  <text x="380" y="70" text-anchor="middle" class="heading">HTTP Server (huma/chi)</text>
+  <text x="380" y="86" text-anchor="middle" class="subtext">prepareRequestBody  |  prepareResponseBody  |  verify  |  /api/health  |  /poller/tees</text>
+
+  <!-- Arrow: 35px -->
+  <path d="M380 95 V130" class="connector" marker-end="url(#arrow)" />
+
+  <!-- Module Loader -->
+  <rect x="150" y="130" width="460" height="28" rx="4" class="nested-box" />
+  <text x="380" y="149" text-anchor="middle" class="subtext">Module Loader — selects one attestation type per process (VERIFIER_TYPE)</text>
+
+  <!-- Arrow + branch: 35px vertical before branch -->
+  <path d="M380 158 V175" class="connector" />
+  <path d="M125 175 H635" class="connector" />
+  <path d="M125 175 V200" class="connector" marker-end="url(#arrow)" />
+  <path d="M305 175 V200" class="connector" marker-end="url(#arrow)" />
+  <path d="M472 175 V200" class="connector" marker-end="url(#arrow)" />
+  <path d="M635 175 V200" class="connector" marker-end="url(#arrow)" />
+
+  <!-- 4 modules: equal widths (155px), 15px gaps -->
+  <!-- Module 1: x=50..200 center=125 -->
+  <rect x="50" y="200" width="155" height="100" rx="4" class="nested-box" />
+  <text x="127" y="222" text-anchor="middle" class="heading">TEE Avail. Check</text>
+  <text x="127" y="244" text-anchor="middle" class="subtext">JWT / PKI validation</text>
+  <text x="127" y="260" text-anchor="middle" class="subtext">CRL, SSRF protection</text>
+  <text x="127" y="276" text-anchor="middle" class="subtext">Signing policy check</text>
+  <text x="127" y="292" text-anchor="middle" class="subtext">+ Background poller</text>
+
+  <!-- Module 2: x=220..380 center=300 -->
+  <rect x="220" y="200" width="165" height="100" rx="4" class="nested-box" />
+  <text x="302" y="222" text-anchor="middle" class="heading">PMW Payment</text>
+  <text x="302" y="237" text-anchor="middle" class="heading">Status</text>
+  <text x="302" y="257" text-anchor="middle" class="subtext">Instruction ID lookup</text>
+  <text x="302" y="273" text-anchor="middle" class="subtext">XRP tx verification</text>
+  <text x="302" y="289" text-anchor="middle" class="subtext">Amount from AffectedNodes</text>
+
+  <!-- Module 3: x=400..545 center=472 -->
+  <rect x="400" y="200" width="145" height="100" rx="4" class="nested-box" />
+  <text x="472" y="222" text-anchor="middle" class="heading">PMW Multisig</text>
+  <text x="472" y="237" text-anchor="middle" class="heading">Acct. Configured</text>
+  <text x="472" y="257" text-anchor="middle" class="subtext">account_info RPC</text>
+  <text x="472" y="273" text-anchor="middle" class="subtext">Signer list check</text>
+  <text x="472" y="289" text-anchor="middle" class="subtext">Account flags check</text>
+
+  <!-- Module 4: x=560..710 center=635 -->
+  <rect x="560" y="200" width="150" height="100" rx="4" class="nested-box" />
+  <text x="635" y="222" text-anchor="middle" class="heading">PMW Fee Proof</text>
+  <text x="635" y="244" text-anchor="middle" class="subtext">Nonce range lookup</text>
+  <text x="635" y="260" text-anchor="middle" class="subtext">Pay + reissue events</text>
+  <text x="635" y="276" text-anchor="middle" class="subtext">actualFee vs</text>
+  <text x="635" y="292" text-anchor="middle" class="subtext">estimatedFee</text>
+
+  <!-- Arrows to external deps: 50px (arrowhead = 20%) -->
+  <path d="M127 345 V395" class="connector" marker-end="url(#arrow)" />
+  <path d="M302 345 V395" class="connector" marker-end="url(#arrow)" />
+  <path d="M472 345 V395" class="connector" marker-end="url(#arrow)" />
+  <path d="M635 345 V395" class="connector" marker-end="url(#arrow)" />
+
+  <!-- External dependencies: aligned under modules, same widths -->
+  <rect x="50" y="395" width="155" height="65" rx="4" class="box" />
+  <text x="127" y="416" text-anchor="middle" class="heading">Flare C-chain</text>
+  <text x="127" y="432" text-anchor="middle" class="subtext">Relay, Registry</text>
+  <text x="127" y="448" text-anchor="middle" class="subtext">TEE proxies (/info)</text>
+
+  <rect x="220" y="395" width="165" height="65" rx="4" class="box" />
+  <text x="302" y="416" text-anchor="middle" class="heading">PostgreSQL + MySQL</text>
+  <text x="302" y="432" text-anchor="middle" class="subtext">XRP indexer (source)</text>
+  <text x="302" y="448" text-anchor="middle" class="subtext">C-chain indexer</text>
+
+  <rect x="400" y="395" width="145" height="65" rx="4" class="box" />
+  <text x="472" y="422" text-anchor="middle" class="heading">XRP Ledger</text>
+  <text x="472" y="442" text-anchor="middle" class="subtext">JSON-RPC</text>
+
+  <rect x="560" y="395" width="150" height="65" rx="4" class="box" />
+  <text x="635" y="416" text-anchor="middle" class="heading">PostgreSQL + MySQL</text>
+  <text x="635" y="432" text-anchor="middle" class="subtext">XRP indexer (source)</text>
+  <text x="635" y="448" text-anchor="middle" class="subtext">C-chain indexer</text>
+</svg>

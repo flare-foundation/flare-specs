@@ -1,0 +1,71 @@
+<svg width="1150" height="430" viewBox="0 0 1150 430" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .heading { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 700; }
+    .subtext { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 400; }
+    .label { fill: #c10f45; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 600; }
+    
+    .box { fill: none; stroke: #c10f45; stroke-width: 2; }
+    .external-entity { fill: none; stroke: #c10f45; stroke-width: 1.5; stroke-dasharray: 4 2; }
+    
+    .connector { stroke: #c10f45; stroke-width: 1.2; fill: none; }
+    .arrowhead { fill: #c10f45; }
+  </style>
+
+  <defs>
+    <marker id="crimsonArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" class="arrowhead" />
+    </marker>
+  </defs>
+
+  <rect x="50" y="140" width="220" height="110" rx="4" class="box" />
+  <text x="160" y="165" text-anchor="middle" class="heading">FCC contracts</text>
+  <text x="160" y="185" text-anchor="middle" class="subtext">Extensions</text>
+  <text x="160" y="200" text-anchor="middle" class="subtext">Registration &amp; attestation</text>
+  <text x="160" y="215" text-anchor="middle" class="subtext">Instruction emission</text>
+  <text x="160" y="230" text-anchor="middle" class="subtext">Private key administration</text>
+
+  <rect x="430" y="140" width="250" height="110" rx="4" class="box" />
+  <text x="555" y="165" text-anchor="middle" class="heading">Data providers &amp; cosigners</text>
+  <text x="555" y="190" text-anchor="middle" class="subtext">Instruction relaying</text>
+  <text x="555" y="205" text-anchor="middle" class="subtext">Instruction augmentation</text>
+  <text x="555" y="220" text-anchor="middle" class="subtext">Data connector verification</text>
+
+  <rect x="830" y="140" width="240" height="110" rx="4" class="box" />
+  <text x="950" y="165" text-anchor="middle" class="heading">TEE machines</text>
+  <text x="950" y="185" text-anchor="middle" class="subtext">Identity</text>
+  <text x="950" y="200" text-anchor="middle" class="subtext">Relayed instruction verification</text>
+  <text x="950" y="215" text-anchor="middle" class="subtext">Private key management</text>
+  <text x="950" y="230" text-anchor="middle" class="subtext">Custom logic per extension</text>
+
+  <ellipse cx="160" cy="350" rx="90" ry="35" class="external-entity" />
+  <text x="160" y="345" text-anchor="middle" class="heading">Users</text>
+  <text x="160" y="362" text-anchor="middle" class="subtext">Smart contracts / direct</text>
+
+  <ellipse cx="555" cy="350" rx="110" ry="40" class="external-entity" />
+  <text x="555" y="345" text-anchor="middle" class="heading">External world</text>
+  <text x="555" y="362" text-anchor="middle" class="subtext">Blockchains, Web2, etc.</text>
+
+  <path d="M160 315 V250" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="165" y="285" class="label">Instructions</text>
+
+  <path d="M555 310 V250" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="560" y="285" class="label">Flare Data Connector</text>
+
+  <path d="M270 200 H430" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="350" y="192" text-anchor="middle" class="label">Instructions</text>
+
+  <path d="M680 180 H830" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="755" y="172" text-anchor="middle" class="label">Signed instructions</text>
+  
+  <path d="M680 220 H830" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="755" y="212" text-anchor="middle" class="label">Flare Data Connector</text>
+
+  <path d="M950 140 V60 H160 V140" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="555" y="55" text-anchor="middle" class="label">Registration &amp; attestation</text>
+
+  <path d="M920 140 V90 H555 V140" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="737" y="85" text-anchor="middle" class="label">Relaying results</text>
+
+  <path d="M950 250 V350 H665" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="807" y="345" text-anchor="middle" class="label">Relaying results</text>
+</svg>

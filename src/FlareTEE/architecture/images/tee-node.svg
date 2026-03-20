@@ -1,0 +1,86 @@
+<svg width="780" height="460" viewBox="0 0 780 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .heading { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; }
+    .subtext { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 400; }
+    .label { fill: #c10f45; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 600; }
+    .box { fill: none; stroke: #c10f45; stroke-width: 2; }
+    .nested-box { fill: none; stroke: #c10f45; stroke-width: 1.5; }
+    .dashed-box { fill: none; stroke: #c10f45; stroke-width: 2; stroke-dasharray: 8 4; }
+    .external-entity { fill: none; stroke: #c10f45; stroke-width: 1.5; stroke-dasharray: 4 2; }
+    .connector { stroke: #c10f45; stroke-width: 1.2; fill: none; }
+    .arrowhead { fill: #c10f45; }
+  </style>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" class="arrowhead" />
+    </marker>
+    <marker id="arrowUp" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" class="arrowhead" />
+    </marker>
+  </defs>
+
+  <!-- TEE Node outer boundary -->
+  <rect x="30" y="15" width="720" height="290" rx="6" class="dashed-box" />
+  <text x="55" y="38" class="heading">TEE Node</text>
+
+  <!-- Row 1: Config Server, Sign Server -->
+  <!-- 20px padding from dashed boundary, 20px gap between boxes -->
+  <rect x="50" y="52" width="155" height="48" rx="4" class="box" />
+  <text x="127" y="73" text-anchor="middle" class="heading">Config Server</text>
+  <text x="127" y="90" text-anchor="middle" class="subtext">(port 5500)</text>
+
+  <rect x="225" y="52" width="155" height="48" rx="4" class="box" />
+  <text x="302" y="73" text-anchor="middle" class="heading">Sign Server</text>
+  <text x="302" y="90" text-anchor="middle" class="subtext">(port 8888)</text>
+
+  <!-- Action Router: spans rows 1-2, right third of the layout -->
+  <rect x="400" y="52" width="330" height="120" rx="4" class="box" />
+  <text x="425" y="74" class="heading">Action Router</text>
+
+  <!-- Queues nested inside Action Router: 15px padding -->
+  <rect x="530" y="65" width="185" height="95" rx="4" class="nested-box" />
+  <text x="622" y="88" text-anchor="middle" class="subtext">Main Queue</text>
+  <text x="622" y="108" text-anchor="middle" class="subtext">Direct Queue</text>
+  <text x="622" y="128" text-anchor="middle" class="subtext">Backup Queue</text>
+  <text x="622" y="148" text-anchor="middle" class="subtext">(poll proxy)</text>
+
+  <!-- Row 2: Node, Wallet Storage, aligned with bottom half of Action Router -->
+  <!-- 18px gap below row 1 small boxes -->
+  <rect x="50" y="118" width="155" height="54" rx="4" class="box" />
+  <text x="127" y="141" text-anchor="middle" class="heading">Node (ID,</text>
+  <text x="127" y="159" text-anchor="middle" class="heading">keys, state)</text>
+
+  <rect x="225" y="118" width="155" height="54" rx="4" class="box" />
+  <text x="302" y="141" text-anchor="middle" class="heading">Wallet</text>
+  <text x="302" y="159" text-anchor="middle" class="heading">Storage</text>
+
+  <!-- Row 3: 22px gap below row 2 -->
+  <rect x="50" y="194" width="155" height="54" rx="4" class="box" />
+  <text x="127" y="217" text-anchor="middle" class="heading">Policy</text>
+  <text x="127" y="235" text-anchor="middle" class="heading">Storage</text>
+
+  <!-- Processors box: same row, spans right side -->
+  <rect x="225" y="194" width="505" height="90" rx="4" class="box" />
+  <text x="250" y="218" class="heading">Processors</text>
+  <text x="270" y="240" class="subtext">Direct: GET, POLICY</text>
+  <text x="270" y="258" class="subtext">Instruction: WALLET, REG, XRP, FDC2</text>
+  <text x="270" y="276" class="subtext">Default: Extension forwarding</text>
+
+  <!-- Arrows: boundary bottom at y=305, ellipses at y=410 -->
+  <path d="M200 305 V370" class="connector" marker-end="url(#arrow)" />
+  <text x="210" y="340" class="label">HTTP</text>
+
+  <path d="M580 305 V370" class="connector" marker-end="url(#arrow)" />
+  <text x="590" y="340" class="label">HTTP</text>
+
+  <!-- External: TEE Proxy -->
+  <ellipse cx="200" cy="410" rx="105" ry="35" class="external-entity" />
+  <text x="200" y="407" text-anchor="middle" class="heading">TEE Proxy</text>
+  <text x="200" y="424" text-anchor="middle" class="subtext">(ports 6661/6662)</text>
+
+  <!-- External: Extension Service -->
+  <ellipse cx="580" cy="410" rx="115" ry="35" class="external-entity" />
+  <text x="580" y="407" text-anchor="middle" class="heading">Extension Service</text>
+  <text x="580" y="424" text-anchor="middle" class="subtext">(port 8889)</text>
+</svg>

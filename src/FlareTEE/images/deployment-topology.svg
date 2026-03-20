@@ -1,0 +1,78 @@
+<svg width="900" height="460" viewBox="0 0 900 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .heading { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; }
+    .box { fill: none; stroke: #c10f45; stroke-width: 2; rx: 6; }
+    .nested-box { fill: none; stroke: #c10f45; stroke-width: 1.5; rx: 4; }
+    .dashed-box { fill: none; stroke: #c10f45; stroke-width: 2; stroke-dasharray: 8 4; rx: 8; }
+    .external-entity { fill: none; stroke: #c10f45; stroke-width: 1.5; stroke-dasharray: 4 2; }
+    .connector { stroke: #c10f45; stroke-width: 1.5; fill: none; }
+    .arrowhead { fill: #c10f45; }
+  </style>
+
+  <defs>
+    <marker id="crimsonArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" class="arrowhead" />
+    </marker>
+    <marker id="crimsonArrowStart" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" class="arrowhead" />
+    </marker>
+  </defs>
+
+  <rect x="20" y="20" width="560" height="420" class="dashed-box" />
+  <text x="290" y="45" text-anchor="middle" class="heading">Firewall</text>
+
+  <ellipse cx="90" cy="55" rx="40" ry="22" class="external-entity" />
+  <text x="90" y="60" text-anchor="middle" class="heading">owner</text>
+
+  <rect x="50" y="90" width="310" height="155" class="box" />
+  <text x="70" y="115" class="heading">TEE machine</text>
+
+  <rect x="65" y="125" width="280" height="105" class="nested-box" />
+  <text x="80" y="145" class="heading">Docker container</text>
+
+  <rect x="75" y="160" width="105" height="55" class="nested-box" />
+  <text x="127" y="185" text-anchor="middle" class="heading">Extension</text>
+  <text x="127" y="202" text-anchor="middle" class="heading">app</text>
+
+  <rect x="230" y="160" width="105" height="55" class="nested-box" />
+  <text x="282" y="185" text-anchor="middle" class="heading">Flare Node</text>
+  <text x="282" y="202" text-anchor="middle" class="heading">app</text>
+
+  <rect x="410" y="90" width="90" height="100" class="box" />
+  <text x="455" y="135" text-anchor="middle" class="heading">Internal</text>
+  <text x="455" y="152" text-anchor="middle" class="heading">API</text>
+
+  <rect x="500" y="90" width="180" height="300" class="box" />
+  <line x1="580" y1="90" x2="580" y2="390" stroke="#c10f45" stroke-width="2" />
+  <text x="540" y="235" text-anchor="middle" class="heading">TEE proxy</text>
+  <text x="630" y="235" text-anchor="middle" class="heading">External API</text>
+
+  <rect x="50" y="265" width="130" height="85" class="box" />
+  <text x="115" y="312" text-anchor="middle" class="heading">Flare node</text>
+
+  <rect x="230" y="265" width="120" height="60" class="box" />
+  <text x="290" y="290" text-anchor="middle" class="heading">C-chain</text>
+  <text x="290" y="307" text-anchor="middle" class="heading">indexer</text>
+
+  <rect x="230" y="345" width="120" height="45" class="box" />
+  <text x="290" y="372" text-anchor="middle" class="heading">REDIS</text>
+
+  <ellipse cx="790" cy="240" rx="85" ry="65" class="external-entity" />
+  <text x="790" y="225" text-anchor="middle" class="heading">Users, data</text>
+  <text x="790" y="245" text-anchor="middle" class="heading">providers,</text>
+  <text x="790" y="265" text-anchor="middle" class="heading">cosigners</text>
+
+  <path d="M90 77 V90" class="connector" marker-end="url(#crimsonArrow)" />
+  
+  <path d="M180 187 H230" class="connector" marker-start="url(#crimsonArrowStart)" marker-end="url(#crimsonArrow)" />
+  
+  <path d="M335 187 H370 V140 H410" class="connector" marker-end="url(#crimsonArrow)" />
+  
+  <path d="M500 240 H400 V295 H350" class="connector" marker-end="url(#crimsonArrow)" />
+  
+  <path d="M500 240 H400 V367 H350" class="connector" marker-end="url(#crimsonArrow)" />
+  
+  <path d="M230 295 H180" class="connector" marker-end="url(#crimsonArrow)" />
+  
+  <path d="M705 240 H680" class="connector" marker-end="url(#crimsonArrow)" />
+</svg>

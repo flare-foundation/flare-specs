@@ -1,5 +1,10 @@
 -   Introduction
 -   Architecture
+-   Component Architecture
+	- TEE Node
+	- TEE Proxy
+	- Go Verifier API
+	- TEE Relay Client
 -   TEE Management
 	-  TEE Proxies
 	-  TEE Machines
