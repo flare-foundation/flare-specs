@@ -61,7 +61,7 @@ JSON of the XRP Ledger transaction with filled `Signers` field. The transaction 
 
 When a fee schedule is present, results are posted to the proxy progressively with time delays between each fee level. Each result includes the signed transaction at the corresponding fee amount.
 
-### Validation
+## Notes
 
 The TEE machine performs the following validations before signing:
 - Cosigner signatures are verified per key (when cosigners are configured on the wallet).

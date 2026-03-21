@@ -19,9 +19,9 @@ Attestation response body:
   - `ERROR` ($1$) — Account is incorrectly configured or the RPC query to the external chain failed validation checks.
 - `sequence` (`uint64`) — Sequence number of the account. Set to $0$ when status is `ERROR`.
 
-## Trust Model
+## Chain Support
 
-Each data provider uses its own XRP node for verification, so the system does not rely on a single node. This mitigates the risk of a single malicious or spoofed node causing the FDC to attest to invalid account configurations.
+Currently, `PMWMultisigAccountConfigured` is used for XRP.
 
 ## Verification
 
@@ -55,7 +55,7 @@ Each data provider uses its own XRP node for verification, so the system does no
 - If any validation check fails: `status` = `ERROR`, `sequence` = $0$. The response is still returned successfully (not an HTTP error).
 - If the XRP RPC call itself fails (network error, node unreachable): an error is returned to the caller.
 
-## Example
+## Notes
 
 Example `account_info` response for a correctly configured multisig account (`rhKxtU4Zgj6aCdBKQWHkqku72bmDvRgzRz`):
 

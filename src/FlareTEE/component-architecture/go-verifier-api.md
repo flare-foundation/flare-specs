@@ -1,12 +1,12 @@
 # Go Verifier API Architecture
 
-The go-verifier-api is an FDC2 verifier server that validates attestation requests. It implements a pluggable verifier pattern where each attestation type (TeeAvailabilityCheck, PMWPaymentStatus, PMWMultisigAccountConfigured) is loaded as a module with its own verification logic, data sources, and configuration.
+`go-verifier-api` is an FDC2 verifier server that validates attestation requests. Each attestation type (TeeAvailabilityCheck, PMWPaymentStatus, PMWMultisigAccountConfigured) is loaded as a module with its own verification logic, data sources, and configuration.
 
 ![Go Verifier API architecture](images/go-verifier-api.svg)
 
 ## Component Overview
 
-## Generic Verifier Pattern
+### Generic Verifier Pattern
 
 All attestation types implement the same interface:
 
@@ -16,7 +16,7 @@ type Verifier[Req any, Res any] interface {
 }
 ```
 
-Request and response types are defined in `go-flare-common/pkg/tee/structs/connector/autogen.go`, generated from the Solidity interface ABIs. This ensures the verifier's types match the on-chain proof structures exactly.
+Request and response types are defined in `go-flare-common/pkg/tee/structs/connector/autogen.go`, generated from Solidity interface ABIs to match the on-chain proof structures.
 
 ## HTTP Endpoints
 
@@ -40,7 +40,7 @@ All endpoints (except `/api/health`) require API key authentication via the `X-A
 
 ## Module Loading
 
-The `VERIFIER_TYPE` environment variable determines which attestation type module is loaded at startup. Each module instantiates its own service, verifier, external data connections, and HTTP handlers. Only one attestation type runs per process instance.
+`VERIFIER_TYPE` selects which attestation type module is loaded at startup. Each module instantiates its own service, verifier, external data connections, and HTTP handlers. One attestation type per process.
 
 ## TeeAvailabilityCheck Module
 
@@ -62,7 +62,7 @@ The `VERIFIER_TYPE` environment variable determines which attestation type modul
 
 ### TEE Poller
 
-A background goroutine that continuously monitors TEE machine availability:
+Background goroutine monitoring TEE machine availability:
 
 - **Polling interval**: every $1$ minute.
 - **Active machine list**: fetched from the `TeeMachineRegistry` contract.
@@ -137,7 +137,7 @@ A background goroutine that continuously monitors TEE machine availability:
 
 ## Configuration
 
-Key environment variables:
+Environment variables:
 
 | Variable | Required For | Description |
 |---|---|---|
@@ -150,10 +150,3 @@ Key environment variables:
 | `TEE_MACHINE_REGISTRY_CONTRACT_ADDRESS` | TEE | Machine registry address |
 | `SOURCE_DATABASE_URL` | Payment, Fee | PostgreSQL connection string |
 | `CCHAIN_DATABASE_URL` | Payment, Fee | MySQL connection string |
-
-## Key Design Decisions
-
-- **One attestation type per process** — simplifies configuration, deployment, and scaling. Different types can be scaled independently.
-- **Generic handler registration** — the same HTTP handler code serves all attestation types via Go generics, eliminating duplication.
-- **ABI-based type generation** — request/response structs are auto-generated from Solidity ABIs, ensuring on-chain compatibility.
-- **Poller-based DOWN detection** — the verifier actively monitors TEE availability rather than relying solely on on-demand checks, enabling faster detection of offline machines.

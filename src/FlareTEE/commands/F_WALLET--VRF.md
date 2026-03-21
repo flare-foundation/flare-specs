@@ -60,6 +60,6 @@ Where:
 - `v` -- Witness point $c \cdot \gamma + s \cdot H$.
 - `zInv` -- Field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
 
-## Security considerations
+## Notes
 
 The nonce must be non-empty; the processor rejects requests with an empty nonce. The key's signing algorithm must be `keccak256-secp256k1-vrf`; any other algorithm is rejected. If the specified `(walletId, keyId)` pair does not exist on the TEE machine, the request fails.

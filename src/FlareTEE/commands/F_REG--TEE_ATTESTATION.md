@@ -25,8 +25,6 @@ struct TeeMachineWithAttestationData {
 }
 ```
 
-> **Note:** The command only produces a result on the `Threshold` submission tag. On the `End` submission tag, no result is returned.
-
 ## Fixed message
 
 /
@@ -54,3 +52,7 @@ type TeeInfoResponse struct {
 ```
 
 See [TEE_INFO](F_GET--TEE_INFO.md) for full field descriptions.
+
+## Notes
+
+The command only produces a result on the `Threshold` submission tag. On the `End` submission tag, no result is returned.

@@ -23,7 +23,7 @@ For full details, see the [FTDC specification](../Extensions/FTDC.md).
 
 ---
 
-## General FTDC Attestation Flow
+## Steps
 
 All FTDC attestation types follow the same process. The specific request and response bodies vary by attestation type, but the overall flow, voting mechanism, and proof structure are identical.
 
@@ -42,21 +42,31 @@ Additionally, the instruction includes a TEE list (`numberOfTees`, `TeeIds`) ind
 
 Depending on the attestation type, the request is submitted through a convenience contract (e.g., `TeeVerification.requestAvailabilityCheckAttestation()`, `TeeVerification.RequestPMWMultisigAccountConfiguredAttestation()`) or directly via `FtdcHub.RequestAttestation()`.
 
-### Automatic Processing (Steps 2-6)
+Steps 2 through 6 happen automatically once the attestation request is submitted on-chain:
 
-Once the attestation request is submitted on-chain, the following steps happen automatically without user intervention:
+### Step 2: Data Provider Verification
 
-**Step 2: Data Provider Verification** — Data providers pick up the instruction from Flare and confirm off-chain that the `(data, source)` pair in the request represents valid data from the specified source. If the request includes cosigners, they also perform this verification step.
+Data providers pick up the instruction from Flare and confirm off-chain that the `(data, source)` pair in the request represents valid data from the specified source. If the request includes cosigners, they also perform this verification step.
 
-**Step 3: Provider Signs Attestation Response** — Each provider and cosigner packages the instruction together with the attestation response. They prepare a signed TEE instruction including their signature over the attestation response. The instruction fields are:
+### Step 3: Provider Signs Attestation Response
+
+Each provider and cosigner packages the instruction together with the attestation response. They prepare a signed TEE instruction including their signature over the attestation response. The instruction fields are:
+
 - `additionalFixedMessage`: The ABI encoding of `requestBody`.
 - `additionalVariableMessage`: The signature over the hash generated from the attestation response.
 
-**Step 4: Submit to TEE Proxies** — Each provider sends the signed TEE instruction to the TEE proxies corresponding to the TEE machines listed in `TEE_list`.
+### Step 4: Submit to TEE Proxies
 
-**Step 5: TEE Voting** — The [voting process](../Operations/Voting.md) for an FTDC request follows the standard instruction voting rules. Upon receiving sufficient weight of data provider signatures (and cosigner signatures exceeding the cosigner threshold), each TEE machine signs the attestation response with its identity key.
+Each provider sends the signed TEE instruction to the TEE proxies corresponding to the TEE machines listed in `TEE_list`.
 
-**Step 6: TEE Returns Action Result** — The TEE returns the action result to the TEE proxy, including:
+### Step 5: TEE Voting
+
+The [voting process](../Operations/Voting.md) for an FTDC request follows the standard instruction voting rules. Upon receiving sufficient weight of data provider signatures (and cosigner signatures exceeding the cosigner threshold), each TEE machine signs the attestation response with its identity key.
+
+### Step 6: TEE Returns Action Result
+
+The TEE returns the action result to the TEE proxy, including:
+
 - The list of data provider signatures over the attestation response.
 - The TEE's own signature over the attestation response.
 - Cosigner signatures (if applicable).
@@ -74,9 +84,11 @@ After submitting the attestation request, poll the TEE proxy until the proof is 
 
 ---
 
-## Request and Response Structures
+## Notes
 
-### FtdcRequestHeader
+### Request and Response Structures
+
+#### FtdcRequestHeader
 
 ```solidity
 struct FtdcRequestHeader {
@@ -95,7 +107,7 @@ struct FtdcRequestHeader {
 
 Note: When the attestation request is submitted on-chain, `cosigners` and `cosignersThreshold` may be included at the instruction event level rather than in the header itself, depending on how the `sendInstructions` call is structured.
 
-### FtdcResponseHeader
+#### FtdcResponseHeader
 
 ```solidity
 struct FtdcResponseHeader {
@@ -110,7 +122,7 @@ struct FtdcResponseHeader {
 
 Identical to the request header with the addition of a `timestamp` field stating when the response was generated.
 
-### Signing Scheme
+#### Signing Scheme
 
 The attestation response is signed by data providers, cosigners, and the TEE machine. The signed hash is constructed as:
 
@@ -126,7 +138,7 @@ hash(0x010000000000,
 
 The 38-byte prefix `0x010000000000` matches the format of a protocol message with a Merkle root (`protocolId = 1`, `votingRoundId = 0`, `isSecureRandom = 0`), ensuring interoperability with the existing Relay contract verification used in the FDC.
 
-### Proof Structure
+#### Proof Structure
 
 ```solidity
 struct Proof {
@@ -147,13 +159,13 @@ Some fields may be empty when there are no cosigners.
 
 ---
 
-## TeeAvailabilityCheck
+### TeeAvailabilityCheck
 
 Verifies that a registered TEE machine is available, running valid code, and has a fresh attestation from the platform. Used during machine registration (`toProduction`), periodic availability confirmation (`confirmAvailability`), and pause-with-proof (`pauseWithProof`).
 
 For the full specification, see [TeeAvailabilityCheck](../attestation-types/TeeAvailabilityCheck.md).
 
-### Request Body
+#### Request Body
 
 ```solidity
 struct RequestBody {
@@ -171,7 +183,7 @@ struct RequestBody {
 - `challenge` -- random challenge for the attestation request.
 - `instructionId` -- instruction ID for the attestation request.
 
-### Response Body
+#### Response Body
 
 ```solidity
 enum AvailabilityCheckStatus { OK, OBSOLETE, DOWN }
@@ -201,7 +213,7 @@ struct ResponseBody {
 - `initialSigningPolicyId` / `lastSigningPolicyId` -- from the TEE proxy attestation result.
 - `state` -- TEE state encoding from the TEE proxy attestation result.
 
-### JWT Verification Rules
+#### JWT Verification Rules
 
 Currently only Google attestations in JWT token format are supported. The attestation result is obtained from the TEE proxy on `/action/result/<instructionId>`.
 
@@ -217,7 +229,7 @@ Currently only Google attestations in JWT token format are supported. The attest
    - Verify that `data.initialSigningPolicyHash` equals the initial signing policy on chain.
    - Signing policy fetching uses aggressive retry parameters (single attempt, 400 ms delay) to stay within the 5-second timeout.
 
-### Verifier Server Behavior (Poller)
+#### Verifier Server Behavior (Poller)
 
 The verifier server (`VERIFIER_TYPE=TeeAvailabilityCheck`) also acts as a TEE machine availability poller.
 
@@ -232,14 +244,14 @@ The verifier server (`VERIFIER_TYPE=TeeAvailabilityCheck`) also acts as a TEE ma
    - Failure due to verifier fault (e.g., cannot connect to RPC): sample state = `INDETERMINATE`.
    - Failure due to provided data: sample state = `INVALID`.
 
-### Status Determination (DOWN Detection)
+#### Status Determination (DOWN Detection)
 
 To reliably detect `DOWN`, the poller must observe only `INVALID` samples for at least 5 minutes:
 
 - If all entries hold sample state `INVALID`: status = `DOWN`.
 - Otherwise: status = `INDETERMINATE`.
 
-### Evaluating Availability with Attestation
+#### Evaluating Availability with Attestation
 
 - **No attestation result available** on `/action/result/<instructionId>`:
   - Fall back to availability checks using recent samples.
@@ -251,24 +263,24 @@ To reliably detect `DOWN`, the poller must observe only `INVALID` samples for at
 
 ---
 
-## PMWMultisigAccountConfigured
+### PMWMultisigAccountConfigured
 
 Proves that a multisig account on an external chain is configured correctly for use with Protocol Managed Wallets. Each data provider uses its own XRP node for verification, mitigating the risk of a single malicious or spoofed node.
 
 For the full specification, see [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md).
 
-### Request Body
+#### Request Body
 
 - `accountAddress` (`string`) -- address of the multisig account.
 - `publicKeys` (`bytes[]`) -- public keys of the multisig account owners (concatenated format: `pubkey.X | pubkey.Y`).
 - `threshold` (`uint64`) -- threshold for the multisig account.
 
-### Response Body
+#### Response Body
 
 - `status` (`uint8`) -- `ok` (correctly configured) or `error` (incorrectly configured).
 - `sequence` (`uint64`) -- sequence number of the account.
 
-### XRP Account Validation Rules
+#### XRP Account Validation Rules
 
 The verifier queries `account_info` on an XRP node for the given `accountAddress` and performs:
 
@@ -282,24 +294,24 @@ The verifier queries `account_info` on an XRP node for the given `accountAddress
 4. **Validate no regular key** -- check that `result.account_data.RegularKey` does not exist.
 5. **Retrieve sequence** -- `sequence` = `result.account_data.Sequence`.
 
-### Result
+#### Result
 
 - All checks pass: `status` = `ok`, `sequence` = `result.account_data.Sequence`.
 - Any check fails: `status` = `error`, `sequence` = `0`.
 
-### Usage in Workflows
+#### Usage in Workflows
 
 The PMWMultisigAccountConfigured attestation is used during XRPL multisig setup. For the complete procedure including request submission, proof retrieval, verification, and account registration, see [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) Steps 3-5.
 
 ---
 
-## PMWPaymentStatus
+### PMWPaymentStatus
 
 Verifies the status of a payment transaction initiated by a Protocol Managed Wallet on an external chain. Currently only used for XRP.
 
 For the full specification, see [PMWPaymentStatus](../attestation-types/PMWPaymentStatus.md).
 
-### Request Body
+#### Request Body
 
 - `opType` (`bytes32`) -- wallet operation type (e.g., `F_XRP`).
 - `senderAddress` (`string`) -- sender address on the external chain.
@@ -313,7 +325,7 @@ For the full specification, see [PMWPaymentStatus](../attestation-types/PMWPayme
 | XRP | XRP `sequenceNumber` | XRP `sequenceNumber` (same as nonce) |
 | UTXO | Batch identifier | Individual payment instruction index |
 
-### Response Body
+#### Response Body
 
 - `recipientAddress` (`string`) -- recipient address (from `PaymentInstructionMessage` on C-chain).
 - `tokenId` (`bytes32`) -- token ID; `bytes32(0)` means native token.
@@ -328,7 +340,7 @@ For the full specification, see [PMWPaymentStatus](../attestation-types/PMWPayme
 - `blockNumber` (`uint64`) -- block/ledger number.
 - `blockTimestamp` (`uint64`) -- block timestamp.
 
-### Transaction Lookup Process
+#### Transaction Lookup Process
 
 1. **Retrieve PaymentInstructionMessage** -- find the `TeeInstructionsSent` event from the C-chain indexer logs via `extensionId = 0` and:
 
@@ -347,13 +359,13 @@ For the full specification, see [PMWPaymentStatus](../attestation-types/PMWPayme
    - **XRP -- Transaction successful:** `transactionStatus` = success, `receivedAmount` = amount received, `transactionFee` = fee, `revertReason` = empty.
    - **XRP -- Transaction reverted** (status != `tesSUCCESS`): `transactionStatus` = reverted, `receivedAmount` = 0, `transactionFee` = fee, `revertReason` = actual transaction result code.
 
-### Chain-Specific Semantics
+#### Chain-Specific Semantics
 
 The XRP Ledger uses deterministic consensus-based finality (validated ledgers are final), so transaction reorgs are not a concern and no minimum confirmation block requirements are needed.
 
 The XRP indexer supports finding transactions via `sourceAddress` and `nonce`, as well as via `paymentReference`. The `deliveredAmount` and receiver can be calculated from `AffectedNodes` in the XRP transaction metadata. For partial payments, consult the `delivered_amount` field documentation.
 
-### Usage in Workflows
+#### Usage in Workflows
 
 The PMWPaymentStatus attestation is used to verify completed payments. For the complete procedure including request submission, proof retrieval, and verification, see [xrp-payment.md](xrp-payment.md) Step 4.
 

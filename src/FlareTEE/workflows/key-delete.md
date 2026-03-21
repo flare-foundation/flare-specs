@@ -14,7 +14,9 @@ For full details on key data structures, see the [Key Management specification](
 
 ---
 
-## Step 1: Delete Key — `TeeWalletKeyManager.deleteKey()`
+## Steps
+
+### Step 1: Delete Key — `TeeWalletKeyManager.deleteKey()`
 
 **Who can call:** Project owner or wallet admin.
 
@@ -41,7 +43,7 @@ For full details on key data structures, see the [Key Management specification](
 
 ---
 
-## Step 2: Clean Up Stale TEE IDs — `TeeWalletKeyManager.cleanUpTeeIds()`
+### Step 2: Clean Up Stale TEE IDs — `TeeWalletKeyManager.cleanUpTeeIds()`
 
 After deleting keys or decommissioning TEE machines, stale TEE IDs may remain in a key's TEE list. This step removes them.
 
@@ -64,9 +66,7 @@ After deleting keys or decommissioning TEE machines, stale TEE IDs may remain in
 
 ---
 
-## Cross-References
+## Notes
 
-- [key-add.md](key-add.md) — adding new keys to TEE machines.
-- [key-restore.md](key-restore.md) — restoring deleted keys from backup.
-- [machine-lifecycle.md](machine-lifecycle.md) — TEE machine decommissioning and status changes.
-- [Key Management specification](../TEE%20Management/Key%20Management.md) — key data structures and wallet key variables.
+- For adding new keys to TEE machines, see the [key add workflow](key-add.md). For TEE machine decommissioning and status changes, see [machine lifecycle](machine-lifecycle.md).
+- On the TEE machine, wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) are retained even after deletion, preventing nonce reuse if the key is later [restored from backup](key-restore.md).

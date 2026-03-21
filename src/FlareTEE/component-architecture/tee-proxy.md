@@ -1,12 +1,12 @@
 # TEE Proxy Architecture
 
-The TEE proxy (`tee-proxy`) is a server that controls access to the TEE node. It manages instruction voting, action queuing, result storage, signing policy synchronization, wallet tracking, and key backups. External clients interact with the proxy, not the TEE node directly.
+`tee-proxy` controls access to the TEE node. It manages instruction voting, action queuing, result storage, signing-policy synchronization, wallet tracking, and key backups. External clients interact with the proxy, not the TEE node directly.
 
 ![TEE Proxy architecture](images/tee-proxy.svg)
 
 ## Component Overview
 
-## Initialization Flow
+### Initialization Flow
 
 1. Parse TOML configuration and initialize logging.
 2. Connect to the C-chain indexer database (MySQL) and wait for it to sync.
@@ -21,7 +21,7 @@ The TEE proxy (`tee-proxy`) is a server that controls access to the TEE node. It
 
 ## Voting System
 
-The instruction service implements threshold-based voting for TEE instructions.
+Threshold-based voting for TEE instructions.
 
 ### Data Structure
 
@@ -130,7 +130,7 @@ The policy service:
 
 ## Info Service
 
-Periodically (every $10$ seconds) sends a `TEE_INFO` action via the direct queue, using the latest block hash as a challenge. The response provides the TEE's public key, signing policy data, machine state, and platform attestation. The latest attestation is cached and served via `GET /info`.
+Sends a `TEE_INFO` action via the direct queue every $10$ seconds, using the latest block hash as a challenge. The response contains the TEE's public key, signing policy data, machine state, and platform attestation. The latest attestation is cached and served via `GET /info`.
 
 ## Health Checks
 
@@ -150,7 +150,7 @@ Periodically (every $10$ seconds) sends a `TEE_INFO` action via the direct queue
 
 ## Configuration
 
-Key configuration fields (`config.toml`):
+Configuration fields (`config.toml`):
 
 ```toml
 redis_port = ":6379"
@@ -169,11 +169,3 @@ max_pending_request = 100
 [info_timing]
 cycle_internal = "10s"
 ```
-
-## Key Design Decisions
-
-- **Redis for queues and results** — provides persistence across proxy restarts and pub/sub for efficient result notification.
-- **In-memory voting** — voting state is ephemeral (cyclic buffer of $3$ rounds). Lost on restart, but instructions can be re-submitted.
-- **Separate internal/external servers** — the TEE node and internal services use port $6661$ (behind firewall), while external clients use port $6662$ (public).
-- **Channel-based event routing** — result processing uses Go channels to decouple storage from side-effect handling (wallet sync, backup triggers).
-- **Proxy signing** — the proxy has its own identity key and signs receipts, allowing clients to verify that their instruction was received.

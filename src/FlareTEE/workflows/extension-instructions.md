@@ -6,6 +6,8 @@ Custom [extensions](../Extensions/Extensions.md) receive and process instruction
 
 This document covers sending instructions to custom extensions, processing them, and retrieving the results. Two concrete examples are demonstrated: EVM transaction signing and random number generation.
 
+The data flow is: user calls an instruction sender contract on C-chain, which emits a `TeeInstructionsSent` event via `TeeExtensionRegistry.sendInstructions()`. Data providers relay the signed [instruction](../Operations/Instructions.md) to the TEE proxy, which packages it into an [action](../Operations/Actions.md) and forwards it to the FCC node app. The node app routes non-system `opTypes` (those not starting with `F_`) to the compute extension app on port 8889. The extension processes the action, optionally calling internal endpoints on port 8888 (e.g., `/sign`, `/key-info`, `/result`), and the final result is cached on the proxy for retrieval via `GET /action/result/<actionId>`.
+
 ## Prerequisites
 
 - Extension registered and configured (see [Extension Configuration](extension-configuration.md))
@@ -16,53 +18,9 @@ This document covers sending instructions to custom extensions, processing them,
 - Instruction sender contract deployed and its extension ID set via `setExtensionId()`
 - TEE proxy running with connection to the TEE node
 
-## Architecture
+## Steps
 
-The following diagram shows the data flow for extension instruction processing:
-
-```
-Blockchain (C-chain)
-  |
-  |  User calls instruction sender contract
-  |  (e.g., signTransaction() or generateRandomUint64())
-  v
-TeeExtensionRegistry.sendInstructions()
-  |
-  |  Emits TeeInstructionsSent event
-  v
-TEE Relay Client (polls C-chain indexer DB, signs instruction, routes to proxy)
-  |
-  v
-TEE Proxy (port 6662 external / port 6661 internal)
-  |  Collects threshold of data provider signatures
-  |  Packages instruction into an Action
-  v
-TEE Node -- FCC Node App (ForwardRouter)
-  |  Checks opType: non-system opTypes (not starting with F_)
-  |  are forwarded to the compute extension
-  v
-Compute Extension App (port 8889)
-  |  POST /action receives the action
-  |  Extension processes the action:
-  |    - May call /sign/<walletId>/<keyId> on port 8888
-  |    - May call /key-info/<walletId>/<keyId> on port 8888
-  |  Returns ActionResult (final or transient)
-  v
-FCC Node App (port 8888)
-  |  POST /result receives final results from extension
-  |  Signs the result with the TEE identity key
-  v
-TEE Proxy
-  |  Stores ActionResponse for retrieval (30 minutes)
-  v
-Caller retrieves result via GET /action/result/<actionId>
-```
-
-The FCC node app serves actions with system `opTypes` (`F_GET`, `F_POLICY`, `F_WALLET`, `F_REG`) internally. Actions with other valid `opTypes` are forwarded to the compute extension via `POST /action`. An `opType` is valid if it does not start with `F_`.
-
----
-
-## Step 1: EVM Transaction Signing via Extension -- `signTransaction()`
+### Step 1: EVM Transaction Signing via Extension -- `signTransaction()`
 
 This step demonstrates sending a sign instruction through the instruction sender contract, which the TEE extension processes by signing an EVM transaction with wallet keys.
 
@@ -121,7 +79,7 @@ This step demonstrates sending a sign instruction through the instruction sender
 
 ---
 
-## Step 2: Random Number Generation via Extension -- `generateRandomUint64()`
+### Step 2: Random Number Generation via Extension -- `generateRandomUint64()`
 
 This step demonstrates sending a random number generation instruction, which the TEE extension processes using cryptographically secure randomness inside the TEE.
 
@@ -157,7 +115,7 @@ This step demonstrates sending a random number generation instruction, which the
 
 ---
 
-## Step 3: Retrieving and Verifying Extension Action Results
+### Step 3: Retrieving and Verifying Extension Action Results
 
 After an instruction has been processed, the action result is stored on the TEE proxy and can be retrieved by the caller.
 
@@ -205,7 +163,7 @@ The TEE identity signature on the `ActionResponse` confirms the result originate
 
 ---
 
-## Step 4: Extension SDK Interface Reference
+### Step 4: Extension SDK Interface Reference
 
 The FCC SDK (SDK and Development -- not yet published) defines two sets of internal HTTP endpoints for communication between the FCC node app and the compute extension app.
 
@@ -246,7 +204,7 @@ When the FCC node app receives an action:
 
 ---
 
-## Step 5: Direct Actions to Extension -- `POST /direct`
+### Step 5: Direct Actions to Extension -- `POST /direct`
 
 Instructions can be sent to the compute extension directly without smart contract events, bypassing the data provider signing process. This is useful for administrative operations, queries, or actions where the legitimacy is proven by the action data itself.
 
@@ -296,15 +254,8 @@ The returned `action` object includes the assigned action ID needed to retrieve 
 
 ---
 
-## Cross-References
+## Notes
 
-- [Extensions](../Extensions/Extensions.md) -- Extension lifecycle and management functions
-- [System Extension](../Extensions/System%20Extension.md) -- System extension (ID 0) with PMW and FTDC
-- SDK and Development -- Full SDK documentation, deployment procedures, and GCP setup (not yet published)
-- TEE Configuration API -- Configuration endpoints on port 5500 (not yet published)
-- [Actions](../Operations/Actions.md) -- Action structure, processing queues, and response format
-- [Instructions](../Operations/Instructions.md) -- Instruction event format, TEE instructions, and thresholds
-- [Extension Configuration](extension-configuration.md) -- Registering and configuring an extension
-- [Machine Registration](machine-registration.md) -- Registering TEE machines and moving to production
-- [Wallet Setup](wallet-setup.md) -- Creating wallet projects, wallets, and keys
+- The FCC node app serves [actions](../Operations/Actions.md) with system `opTypes` (`F_GET`, `F_POLICY`, `F_WALLET`, `F_REG`) internally. Actions with other valid `opTypes` are forwarded to the compute extension via `POST /action`. An `opType` is valid if it does not start with `F_`.
+- For action structure details, see [Actions](../Operations/Actions.md). For instruction event format and thresholds, see [Instructions](../Operations/Instructions.md).
 

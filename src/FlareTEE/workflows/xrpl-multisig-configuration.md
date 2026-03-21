@@ -16,9 +16,11 @@ Once complete, the wallet can issue payment transactions on the XRP Ledger throu
 
 ---
 
-## Phase 1: Off-Chain XRPL Setup
+## Steps
 
-## Step 1: Derive XRP Addresses
+### Phase 1: Off-Chain XRPL Setup
+
+### Step 1: Derive XRP Addresses
 
 Convert each TEE wallet public key into an XRPL account address.
 
@@ -37,7 +39,7 @@ Each wallet key produces one XRP address that will be used as a signer on the mu
 
 ---
 
-## Step 2: Create XRPL Multisig Account
+### Step 2: Create XRPL Multisig Account
 
 Set up a multisig account on the XRP Ledger with the derived signer addresses.
 
@@ -49,7 +51,7 @@ Set up a multisig account on the XRP Ledger with the derived signer addresses.
 
 **Requirements:**
 - The XRPL account must be funded with enough XRP to meet the owner reserve for the signer list.
-- The account configuration must satisfy all verification rules described in the [XRPL Account Flag Requirements](#xrpl-account-flag-requirements) section below.
+- The account configuration must satisfy all verification rules described in the XRPL Account Flag Requirements below.
 
 **What happens:**
 
@@ -63,11 +65,47 @@ Set up a multisig account on the XRP Ledger with the derived signer addresses.
 
 After this step, the XRPL account can only authorize transactions through multisig signing by the TEE-held keys.
 
+#### XRPL Account Flag Requirements
+
+The `PMWMultisigAccountConfigured` attestation verifier performs the following checks against the XRPL account. All checks must pass for the attestation to return `status = ok`.
+
+**Signer List Validation:**
+- The account's `signer_lists` must contain exactly one signer list.
+- Each `SignerEntry.Account` must correspond to one of the wallet's `publicKeys` (converted to XRPL addresses).
+- Each `SignerEntry.SignerWeight` must equal `1`.
+- The number of signers must match the number of public keys in the request.
+
+**Quorum Validation:**
+- `SignerQuorum` must equal the requested `threshold`.
+
+**Flag Validation:**
+
+The following account flags are checked via the `account_flags` field from `account_info`:
+
+| Flag | Required Value |
+|------|---------------|
+| `disableMasterKey` | `true` |
+| `depositAuth` | `false` |
+| `requireDestinationTag` | `false` |
+| `disallowIncomingXRP` | `false` |
+
+**No Regular Key:**
+- The `RegularKey` field must not exist in `account_data`. If a regular key is set, the attestation fails.
+
+**Sequence Number Retrieval:**
+- On successful verification, the account's `Sequence` number is read from `account_data.Sequence` and returned in the attestation response. This value is used as the initial nonce for payment transactions from this account.
+
+**Attestation Result:**
+- If all checks pass: `status = ok`, `sequence = account_data.Sequence`.
+- If any check fails: `status = error`, `sequence = 0`.
+
+See [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) for the full attestation type specification.
+
 ---
 
-## Phase 2: On-Chain Attestation and Linking
+### Phase 2: On-Chain Attestation and Linking
 
-## Step 3: Request `PMWMultisigAccountConfigured` Attestation
+### Step 3: Request `PMWMultisigAccountConfigured` Attestation
 
 Submit an FTDC attestation request to verify that the XRPL multisig account is correctly configured.
 
@@ -96,7 +134,7 @@ Submit an FTDC attestation request to verify that the XRPL multisig account is c
 
 ---
 
-## Step 4: Retrieve and Verify Attestation Proof
+### Step 4: Retrieve and Verify Attestation Proof
 
 Fetch the attestation proof from the TEE proxy and verify it on-chain.
 
@@ -130,7 +168,7 @@ Fetch the attestation proof from the TEE proxy and verify it on-chain.
 
 ---
 
-## Step 5: Add PMW Multisig Account
+### Step 5: Add PMW Multisig Account
 
 Link the verified XRPL multisig account to the wallet on-chain.
 
@@ -159,7 +197,7 @@ Link the verified XRPL multisig account to the wallet on-chain.
 
 ---
 
-## Step 6: Set Batch Settings (Optional)
+### Step 6: Set Batch Settings (Optional)
 
 Configure batching parameters for the multisig account to group multiple payments into single XRPL transactions.
 
@@ -187,46 +225,4 @@ Configure batching parameters for the multisig account to group multiple payment
 
 **Events emitted:** `BatchSettingsSet` with the account and new settings.
 
----
-
-## XRPL Account Flag Requirements
-
-The `PMWMultisigAccountConfigured` attestation verifier performs the following checks against the XRPL account. All checks must pass for the attestation to return `status = ok`.
-
-### Signer List Validation
-
-- The account's `signer_lists` must contain exactly one signer list.
-- Each `SignerEntry.Account` must correspond to one of the wallet's `publicKeys` (converted to XRPL addresses).
-- Each `SignerEntry.SignerWeight` must equal `1`.
-- The number of signers must match the number of public keys in the request.
-
-### Quorum Validation
-
-- `SignerQuorum` must equal the requested `threshold`.
-
-### Flag Validation
-
-The following account flags are checked via the `account_flags` field from `account_info`:
-
-| Flag | Required Value |
-|------|---------------|
-| `disableMasterKey` | `true` |
-| `depositAuth` | `false` |
-| `requireDestinationTag` | `false` |
-| `disallowIncomingXRP` | `false` |
-
-### No Regular Key
-
-- The `RegularKey` field must not exist in `account_data`. If a regular key is set, the attestation fails.
-
-### Sequence Number Retrieval
-
-- On successful verification, the account's `Sequence` number is read from `account_data.Sequence` and returned in the attestation response. This value is used as the initial nonce for payment transactions from this account.
-
-### Attestation Result
-
-- If all checks pass: `status = ok`, `sequence = account_data.Sequence`.
-- If any check fails: `status = error`, `sequence = 0`.
-
-See [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) for the full attestation type specification.
 

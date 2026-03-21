@@ -17,7 +17,9 @@ For full details on key data structures, see the [Key Management specification](
 
 ---
 
-## Step 1: Add Key — `TeeWalletKeyManager.addKey()`
+## Steps
+
+### Step 1: Add Key — `TeeWalletKeyManager.addKey()`
 
 **Who can call:** Project owner (wallet owner).
 
@@ -42,7 +44,7 @@ For full details on key data structures, see the [Key Management specification](
 
 ---
 
-## Step 2: Confirm Key — `TeeWalletKeyManager.confirmKey()`
+### Step 2: Confirm Key — `TeeWalletKeyManager.confirmKey()`
 
 **Who can call:** Project owner or backup manager.
 
@@ -77,10 +79,7 @@ For full details on key data structures, see the [Key Management specification](
 
 ---
 
-## Cross-References
+## Notes
 
-- [wallet-setup.md](wallet-setup.md) — initial key creation during wallet setup (Steps 9–10).
-- [key-delete.md](key-delete.md) — removing keys from TEE machines.
-- [key-restore.md](key-restore.md) — restoring keys from backup onto a new TEE.
-- [Key Management specification](../TEE%20Management/Key%20Management.md) — key data structures, signing algorithms, and key types.
-- [Projects and Ownership](../Operations/Projects%20and%20Ownership.md) — key definitions and project configuration.
+- To remove keys from TEE machines, see the [key delete workflow](key-delete.md). To restore keys from backup onto a new TEE, see the [key restore workflow](key-restore.md).
+- For key definitions and project configuration details, see [Projects and Ownership](../Operations/Projects%20and%20Ownership.md).

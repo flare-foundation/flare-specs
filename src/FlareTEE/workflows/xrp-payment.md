@@ -13,7 +13,9 @@ This workflow describes how to send XRP payments from a TEE-managed Protocol Man
 
 ---
 
-## Step 1: Submit Payment — `TeePayments.pay()`
+## Steps
+
+### Step 1: Submit Payment — `TeePayments.pay()`
 
 **Who can call:** The project's authorized payment submission address.
 
@@ -54,7 +56,7 @@ This workflow describes how to send XRP payments from a TEE-managed Protocol Man
 
 ---
 
-## Step 2: Batching
+### Step 2: Batching
 
 If batching is enabled for the multisig account, payments accumulate in a batch before being submitted as an instruction.
 
@@ -72,7 +74,7 @@ If `batchSize` is set to `1` and `batchDurationSeconds` is set to `0`, each paym
 
 ---
 
-## Step 3: TEE Processing
+### Step 3: TEE Processing
 
 After the instruction is submitted, data providers vote on it and the action is processed by the TEE machine(s).
 
@@ -87,7 +89,7 @@ After the instruction is submitted, data providers vote on it and the action is 
 
 ---
 
-## Step 4: Retrieve Signed Transaction
+### Step 4: Retrieve Signed Transaction
 
 Fetch the signed XRPL transaction from the TEE proxy.
 
@@ -108,7 +110,7 @@ Fetch the signed XRPL transaction from the TEE proxy.
 
 ---
 
-## Step 5: Submit to XRPL
+### Step 5: Submit to XRPL
 
 Submit the multisigned transaction to the XRP Ledger.
 
@@ -130,7 +132,7 @@ Submit the multisigned transaction to the XRP Ledger.
 
 ---
 
-## Step 6: Verify Payment (Optional) — `PMWPaymentStatus` FTDC Attestation
+### Step 6: Verify Payment (Optional) — `PMWPaymentStatus` FTDC Attestation
 
 Request a `PMWPaymentStatus` attestation to verify the on-chain status of the payment.
 
@@ -161,7 +163,7 @@ See [PMWPaymentStatus](../attestation-types/PMWPaymentStatus.md) for the full at
 
 ---
 
-## Step 7: Reissuance — `TeePayments.reissue()`
+### Step 7: Reissuance — `TeePayments.reissue()`
 
 If a payment fails (e.g., due to a low fee or chain-level issues), the transaction can be reissued with updated parameters.
 

@@ -12,7 +12,9 @@ This workflow describes the process of generating a verifiable random number usi
 
 ---
 
-## Step 1: Submit VRF Instruction
+## Steps
+
+### Step 1: Submit VRF Instruction
 
 **Who initiates:** A data provider (or any authorized submitter)
 
@@ -39,13 +41,13 @@ struct VrfInstructionMessage {
 
 ---
 
-## Step 2: Voting
+### Step 2: Voting
 
 Data providers vote on the instruction following the standard voting process (see [extension-instructions.md](extension-instructions.md)). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
 
 ---
 
-## Step 3: TEE Processing
+### Step 3: TEE Processing
 
 Once the voting threshold is reached, the TEE proxy delivers the action to the TEE machine. The TEE then:
 
@@ -63,7 +65,7 @@ Once the voting threshold is reached, the TEE proxy delivers the action to the T
 
 ---
 
-## Step 4: Retrieve Result
+### Step 4: Retrieve Result
 
 The action result is available from the TEE proxy. The response is a JSON object containing:
 
@@ -98,7 +100,7 @@ The four witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain 
 
 ---
 
-## Step 5: On-chain Verification
+### Step 5: On-chain Verification
 
 The proof can be verified on-chain by submitting it to the `TeeVRFVerifier` contract. The contract performs $4$ independent checks using `ecrecover`:
 
@@ -115,7 +117,9 @@ where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma 
 
 ---
 
-## Error Conditions
+## Notes
+
+**Error conditions:**
 
 | Condition | Result |
 |-----------|--------|
@@ -125,9 +129,5 @@ where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma 
 | `HashToCurve` fails (no valid point found in $256$ iterations) | Proof generation fails |
 | Zero denominator for `zInv` (probability $\approx 1/P$) | Proof generation fails; extremely unlikely |
 
----
-
-## Cryptographic Reference
-
-The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
+**Cryptographic reference:** The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
 

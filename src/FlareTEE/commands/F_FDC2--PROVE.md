@@ -68,10 +68,8 @@ struct Fdc2ResponseHeader {
 }
 ```
 
-### Message Hash Construction
+## Notes
 
-The TEE constructs the signed hash by separately ABI-encoding and hashing the response header, request body, and response body, combining the three hashes, prepending a $6$-byte protocol prefix (`0x010000000000`), and hashing the result. This format ensures interoperability with the existing Relay contract verification used in the FDC.
+**Message Hash Construction:** The TEE constructs the signed hash by separately ABI-encoding and hashing the response header, request body, and response body, combining the three hashes, prepending a $6$-byte protocol prefix (`0x010000000000`), and hashing the result. This format ensures interoperability with the existing Relay contract verification used in the FDC.
 
-### Data Provider Signatures
-
-Data provider signatures are encoded in relay format using the signing policy, enabling on-chain verification through the existing Relay contract infrastructure.
+**Data Provider Signatures:** Data provider signatures are encoded in relay format using the signing policy, enabling on-chain verification through the existing Relay contract infrastructure.

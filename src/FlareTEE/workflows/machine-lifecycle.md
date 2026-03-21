@@ -8,16 +8,7 @@ All management functions are available on the `TeeMachineRegistry` smart contrac
 
 For full details, see the [Ownership specification](../TEE%20Management/Ownership.md) and [State and Status specification](../TEE%20Management/State%20and%20Status.md).
 
-## Prerequisites
-
-- The TEE machine must be registered on the `TeeMachineRegistry` smart contract.
-- For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [machine-registration.md](machine-registration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid `TeeAvailabilityCheck` proof and a supported code version.
-- The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
-- For proof-based operations, a valid `TeeAvailabilityCheck` FTDC proof is required (see [ftdc-attestation.md](ftdc-attestation.md)).
-
----
-
-## Status Transition Diagram
+### Status Transition Diagram
 
 The following diagram shows the implemented machine statuses and the transitions between them:
 
@@ -69,9 +60,18 @@ The following diagram shows the implemented machine statuses and the transitions
 | `PAUSED` | Paused by owner, unsupported code version, settings update, or unban. Can return to `PRODUCTION` with a new availability proof. |
 | `BANNED` | Banned by governance. Can only be reversed by `unban()`, which moves to `PAUSED`. |
 
+## Prerequisites
+
+- The TEE machine must be registered on the `TeeMachineRegistry` smart contract.
+- For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [machine-registration.md](machine-registration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid `TeeAvailabilityCheck` proof and a supported code version.
+- The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
+- For proof-based operations, a valid `TeeAvailabilityCheck` FTDC proof is required (see [ftdc-attestation.md](ftdc-attestation.md)).
+
 ---
 
-## Step 1: Pause with Proof -- `TeeMachineRegistry.pauseWithProof()`
+## Steps
+
+### Step 1: Pause with Proof -- `TeeMachineRegistry.pauseWithProof()`
 
 **Who can call:** Anyone.
 
@@ -108,7 +108,7 @@ The FTDC verifier TEE challenges the target machine and determines its availabil
 
 ---
 
-## Step 2: Owner Pause -- `TeeMachineRegistry.pause()`
+### Step 2: Owner Pause -- `TeeMachineRegistry.pause()`
 
 **Who can call:** The machine owner. Also callable by anyone if the current TEE code version is no longer supported.
 
@@ -131,7 +131,7 @@ The FTDC verifier TEE challenges the target machine and determines its availabil
 
 ---
 
-## Step 3: Batch Pause Inactive Machines
+### Step 3: Batch Pause Inactive Machines
 
 Batch pausing is not a single dedicated contract function. Instead, the `pause()` function can be called by anyone when a machine's code version is no longer supported by the extension. In practice, an operator or automated process can iterate over machines with unsupported code versions and call `pause(teeId)` for each one, effectively performing a batch pause of inactive or obsolete machines. Note that `pause()` works from both `PRODUCTION` and `SUSPENDED` statuses.
 
@@ -139,7 +139,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 
 ---
 
-## Step 4: Machine Settings Update -- `TeeMachineRegistry.updateTeeMachineSettings()`
+### Step 4: Machine Settings Update -- `TeeMachineRegistry.updateTeeMachineSettings()`
 
 **Who can call:** The machine owner.
 
@@ -165,7 +165,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 
 ---
 
-## Step 5: Machine Ownership Transfer -- `TeeMachineRegistry.proposeNewOwner()` and `TeeMachineRegistry.confirmOwnership()`
+### Step 5: Machine Ownership Transfer -- `TeeMachineRegistry.proposeNewOwner()` and `TeeMachineRegistry.confirmOwnership()`
 
 This is a two-step process to prevent accidental transfers.
 
@@ -214,7 +214,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 ---
 
-## Step 6: Periodic Availability Confirmation -- `TeeVerification.confirmAvailability()`
+### Step 6: Periodic Availability Confirmation -- `TeeVerification.confirmAvailability()`
 
 **Who can call:** Anyone.
 
@@ -242,7 +242,7 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 ---
 
-## Step 7: Ban and Unban -- `TeeMachineRegistry.ban()` and `TeeMachineRegistry.unban()`
+### Step 7: Ban and Unban -- `TeeMachineRegistry.ban()` and `TeeMachineRegistry.unban()`
 
 ### Step 7a: Ban -- `ban()`
 

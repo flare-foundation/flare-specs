@@ -37,7 +37,7 @@ Attestation response body:
 - `blockNumber` — Number of the block (or ledger) in which the transaction is included.
 - `blockTimestamp` — Timestamp of the block in which the transaction is included.
 
-## Chain Support and Finality
+## Chain Support
 
 Currently, `PMWPaymentStatus` is only used for XRP. Since the XRP Ledger uses deterministic consensus-based finality (validated ledgers are final), transaction reorgs are not a concern and no minimum confirmation block requirements are needed.
 
@@ -73,7 +73,6 @@ struct PaymentInstructionMessage {
 
 ### 2. Find Transaction on External Chain
 
-- **XRP:** Look up the transaction via `senderAddress` and `nonce` (or via `paymentReference`).
 - **UTXO:** Look up via `paymentReference` (TBD).
 
 ### 3. Check Transaction
@@ -82,14 +81,18 @@ struct PaymentInstructionMessage {
 
 - Cannot prove anything → the verifier returns an error, which the service layer translates to an HTTP error response.
 
-**XRP — Transaction successful:**
+### XRP
+
+**Transaction lookup:** Look up the transaction via `senderAddress` and `nonce` (or via `paymentReference`).
+
+**Transaction successful:**
 
 - `transactionStatus` = success.
 - `receivedAmount` = amount received on the `recipientAddress`.
 - `transactionFee` = transaction fee.
 - `revertReason` = empty string.
 
-**XRP — Transaction reverted** (status ≠ `tesSUCCESS`):
+**Transaction reverted** (status ≠ `tesSUCCESS`):
 
 - `transactionStatus` = reverted.
 - `receivedAmount` = 0.

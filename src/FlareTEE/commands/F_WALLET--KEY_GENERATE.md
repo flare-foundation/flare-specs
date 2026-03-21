@@ -75,7 +75,7 @@ struct Signature {
 }
 ```
 
-## Validation
+## Notes
 
 The TEE machine performs the following checks before generating a key:
 - The `teeId` in the instruction must match the machine's own identity.
@@ -87,6 +87,4 @@ The TEE machine performs the following checks before generating a key:
 
 > **Note:** The `signature` field in the action result is the raw ECDSA signature bytes. Smart contracts decompose this into the `(v, r, s)` components of the `Signature` struct for on-chain verification.
 
-## Security considerations
-
-If data providers are malicious (50%+ attack), they can sign anything and send to any machine multiple times, which would result in generating different keys. From the smart contracts point of view, the first public key that gets confirmed (TeeKeyExistence attestation) on a key definition defines the validity of a key. Once a public key is set on a key definition, it cannot be changed.
+**Security considerations:** If data providers are malicious (50%+ attack), they can sign anything and send to any machine multiple times, which would result in generating different keys. From the smart contracts point of view, the first public key that gets confirmed (TeeKeyExistence attestation) on a key definition defines the validity of a key. Once a public key is set on a key definition, it cannot be changed.

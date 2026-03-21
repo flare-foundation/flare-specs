@@ -38,9 +38,27 @@ struct ResponseBody {
 - `actualFee` — the total fees actually spent on the external chain for all transactions in the nonce range, summed in minimal units (drops for XRP).
 - `estimatedFee` — the total estimated fees based on the `maxFee` values from the on-chain pay and reissue instruction events, summed in minimal units.
 
-## Fee Computation
+## Chain Support
 
-### Actual Fee
+Currently, `PMWFeeProof` is only used for XRP. The nonces correspond to XRP sequence numbers, and fees are measured in drops.
+
+## Verification
+
+### Event Lookup
+
+Events are fetched from the C-chain indexer:
+
+- **Pay events**: Instruction IDs are deterministic (computed from `opType`, `PAY`, `sourceId`, `senderAddress`, `nonce`). All IDs for the nonce range can be computed upfront and batch-fetched.
+- **Reissue events**: Instruction IDs include a `reissueNumber` (not known upfront). The verifier queries iteratively per nonce, incrementing the reissue number until no event is found. Since reissues are rare, most nonces require only the pay event lookup.
+- Only events with block timestamp $\leq \mathrm{untilTimestamp}$ are included.
+
+### Transaction Lookup
+
+Actual transaction fees are fetched from the XRP indexer by querying for transactions matching `senderAddress` and the sequence numbers in the nonce range.
+
+### Fee Computation
+
+#### Actual Fee
 
 For each nonce in the range $[\mathrm{fromNonce}, \mathrm{toNonce}]$:
 
@@ -50,7 +68,7 @@ For each nonce in the range $[\mathrm{fromNonce}, \mathrm{toNonce}]$:
 
 $$\mathrm{actualFee} = \sum_{n = \mathrm{fromNonce}}^{\mathrm{toNonce}} \mathrm{txFee}(n)$$
 
-### Estimated Fee
+#### Estimated Fee
 
 For each nonce $n$ in the range $[\mathrm{fromNonce}, \mathrm{toNonce}]$:
 
@@ -74,25 +92,11 @@ $$\mathrm{estimatedFee} = \sum_{n = \mathrm{fromNonce}}^{\mathrm{toNonce}} \math
 
 The residual-based formula ensures that reissues with a lower `maxFee` than the original pay do not reduce the estimated fee (clamped to $0$).
 
-## Chain Support
+## Notes
 
-Currently, `PMWFeeProof` is only used for XRP. The nonces correspond to XRP sequence numbers, and fees are measured in drops.
-
-## Verification
-
-### Event Lookup
-
-Events are fetched from the C-chain indexer:
-
-- **Pay events**: Instruction IDs are deterministic (computed from `opType`, `PAY`, `sourceId`, `senderAddress`, `nonce`). All IDs for the nonce range can be computed upfront and batch-fetched.
-- **Reissue events**: Instruction IDs include a `reissueNumber` (not known upfront). The verifier queries iteratively per nonce, incrementing the reissue number until no event is found. Since reissues are rare, most nonces require only the pay event lookup.
-- Only events with block timestamp $\leq \mathrm{untilTimestamp}$ are included.
-
-### Transaction Lookup
-
-Actual transaction fees are fetched from the XRP indexer by querying for transactions matching `senderAddress` and the sequence numbers in the nonce range.
-
-## Error Conditions
+- The caller should use `PMWPaymentStatus` to confirm that all nonces in the requested range are finalized before requesting `PMWFeeProof`. The `untilTimestamp` field prevents the verifier from attempting to include in-flight or incomplete reissue events.
+- The `estimatedFee` calculation is designed for fee reconciliation use cases (e.g., FAsset fee tracking), where the difference between estimated and actual fees must be accounted for.
+- **Error conditions:**
 
 | Condition | HTTP Status | Description |
 |---|---|---|
@@ -102,11 +106,4 @@ Actual transaction fees are fetched from the XRP indexer by querying for transac
 | Database infrastructure failure | $503$ | Connection timeout or transaction failure (retryable). |
 | Unparseable transaction data | $500$ | Malformed or corrupted data in the indexer. |
 
-## Data Retention
-
-The XRP indexer retains transaction data for a configurable period (typically approximately $2$ weeks in production). Callers must request `PMWFeeProof` within this retention window; otherwise, the verifier will return a $422$ error for missing transaction data.
-
-## Notes
-
-- The caller should use `PMWPaymentStatus` to confirm that all nonces in the requested range are finalized before requesting `PMWFeeProof`. The `untilTimestamp` field prevents the verifier from attempting to include in-flight or incomplete reissue events.
-- The `estimatedFee` calculation is designed for fee reconciliation use cases (e.g., FAsset fee tracking), where the difference between estimated and actual fees must be accounted for.
+- **Data retention:** The XRP indexer retains transaction data for a configurable period (typically approximately $2$ weeks in production). Callers must request `PMWFeeProof` within this retention window; otherwise, the verifier will return a $422$ error for missing transaction data.

@@ -14,7 +14,9 @@ This workflow describes the full process of deploying a TEE machine onto the Fla
 
 ---
 
-## Phase 1: Local Configuration
+## Steps
+
+*Phase 1: Local Configuration*
 
 ### Step 1: Boot Confidential VM — Identity Key Generation
 
@@ -122,7 +124,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 ---
 
-## Phase 2: Retrieve Machine Info
+*Phase 2: Retrieve Machine Info*
 
 ### Step 5: Get Machine Data from Proxy — `GET /info`
 
@@ -151,7 +153,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 ---
 
-## Phase 3: On-Chain Registration
+*Phase 3: On-Chain Registration*
 
 ### Step 6: Register TEE Code Version (if new) — `TeeExtensionRegistry.addTeeVersion()`
 
@@ -298,7 +300,7 @@ For more details on the FTDC attestation process, see [ftdc-attestation.md](ftdc
 
 ---
 
-## Phase 4: Ongoing Operations
+*Phase 4: Ongoing Operations*
 
 ### Step 11: Periodic Availability Confirmation — `TeeMachineRegistry.confirmAvailability()`
 

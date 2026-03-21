@@ -15,7 +15,9 @@ The multi-TEE approach applies to all key operations: key generation, XRPL multi
 
 ---
 
-## Step 1: Register N Machines Independently -- `TeeMachineRegistry.register()` + `toProduction()`
+## Steps
+
+### Step 1: Register N Machines Independently -- `TeeMachineRegistry.register()` + `toProduction()`
 
 **Who can call:** TEE operator (machine owner).
 
@@ -40,7 +42,7 @@ The multi-TEE approach applies to all key operations: key generation, XRPL multi
 
 ---
 
-## Step 2: Create Wallet Across Multiple TEEs -- `TeeWalletManager.createWallet()` + `TeeWalletKeyManager.addKey()`
+### Step 2: Create Wallet Across Multiple TEEs -- `TeeWalletManager.createWallet()` + `TeeWalletKeyManager.addKey()`
 
 **Who can call:** Project owner.
 
@@ -73,7 +75,7 @@ See [wallet-setup.md](wallet-setup.md) for the full single-TEE wallet flow.
 
 ---
 
-## Step 3: Set Up Shared XRPL Multisig Account
+### Step 3: Set Up Shared XRPL Multisig Account
 
 **Who can call:** Project owner.
 
@@ -113,7 +115,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
 
 ---
 
-## Step 4: Execute Distributed XRP Payment -- `TeePayments.pay()`
+### Step 4: Execute Distributed XRP Payment -- `TeePayments.pay()`
 
 **Who can call:** Project owner or authorized address.
 
@@ -155,7 +157,9 @@ See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [ftdc-a
 
 ---
 
-## Comparison: Single-TEE vs Multi-TEE Operations
+## Notes
+
+### Comparison: Single-TEE vs Multi-TEE Operations
 
 | Aspect | Single TEE | Multi-TEE |
 |--------|-----------|-----------|
@@ -170,17 +174,5 @@ See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [ftdc-a
 | Setup complexity | Simple -- single proxy | Requires coordination across N proxies |
 | Payment flow | Sign and submit from one proxy | Collect signatures from each proxy, aggregate, then submit |
 
----
-
-## Cross-References
-
-- [machine-registration.md](machine-registration.md) -- single-machine registration flow.
-- [wallet-setup.md](wallet-setup.md) -- full wallet creation, key generation, and enablement flow.
-- [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) -- single-TEE XRPL multisig setup.
-- [xrp-payment.md](xrp-payment.md) -- single-TEE XRP payment flow.
-- [ftdc-attestation.md](ftdc-attestation.md) -- FTDC attestation sub-workflow for TeeAvailabilityCheck, PMWMultisigAccountConfigured, and PMWPaymentStatus.
-- [key-add.md](key-add.md) -- adding keys to TEE machines.
-- [key-delete.md](key-delete.md) -- deleting keys from TEE machines.
-- [key-restore.md](key-restore.md) -- restoring keys from backup.
-- [Key Management specification](../TEE%20Management/Key%20Management.md) -- backup and restore security model.
+For single-TEE equivalents of each step, see: [machine-registration.md](machine-registration.md) for registration, [wallet-setup.md](wallet-setup.md) for wallet creation and key generation, [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for XRPL multisig setup, and [xrp-payment.md](xrp-payment.md) for XRP payments. For attestation details, see [ftdc-attestation.md](ftdc-attestation.md). For key operations, see [key-add.md](key-add.md), [key-delete.md](key-delete.md), and [key-restore.md](key-restore.md).
 

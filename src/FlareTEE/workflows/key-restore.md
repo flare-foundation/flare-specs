@@ -4,29 +4,10 @@
 
 This workflow covers restoring a signing key from backup onto a new TEE machine. Key restoration is necessary when a TEE machine becomes unavailable, is decommissioned, or when migrating keys between machines. The process requires cooperation from both data providers and key admins, preserving the distributed trust model.
 
-The key backup system uses a two-round Shamir secret sharing scheme. Backups are created automatically — there is no user-facing call for triggering a backup.
+The key backup system uses a two-round Shamir secret sharing scheme. Backups are created automatically — there is no user-facing call for triggering a backup. Key backup is triggered by the TEE machine in two cases:
 
-For full details on key data structures and backup cryptography, see the [Key Management specification](../TEE%20Management/Key%20Management.md).
-
-## Prerequisites
-
-- The key must have been previously generated and confirmed (via [key-add.md](key-add.md) or [wallet-setup.md](wallet-setup.md) Steps 9–10).
-- The target TEE machine must be in `PRODUCTION` status and belong to the same extension as the source machine.
-- Data providers must be enrolled in the signing policy that was active when the backup was created.
-- Key admins must have been set during wallet initialization (via `setAdmins`).
-- A backup package must be available (either from the TEE proxy or uploaded to a URL).
-
----
-
-## Automatic Key Backup
-
-Key backup is triggered automatically by the TEE machine in two cases:
 - When a new key is generated (via `addKey`).
 - When the signing policy is updated at the TEE machine (triggers re-backup of all keys on the machine).
-
-There is no user-facing contract call for triggering a backup.
-
-### Backup Process
 
 The backup process for a key $K$ uses a two-round secret sharing scheme:
 
@@ -79,9 +60,21 @@ The full backup metadata contains all `BackupId` fields plus:
 
 > **Note:** The wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) are not included in the backup. These values are managed independently on each TEE machine.
 
+For full details on key data structures and backup cryptography, see the [Key Management specification](../TEE%20Management/Key%20Management.md).
+
+## Prerequisites
+
+- The key must have been previously generated and confirmed (via [key-add.md](key-add.md) or [wallet-setup.md](wallet-setup.md) Steps 9–10).
+- The target TEE machine must be in `PRODUCTION` status and belong to the same extension as the source machine.
+- Data providers must be enrolled in the signing policy that was active when the backup was created.
+- Key admins must have been set during wallet initialization (via `setAdmins`).
+- A backup package must be available (either from the TEE proxy or uploaded to a URL).
+
 ---
 
-## Step 1: Initiate Key Restoration — `TeeWalletBackupManager.backupRestore()`
+## Steps
+
+### Step 1: Initiate Key Restoration — `TeeWalletBackupManager.backupRestore()`
 
 **Who can call:** Any Flare user (typically the backup manager address set on the project).
 
@@ -91,7 +84,7 @@ The full backup metadata contains all `BackupId` fields plus:
 - `backupUrl` (`string`) — URL where the backup package is hosted. If no URL exists, the caller fetches the backup package from the TEE proxy and uploads it first.
 
 **Requirements:**
-- The target TEE machine must be registered and confirmed (via `TeeAvailabilityCheck` proof) in the same extension as the source machine. The proof must be recent (e.g., within $1$ day).
+- The target TEE machine must be registered and confirmed (via [TeeAvailabilityCheck](ftdc-attestation.md) proof) in the same extension as the source machine. The proof must be recent (e.g., within $1$ day).
 - The source machine (identified in the `backupId`) must have been confirmed in the same extension at least once.
 - Smart contracts will only emit the `KEY_DATA_PROVIDER_RESTORE` instruction if the extensions of the target and source machines match.
 
@@ -103,7 +96,7 @@ The full backup metadata contains all `BackupId` fields plus:
 
 ---
 
-## Step 2: Share Collection — Data Providers and Key Admins Submit Shares
+### Step 2: Share Collection — Data Providers and Key Admins Submit Shares
 
 **Who participates:** Data providers and key admins who hold backup shares.
 
@@ -122,7 +115,7 @@ The full backup metadata contains all `BackupId` fields plus:
 
 ---
 
-## Step 3: TEE Reconstruction — Target TEE Decrypts and Recovers the Key
+### Step 3: TEE Reconstruction — Target TEE Decrypts and Recovers the Key
 
 **What happens:**
 1. Once the TEE proxy has received sufficient shares from both data providers (meeting the `providersThreshold` weight) and key admins (meeting the `adminsThreshold` count), it prepares the recovery action.
@@ -135,7 +128,7 @@ The full backup metadata contains all `BackupId` fields plus:
 
 ---
 
-## Step 4: Confirm Restored Key — `TeeWalletKeyManager.confirmKey()`
+### Step 4: Confirm Restored Key — `TeeWalletKeyManager.confirmKey()`
 
 **Who can call:** Project owner or backup manager.
 
@@ -172,36 +165,12 @@ The full backup metadata contains all `BackupId` fields plus:
 
 ---
 
-## Key Migration Between TEEs
+## Notes
 
-Key migration moves a key from one TEE machine to another. This is a composite workflow:
-
-1. **Restore the key on the new TEE** — follow Steps 1–4 above to reconstruct the existing key on the target machine.
-2. **Confirm the restored key** — verify with `confirmKey()`.
-3. **Optionally delete key from the old TEE** — use [key-delete.md](key-delete.md) to remove the key from the decommissioned machine.
-
-> **Note:** During migration, the key exists on both TEEs simultaneously until explicitly deleted from the old one. This ensures zero downtime for signing operations.
-
----
-
-## Security Considerations
-
-- Each `teeId` can be registered to at most one extension. Once the machine is confirmed via `TeeAvailabilityCheck`, its extension is fixed.
-- Each wallet belongs to exactly one extension.
-- A backup is valid only if the source and target machines belong to the same extension.
-- Data providers and key admins should verify on-chain events and block confirmations before submitting shares, ensuring:
+- **Key migration between TEEs:** Key migration moves a key from one TEE machine to another. This is a composite workflow: (1) restore the key on the new TEE using Steps 1-4 above, (2) confirm the restored key with `confirmKey()`, and (3) optionally [delete the key](key-delete.md) from the decommissioned machine. During migration, the key exists on both TEEs simultaneously until explicitly deleted from the old one, ensuring zero downtime for signing operations.
+- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via `TeeAvailabilityCheck`, its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
+- **Share submission verification:** Data providers and key admins should verify on-chain events and block confirmations before submitting shares, ensuring:
   - The `KEY_DATA_PROVIDER_RESTORE` event was emitted with sufficient confirmations.
   - The backup from the provided URL is consistent with the backup ID.
   - The `signature` and `teeSignature` fields in the backup package match the backup ID and metadata.
-
----
-
-## Cross-References
-
-- [key-add.md](key-add.md) — adding new keys to TEE machines.
-- [key-delete.md](key-delete.md) — deleting keys and cleaning up stale TEE IDs.
-- [wallet-setup.md](wallet-setup.md) — initial key creation during wallet setup (Steps 9–10).
-- [machine-lifecycle.md](machine-lifecycle.md) — TEE machine registration, production status, and decommissioning.
-- [ftdc-attestation.md](ftdc-attestation.md) — `TeeAvailabilityCheck` attestation required for target TEE during restoration.
-- [Key Management specification](../TEE%20Management/Key%20Management.md) — full specification of key data structures, backup cryptography, and security model.
-- [Projects and Ownership](../Operations/Projects%20and%20Ownership.md) — key definitions, key types, and project configuration.
+- For related workflows, see [key-add.md](key-add.md) for adding new keys, [key-delete.md](key-delete.md) for deleting keys, [wallet-setup.md](wallet-setup.md) for initial key creation, and [machine-lifecycle.md](machine-lifecycle.md) for TEE machine status management.

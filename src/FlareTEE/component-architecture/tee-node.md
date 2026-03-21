@@ -1,14 +1,14 @@
 # TEE Node Architecture
 
-The TEE node (`tee-node`) is the core application running inside a Trusted Execution Environment. It manages wallet keys, processes cryptographic operations, validates signing policies, and executes actions received from the TEE proxy.
+`tee-node` runs inside a Trusted Execution Environment. It manages wallet keys, cryptographic operations, signing-policy validation, and action execution on behalf of the TEE proxy.
 
 ![TEE Node architecture](images/tee-node.svg)
 
 ## Component Overview
 
-## Entry Point and Initialization
+### Entry Point and Initialization
 
-The node starts in `cmd/main.go`:
+Startup sequence (`cmd/main.go`):
 
 1. **Key generation** — an ECDSA private key is generated inside the TEE. The corresponding Ethereum address becomes the machine's identity ($\mathrm{TEE}_{\mathrm{ID}}$).
 2. **Storage initialization** — in-memory wallet storage and policy storage are created (empty).
@@ -18,7 +18,7 @@ The node starts in `cmd/main.go`:
 
 ## Action Processing Pipeline
 
-Each queue worker continuously:
+Per-worker loop:
 
 1. **Fetch Action** — `POST {proxyURL}/queue/{queueID}`.
 2. **Normalize** — `CheckAndAdapt` (align variable messages).
@@ -58,7 +58,7 @@ Execute immediately, return a result. No signature threshold checking.
 
 ### Instruction Processors
 
-Multi-phase processors with signature threshold checking. Each instruction goes through preprocessing that validates the signing policy, extracts signers from signatures, and checks weight thresholds.
+Multi-phase processors with signature threshold checking. Preprocessing validates the signing policy, extracts signers, and checks weight thresholds.
 
 | Processor | Op Type | Op Command | Immediate Result |
 |---|---|---|---|
@@ -110,7 +110,7 @@ Three signing algorithms are supported: `keccak256-secp256k1-ecdsa` (EVM), `sha5
 
 ## Communication with Proxy
 
-The TEE node communicates with the proxy via two HTTP endpoints:
+Two HTTP endpoints connect the node to the proxy:
 
 | Direction | Endpoint | Purpose |
 |---|---|---|
@@ -123,7 +123,7 @@ The proxy URL is configured via `POST http://localhost:5500/proxy` or the `PROXY
 
 ### Sign Server (port $8888$)
 
-An HTTP server that extension services can call to use the TEE's cryptographic capabilities:
+HTTP server exposing the TEE's cryptographic capabilities to extension services:
 
 - `GET /key-info/{walletID}/{keyID}` — retrieve wallet key information.
 - `POST /sign/{walletID}/{keyID}` — sign data with a wallet key.
@@ -138,12 +138,12 @@ When the `ForwardRouter` encounters an unregistered operation, it forwards the f
 
 ## Platform Attestation
 
-The TEE node generates platform attestation tokens depending on the deployment mode:
+Attestation token generation depends on deployment mode:
 
-- **Mode $0$ (production)** — real Google Cloud Confidential Space attestation with JWT token.
+- **Mode $0$ (production)** — Google Cloud Confidential Space attestation (JWT).
 - **Mode $1$ (local/development)** — test platform and code hash values.
 
-The attestation is included in `TEE_INFO` and `TEE_ATTESTATION` responses, enabling on-chain verification of the TEE's integrity.
+Attestation is included in `TEE_INFO` and `TEE_ATTESTATION` responses for on-chain verification.
 
 ## Configuration
 
@@ -156,10 +156,3 @@ The attestation is included in `TEE_INFO` and `TEE_ATTESTATION` responses, enabl
 | `PROXY_URL` | — | TEE proxy endpoint |
 | `INITIAL_OWNER` | — | Initial owner address (hex) |
 | `EXTENSION_ID` | — | Extension ID hash (hex) |
-
-## Key Design Decisions
-
-- **All state in memory** — wallets and policies are never persisted to disk. The TEE's memory is the only storage, ensuring keys cannot be extracted.
-- **Interface-based processors** — new operations can be added by implementing the `Processor` interface and registering with the router.
-- **Extension forwarding** — custom extensions run as separate processes, communicating via HTTP on localhost. This isolates extension code from the TEE node's core.
-- **Separate queues** — Main, Direct, and Backup queues allow priority-based processing (direct queries are not blocked by long-running instruction actions).

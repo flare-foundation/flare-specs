@@ -29,6 +29,18 @@ type PublicKey struct {
 }
 ```
 
+## Fixed message
+
+/
+
+## Variable message
+
+/
+
+## Additional action data
+
+/
+
 ## Action result
 
 /

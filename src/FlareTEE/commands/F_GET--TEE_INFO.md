@@ -15,6 +15,18 @@ type TeeInfoRequest struct {
 }
 ```
 
+## Fixed message
+
+/
+
+## Variable message
+
+/
+
+## Additional action data
+
+/
+
 ## Action result
 
 ```go
@@ -57,5 +69,7 @@ type TeeState struct {
     StateVersion       common.Hash   `json:"stateVersion"`       // application state version hash
 }
 ```
+
+## Notes
 
 **Proxy result hook:** Proxy stores the latest deserialized action result.

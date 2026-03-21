@@ -46,4 +46,6 @@ type KeyIDPair struct {
 
 The result contains the `walletId` and `keyId` of the deleted key.
 
+## Notes
+
 On the `End` submission tag, the TEE verifies that the deletion was processed and the nonce was consumed, ensuring consistency between the threshold and end-of-voting results.

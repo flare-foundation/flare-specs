@@ -13,6 +13,18 @@ Returns the latest backup package for a specific key. This is a direct instructi
 }
 ```
 
+## Fixed message
+
+/
+
+## Variable message
+
+/
+
+## Additional action data
+
+/
+
 ## Action result
 
 ```go
@@ -27,5 +39,7 @@ type TEEBackupResponse struct {
 The `TEESignature` field contains a signature by the TEE's identity key over the hash of the backup, providing authenticity verification for the backup package.
 
 See [KEY_DATA_PROVIDER_RESTORE](F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) for the `BackupId` struct definition.
+
+## Notes
 
 **Proxy result hook:** Proxy stores backups per hash of backup ID and also stores a mapping from `(walletId, keyId)` to the latest backup ID hash.

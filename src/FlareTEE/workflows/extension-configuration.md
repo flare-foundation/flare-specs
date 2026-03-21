@@ -20,7 +20,9 @@ This document covers the full workflow for registering and configuring a custom 
 
 ---
 
-## Step 1: Deploy Instruction Sender Contract
+## Steps
+
+### Step 1: Deploy Instruction Sender Contract
 
 **Who can call:** Any address
 
@@ -45,7 +47,7 @@ This document covers the full workflow for registering and configuring a custom 
 
 ---
 
-## Step 2: Register Extension -- `TeeExtensionRegistry.register()`
+### Step 2: Register Extension -- `TeeExtensionRegistry.register()`
 
 **Who can call:** Any address (the caller becomes the extension owner)
 
@@ -71,7 +73,7 @@ This document covers the full workflow for registering and configuring a custom 
 
 ---
 
-## Step 3: Add TEE Code Version -- `TeeExtensionRegistry.addTeeVersion()`
+### Step 3: Add TEE Code Version -- `TeeExtensionRegistry.addTeeVersion()`
 
 **Who can call:** Extension owner only
 
@@ -97,7 +99,7 @@ This document covers the full workflow for registering and configuring a custom 
 
 ---
 
-## Step 4: Configure Owner Allowlists -- `TeeOwnerAllowlist`
+### Step 4: Configure Owner Allowlists -- `TeeOwnerAllowlist`
 
 This step configures which addresses are permitted to register TEE machines and create wallet projects for this extension. Two separate allowlists must be configured.
 
@@ -141,7 +143,7 @@ This step configures which addresses are permitted to register TEE machines and 
 
 ---
 
-## Step 5: Add Supported Key Types -- `TeeExtensionRegistry.addSupportedKeyTypes()`
+### Step 5: Add Supported Key Types -- `TeeExtensionRegistry.addSupportedKeyTypes()`
 
 **Who can call:** Extension owner only
 
@@ -165,7 +167,7 @@ This step configures which addresses are permitted to register TEE machines and 
 
 ---
 
-## Step 6: Configure TEE Node with Extension ID -- Config API
+### Step 6: Configure TEE Node with Extension ID -- Config API
 
 Before the TEE machine can be registered on-chain, it must be configured with the extension ID, proxy URL, and initial owner via the TEE Configuration API (not yet published) on port 5500.
 
@@ -216,7 +218,7 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 
 ---
 
-## Step 7: Extension Ownership Transfer (Optional) -- `proposeNewOwner()` / `confirmOwnership()`
+### Step 7: Extension Ownership Transfer (Optional) -- `proposeNewOwner()` / `confirmOwnership()`
 
 **Who can call:** Current extension owner (for proposal), proposed new owner (for confirmation)
 
@@ -241,11 +243,9 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 
 ---
 
-## Next Steps
+## Notes
 
-After completing extension configuration, proceed to:
-
-- [Machine Registration](machine-registration.md) -- Register TEE machines to the extension, verify via `TeeAvailabilityCheck`, and move to production status
-- [Wallet Setup](wallet-setup.md) -- Create wallet projects, wallets, and keys for the extension
-- [Extension Instructions](extension-instructions.md) -- Send custom instructions to the extension and retrieve results
+- After completing extension configuration, proceed to [Machine Registration](machine-registration.md) to register TEE machines, then [Wallet Setup](wallet-setup.md) to create wallet projects and keys, and finally [Extension Instructions](extension-instructions.md) to send custom instructions.
+- The extension owner is typically a multisig governance account for production deployments.
+- All three TEE node configuration endpoints (Step 6) can alternatively be set via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) before the TEE node starts.
 
