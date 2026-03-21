@@ -41,7 +41,7 @@ TEE machines running custom extensions use the `ForwardRouter`, which registers 
 The FDC2 is a TEE-based variant of the Flare Data Connector (FDC), Flare's enshrined oracle for validating and importing external data to Flare's EVM state.
 The FDC uses consensus among Flare's data providers to attest to external data.
 In the FDC2, this attestation is performed by data providers and then validated by TEEs in response to instruction by the providers.
-More information on the FDC2 can be found in its own [file](FTDC.md).
+More information on the FDC2 can be found in its own [specification](FTDC.md).
 
 In the context of Flare Confidential Compute, the FDC2 serves two purposes: firstly, it is the system by which the state of a TEE machine is validated, ensuring that TEEs participating in operations on Flare are running the correctly specified code and state.
 Secondly, it offers latency advantages over the FDC, and thus may be preferable for some users who would otherwise want to use the FDC.

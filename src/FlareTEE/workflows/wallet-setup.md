@@ -313,6 +313,8 @@ This workflow describes the complete process of creating a project, configuring 
 
 ## Notes
 
+For the architectural overview of projects, wallets, and key data structures, see the [Projects and Ownership specification](../Operations/Projects%20and%20Ownership.md).
+
 ### Project Ownership Transfer — `proposeNewOwner()` + `confirmOwnership()`
 
 Project ownership transfer is a two-step process to ensure security and proper authorization.

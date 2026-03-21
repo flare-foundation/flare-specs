@@ -50,7 +50,7 @@ The workflows build on each other. Complete earlier workflows before attempting 
      multi-tee-operations
 ```
 
-> **FTDC Attestation** is a shared sub-workflow invoked from within other workflows, not a standalone prerequisite. The following workflows use FTDC attestation:
+> **FDC2 Attestation** is a shared sub-workflow invoked from within other workflows, not a standalone prerequisite. The following workflows use FDC2 attestation:
 > - **TeeAvailabilityCheck** — used in [machine-registration.md](machine-registration.md) (Steps 9-10), [machine-lifecycle.md](machine-lifecycle.md) (Steps 1, 6), and [multi-tee-operations.md](multi-tee-operations.md) (Step 1)
 > - **PMWMultisigAccountConfigured** — used in [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) (Steps 3-5) and [multi-tee-operations.md](multi-tee-operations.md) (Step 3)
 > - **PMWPaymentStatus** — used in [xrp-payment.md](xrp-payment.md) (Step 4) and [multi-tee-operations.md](multi-tee-operations.md) (Step 4)
@@ -59,7 +59,7 @@ The workflows build on each other. Complete earlier workflows before attempting 
 
 | Workflow | Description | Key Contracts | Spec References |
 |----------|-------------|---------------|-----------------|
-| [ftdc-attestation.md](ftdc-attestation.md) | FTDC attestation sub-workflow — not standalone; invoked from within machine, multisig, and payment workflows | `FtdcHub`, `TeeVerification` | [FTDC](../Extensions/FTDC.md), [attestation-types/](../attestation-types/) |
+| [fdc2-attestation.md](fdc2-attestation.md) | FDC2 attestation sub-workflow — not standalone; invoked from within machine, multisig, and payment workflows | `Fdc2Hub`, `TeeVerification` | [FDC2](../Extensions/FTDC.md), [attestation-types/](../attestation-types/) |
 | [extension-configuration.md](extension-configuration.md) | Register and configure a custom TEE extension (extensionId > 0) | `TeeExtensionRegistry` | [Extensions](../Extensions/Extensions.md), [System Extension](../Extensions/System%20Extension.md), SDK and Development (not yet published) |
 | [machine-registration.md](machine-registration.md) | Deploy a TEE machine from VM boot to PRODUCTION status | `TeeMachineRegistry`, `TeeExtensionRegistry`, `TeeVerification` | [Ownership](../TEE%20Management/Ownership.md), [State and Status](../TEE%20Management/State%20and%20Status.md), TEE Configuration API (not yet published) |
 | [wallet-setup.md](wallet-setup.md) | Create a project and configure a wallet through to PRODUCTION | `TeeWalletProjectManager`, `TeeWalletManager`, `TeeWalletKeyManager` | [Projects and Ownership](../Operations/Projects%20and%20Ownership.md) |
@@ -88,13 +88,7 @@ Status transitions are denoted with arrows:
 
 ### Machine Statuses
 
-| Status | Meaning |
-|--------|---------|
-| `INITIALIZED` | Registered but not yet verified |
-| `PRODUCTION` | Fully operational |
-| `SUSPENDED` | Suspended due to non-availability proof |
-| `PAUSED` | Paused by owner, unsupported code version, settings update, or unban |
-| `BANNED` | Banned by governance, reversible via unban |
+See the [Ownership specification](../TEE%20Management/Ownership.md#statuses) for full status definitions (`INITIALIZED`, `PRODUCTION`, `SUSPENDED`, `PAUSED`, `BANNED`).
 
 ### Wallet Statuses
 

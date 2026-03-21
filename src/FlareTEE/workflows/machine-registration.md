@@ -2,14 +2,14 @@
 
 ## Overview
 
-This workflow describes the full process of deploying a TEE machine onto the Flare network, from the moment the Confidential VM boots through to reaching `PRODUCTION` status. The process involves local configuration of the TEE node, on-chain registration via the `TeeMachineRegistry` contract, attestation verification through the FTDC system, and ongoing availability confirmation.
+This workflow describes the full process of deploying a TEE machine onto the Flare network, from the moment the Confidential VM boots through to reaching `PRODUCTION` status. The process involves local configuration of the TEE node, on-chain registration via the `TeeMachineRegistry` contract, attestation verification through the FDC2 system, and ongoing availability confirmation.
 
 ## Prerequisites
 
 - **Extension registered** on-chain with a valid extension ID (see [extension-configuration.md](extension-configuration.md))
 - **TEE node running** inside a Google Cloud Confidential VM (MODE=0 for production, MODE=1 for local development)
 - **TEE proxy running** and reachable by the TEE node (requires `PRIVATE_KEY` env var)
-- **Smart contracts deployed** — `TeeMachineRegistry`, `TeeExtensionRegistry`, `TeeVerification`, and `FtdcHub` must be available on the target network
+- **Smart contracts deployed** — `TeeMachineRegistry`, `TeeExtensionRegistry`, `TeeVerification`, and `Fdc2Hub` must be available on the target network
 - **Funded owner account** — the Flare address that will own the TEE machine must have sufficient funds for transaction fees
 
 ---
@@ -185,12 +185,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 **Who can call:** Machine owner (the `initialOwner` address configured in Step 3)
 
 **Parameters:**
-- `machineData` (struct `ITeeMachineRegistryTeeMachineData`):
-  - `extensionId` (uint256) — the extension ID
-  - `initialOwner` (address) — the initial owner address
-  - `codeHash` (bytes32) — hash of the deployed code
-  - `platform` (bytes32) — attestation platform (e.g., `GOOGLE_INTEL`, `GOOGLE_AMD`)
-  - `publicKey` (PublicKey: `{x: bytes32, y: bytes32}`) — the TEE's public key
+- `machineData` (struct `ITeeMachineRegistryTeeMachineData`) — contains `extensionId`, `initialOwner`, `codeHash`, `platform`, and `publicKey`. These values come from the `/info` endpoint (Step 5). For the full struct definition, see the [Ownership specification](../TEE%20Management/Ownership.md#registration).
 - `signature` (Signature: `{v: uint8, r: bytes32, s: bytes32}`) — signature over `machineData` by the TEE machine's private key, proving consent to registration
 - `teeProxyId` (address) — identity of the proxy server relaying information to/from the TEE
 - `teeUrl` (string) — URL at which the TEE machine is reachable via the proxy
@@ -239,23 +234,23 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 ---
 
-### Step 9: FTDC Availability Check — `TeeVerification.requestAvailabilityCheckAttestation()`
+### Step 9: FDC2 Availability Check — `TeeVerification.requestAvailabilityCheckAttestation()`
 
 **Who can call:** Machine owner
 
 **Parameters:**
 - `teeId` (address) — the TEE machine to check
 - `teeAttestInstructionID` (bytes32) — instruction ID from the attestation request in Step 8
-- `externalTeeId` (address) — identity of the FTDC TEE that will perform the verification
+- `externalTeeId` (address) — identity of the FDC2 TEE that will perform the verification
 
 **Requirements:**
 - The TEE attestation from Step 8 must have completed
-- An FTDC-capable TEE must be available to perform the availability check
+- An FDC2-capable TEE must be available to perform the availability check
 
 **What happens:**
 
-1. The contract sends a `TeeAvailabilityCheck` attestation request through the FTDC system.
-2. The FTDC verifier TEE challenges the target machine and verifies:
+1. The contract sends a `TeeAvailabilityCheck` attestation request through the FDC2 system.
+2. The FDC2 verifier TEE challenges the target machine and verifies:
    - The machine is reachable at the registered URL
    - The attestation response is valid and fresh
    - The code hash matches the registered version
@@ -264,9 +259,9 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 3. The verifier produces a proof (signed by data providers) that the machine is available and correctly configured.
 4. The proof result can be retrieved from the proxy via `GET /action/result/<instructionId>`.
 
-For more details on the FTDC attestation process, see [ftdc-attestation.md](ftdc-attestation.md).
+For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2-attestation.md).
 
-**Events emitted:** `TeeInstructionsSent` (FTDC instruction)
+**Events emitted:** `TeeInstructionsSent` (FDC2 instruction)
 
 ---
 
@@ -276,8 +271,8 @@ For more details on the FTDC attestation process, see [ftdc-attestation.md](ftdc
 
 **Parameters:**
 - `proof` (struct `ITeeAvailabilityCheckProof`):
-  - `signatures` — FTDC signing policy signatures
-  - `header` — FTDC response header
+  - `signatures` — FDC2 signing policy signatures
+  - `header` — FDC2 response header
   - `requestBody` — the availability check request (contains `teeId`, `url`, `challenge`)
   - `responseBody` — the availability check response (contains `status`, `teeTimestamp`, `codeHash`, `platform`, signing policy IDs, `state`)
 
@@ -288,7 +283,7 @@ For more details on the FTDC attestation process, see [ftdc-attestation.md](ftdc
 
 **What happens:**
 
-1. The contract validates the FTDC `TeeAvailabilityCheck` proof — verifies signatures, checks that the proof data matches the registered machine.
+1. The contract validates the FDC2 `TeeAvailabilityCheck` proof — verifies signatures, checks that the proof data matches the registered machine.
 2. The machine status changes from `INITIALIZED` to `PRODUCTION`.
 3. `lastStatusChangeTs` is updated to `block.timestamp`.
 4. An `availabilityCheckValidityEndTs` deadline is set, defining how long the machine is considered available.

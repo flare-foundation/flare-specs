@@ -84,7 +84,7 @@ For full details on key data structures and backup cryptography, see the [Key Ma
 - `backupUrl` (`string`) — URL where the backup package is hosted. If no URL exists, the caller fetches the backup package from the TEE proxy and uploads it first.
 
 **Requirements:**
-- The target TEE machine must be registered and confirmed (via [TeeAvailabilityCheck](ftdc-attestation.md) proof) in the same extension as the source machine. The proof must be recent (e.g., within $1$ day).
+- The target TEE machine must be registered and confirmed (via [TeeAvailabilityCheck](fdc2-attestation.md) proof) in the same extension as the source machine. The proof must be recent (e.g., within $1$ day).
 - The source machine (identified in the `backupId`) must have been confirmed in the same extension at least once.
 - Smart contracts will only emit the `KEY_DATA_PROVIDER_RESTORE` instruction if the extensions of the target and source machines match.
 

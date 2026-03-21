@@ -8,7 +8,7 @@ Once a TEE has received the instruction from a majority of data providers, it fu
 The results of the TEEs work is then relayed back onto the Flare network by the data providers or other participating entity. 
 
 This documentation describes the processes and infrastructure that enable Flare Confidential Compute in technical detail.
-It also describes two particular functions of Flare Confidential Compute: Protocol Managed Wallets [(PMWs)](PMW.md) allow Flare users to control wallet accounts on external blockchains from Flare, and the Flare TEE Data Connector [(FTDC)](FTDC.md)that allows TEEs to verify the existence of external events.
+It also describes two particular functions of Flare Confidential Compute: Protocol Managed Wallets [(PMWs)](PMW.md) allow Flare users to control wallet accounts on external blockchains from Flare, and the Flare Data Connector [(FDC2)](FTDC.md)that allows TEEs to verify the existence of external events.
 A more high level description can be found in the accompanying White Paper [link].
 
 ## Extensions

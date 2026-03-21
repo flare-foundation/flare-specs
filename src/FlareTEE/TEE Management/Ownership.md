@@ -22,7 +22,7 @@ The `machineData` field is in the following format:
 5. **publicKey**: The public key of the TEE, corresponding to its identity.
 
 The registration transaction places the machine in an `INITIALIZED` status.
-To complete registration and enter production, an [FTDC](FTDC.md) `teeAvailabilityCheck` attestation proof must be obtained and submitted via `toProduction(proof)`, confirming that the machine's state is correct.
+To complete registration and enter production, an [FDC2](FTDC.md) `teeAvailabilityCheck` attestation proof must be obtained and submitted via `toProduction(proof)`, confirming that the machine's state is correct.
 Once the attestation proof is accepted, the status changes to `PRODUCTION`, indicating that the machine is active on its extension.
 
 ### Machine Registry Contract

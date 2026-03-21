@@ -4,7 +4,7 @@
 
 A TEE [extension](../Extensions/Extensions.md) is an isolated application within the Flare Confidential Compute infrastructure. Each extension defines its own set of supported code versions (Docker image hashes) and a set of TEE machines that run those code versions. Extensions extend the concept of smart contracts on Flare by enabling the use of TEE machines for custom computation, EVM transaction signing, random number generation, and other operations.
 
-Extension ID 0 is reserved for the [system extension](../Extensions/System%20Extension.md), which hosts the Protocol Managed Wallet (PMW) infrastructure and the Flare TEE Data Connector (FTDC). Custom extensions use extension IDs greater than 0 and are created and managed by their owners.
+Extension ID 0 is reserved for the [system extension](../Extensions/System%20Extension.md), which hosts the Protocol Managed Wallet (PMW) infrastructure and the Flare Data Connector (FDC2). Custom extensions use extension IDs greater than 0 and are created and managed by their owners.
 
 This document covers the full workflow for registering and configuring a custom TEE extension, from deploying the instruction sender contract through to configuring the TEE node.
 
@@ -167,50 +167,16 @@ This step configures which addresses are permitted to register TEE machines and 
 
 ---
 
-### Step 6: Configure TEE Node with Extension ID -- Config API
+### Step 6: Configure TEE Node -- Config API
 
-Before the TEE machine can be registered on-chain, it must be configured with the extension ID, proxy URL, and initial owner via the TEE Configuration API (not yet published) on port 5500.
-
-### Step 6a: Set Proxy URL -- `POST /proxy`
+Before the TEE machine can be registered on-chain, it must be configured with the proxy URL, initial owner, and extension ID via the TEE Configuration API (not yet published) on port 5500. These are the same three endpoints used in [machine-registration.md](machine-registration.md) Steps 2–4, which documents the full Config API details including curl examples and requirements.
 
 **Who can call:** TEE machine owner (network access to port 5500 required)
 
-**Request body:**
-```json
-{"url": "http://<TEE_PROXY_INTERNAL_IP>:6661"}
-```
-
-**What happens:**
-1. The TEE node stores the proxy URL and connects to the specified TEE proxy server.
-2. The proxy serves as the communication layer between the blockchain and the TEE machine.
-
-### Step 6b: Set Initial Owner -- `POST /initial-owner`
-
-**Who can call:** TEE machine owner (network access to port 5500 required)
-
-**Request body:**
-```json
-{"owner": "0x1234..."}
-```
-
-**What happens:**
-1. The initial owner address is permanently recorded in the TEE node's internal storage.
-2. This address is the only one authorized to perform the initial on-chain registration.
-3. Once set, the initial owner is immutable on the machine (though on-chain ownership can be transferred later).
-
-### Step 6c: Set Extension ID -- `POST /extension-id`
-
-**Who can call:** TEE machine owner (network access to port 5500 required)
-
-**Request body:**
-```json
-{"extensionId": "0x..."}
-```
-
-**What happens:**
-1. The extension ID is stored in the TEE node's configuration.
-2. Once the machine is registered and verified via a `TeeAvailabilityCheck` proof, the extension ID becomes fixed and cannot be changed.
-3. The extension ID determines which extension's instructions the TEE machine will process.
+**Endpoints:**
+- `POST /proxy` -- set the TEE proxy URL (e.g., `http://<TEE_PROXY_INTERNAL_IP>:6661`)
+- `POST /initial-owner` -- set the initial owner address (immutable once set)
+- `POST /extension-id` -- set the extension ID (fixed after `TeeAvailabilityCheck` verification)
 
 **Events emitted:** None (off-chain configuration)
 

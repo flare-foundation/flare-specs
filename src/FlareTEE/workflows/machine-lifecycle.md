@@ -50,22 +50,14 @@ The following diagram shows the implemented machine statuses and the transitions
                      PAUSED
 ```
 
-**Status summary:**
-
-| Status | Description |
-|--------|-------------|
-| `INITIALIZED` | After registration, not yet verified. Can transition to `PRODUCTION`. |
-| `PRODUCTION` | Fully operational, accepts all instructions. Can be paused, suspended, or banned. |
-| `SUSPENDED` | Paused via `pauseWithProof()` based on a non-availability proof. Can transition to `PAUSED` via `pause()` or be banned. |
-| `PAUSED` | Paused by owner, unsupported code version, settings update, or unban. Can return to `PRODUCTION` with a new availability proof. |
-| `BANNED` | Banned by governance. Can only be reversed by `unban()`, which moves to `PAUSED`. |
+For full status definitions, see the [Ownership specification](../TEE%20Management/Ownership.md#statuses).
 
 ## Prerequisites
 
 - The TEE machine must be registered on the `TeeMachineRegistry` smart contract.
 - For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [machine-registration.md](machine-registration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid `TeeAvailabilityCheck` proof and a supported code version.
 - The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
-- For proof-based operations, a valid `TeeAvailabilityCheck` FTDC proof is required (see [ftdc-attestation.md](ftdc-attestation.md)).
+- For proof-based operations, a valid `TeeAvailabilityCheck` FDC2 proof is required (see [fdc2-attestation.md](fdc2-attestation.md)).
 
 ---
 
@@ -98,13 +90,13 @@ The following diagram shows the implemented machine statuses and the transitions
 To obtain a non-availability proof and pause a machine:
 
 1. Call `TeeVerification.requestTeeAttestation(teeId)` to trigger a TEE attestation on the target machine.
-2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, teeAttestInstructionId, externalTeeId)` to request an FTDC availability check using an external TEE. Parse the `TeeInstructionsSent` event to obtain the `instructionId`.
+2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, teeAttestInstructionId, externalTeeId)` to request an FDC2 availability check using an external TEE. Parse the `TeeInstructionsSent` event to obtain the `instructionId`.
 3. Poll `<proxy_url>/action/result/<instructionId>` until the proof is available.
 4. Call `TeeMachineRegistry.pauseWithProof(proof)` with the retrieved proof.
 
 **What happens automatically:**
 
-The FTDC verifier TEE challenges the target machine and determines its availability status. If the machine is unreachable or fails verification checks, the proof will contain status `DOWN`, which is required for `pauseWithProof()` to succeed. See [ftdc-attestation.md](ftdc-attestation.md) for details on the TeeAvailabilityCheck attestation process.
+The FDC2 verifier TEE challenges the target machine and determines its availability status. If the machine is unreachable or fails verification checks, the proof will contain status `DOWN`, which is required for `pauseWithProof()` to succeed. See [fdc2-attestation.md](fdc2-attestation.md) for details on the TeeAvailabilityCheck attestation process.
 
 ---
 

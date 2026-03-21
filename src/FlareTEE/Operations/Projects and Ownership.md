@@ -15,7 +15,7 @@ The workflow beginning from instantiating a project to using keys in production 
 4. The owner finishes initialization by calling the `closeWalletInitialization` function on the wallet manager contract. This sets the wallet status to `initialized`.
 5. Once initialized, the owner can generate private keys for the wallet by calling the `addKey` function on the wallet manager contract. This function issues an instruction to designated TEE machines to generate private keys.
 6. On generating a key, the TEE machine provides a key existence proof that is relayed to the wallet manager contract on-chain (by any address on Flare) using the `confirmKey` function.
-7. Once enough keys are confirmed the owner can enable the wallet for production by calling the `enableWallet` function on the wallet manager smart contract. To call the enable wallet function, an FTDC proof of a properly configured multisig must first be obtained, using the attestation type `TeeMultisigAccountConfigured`. The amount of keys required corresponds to the multisig threshold set up by the project owner (see below).
+7. Once enough keys are confirmed the owner can enable the wallet for production by calling the `enableWallet` function on the wallet manager smart contract. To call the enable wallet function, an FDC2 proof of a properly configured multisig must first be obtained, using the attestation type `TeeMultisigAccountConfigured`. The amount of keys required corresponds to the multisig threshold set up by the project owner (see below).
 8. The wallet is enabled and its status is set to `production`.
 
 ### Cosigners

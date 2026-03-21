@@ -21,7 +21,7 @@
 	- PMW
 		- Overview
 		- Transactions
-	-   FTDC
+	-   FDC2
 -   Attestation Types
 	- TeeAvailabilityCheck
 	- PMWPaymentStatus
@@ -41,6 +41,6 @@
 	- XRP Payment
 	- Extension Configuration
 	- Extension Instructions
-	- FTDC Attestation
+	- FDC2 Attestation
 	- XRPL Multisig Configuration
 	- Multi-TEE Operations

@@ -34,7 +34,7 @@ The multi-TEE approach applies to all key operations: key generation, XRPL multi
    - Extract the `teeId` and `proxyId` from the signed TEE info response.
    - Call `GET <proxy_url>/info` to retrieve the `SignedTeeInfoResponse`. Extract the `teeId`, `publicKey`, `codeHash`, `platform`, `extensionId`, `proxyId`, and `dataSignature`.
    - Call `TeeMachineRegistry.register(machineData, signature, teeProxyId, teeUrl)` where `machineData` is constructed from the `/info` response fields and `signature` is the `dataSignature` from the response.
-   - Request a `TeeAvailabilityCheck` attestation via the FTDC flow.
+   - Request a `TeeAvailabilityCheck` attestation via the FDC2 flow.
    - Retrieve the availability proof and call `TeeMachineRegistry.toProduction(proof)` to move the machine to `PRODUCTION` status.
 2. Each registration is fully independent -- machines do not need to know about each other at this stage.
 
@@ -111,7 +111,7 @@ See [wallet-setup.md](wallet-setup.md) for the full single-TEE wallet flow.
 
 **Events emitted:** `TeeInstructionsSent` (per attestation request), plus payment contract events for `AddPMWMultisigAccount` and `SetBatchSettings`.
 
-See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the single-TEE flow and [ftdc-attestation.md](ftdc-attestation.md) for the PMWMultisigAccountConfigured attestation details.
+See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the single-TEE flow and [fdc2-attestation.md](fdc2-attestation.md) for the PMWMultisigAccountConfigured attestation details.
 
 ---
 
@@ -147,13 +147,13 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
    - If the initial submission fails (engine result is not `tesSUCCESS`), a reissue can be attempted via `TeePayment.Reissue()` with an updated fee and the failed transaction's sequence number.
 6. **Verify payment via PMWPaymentStatus attestation:**
    - Wait for the XRP indexer to catch up (typically a few seconds).
-   - Submit an attestation request via `FtdcHub.requestAttestation(0, numberOfTees, teeIds, cosigners, cosignersThreshold, attestationType, sourceId, requestBody)` where `attestationType = bytes32("PMWPaymentStatus")` and `requestBody` is the ABI-encoded struct `(opType, senderAddress, nonce, subNonce)`.
+   - Submit an attestation request via `Fdc2Hub.requestAttestation(0, numberOfTees, teeIds, cosigners, cosignersThreshold, attestationType, sourceId, requestBody)` where `attestationType = bytes32("PMWPaymentStatus")` and `requestBody` is the ABI-encoded struct `(opType, senderAddress, nonce, subNonce)`.
    - Retrieve and verify the `PMWPaymentStatusProof` from each proxy via `GET <proxy_url>/action/result/<instructionId>`.
    - Verify the proof on-chain via `PMWPaymentStatusVerifier.verify(teePaymentsAddress, proof)`.
 
 **Events emitted:** `TeeInstructionsSent` (for payment and for PMWPaymentStatus attestation).
 
-See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [ftdc-attestation.md](ftdc-attestation.md) for PMWPaymentStatus attestation details.
+See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [fdc2-attestation.md](fdc2-attestation.md) for PMWPaymentStatus attestation details.
 
 ---
 
@@ -174,5 +174,5 @@ See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [ftdc-a
 | Setup complexity | Simple -- single proxy | Requires coordination across N proxies |
 | Payment flow | Sign and submit from one proxy | Collect signatures from each proxy, aggregate, then submit |
 
-For single-TEE equivalents of each step, see: [machine-registration.md](machine-registration.md) for registration, [wallet-setup.md](wallet-setup.md) for wallet creation and key generation, [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for XRPL multisig setup, and [xrp-payment.md](xrp-payment.md) for XRP payments. For attestation details, see [ftdc-attestation.md](ftdc-attestation.md). For key operations, see [key-add.md](key-add.md), [key-delete.md](key-delete.md), and [key-restore.md](key-restore.md).
+For single-TEE equivalents of each step, see: [machine-registration.md](machine-registration.md) for registration, [wallet-setup.md](wallet-setup.md) for wallet creation and key generation, [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for XRPL multisig setup, and [xrp-payment.md](xrp-payment.md) for XRP payments. For attestation details, see [fdc2-attestation.md](fdc2-attestation.md). For key operations, see [key-add.md](key-add.md), [key-delete.md](key-delete.md), and [key-restore.md](key-restore.md).
 

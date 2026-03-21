@@ -2,7 +2,7 @@
 
 ## Overview
 
-This workflow describes how to bind an XRPL multisig account to a TEE-managed Protocol Managed Wallet (PMW). The process involves two phases: first, configuring a multisig account on the XRP Ledger off-chain using the wallet's public keys, then linking that account on-chain through an FTDC attestation that proves the XRPL account is correctly configured.
+This workflow describes how to bind an XRPL multisig account to a TEE-managed Protocol Managed Wallet (PMW). The process involves two phases: first, configuring a multisig account on the XRP Ledger off-chain using the wallet's public keys, then linking that account on-chain through an FDC2 attestation that proves the XRPL account is correctly configured.
 
 Once complete, the wallet can issue payment transactions on the XRP Ledger through the TEE infrastructure.
 
@@ -65,41 +65,18 @@ Set up a multisig account on the XRP Ledger with the derived signer addresses.
 
 After this step, the XRPL account can only authorize transactions through multisig signing by the TEE-held keys.
 
-#### XRPL Account Flag Requirements
+#### XRPL Account Configuration Requirements
 
-The `PMWMultisigAccountConfigured` attestation verifier performs the following checks against the XRPL account. All checks must pass for the attestation to return `status = ok`.
+The `PMWMultisigAccountConfigured` attestation verifier checks the XRPL account's signer list, quorum, account flags, and regular key status. All checks must pass for the attestation to return `status = ok`. In summary, the account must have:
 
-**Signer List Validation:**
-- The account's `signer_lists` must contain exactly one signer list.
-- Each `SignerEntry.Account` must correspond to one of the wallet's `publicKeys` (converted to XRPL addresses).
-- Each `SignerEntry.SignerWeight` must equal `1`.
-- The number of signers must match the number of public keys in the request.
+- A signer list matching the wallet's public keys, each with `SignerWeight = 1`
+- `SignerQuorum` matching the wallet's multisig threshold
+- Master key disabled, no deposit authorization, no destination tag requirement, no incoming XRP disallowed
+- No regular key set
 
-**Quorum Validation:**
-- `SignerQuorum` must equal the requested `threshold`.
+On success, the account's `Sequence` number is returned as the initial nonce for payment transactions.
 
-**Flag Validation:**
-
-The following account flags are checked via the `account_flags` field from `account_info`:
-
-| Flag | Required Value |
-|------|---------------|
-| `disableMasterKey` | `true` |
-| `depositAuth` | `false` |
-| `requireDestinationTag` | `false` |
-| `disallowIncomingXRP` | `false` |
-
-**No Regular Key:**
-- The `RegularKey` field must not exist in `account_data`. If a regular key is set, the attestation fails.
-
-**Sequence Number Retrieval:**
-- On successful verification, the account's `Sequence` number is read from `account_data.Sequence` and returned in the attestation response. This value is used as the initial nonce for payment transactions from this account.
-
-**Attestation Result:**
-- If all checks pass: `status = ok`, `sequence = account_data.Sequence`.
-- If any check fails: `status = error`, `sequence = 0`.
-
-See [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) for the full attestation type specification.
+For the complete verification rules and example `account_info` responses, see [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md).
 
 ---
 
@@ -107,7 +84,7 @@ See [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfig
 
 ### Step 3: Request `PMWMultisigAccountConfigured` Attestation
 
-Submit an FTDC attestation request to verify that the XRPL multisig account is correctly configured.
+Submit an FDC2 attestation request to verify that the XRPL multisig account is correctly configured.
 
 **Who can call:** Anyone (typically the wallet owner).
 
@@ -125,7 +102,7 @@ Submit an FTDC attestation request to verify that the XRPL multisig account is c
 
 1. `TeeVerification.requestPMWMultisigAccountConfiguredAttestation()` is called on the Flare C-chain.
 2. The contract collects the wallet's public keys and multisig threshold from the `TeeWalletManager`.
-3. An FTDC attestation request is formed and sent to TEE machines as an instruction.
+3. An FDC2 attestation request is formed and sent to TEE machines as an instruction.
 4. A `TeeInstructionsSent` event is emitted containing the `instructionId`.
 5. Off-chain, each TEE machine independently queries its own XRP node and verifies the account configuration (see [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) for the full verification procedure).
 6. TEE machines return signed attestation responses to the TEE proxy.
@@ -152,7 +129,7 @@ Fetch the attestation proof from the TEE proxy and verify it on-chain.
 
 1. The attestation proof is fetched from the TEE proxy using the `instructionId`.
 2. The proof is an `IPMWMultisigAccountConfiguredProof` containing:
-   - `Header` -- FTDC response header.
+   - `Header` -- FDC2 response header.
    - `RequestBody` -- The original request (`accountAddress`, `publicKeys`, `threshold`).
    - `ResponseBody` -- The attestation result (`status`, `sequence`).
    - `Signatures` -- Signing policy signatures, TEE signatures, and cosigner signatures.
