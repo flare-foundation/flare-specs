@@ -1,46 +1,29 @@
--   Introduction
--   Architecture
--   Component Architecture
-	- TEE Node
-	- TEE Proxy
-	- Go Verifier API
-	- TEE Relay Client
+-   [Introduction](Introduction.md)
+-   [Architecture](Architecture.md)
 -   TEE Management
-	-  TEE Proxies
-	-  TEE Machines
-	-  Key Management
-	-  Registration and Management
+	- [TEE Proxies](TEE%20Management/Tee%20Proxies.md)
+	- [TEE Machines](TEE%20Management/State%20and%20Status.md)
+	- [Key Management](TEE%20Management/Key%20Management.md)
+	- [Registration and Management](TEE%20Management/Ownership.md)
 -   Operations
-	-   TEE Instructions
-	-   Actions
-	-   Voting
-	-  Projects and Ownership
--  Extensions
-	- FCE
-	- System Extension
+	- [TEE Instructions](Operations/Instructions.md)
+	- [Action Instructions](Operations/Actions.md)
+	- [Voting](Operations/Voting.md)
+	- [Projects and Ownership](Operations/Projects%20and%20Ownership.md)
+-   Extensions
+	- [FCE](Extensions/Extensions.md)
+	- [System Extension](Extensions/System%20Extension.md)
 	- PMW
-		- Overview
-		- Transactions
-	-   FDC2
--   Attestation Types
-	- TeeAvailabilityCheck
-	- PMWPaymentStatus
-	- PMWMultisigAccountConfigured
-	- PMWFeeProof
--   Commands
-	- Command Reference (index)
-	- Individual command documentation (F_REG, F_WALLET, F_GET, F_POLICY, F_XRP, F_FDC2)
--   Workflows
-	- Machine Registration
-	- Machine Lifecycle
-	- Wallet Setup
-	- Key Add
-	- Key Delete
-	- Key Restore
-	- VRF Proof
-	- XRP Payment
-	- Extension Configuration
-	- Extension Instructions
-	- FDC2 Attestation
-	- XRPL Multisig Configuration
-	- Multi-TEE Operations
+		- [Overview](Extensions/PMW/PMW.md)
+		- [Transactions](Extensions/PMW/Transactions.md)
+	- [FDC](Extensions/FTDC.md)
+-   References
+	- Smart Contracts
+	- [Component Architecture](component-architecture/index.md)
+		- [TEE Node](component-architecture/tee-node.md)
+		- [TEE Proxy](component-architecture/tee-proxy.md)
+		- [Verifier server](component-architecture/go-verifier-api.md)
+		- [Relay client](component-architecture/tee-relay-client.md)
+	- [Commands](commands/index.md)
+	- [Workflows](workflows/index.md)
+	- [Attestation Types](attestation-types/index.md)
