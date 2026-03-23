@@ -62,4 +62,4 @@ Where:
 
 ## Notes
 
-The nonce must be non-empty; the processor rejects requests with an empty nonce. The key's signing algorithm must be `keccak256-secp256k1-vrf`; any other algorithm is rejected. If the specified `(walletId, keyId)` pair does not exist on the TEE machine, the request fails.
+- **Validation:** The nonce must be non-empty; the processor rejects requests with an empty nonce. The key's signing algorithm must be `keccak256-secp256k1-vrf`; any other algorithm is rejected. If the specified `(walletId, keyId)` pair does not exist on the TEE machine, the request fails.

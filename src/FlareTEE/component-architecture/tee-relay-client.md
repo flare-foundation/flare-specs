@@ -1,6 +1,8 @@
 # TEE Relay Client Architecture
 
-`tee-relay-client` bridges the Flare blockchain and TEE proxy nodes. It monitors the C-chain for `TeeInstructionsSent` events, processes them by type, signs them with the relay client's key, and relays the signed instructions to the appropriate TEE proxies. Each data provider and cosigner runs its own instance.
+The TEE relay client bridges the Flare blockchain and TEE proxy nodes.
+It monitors the C-chain for `TeeInstructionsSent` events, processes them by type, signs them with the relay client's key, and relays the signed instructions to the appropriate TEE proxies.
+Each data provider and cosigner runs its own instance.
 
 ![TEE Relay Client architecture](images/tee-relay-client.svg)
 

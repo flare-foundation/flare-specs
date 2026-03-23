@@ -42,4 +42,4 @@ See [KEY_DATA_PROVIDER_RESTORE](F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) for the 
 
 ## Notes
 
-**Proxy result hook:** Proxy stores backups per hash of backup ID and also stores a mapping from `(walletId, keyId)` to the latest backup ID hash.
+- **Proxy result hook:** Proxy stores backups per hash of backup ID and also stores a mapping from `(walletId, keyId)` to the latest backup ID hash.

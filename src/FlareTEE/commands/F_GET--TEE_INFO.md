@@ -72,4 +72,4 @@ type TeeState struct {
 
 ## Notes
 
-**Proxy result hook:** Proxy stores the latest deserialized action result.
+- **Proxy result hook:** Proxy stores the latest deserialized action result.

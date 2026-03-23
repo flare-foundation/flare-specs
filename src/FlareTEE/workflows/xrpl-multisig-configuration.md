@@ -18,8 +18,6 @@ Once complete, the wallet can issue payment transactions on the XRP Ledger throu
 
 ## Steps
 
-### Phase 1: Off-Chain XRPL Setup
-
 ### Step 1: Derive XRP Addresses
 
 Convert each TEE wallet public key into an XRPL account address.
@@ -79,8 +77,6 @@ On success, the account's `Sequence` number is returned as the initial nonce for
 For the complete verification rules and example `account_info` responses, see [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md).
 
 ---
-
-### Phase 2: On-Chain Attestation and Linking
 
 ### Step 3: Request `PMWMultisigAccountConfigured` Attestation
 

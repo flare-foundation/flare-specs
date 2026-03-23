@@ -16,9 +16,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ## Steps
 
-### Phase 1: Project Creation
-
-#### Step 1: Create Project — `TeeWalletProjectManager.createProject()`
+### Step 1: Create Project — `TeeWalletProjectManager.createProject()`
 
 **Who can call:** Must be allowlisted as a wallet project owner for the extension. If default extension 0, anyone can call.
 
@@ -44,9 +42,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-### Phase 2: Wallet Creation and Configuration
-
-#### Step 2: Create Wallet — `TeeWalletManager.createWallet()`
+### Step 2: Create Wallet — `TeeWalletManager.createWallet()`
 
 **Who can call:** Project owner only
 
@@ -68,7 +64,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-#### Step 3: Set Admins — `TeeWalletManager.setAdmins()`
+### Step 3: Set Admins — `TeeWalletManager.setAdmins()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -96,7 +92,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-#### Step 4: Confirm Admins — `TeeWalletManager.confirmAdmin()`
+### Step 4: Confirm Admins — `TeeWalletManager.confirmAdmin()`
 
 **Who can call:** Each admin (must match one of the admin public keys set in Step 3)
 
@@ -118,7 +114,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-#### Step 5: Set Cosigners (Optional) — `TeeWalletManager.setCosigners()`
+### Step 5: Set Cosigners (Optional) — `TeeWalletManager.setCosigners()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -145,7 +141,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-#### Step 6: Confirm Cosigners — `TeeWalletManager.confirmCosigner()`
+### Step 6: Confirm Cosigners — `TeeWalletManager.confirmCosigner()`
 
 **Who can call:** Each cosigner (must match one of the cosigner addresses set in Step 5)
 
@@ -167,7 +163,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-#### Step 7: Close Initialization — `TeeWalletManager.closeWalletInitialization()`
+### Step 7: Close Initialization — `TeeWalletManager.closeWalletInitialization()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -192,9 +188,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-### Phase 3: Key Setup
-
-#### Step 8: Set Multisig Threshold — `TeeWalletKeyManager.setMultisigThreshold()`
+### Step 8: Set Multisig Threshold — `TeeWalletKeyManager.setMultisigThreshold()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -217,7 +211,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-#### Step 9: Add Key(s) — `TeeWalletKeyManager.addKey()`
+### Step 9: Add Key(s) — `TeeWalletKeyManager.addKey()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -242,7 +236,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-#### Step 10: Confirm Key — `TeeWalletKeyManager.confirmKey()`
+### Step 10: Confirm Key — `TeeWalletKeyManager.confirmKey()`
 
 **Who can call:** Project owner or backup manager
 
@@ -286,9 +280,7 @@ This workflow describes the complete process of creating a project, configuring 
 
 ---
 
-### Phase 4: Enable
-
-#### Step 11: Enable Wallet — `TeeWalletManager.enableWallet()`
+### Step 11: Enable Wallet — `TeeWalletManager.enableWallet()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -313,88 +305,13 @@ This workflow describes the complete process of creating a project, configuring 
 
 ## Notes
 
-For the architectural overview of projects, wallets, and key data structures, see the [Projects and Ownership specification](../Operations/Projects%20and%20Ownership.md).
-
-### Project Ownership Transfer — `proposeNewOwner()` + `confirmOwnership()`
-
-Project ownership transfer is a two-step process to ensure security and proper authorization.
-
-**Step A: Propose New Owner — `TeeWalletProjectManager.proposeNewOwner()`**
-
-- **Who can call:** Current project owner only
-- **Parameters:**
-  - `projectId` (bytes32) — the project ID
-  - `newOwner` (address) — address of the proposed new owner (can be `address(0)` to cancel a previous proposal)
-- **Requirements:**
-  - Caller must be the current project owner
-  - If `newOwner` is not `address(0)`, the new owner must be allowlisted as a wallet project owner for the extension
-- **What happens:**
-  - Stores the proposed new owner address
-  - Does **not** transfer ownership yet
-- **Events emitted:** `NewOwnerProposed`
-
-**Step B: Confirm Ownership — `TeeWalletProjectManager.confirmOwnership()`**
-
-- **Who can call:** Proposed new owner only
-- **Parameters:**
-  - `projectId` (bytes32) — the project ID
-- **Requirements:**
-  - Caller must be the address that was proposed as the new owner
-  - Proposed new owner must be allowlisted as a wallet project owner for the extension
-- **What happens:**
-  - Transfers project ownership to the new owner
-  - Clears the proposed owner proposal
-  - New owner can now manage all wallets in the project
-- **Events emitted:** `OwnershipConfirmed`
-
-### Wallet Pausing — `pauseWallet()` and `enableWallet()`
-
-**`TeeWalletManager.pauseWallet(walletId)`**
-
-- **Who can call:** Project owner or pausing addresses
-- **Parameters:**
-  - `walletId` (bytes32) — the wallet ID
-- **What happens:**
-  - Wallet status changes to `PAUSED`
-  - Indicates that existing payment instructions should be reverted
-- **Events emitted:** Wallet paused event
-
-To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
-
-### Setting Default Wallet — `TeeWalletProjectManager.setDefaultWallet()`
-
-- **Who can call:** Project owner only
-- **Parameters:**
-  - `projectId` (bytes32) — the project ID
-  - `walletId` (bytes32) — the wallet ID to set as default
-- **What happens:**
-  - Sets the default wallet for the project, which will be used for all signings (payments)
-
-### Setting Backup Manager — `TeeWalletProjectManager.setBackupManager()`
-
-- **Who can call:** Project owner only
-- **Parameters:**
-  - `projectId` (bytes32) — the project ID
-  - `address` (address) — the backup manager address
-- **What happens:**
-  - Sets the backup manager address that can trigger key restores for backed-up keys
-
-### Key Deletion — `TeeWalletKeyManager.deleteKey()`
-
-- **Who can call:** Project owner (wallet owner)
-- **When:** Any wallet status (but the TEE must be in `PRODUCTION`)
-- **What happens:**
-  - Removes the `teeId` from the key's TEE list
-  - Sends a `KEY_DELETE` instruction to the TEE machine
-  - Does not remove the key entirely, only removes it from a specific TEE
-- **Events emitted:** `WalletKeyDeleted`
-
-### Setting Pausing Addresses -- `TeeWalletManager.setPausingAddresses()`
-
-- **Who can call:** Project owner only
-- **Parameters:**
-  - `walletId` (bytes32) — the wallet ID
-  - `pausingAddresses` (address[]) — addresses authorized to pause the wallet
-- **What happens:**
-  - Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet
+- **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Projects and Ownership specification](../Operations/Projects%20and%20Ownership.md).
+- **Project ownership transfer — `proposeNewOwner()` + `confirmOwnership()`:** Project ownership transfer is a two-step process to ensure security and proper authorization.
+  - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits `NewOwnerProposed`.
+  - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits `OwnershipConfirmed`.
+- **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner or pausing addresses. Changes wallet status to `PAUSED` and indicates that existing payment instructions should be reverted. To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
+- **Setting default wallet — `TeeWalletProjectManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
+- **Setting backup manager — `TeeWalletProjectManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
+- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a `KEY_DELETE` instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits `WalletKeyDeleted`.
+- **Setting pausing addresses — `TeeWalletManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.
 

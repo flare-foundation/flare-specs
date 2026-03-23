@@ -1,6 +1,7 @@
 # Go Verifier API Architecture
 
-`go-verifier-api` is an FDC2 verifier server that validates attestation requests. Each attestation type (TeeAvailabilityCheck, PMWPaymentStatus, PMWMultisigAccountConfigured) is loaded as a module with its own verification logic, data sources, and configuration.
+The Go verifier API is an FDC2 verifier server that validates attestation requests.
+Each attestation type (TeeAvailabilityCheck, PMWPaymentStatus, PMWMultisigAccountConfigured) is loaded as a module with its own verification logic, data sources, and configuration.
 
 ![Go Verifier API architecture](images/go-verifier-api.svg)
 

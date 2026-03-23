@@ -63,7 +63,7 @@ When a fee schedule is present, results are posted to the proxy progressively wi
 
 ## Notes
 
-The TEE machine performs the following validations before signing:
-- Cosigner signatures are verified per key (when cosigners are configured on the wallet).
-- The signing algorithm for the key must be `sha512half-secp256k1-ecdsa`.
-- The key must exist on the machine and be in active status.
+- **Validation:** The TEE machine performs the following validations before signing:
+  - Cosigner signatures are verified per key (when cosigners are configured on the wallet).
+  - The signing algorithm for the key must be `sha512half-secp256k1-ecdsa`.
+  - The key must exist on the machine and be in active status.

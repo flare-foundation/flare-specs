@@ -1,6 +1,7 @@
 # TEE Node Architecture
 
-`tee-node` runs inside a Trusted Execution Environment. It manages wallet keys, cryptographic operations, signing-policy validation, and action execution on behalf of the TEE proxy.
+The TEE node runs inside a Trusted Execution Environment.
+It manages wallet keys, cryptographic operations, signing-policy validation, and action execution on behalf of the TEE proxy.
 
 ![TEE Node architecture](images/tee-node.svg)
 

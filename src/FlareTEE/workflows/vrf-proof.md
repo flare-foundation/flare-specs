@@ -119,15 +119,15 @@ where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma 
 
 ## Notes
 
-**Error conditions:**
+- **Error conditions:**
 
-| Condition | Result |
-|-----------|--------|
-| Empty nonce | Rejected by TEE processor |
-| Key not found for `(walletId, keyId)` | Action fails |
-| Signing algorithm is not `keccak256-secp256k1-vrf` | Rejected by TEE processor |
-| `HashToCurve` fails (no valid point found in $256$ iterations) | Proof generation fails |
-| Zero denominator for `zInv` (probability $\approx 1/P$) | Proof generation fails; extremely unlikely |
+  | Condition | Result |
+  |-----------|--------|
+  | Empty nonce | Rejected by TEE processor |
+  | Key not found for `(walletId, keyId)` | Action fails |
+  | Signing algorithm is not `keccak256-secp256k1-vrf` | Rejected by TEE processor |
+  | `HashToCurve` fails (no valid point found in $256$ iterations) | Proof generation fails |
+  | Zero denominator for `zInv` (probability $\approx 1/P$) | Proof generation fails; extremely unlikely |
 
-**Cryptographic reference:** The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
+- **Cryptographic reference:** The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
 

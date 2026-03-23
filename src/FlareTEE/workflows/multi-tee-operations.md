@@ -159,20 +159,20 @@ See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [fdc2-a
 
 ## Notes
 
-### Comparison: Single-TEE vs Multi-TEE Operations
+- **Comparison — single-TEE vs multi-TEE operations:**
 
-| Aspect | Single TEE | Multi-TEE |
-|--------|-----------|-----------|
-| Trust model | Single machine | Distributed across N machines |
-| Key generation | All keys on one TEE | One key per TEE |
-| Key storage | Single point of storage | Keys distributed across machines |
-| Signing | Single TEE signs all keys | Each TEE signs with its own key |
-| Transaction assembly | Direct from one proxy | Aggregate partial signatures from all proxies |
-| Multisig threshold | Can be 1-of-N (all keys local) | Typically k-of-N across machines (e.g., 2-of-3) |
-| Fault tolerance | Single point of failure | Threshold-based (e.g., 2-of-3 tolerates 1 failure) |
-| Attestation verification | One TEE verifies | Each TEE verifies independently |
-| Setup complexity | Simple -- single proxy | Requires coordination across N proxies |
-| Payment flow | Sign and submit from one proxy | Collect signatures from each proxy, aggregate, then submit |
+  | Aspect | Single TEE | Multi-TEE |
+  |--------|-----------|-----------|
+  | Trust model | Single machine | Distributed across N machines |
+  | Key generation | All keys on one TEE | One key per TEE |
+  | Key storage | Single point of storage | Keys distributed across machines |
+  | Signing | Single TEE signs all keys | Each TEE signs with its own key |
+  | Transaction assembly | Direct from one proxy | Aggregate partial signatures from all proxies |
+  | Multisig threshold | Can be 1-of-N (all keys local) | Typically k-of-N across machines (e.g., 2-of-3) |
+  | Fault tolerance | Single point of failure | Threshold-based (e.g., 2-of-3 tolerates 1 failure) |
+  | Attestation verification | One TEE verifies | Each TEE verifies independently |
+  | Setup complexity | Simple -- single proxy | Requires coordination across N proxies |
+  | Payment flow | Sign and submit from one proxy | Collect signatures from each proxy, aggregate, then submit |
 
-For single-TEE equivalents of each step, see: [machine-registration.md](machine-registration.md) for registration, [wallet-setup.md](wallet-setup.md) for wallet creation and key generation, [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for XRPL multisig setup, and [xrp-payment.md](xrp-payment.md) for XRP payments. For attestation details, see [fdc2-attestation.md](fdc2-attestation.md). For key operations, see [key-add.md](key-add.md), [key-delete.md](key-delete.md), and [key-restore.md](key-restore.md).
+- **Related workflows:** For single-TEE equivalents of each step, see: [machine-registration.md](machine-registration.md) for registration, [wallet-setup.md](wallet-setup.md) for wallet creation and key generation, [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for XRPL multisig setup, and [xrp-payment.md](xrp-payment.md) for XRP payments. For attestation details, see [fdc2-attestation.md](fdc2-attestation.md). For key operations, see [key-add.md](key-add.md), [key-delete.md](key-delete.md), and [key-restore.md](key-restore.md).
 

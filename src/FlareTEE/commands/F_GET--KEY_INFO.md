@@ -29,4 +29,4 @@ The result is returned as a list of signed `KeyExistence` proofs:
 
 ## Notes
 
-**Proxy result hook:** The proxy loops through the result and pushes the `KeyExistence` proofs with signatures to the key data store. For each key, the backup id is calculated and checked whether the backup is already in the backup store. If not, a [TEE_BACKUP](F_GET--TEE_BACKUP.md) action is triggered.
+- **Proxy result hook:** The proxy loops through the result and pushes the `KeyExistence` proofs with signatures to the key data store. For each key, the backup ID is calculated and checked whether the backup is already in the backup store. If not, a [TEE_BACKUP](F_GET--TEE_BACKUP.md) action is triggered.

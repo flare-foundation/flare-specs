@@ -1,6 +1,8 @@
 # TEE Proxy Architecture
 
-`tee-proxy` controls access to the TEE node. It manages instruction voting, action queuing, result storage, signing-policy synchronization, wallet tracking, and key backups. External clients interact with the proxy, not the TEE node directly.
+The TEE proxy controls access to the TEE node.
+It manages instruction voting, action queuing, result storage, signing-policy synchronization, wallet tracking, and key backups.
+External clients interact with the proxy, not the TEE node directly.
 
 ![TEE Proxy architecture](images/tee-proxy.svg)
 
