@@ -2,7 +2,7 @@
 
 ## Description
 
-Initializes key restoration from backup by data providers and key admins.
+Restores a previously backed-up key onto a target TEE machine. Data providers and wallet admins fetch the backup package, verify its consistency, and re-encrypt their shares with the target TEE's public key. The TEE machine reconstructs the private key from these shares and returns a signed `KeyExistence` proof.
 
 Data providers and wallet admins fetch the backup package from the `backupUrl`. They check the consistency of the package and consistency with the `backupId`. They check registration and attestation of the machine with `teeId` (also verifying that the code version is not banned). If everything is valid, they extract their encrypted share package, decrypt it, and encrypt it with the public key of `teeId`.
 

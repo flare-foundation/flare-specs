@@ -2,7 +2,7 @@
 
 ## Description
 
-Collects signatures of attestation responses. The PROVE instruction can be issued for any attestation type supported by the FDC verifier infrastructure. A new version (v2) of Flare Data Connector (FDC) is implemented using PMW infrastructure. It leverages the format and verifier infrastructure of the existing FDC. Attestation requests are submitted through the `Fdc2Hub` smart contract.
+Processes an FDC2 attestation request end-to-end: data providers independently validate and sign the attestation response, and the TEE machine aggregates the signatures into a complete signed proof. The PROVE instruction can be issued for any attestation type supported by the FDC verifier infrastructure. A new version (v2) of Flare Data Connector (FDC) is implemented using PMW infrastructure. It leverages the format and verifier infrastructure of the existing FDC. Attestation requests are submitted through the `Fdc2Hub` smart contract.
 
 ## Event message
 

@@ -2,7 +2,7 @@
 
 ## Description
 
-Indicates signing a multisig payment transaction with the specified private key(s).
+Signs an XRP Ledger multisig payment transaction using the specified TEE-managed private key(s).
 
 If the amount is $0$ and the source address equals the recipient address, a nullification transaction (empty `AccountSet` transaction) is signed. The payment reference is still included in the transaction.
 

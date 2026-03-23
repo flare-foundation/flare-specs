@@ -2,7 +2,7 @@
 
 ## Description
 
-Returns info about all the keys on the TEE machine. This is a direct instruction triggered by the proxy and does not need to provide any signatures.
+Returns signed `KeyExistence` proofs for all keys stored on the TEE machine. This is a direct instruction triggered by the proxy and does not need to provide any signatures.
 
 ## Action message
 

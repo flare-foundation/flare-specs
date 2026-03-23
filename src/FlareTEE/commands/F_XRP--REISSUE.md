@@ -2,7 +2,7 @@
 
 ## Description
 
-Used to reissue already issued transactions. The message and the process are the same as with the [PAY](F_XRP--PAY.md) command.
+Re-signs a previously issued XRP payment transaction for resubmission, typically after the original transaction failed to confirm on the XRP Ledger. The message and the process are the same as with the [PAY](F_XRP--PAY.md) command.
 
 ## Event message
 
