@@ -35,7 +35,7 @@ Each instruction is classified into one of three types based on its operation:
 |---|---|---|---|
 | **Plain** | Any valid `(opType, opCommand)` not matching below | Base | Standard sign-and-forward |
 | **FDC** | `opType = F_FDC2`, `opCommand = PROVE` | FDC | Attestation with external verifier |
-| **Backup** | `opType = F_WALLET`, `opCommand = KEY_DATA_PROVIDER_RESTORE` | Backup | Key restoration from shares |
+| **Backup** | `opType = F_WALLET`, `opCommand =` [`KEY_DATA_PROVIDER_RESTORE`](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) | Backup | Key restoration from shares |
 
 ### Base Processor
 
@@ -55,7 +55,7 @@ FDC2 attestation with external verifier integration:
 
 ### Backup Processor
 
-Wallet key backup restoration (`KEY_DATA_PROVIDER_RESTORE`):
+Wallet key backup restoration ([`KEY_DATA_PROVIDER_RESTORE`](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md)):
 
 1. Fetches the encrypted backup package from the URL specified in the instruction.
 2. Validates the backup package consistency (backup ID matches request parameters, signatures are valid).

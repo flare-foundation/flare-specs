@@ -88,7 +88,7 @@ To obtain a non-availability proof and pause a machine:
 
 1. Call `TeeVerification.requestTeeAttestation(teeId)` to trigger a TEE attestation on the target machine.
 2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, teeAttestInstructionId, externalTeeId)` to request an FDC2 availability check using an external TEE. Parse the `TeeInstructionsSent` event to obtain the `instructionId`.
-3. Poll `<proxy_url>/action/result/<instructionId>` until the proof is available.
+3. Poll `<proxyUrl>/action/result/<instructionId>` until the proof is available.
 4. Call `TeeMachineRegistry.pauseWithProof(proof)` with the retrieved proof.
 
 **What happens automatically:**

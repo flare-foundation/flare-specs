@@ -18,7 +18,7 @@ For general voting concepts, see [Voting](../Operations/Voting.md).
 Cosigners and custom thresholds are resolved per instruction type:
 
 - **XRP payments** (`PAY`, `REISSUE`): cosigners fetched from the wallet configuration.
-- **Key restore** (`KEY_DATA_PROVIDER_RESTORE`): cosigners extracted from backup metadata (admin keys and threshold).
+- **Key restore** ([`KEY_DATA_PROVIDER_RESTORE`](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md)): cosigners extracted from backup metadata (admin keys and threshold).
 - **FDC2** (`PROVE`): custom threshold from the FDC request header (`thresholdBIPS`); $0$ means use the signing policy default.
 - **Other instructions**: cosigners and threshold from the instruction event itself.
 
@@ -30,13 +30,13 @@ Cosigners and custom thresholds are resolved per instruction type:
 | Additional fixed message | $100$ KiB | $100$ KiB |
 | Additional variable message | $50$ KiB | $1$ MiB |
 
-System operations (`POLICY`, `KEY_INFO`, `TEE_INFO`, `TEE_BACKUP`) cannot be submitted as instructions — they are direct-only.
+System operations ([`KEY_INFO`](../commands/F_GET--KEY_INFO.md), [`TEE_INFO`](../commands/F_GET--TEE_INFO.md), [`TEE_BACKUP`](../commands/F_GET--TEE_BACKUP.md), [`INITIALIZE_POLICY`](../commands/F_POLICY--INITIALIZE_POLICY.md), [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md)) cannot be submitted as instructions — they are direct-only.
 
 ## Signing Policy Management
 
 The policy service reads `SigningPolicyInitialized` events from the Relay contract.
-On startup, it creates an `INITIALIZE_POLICY` action with the current signing policy and voter public keys.
-When new policies appear, it creates `UPDATE_POLICY` actions and broadcasts to the instruction service, which creates new voting rounds.
+On startup, it creates an [`INITIALIZE_POLICY`](../commands/F_POLICY--INITIALIZE_POLICY.md) action with the current signing policy and voter public keys.
+When new policies appear, it creates [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) actions and broadcasts to the instruction service, which creates new voting rounds.
 
 ---
 
@@ -50,8 +50,8 @@ When new policies appear, it creates `UPDATE_POLICY` actions and broadcasts to t
 4. Create action queues (Main, Direct, Backup) and result storage in Redis.
 5. Create the wallet service (in-memory key cache + Redis backup storage).
 6. Start the internal server (port $6661$).
-7. Start the info service — sends an `INITIALIZE_POLICY` action and a `TEE_INFO` action via the direct queue, waits for responses to establish the TEE's identity.
-8. Start the policy service — listens for `SigningPolicyInitialized` events from the Relay contract and creates `UPDATE_POLICY` actions when new policies appear.
+7. Start the info service — sends an [`INITIALIZE_POLICY`](../commands/F_POLICY--INITIALIZE_POLICY.md) action and a [`TEE_INFO`](../commands/F_GET--TEE_INFO.md) action via the direct queue, waits for responses to establish the TEE's identity.
+8. Start the policy service — listens for `SigningPolicyInitialized` events from the Relay contract and creates [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) actions when new policies appear.
 9. Start the instruction service — creates voting rounds for the current signing policy.
 10. Start the external server (port $6662$).
 
@@ -90,9 +90,9 @@ When the TEE node posts a result via `POST /result`, the proxy:
 1. Validates the TEE signature (recovers signer address, checks against stored TEE ID).
 2. Stores the result in Redis.
 3. Routes events to internal channels:
-   - **WalletSync** channel — for `KEY_GENERATE`, `KEY_DELETE`, `KEY_DATA_PROVIDER_RESTORE` results (updates in-memory key cache).
-   - **Backups** channel — for `TEE_BACKUP` results (stores backup in Redis with $8$-day TTL).
-   - **BackupTrigger** channel — for `UPDATE_POLICY` results (triggers re-backup of all keys).
+   - **WalletSync** channel — for [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md), [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md), [`KEY_DATA_PROVIDER_RESTORE`](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) results (updates in-memory key cache).
+   - **Backups** channel — for [`TEE_BACKUP`](../commands/F_GET--TEE_BACKUP.md) results (stores backup in Redis with $8$-day TTL).
+   - **BackupTrigger** channel — for [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) results (triggers re-backup of all keys).
 
 ### Configuration
 

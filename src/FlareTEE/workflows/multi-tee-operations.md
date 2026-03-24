@@ -32,7 +32,7 @@ The multi-TEE approach applies to all key operations: generation, XRPL multisig 
 1. For each of the N TEE machines (e.g., 3 machines with proxies at `http://localhost:6662`, `http://localhost:6664`, `http://localhost:6666`):
    - Retrieve TEE info from the proxy via `/info` endpoint.
    - Extract the `teeId` and `proxyId` from the signed TEE info response.
-   - Call `GET <proxy_url>/info` to retrieve the `SignedTeeInfoResponse`. Extract the `teeId`, `publicKey`, `codeHash`, `platform`, `extensionId`, `proxyId`, and `dataSignature`.
+   - Call `GET <proxyUrl>/info` to retrieve the `SignedTeeInfoResponse`. Extract the `teeId`, `publicKey`, `codeHash`, `platform`, `extensionId`, `proxyId`, and `dataSignature`.
    - Call `TeeMachineRegistry.register(machineData, signature, teeProxyId, teeUrl)` where `machineData` is constructed from the `/info` response fields and `signature` is the `dataSignature` from the response.
    - Request a `TeeAvailabilityCheck` attestation via the FDC2 flow.
    - Retrieve the availability proof and call `TeeMachineRegistry.toProduction(proof)` to move the machine to `PRODUCTION` status.
@@ -85,7 +85,7 @@ See [wallet-setup.md](wallet-setup.md) for the full single-TEE wallet flow.
 
 **What happens:**
 1. **Collect public keys from all TEEs:**
-   - For each proxy, call `GET <proxy_url>/wallet/<walletId>/<keyId>` to retrieve the key info JSON, which includes the `publicKey` field (uncompressed secp256k1 format, 64 bytes: `pubkey.X | pubkey.Y`).
+   - For each proxy, call `GET <proxyUrl>/wallet/<walletId>/<keyId>` to retrieve the key info JSON, which includes the `publicKey` field (uncompressed secp256k1 format, 64 bytes: `pubkey.X | pubkey.Y`).
    - Derive each XRP address from the public key: compress the key to 33 bytes (prefix `0x02` if Y is even, `0x03` if odd) → SHA-256 → RIPEMD-160 → Base58Check encode to an XRP r-address.
 2. **Create XRPL multisig account:**
    - Fund a new XRPL account with sufficient XRP for reserve requirements.
@@ -138,7 +138,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
    - Each TEE constructs the XRPL payment transaction and signs it with its own private key.
    - The signed transaction is available via the proxy's action result endpoint.
 3. **Collect partial signatures from each proxy:**
-   - For each proxy URL, call `GET <proxy_url>/action/result/<instructionId>` to retrieve the `ActionResponse` JSON.
+   - For each proxy URL, call `GET <proxyUrl>/action/result/<instructionId>` to retrieve the `ActionResponse` JSON.
    - Extract the XRP transaction with that TEE's partial signature from the response `data` field.
 4. **Aggregate signatures into a final multisig transaction:**
    - Collect the `Signers` arrays from each proxy's response and merge them into a single XRPL `Payment` transaction object.
@@ -148,7 +148,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
 6. **Verify payment via PMWPaymentStatus attestation:**
    - Wait for the XRP indexer to catch up (typically a few seconds).
    - Submit an attestation request via `Fdc2Hub.requestAttestation(0, numberOfTees, teeIds, cosigners, cosignersThreshold, attestationType, sourceId, requestBody)` where `attestationType = bytes32("PMWPaymentStatus")` and `requestBody` is the ABI-encoded struct `(opType, senderAddress, nonce, subNonce)`.
-   - Retrieve and verify the `PMWPaymentStatusProof` from each proxy via `GET <proxy_url>/action/result/<instructionId>`.
+   - Retrieve and verify the `PMWPaymentStatusProof` from each proxy via `GET <proxyUrl>/action/result/<instructionId>`.
    - Verify the proof on-chain via `PMWPaymentStatusVerifier.verify(teePaymentsAddress, proof)`.
 
 **Events emitted:** `TeeInstructionsSent` (for payment and for PMWPaymentStatus attestation).

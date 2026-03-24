@@ -113,7 +113,7 @@ The verifier server also acts as a TEE machine availability poller.
 
 ### TEE Poller
 
-The poller periodically (every minute) queries the `<proxy_url>/info` API for each active TEE machine. The list of active machines is obtained by calling `getAllActiveTeeMachines` on the `TeeMachineRegistry` smart contract. For each machine, the poller retains only the latest 5 samples.
+The poller periodically (every minute) queries the `<proxyUrl>/info` API for each active TEE machine. The list of active machines is obtained by calling `getAllActiveTeeMachines` on the `TeeMachineRegistry` smart contract. For each machine, the poller retains only the latest 5 samples.
 
 On each poll:
 

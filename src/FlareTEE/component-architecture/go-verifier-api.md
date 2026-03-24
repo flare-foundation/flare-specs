@@ -11,9 +11,9 @@ Each loaded attestation type exposes three endpoints:
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /verifier/{sourceId}/{attestationType}/prepareRequestBody` | ABI-encode a raw request body |
-| `POST /verifier/{sourceId}/{attestationType}/prepareResponseBody` | Decode request, run verification, return ABI-encoded response |
-| `POST /verifier/{sourceId}/{attestationType}/verify` | Full verification pipeline, return encoded response body |
+| `POST /verifier/<sourceId>/<attestationType>/prepareRequestBody` | ABI-encode a raw request body |
+| `POST /verifier/<sourceId>/<attestationType>/prepareResponseBody` | Decode request, run verification, return ABI-encoded response |
+| `POST /verifier/<sourceId>/<attestationType>/verify` | Full verification pipeline, return encoded response body |
 
 All endpoints (except `/api/health`) require API key authentication via the `X-API-KEY` header.
 

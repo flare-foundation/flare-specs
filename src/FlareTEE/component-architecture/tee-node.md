@@ -38,11 +38,11 @@ No signature threshold checking.
 
 | Processor | Op Type | Op Command | Description |
 |---|---|---|---|
-| `KeysInfo` | F_GET | KEY_INFO | Returns signed key existence proofs for all stored keys |
-| `TEEInfo` | F_GET | TEE_INFO | Returns TEE attestation with challenge response |
-| `TEEBackup` | F_GET | TEE_BACKUP | Returns backup package for a specific key |
-| `InitializePolicy` | F_POLICY | INITIALIZE_POLICY | Sets the initial signing policy |
-| `UpdatePolicy` | F_POLICY | UPDATE_POLICY | Updates to the next signing policy |
+| `KeysInfo` | F_GET | [KEY_INFO](../commands/F_GET--KEY_INFO.md) | Returns signed key existence proofs for all stored keys |
+| `TEEInfo` | F_GET | [TEE_INFO](../commands/F_GET--TEE_INFO.md) | Returns TEE attestation with challenge response |
+| `TEEBackup` | F_GET | [TEE_BACKUP](../commands/F_GET--TEE_BACKUP.md) | Returns backup package for a specific key |
+| `InitializePolicy` | F_POLICY | [INITIALIZE_POLICY](../commands/F_POLICY--INITIALIZE_POLICY.md) | Sets the initial signing policy |
+| `UpdatePolicy` | F_POLICY | [UPDATE_POLICY](../commands/F_POLICY--UPDATE_POLICY.md) | Updates to the next signing policy |
 
 ### Instruction Processors
 
@@ -51,13 +51,13 @@ Preprocessing validates the signing policy, extracts signers, and checks weight 
 
 | Processor | Op Type | Op Command | Immediate Result |
 |---|---|---|---|
-| `KeyGenerate` | F_WALLET | KEY_GENERATE | Yes |
-| `KeyDelete` | F_WALLET | KEY_DELETE | Yes |
-| `KeyDataProviderRestore` | F_WALLET | KEY_DATA_PROVIDER_RESTORE | Yes |
-| `VRF` | F_WALLET | VRF | Yes |
-| `TEEAttestation` | F_REG | TEE_ATTESTATION | Yes |
-| `SignXRPLPayment` | F_XRP | PAY / REISSUE | No |
-| `FDC2Prove` | F_FDC2 | PROVE | Yes |
+| `KeyGenerate` | F_WALLET | [KEY_GENERATE](../commands/F_WALLET--KEY_GENERATE.md) | Yes |
+| `KeyDelete` | F_WALLET | [KEY_DELETE](../commands/F_WALLET--KEY_DELETE.md) | Yes |
+| `KeyDataProviderRestore` | F_WALLET | [KEY_DATA_PROVIDER_RESTORE](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) | Yes |
+| `VRF` | F_WALLET | [VRF](../commands/F_WALLET--VRF.md) | Yes |
+| `TEEAttestation` | F_REG | [TEE_ATTESTATION](../commands/F_REG--TEE_ATTESTATION.md) | Yes |
+| `SignXRPLPayment` | F_XRP | [PAY](../commands/F_XRP--PAY.md) / [REISSUE](../commands/F_XRP--REISSUE.md) | No |
+| `FDC2Prove` | F_FDC2 | [PROVE](../commands/F_FDC2--PROVE.md) | Yes |
 
 ### Submission Tags
 
@@ -103,7 +103,7 @@ Two endpoints connect the node to the proxy:
 
 | Direction | Endpoint | Purpose |
 |---|---|---|
-| Node → Proxy | `POST /queue/{queueID}` | Dequeue next action from Main, Direct, or Backup queue |
+| Node → Proxy | `POST /queue/<queueId>` | Dequeue next action from Main, Direct, or Backup queue |
 | Node → Proxy | `POST /result` | Push signed action response back to proxy |
 
 ## Extension Integration
@@ -118,7 +118,7 @@ Attestation token generation depends on deployment mode:
 - **Production** — platform attestation (e.g., Google Cloud Confidential Space JWT).
 - **Local/development** — test platform and code hash values.
 
-Attestation is included in `TEE_INFO` and `TEE_ATTESTATION` responses for on-chain verification.
+Attestation is included in [TEE_INFO](../commands/F_GET--TEE_INFO.md) and [TEE_ATTESTATION](../commands/F_REG--TEE_ATTESTATION.md) responses for on-chain verification.
 
 ---
 
@@ -141,16 +141,16 @@ State is protected by `sync.RWMutex`.
 
 HTTP server exposing TEE cryptographic capabilities to extension services:
 
-- `GET /key-info/{walletID}/{keyID}` — retrieve wallet key information.
-- `POST /sign/{walletID}/{keyID}` — sign data with a wallet key.
+- `GET /key-info/<walletId>/<keyId>` — retrieve wallet key information.
+- `POST /sign/<walletId>/<keyId>` — sign data with a wallet key.
 - `POST /sign` — sign data with the TEE identity key.
-- `POST /decrypt/{walletID}/{keyID}` — decrypt with a wallet key.
+- `POST /decrypt/<walletId>/<keyId>` — decrypt with a wallet key.
 - `POST /decrypt` — decrypt with the TEE identity key.
 - `POST /result` — post a signed result back to the proxy.
 
 ### Extension Forwarding
 
-When the `ForwardRouter` encounters an unregistered operation, it forwards the full action as an HTTP POST to `http://localhost:{extensionPort}/action` (default port $8889$).
+When the `ForwardRouter` encounters an unregistered operation, it forwards the full action as an HTTP POST to `http://localhost:<extensionPort>/action` (default port $8889$).
 The extension service processes the action and returns an `ActionResult`.
 
 ### Configuration
