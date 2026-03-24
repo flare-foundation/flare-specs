@@ -2,11 +2,8 @@
 
 ## Overview
 
-This workflow covers adding a new signing key to a TEE machine after the wallet has been created. Keys can be added to existing wallets at any time, for example to extend a wallet to additional TEE machines or to replace deleted keys.
-
-For key generation during initial wallet setup, see [wallet-setup.md](wallet-setup.md) Steps 9–10, which follows the same process but requires the wallet to be in `INITIALIZED` status.
-
-For full details on key data structures, see the [Key Management specification](../TEE%20Management/Key%20Management.md).
+This workflow covers adding a new signing key to a TEE machine for an existing wallet.
+For key data structures, see [Key Management](../TEE%20Management/Key%20Management.md).
 
 ## Prerequisites
 

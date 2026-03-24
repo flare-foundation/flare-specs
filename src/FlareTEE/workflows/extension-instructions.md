@@ -2,19 +2,15 @@
 
 ## Overview
 
-Custom [extensions](../Extensions/Extensions.md) receive and process instructions through the Flare Confidential Compute infrastructure. When an instruction is sent to an extension, it flows from the blockchain through the TEE proxy to the TEE node, which forwards non-system actions to the compute extension app for processing. The extension can use the FCC node app's internal endpoints to sign data, retrieve key information, and post results back.
-
-This document covers sending instructions to custom extensions, processing them, and retrieving the results. Two concrete examples are demonstrated: EVM transaction signing and random number generation.
-
-The data flow is: user calls an instruction sender contract on C-chain, which emits a `TeeInstructionsSent` event via `TeeExtensionRegistry.sendInstructions()`. Data providers relay the signed [instruction](../Operations/Instructions.md) to the TEE proxy, which packages it into an [action](../Operations/Actions.md) and forwards it to the FCC node app. The node app routes non-system `opTypes` (those not starting with `F_`) to the compute extension app on port 8889. The extension processes the action, optionally calling internal endpoints on port 8888 (e.g., `/sign`, `/key-info`, `/result`), and the final result is cached on the proxy for retrieval via `GET /action/result/<actionId>`.
+This workflow covers sending instructions to custom extensions, processing them, and retrieving results.
+Two examples are demonstrated: EVM transaction signing and random number generation.
+For the instruction and action data flow, see [Instructions](../Operations/Instructions.md) and [Actions](../Operations/Actions.md).
 
 ## Prerequisites
 
 - Extension registered and configured (see [Extension Configuration](extension-configuration.md))
-- TEE machine registered and in `PRODUCTION` status (see [Machine Registration](machine-registration.md))
-- Wallet created with appropriate key type and keys confirmed (see [Wallet Setup](wallet-setup.md))
-  - For EVM signing: key type `"EVM"` with signing algorithm `keccak256-secp256k1-ecdsa`
-  - Wallet must be in `PRODUCTION` status (status code `2`)
+- TEE machine in `PRODUCTION` status (see [Machine Registration](machine-registration.md))
+- Wallet created with keys confirmed and in `PRODUCTION` status (see [Wallet Setup](wallet-setup.md))
 - Instruction sender contract deployed and its extension ID set via `setExtensionId()`
 - TEE proxy running with connection to the TEE node
 

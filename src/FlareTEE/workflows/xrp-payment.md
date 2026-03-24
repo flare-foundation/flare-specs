@@ -2,7 +2,7 @@
 
 ## Overview
 
-This workflow describes how to send XRP payments from a TEE-managed Protocol Managed Wallet (PMW). The process covers submitting a payment instruction on Flare, retrieving the signed transaction from the TEE proxy, submitting it to the XRP Ledger, and optionally verifying the payment on-chain. It also covers reissuance and nullification for failed payments.
+This workflow describes sending XRP payments from a TEE-managed Protocol Managed Wallet (PMW), including reissuance and nullification for failed payments.
 
 ## Prerequisites
 

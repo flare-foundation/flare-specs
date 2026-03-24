@@ -2,9 +2,9 @@
 
 ## Overview
 
-The Flare TEE system supports operating with multiple TEE machines working together for a single wallet. In a multi-TEE configuration, keys are distributed across separate TEE machines, each running on its own Confidential VM with its own proxy. Signatures are collected independently from each TEE and aggregated into a single multisig transaction. This distributed trust model eliminates single points of failure and provides threshold-based fault tolerance -- for example, a 2-of-3 configuration allows the system to continue operating even if one TEE machine goes offline.
-
-The multi-TEE approach applies to all key operations: key generation, XRPL multisig configuration, payment signing, and attestation verification. Each TEE independently generates its own key, independently signs transactions, and independently participates in attestation flows. The coordination happens at the proxy level and on-chain.
+This workflow covers operating with multiple TEE machines for a single wallet.
+Keys are distributed across separate TEE machines, signatures are collected independently and aggregated into a single multisig transaction.
+The multi-TEE approach applies to all key operations: generation, XRPL multisig configuration, payment signing, and attestation verification.
 
 ## Prerequisites
 

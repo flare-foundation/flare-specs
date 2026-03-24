@@ -2,8 +2,7 @@
 
 ## Overview
 
-This workflow describes how to bind an XRPL multisig account to a TEE-managed Protocol Managed Wallet (PMW). The process involves two phases: first, configuring a multisig account on the XRP Ledger off-chain using the wallet's public keys, then linking that account on-chain through an FDC2 attestation that proves the XRPL account is correctly configured.
-
+This workflow describes binding an XRPL multisig account to a TEE-managed Protocol Managed Wallet (PMW).
 Once complete, the wallet can issue payment transactions on the XRP Ledger through the TEE infrastructure.
 
 ## Prerequisites

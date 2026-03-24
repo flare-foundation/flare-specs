@@ -2,7 +2,8 @@
 
 ## Overview
 
-This workflow describes the process of generating a verifiable random number using a VRF key held inside a TEE machine. A data provider submits a VRF instruction referencing a wallet key with the `keccak256-secp256k1-vrf` signing algorithm, the instruction is voted on, and the TEE computes an ECVRF proof over the provided nonce. The result can be verified on-chain by the `TeeVRFVerifier` contract using `ecrecover`.
+This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
+The result can be verified on-chain by the `TeeVRFVerifier` contract.
 
 ## Prerequisites
 

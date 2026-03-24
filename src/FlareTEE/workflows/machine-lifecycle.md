@@ -2,11 +2,8 @@
 
 ## Overview
 
-After a TEE machine is registered and moved to `PRODUCTION` status (see [machine-registration.md](machine-registration.md)), the machine owner and other parties can perform a variety of management operations. These include pausing, updating settings, transferring ownership, confirming periodic availability, and governance-level banning.
-
-All management functions are available on the `TeeMachineRegistry` smart contract. When any function changes the machine status, `lastStatusChangeTs` is updated to the current `block.timestamp`.
-
-For full details, see the [Ownership specification](../TEE%20Management/Ownership.md) and [State and Status specification](../TEE%20Management/State%20and%20Status.md).
+After a TEE machine reaches `PRODUCTION` status (see [machine-registration.md](machine-registration.md)), the machine owner can perform management operations including pausing, updating settings, transferring ownership, confirming availability, and governance-level banning.
+For full details, see [Ownership](../TEE%20Management/Ownership.md) and [State and Status](../TEE%20Management/State%20and%20Status.md).
 
 ### Status Transition Diagram
 

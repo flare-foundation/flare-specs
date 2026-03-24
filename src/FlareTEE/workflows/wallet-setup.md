@@ -2,7 +2,7 @@
 
 ## Overview
 
-This workflow describes the complete process of creating a project, configuring a wallet within that project, generating keys on TEE machines, and enabling the wallet for production use. The process follows a strict sequence: project creation, wallet creation, admin/cosigner configuration, initialization closure, key generation and confirmation, and finally wallet enablement.
+This workflow describes creating a project, configuring a wallet, generating keys on TEE machines, and enabling the wallet for production use.
 
 ## Prerequisites
 

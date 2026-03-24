@@ -2,24 +2,15 @@
 
 ## Overview
 
-The Flare Data Connector (FDC2) is a TEE-based alternative to the FDC for verifying external data on Flare. Unlike the FDC, which uses 90-second rounds and on-chain bit-voting, the FDC2 processes requests as they arrive, with data providers voting by submitting attestations directly to participating TEE machines. This yields lower latency and broader request coverage.
-
-The FDC2 is managed via the `Fdc2Hub` smart contract and operates as an application on the [System Extension](../Extensions/System%20Extension.md). It supports three attestation types used across machine lifecycle and PMW workflows:
-
-- **TeeAvailabilityCheck** -- verifies TEE machine liveness, code integrity, and platform freshness.
-- **PMWMultisigAccountConfigured** -- proves correct multisig configuration on an external chain.
-- **PMWPaymentStatus** -- verifies the status of a payment transaction on an external chain.
-
-For full details, see the [FDC2 specification](../Extensions/FTDC.md).
+This sub-workflow describes the common process for submitting, voting on, and verifying an FDC2 attestation request.
+It applies to all three attestation types: `TeeAvailabilityCheck`, `PMWMultisigAccountConfigured`, and `PMWPaymentStatus`.
+For full FDC2 details, see the [FDC2 specification](../Extensions/FTDC.md).
 
 ## Prerequisites
 
-- TEE machines participating in the attestation must be registered and in `PRODUCTION` status.
+- TEE machines participating in the attestation must be in `PRODUCTION` status.
 - Data providers must be enrolled in the current signing policy.
-- The `Fdc2Hub` smart contract must be deployed and accessible.
-- For `TeeAvailabilityCheck`, the verifier server must be running with `VERIFIER_TYPE=TeeAvailabilityCheck`.
-- For `PMWMultisigAccountConfigured`, data providers must have access to their own XRP nodes.
-- For `PMWPaymentStatus`, the XRP indexer and C-chain indexer databases must be operational.
+- The `Fdc2Hub` smart contract must be deployed.
 
 ---
 

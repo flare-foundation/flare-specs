@@ -2,9 +2,8 @@
 
 ## Overview
 
-This workflow covers deleting a signing key from a TEE machine and cleaning up stale TEE associations. Deleting a key removes the private key material from the specified TEE but does not remove the key definition from the wallet — the key can still be [restored from backup](key-restore.md) or may continue to exist on other TEE machines.
-
-For full details on key data structures, see the [Key Management specification](../TEE%20Management/Key%20Management.md).
+This workflow covers deleting a signing key from a TEE machine.
+Deletion removes private key material from the specified TEE but retains the key definition on the wallet.
 
 ## Prerequisites
 

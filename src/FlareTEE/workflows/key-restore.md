@@ -2,65 +2,10 @@
 
 ## Overview
 
-This workflow covers restoring a signing key from backup onto a new TEE machine. Key restoration is necessary when a TEE machine becomes unavailable, is decommissioned, or when migrating keys between machines. The process requires cooperation from both data providers and key admins, preserving the distributed trust model.
-
-The key backup system uses a two-round Shamir secret sharing scheme. Backups are created automatically — there is no user-facing call for triggering a backup. Key backup is triggered by the TEE machine in two cases:
-
-- When a new key is generated (via `addKey`).
-- When the signing policy is updated at the TEE machine (triggers re-backup of all keys on the machine).
-
-The backup process for a key $K$ uses a two-round secret sharing scheme:
-
-**Round 1 — $(2,2)$-secret sharing:**
-1. The TEE generates a random data provider share $S_\mathrm{dp}$.
-2. It computes the key admin share $S_\mathrm{ka} = K - S_\mathrm{dp} \mod N$.
-3. Both shares are required to reconstruct the original key.
-
-**Round 2 — threshold splitting:**
-4. $S_\mathrm{dp}$ is split into $1000$ shares using a $(1000, \mathrm{providersThreshold})$-Shamir secret sharing scheme. Each data provider receives $\lfloor W_j \times 1000 \rfloor$ shares proportional to its weight $W_j$ in the current signing policy. The default `providersThreshold` is $666/1000$ (approximately $66\%$).
-5. $S_\mathrm{ka}$ is split into $N_\mathrm{admin}$ shares using an $(N_\mathrm{admin}, \mathrm{adminsThreshold})$-Shamir scheme. Each admin receives exactly one share.
-
-**Packaging and distribution:**
-6. For each recipient (data provider or key admin), a package is prepared containing:
-   - `shareData` — the share(s) for the recipient.
-   - `backupID` — the identifier for this backup.
-   - `holdersPublicKey` — the public key of the receiving entity.
-   - `signature` — signature of the above fields with the private key being backed up.
-7. Each package is encrypted under the recipient's public key: $\mathrm{Backup}_i = (\text{Enc}_{\mathrm{pk}_i}(\mathrm{pack}_i), \mathrm{pk}_i)$.
-8. All holder backup packages are combined with the backup metadata and signed twice (once by the key being backed up, once by the TEE's identity key) to form the full backup package.
-9. The backup package is distributed to the TEE proxy for retrieval.
-
-### BackupId Structure
-
-The backup is identified by a `BackupId` struct:
-
-```solidity
-struct BackupId {
-    address teeId;
-    bytes32 walletId;
-    uint64 keyId;
-    bytes32 keyType;
-    bytes32 signingAlgo;
-    bytes publicKey;
-    uint24 rewardEpochId;
-    uint256 randomNonce;
-}
-```
-
-The backup hash is `keccak256(abi.encode(backupId))`.
-
-### Backup Metadata
-
-The full backup metadata contains all `BackupId` fields plus:
-- `providersThreshold` — threshold weight for recovering the data provider share. Defaults to $666/1000$.
-- `adminsPublicKeys` — the list of admin public keys.
-- `adminsThreshold` — the threshold for operations with admin public keys.
-- `cosigners` — the list of cosigner addresses, if included.
-- `cosignersThreshold` — the threshold for cosigning.
-
-> **Note:** The wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) are not included in the backup. These values are managed independently on each TEE machine.
-
-For full details on key data structures and backup cryptography, see the [Key Management specification](../TEE%20Management/Key%20Management.md).
+This workflow covers restoring a signing key from backup onto a new TEE machine.
+Key restoration is necessary when a TEE machine becomes unavailable, is decommissioned, or when migrating keys between machines.
+The process requires cooperation from both data providers and key admins.
+For the backup scheme (Shamir secret sharing, packaging, and distribution), see [Key Management](../TEE%20Management/Key%20Management.md).
 
 ## Prerequisites
 

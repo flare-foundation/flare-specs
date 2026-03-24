@@ -2,19 +2,15 @@
 
 ## Overview
 
-A TEE [extension](../Extensions/Extensions.md) is an isolated application within the Flare Confidential Compute infrastructure. Each extension defines its own set of supported code versions (Docker image hashes) and a set of TEE machines that run those code versions. Extensions extend the concept of smart contracts on Flare by enabling the use of TEE machines for custom computation, EVM transaction signing, random number generation, and other operations.
-
-Extension ID 0 is reserved for the [system extension](../Extensions/System%20Extension.md), which hosts the Protocol Managed Wallet (PMW) infrastructure and the Flare Data Connector (FDC2). Custom extensions use extension IDs greater than 0 and are created and managed by their owners.
-
-This document covers the full workflow for registering and configuring a custom TEE extension, from deploying the instruction sender contract through to configuring the TEE node.
+This workflow covers registering and configuring a custom TEE extension, from deploying the instruction sender contract through to configuring the TEE node.
+For background on the extension framework, see [Extensions](../Extensions/Extensions.md).
 
 ## Prerequisites
 
-- Access to a Flare network (Hardhat local, Coston testnet, or mainnet)
 - Deployed Flare TEE system contracts (`TeeExtensionRegistry`, `TeeOwnerAllowlist`, `TeeMachineRegistry`, `TeeWalletProjectManager`, `TeeWalletManager`, `TeeWalletKeyManager`)
-- A funded Ethereum account to submit transactions (this account will become the extension owner)
+- A funded Ethereum account to submit transactions
 - A TEE node running inside a Confidential VM (or in local dev mode with `MODE=1`)
-- Access to the TEE node's Configuration API on port 5500 (TEE Configuration API -- not yet published)
+- Access to the TEE node's Configuration API on port $5500$
 - A TEE proxy server deployed and running
 - A reproducible Docker image hash for the extension code
 

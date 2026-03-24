@@ -2,7 +2,7 @@
 
 ## Overview
 
-This workflow describes the full process of deploying a TEE machine onto the Flare network, from the moment the Confidential VM boots through to reaching `PRODUCTION` status. The process involves local configuration of the TEE node, on-chain registration via the `TeeMachineRegistry` contract, attestation verification through the FDC2 system, and ongoing availability confirmation.
+This workflow describes deploying a TEE machine onto the Flare network, from Confidential VM boot through to `PRODUCTION` status.
 
 ## Prerequisites
 
