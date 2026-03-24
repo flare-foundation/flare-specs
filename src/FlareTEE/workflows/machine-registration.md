@@ -185,10 +185,11 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 **Who can call:** Machine owner (the `initialOwner` address configured in Step 3)
 
 **Parameters:**
-- `machineData` (struct `ITeeMachineRegistryTeeMachineData`) — contains `extensionId`, `initialOwner`, `codeHash`, `platform`, and `publicKey`. These values come from the `/info` endpoint (Step 5). For the full struct definition, see the [Ownership specification](../TEE%20Management/Ownership.md#registration).
+- `machineData` (struct `TeeMachineData`) — contains `extensionId`, `initialOwner`, `codeHash`, `platform`, and `publicKey`. These values come from the `/info` endpoint (Step 5). For the full struct definition, see the [Ownership specification](../TEE%20Management/Ownership.md#registration).
 - `signature` (Signature: `{v: uint8, r: bytes32, s: bytes32}`) — signature over `machineData` by the TEE machine's private key, proving consent to registration
 - `teeProxyId` (address) — identity of the proxy server relaying information to/from the TEE
-- `teeUrl` (string) — URL at which the TEE machine is reachable via the proxy
+- `url` (string) — URL at which the TEE machine is reachable via the proxy
+- `claimBackAddress` (address) — address to claim back unused instruction fees
 
 **Requirements:**
 - The transaction sender must match the `initialOwner` in `machineData`
@@ -206,7 +207,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 `Status: --> INITIALIZED`
 
-**Events emitted:** Machine registered event, `TeeInstructionsSent` (attestation request)
+**Events emitted:** `TeeMachineRegistered(teeId, teeProxyId, owner, extensionId, url, codeHash, platform)`, `TeeInstructionsSent` (attestation request)
 
 ---
 
@@ -297,7 +298,7 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 *Phase 4: Ongoing Operations*
 
-### Step 11: Periodic Availability Confirmation — `TeeMachineRegistry.confirmAvailability()`
+### Step 11: Periodic Availability Confirmation — `TeeVerification.confirmAvailability()`
 
 **Who can call:** Anyone
 

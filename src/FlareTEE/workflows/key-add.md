@@ -23,6 +23,7 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 **Parameters:**
 - `teeId` (`address`) — the TEE machine on which to generate the key.
 - `walletId` (`bytes32`) — the wallet ID.
+- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
 - The TEE machine must be in `PRODUCTION` status.
@@ -35,7 +36,7 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 5. The TEE machine automatically triggers a [key backup](key-restore.md#automatic-key-backup) for the newly generated key.
 
-**Events emitted:** `WalletKeyAdded`, `TeeInstructionsSent`
+**Events emitted:** `WalletKeyAdded(teeId, walletId, keyId)`, `TeeInstructionsSent`
 
 > **Note:** This step can be repeated to add keys on different TEE machines. Each invocation generates a unique `keyId`.
 

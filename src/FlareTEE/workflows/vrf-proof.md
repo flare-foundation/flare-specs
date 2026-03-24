@@ -3,13 +3,14 @@
 ## Overview
 
 This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
-The result can be verified on-chain by the `TeeVRFVerifier` contract.
+The result can be verified on-chain by the `VrfVerifier` contract.
 
 ## Prerequisites
 
 - **TEE machine in PRODUCTION status** — the machine holding the VRF key must be registered and operational (see [machine-registration.md](machine-registration.md))
-- **Wallet with a VRF key** — a key with signing algorithm `keccak256-secp256k1-vrf` must already be generated and confirmed via the [wallet-setup workflow](wallet-setup.md)
-- **Key must be active** — the key must not be paused or expired; if the key has been deleted from the machine, the request will fail
+- **Wallet in PRODUCTION status** — the wallet must be enabled via the [wallet-setup workflow](wallet-setup.md)
+- **Wallet with a VRF key** — a key with signing algorithm `keccak256-secp256k1-vrf` must already be generated and confirmed
+- **VRF authorization address set** — the caller must be the VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`)
 
 ---
 
@@ -17,9 +18,9 @@ The result can be verified on-chain by the `TeeVRFVerifier` contract.
 
 ### Step 1: Submit VRF Instruction
 
-**Who initiates:** A data provider (or any authorized submitter)
+**Who initiates:** The VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`).
 
-A VRF proof request is submitted as an instruction with `opType = F_WALLET` and `opCommand = VRF`. The instruction's event message is a `VrfInstructionMessage` containing:
+A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends an instruction with `opType = F_WALLET` and `opCommand = VRF`. The instruction's event message is a `VrfInstructionMessage` containing:
 
 - `walletId` (`bytes32`) — the wallet ID of the VRF key
 - `keyId` (`uint64`) — the key ID within the wallet
@@ -29,7 +30,7 @@ A VRF proof request is submitted as an instruction with `opType = F_WALLET` and 
 // Source: ITeeVrf.sol
 struct VrfInstructionMessage {
     bytes32 walletId;
-    bytes32 keyId;
+    uint64 keyId;
     bytes nonce;
 }
 ```
@@ -103,7 +104,7 @@ The four witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain 
 
 ### Step 5: On-chain Verification
 
-The proof can be verified on-chain by submitting it to the `TeeVRFVerifier` contract. The contract performs $4$ independent checks using `ecrecover`:
+The proof can be verified on-chain by submitting it to the `VrfVerifier` contract. The contract performs $4$ independent checks using `ecrecover`:
 
 1. $U = c \cdot \mathrm{pk} + s \cdot G$ — proves the TEE knows the secret key $\mathrm{sk}$ such that $\mathrm{pk} = \mathrm{sk} \cdot G$.
 2. $c\gamma = c \cdot \gamma$ — confirms that `cGamma` is correctly derived.

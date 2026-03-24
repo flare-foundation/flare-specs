@@ -23,8 +23,8 @@ struct PaymentInstructionMessage {
     bytes tokenId;                    // token identifier (variable length); zero-valued for native XRP
     uint256 amount;                   // amount of the token transferred
     uint256 maxFee;                   // maximum fee for the transaction
-    bytes32 paymentReference;         // payment reference of the transaction
     bytes feeSchedule;               // encoded fee schedule for progressive fee escalation
+    bytes32 paymentReference;         // payment reference of the transaction
     uint64 nonce;                     // nonce of the transaction
     uint64 subNonce;                  // unused
     uint64 batchEndTs;                // unused
@@ -41,7 +41,7 @@ struct TeeIdKeyIdPair {
 
 The `feeSchedule` field encodes a list of fee entries for progressive fee escalation. Each entry specifies a fee amount and a time delay. The TEE machine signs all fee schedule entries upfront and returns the results progressively — each result is posted back to the proxy after the specified delay. This mechanism allows automatic fee escalation if earlier transactions are not confirmed on the XRP Ledger.
 
-If `feeSchedule` is empty, a single transaction is signed using `maxFee` as the fee.
+The `feeSchedule` must not be empty; an empty fee schedule causes an error.
 
 ## Fixed message
 
@@ -57,13 +57,19 @@ If `feeSchedule` is empty, a single transaction is signed using `maxFee` as the 
 
 ## Action result
 
-JSON of the XRP Ledger transaction with filled `Signers` field. The transaction is a standard XRPL multisig payment or `AccountSet` (for nullification).
+The `SignXRPLPayment` processor returns empty data on the `Threshold` submission tag.
+Signed transactions are posted asynchronously to the proxy via a background goroutine — one result per fee schedule entry, each delayed according to the entry's time offset.
+Intermediate results use status $3$, $4$, $5$, etc. (one per fee entry).
+The final result uses status $1$.
 
-When a fee schedule is present, results are posted to the proxy progressively with time delays between each fee level. Each result includes the signed transaction at the corresponding fee amount.
+Each result contains JSON of an XRP Ledger transaction with filled `Signers` field.
 
 ## Notes
 
 - **Validation:** The TEE machine performs the following validations before signing:
-  - Cosigner signatures are verified per key (when cosigners are configured on the wallet).
+  - The fee schedule must not be empty.
+  - The TEE ID must appear in the `teeIdKeyIdPairs` list.
+  - The key type must be `XRP`.
   - The signing algorithm for the key must be `sha512half-secp256k1-ecdsa`.
+  - Cosigner signatures are verified per key (when cosigners are configured on the wallet).
   - The key must exist on the machine and be in active status.

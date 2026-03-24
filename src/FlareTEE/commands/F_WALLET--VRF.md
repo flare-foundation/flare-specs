@@ -2,7 +2,7 @@
 
 ## Description
 
-Generates a verifiable randomness proof using a VRF key. The TEE loads the private key identified by `(walletId, keyId)`, verifies that its signing algorithm is `keccak256-secp256k1-vrf`, and computes an ECVRF proof over the provided nonce. The witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM. The on-chain `TeeVRFVerifier` contract verifies the proof using `ecrecover`.
+Generates a verifiable randomness proof using a VRF key. The TEE loads the private key identified by `(walletId, keyId)`, verifies that its signing algorithm is `keccak256-secp256k1-vrf`, and computes an ECVRF proof over the provided nonce. The witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM. The on-chain `VrfVerifier` contract verifies the proof using `ecrecover`.
 
 The final random value is derived as `keccak256(gamma_x || gamma_y)`, where `gamma_x` and `gamma_y` are 32-byte big-endian encodings of the gamma point coordinates.
 

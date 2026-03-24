@@ -19,8 +19,8 @@ struct PaymentInstructionMessage {
     bytes tokenId;
     uint256 amount;
     uint256 maxFee;
-    bytes32 paymentReference;
     bytes feeSchedule;
+    bytes32 paymentReference;
     uint64 nonce;
     uint64 subNonce;
     uint64 batchEndTs;

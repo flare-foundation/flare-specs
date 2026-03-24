@@ -36,12 +36,12 @@ The following diagram shows the implemented machine statuses and the transitions
 
                 PAUSED, SUSPENDED, or PRODUCTION
                         |
-                    ban() (governance)
+                    ban() (extension owner)
                         |
                         v
                      BANNED
                         |
-                    unban() (governance)
+                    unban() (extension owner)
                         |
                         v
                      PAUSED
@@ -80,7 +80,7 @@ For full status definitions, see the [Ownership specification](../TEE%20Manageme
 3. The machine status changes to `SUSPENDED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** Status change event for the TEE machine.
+**Events emitted:** `TeeMachineStatusChanged(teeId, newStatus)`
 
 **Procedure:**
 
@@ -116,7 +116,7 @@ The FDC2 verifier TEE challenges the target machine and determines its availabil
 3. The machine status changes to `PAUSED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** Status change event for the TEE machine.
+**Events emitted:** `TeeMachineStatusChanged(teeId, newStatus)`
 
 ---
 
@@ -150,7 +150,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 3. The machine status changes to `PAUSED`. A new `TeeAvailabilityCheck` proof is required to return it to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** Status change event and settings update event for the TEE machine.
+**Events emitted:** `TeeMachineSettingsUpdated(teeId, teeProxyId, url)` and `TeeMachineStatusChanged(teeId, PAUSED)` if the machine was in `PRODUCTION` or `SUSPENDED` status.
 
 ---
 
@@ -177,7 +177,7 @@ This is a two-step process to prevent accidental transfers.
 2. The proposed owner address is recorded on the contract.
 3. No status change occurs.
 
-**Events emitted:** Ownership proposal event.
+**Events emitted:** `NewOwnerProposed(teeId, oldOwner, newOwner)`
 
 ### Step 5b: Confirm Ownership -- `confirmOwnership()`
 
@@ -197,7 +197,7 @@ This is a two-step process to prevent accidental transfers.
 2. The machine's `owner` field is updated to the new address.
 3. The previous owner loses all management rights.
 
-**Events emitted:** Ownership transfer event.
+**Events emitted:** `NewOwnerConfirmed(teeId, newOwner)`
 
 Note: A TEE id can only be transferred to a new owner through this ownership change process while registered. This prevents re-registration of the machine under other owners if it is temporarily unregistered.
 
@@ -225,7 +225,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 3. The `availabilityCheckValidityEndTs` deadline is extended.
 4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares (see Rewarding -- not yet published).
 
-**Events emitted:** Availability confirmation event.
+**Events emitted:** `AvailabilityCheckValidityExtended(teeId, owner, endTs)` (only if the deadline was extended).
 
 Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. The `confirmAvailability()` function on the `TeeVerification` contract must be called periodically before this deadline to maintain eligibility.
 
@@ -235,7 +235,7 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 ### Step 7a: Ban -- `ban()`
 
-**Who can call:** Governance only.
+**Who can call:** Extension owner only.
 
 **Parameters:**
 
@@ -243,21 +243,21 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 **Requirements:**
 
-- The caller must have governance privileges.
+- The caller must be the owner of the extension to which the TEE is registered.
 - The machine must be in `PAUSED`, `SUSPENDED`, or `PRODUCTION` status.
 
 **What happens:**
 
-1. Governance calls `ban(teeId)`.
+1. The extension owner calls `ban(teeId)`.
 2. The machine status changes to `BANNED`.
 3. The machine cannot operate in any capacity.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** Status change event (ban).
+**Events emitted:** `TeeMachineStatusChanged(teeId, BANNED)`
 
 ### Step 7b: Unban -- `unban()`
 
-**Who can call:** Governance only.
+**Who can call:** Extension owner only.
 
 **Parameters:**
 
@@ -266,14 +266,14 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 **Requirements:**
 
 - The machine must be in `BANNED` status.
-- The caller must have governance privileges.
+- The caller must be the owner of the extension to which the TEE is registered.
 
 **What happens:**
 
-1. Governance calls `unban(teeId)`.
+1. The extension owner calls `unban(teeId)`.
 2. The machine status changes from `BANNED` to `PAUSED`.
 3. A new `TeeAvailabilityCheck` proof is required to return the machine to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** Status change event (unban).
+**Events emitted:** `TeeMachineStatusChanged(teeId, PAUSED)`
 

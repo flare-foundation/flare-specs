@@ -30,13 +30,12 @@ Returns the latest backup package for a specific key. This is a direct instructi
 ```go
 // Source: tee-node/pkg/wallets/wallets.go
 type TEEBackupResponse struct {
-    BackupID     WalletBackupID `json:"backupId"`     // backup id structure
-    WalletBackup []byte         `json:"walletBackup"` // binary encoded backup package (base64)
-    TEESignature []byte         `json:"teeSignature"` // TEE signature over the backup hash
+    BackupID     WalletBackupID // backup id structure
+    WalletBackup []byte         // JSON-encoded backup package containing the TEE signature
 }
 ```
 
-The `TEESignature` field contains a signature by the TEE's identity key over the hash of the backup, providing authenticity verification for the backup package.
+The TEE signature over the backup hash is embedded inside the `WalletBackup` bytes, not as a top-level field.
 
 See [KEY_DATA_PROVIDER_RESTORE](F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) for the `BackupId` struct definition.
 

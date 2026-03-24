@@ -17,12 +17,13 @@ Deletion removes private key material from the specified TEE but retains the key
 
 ### Step 1: Delete Key — `TeeWalletKeyManager.deleteKey()`
 
-**Who can call:** Project owner or wallet admin.
+**Who can call:** Project owner only.
 
 **Parameters:**
 - `teeId` (`address`) — the identity address of the TEE machine from which the key should be deleted.
 - `walletId` (`bytes32`) — the wallet ID containing the key.
 - `keyId` (`uint64`) — the key ID to delete from the specified TEE.
+- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
 - The TEE machine identified by `teeId` must be in `PRODUCTION` status.
@@ -36,7 +37,7 @@ Deletion removes private key material from the specified TEE but retains the key
 5. The key definition itself remains on the wallet — only the association with the specific TEE is removed. The key may still exist on other TEE machines.
 6. On the TEE machine, the wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) for that key are *retained* even after deletion, preventing nonce reuse if the key is later restored.
 
-**Events emitted:** `WalletKeyDeleted`
+**Events emitted:** `WalletKeyDeleted(teeId, walletId, keyId)`, `TeeInstructionsSent`
 
 > **Note:** Deleting a key from all TEEs does not remove the key definition from the wallet. The key can be restored via the [key restore workflow](key-restore.md).
 

@@ -86,17 +86,20 @@ Submit an FDC2 attestation request to verify that the XRPL multisig account is c
 **Parameters:**
 - `walletId` (`bytes32`) -- The wallet ID.
 - `sourceId` (`bytes32`) -- Source chain identifier (e.g., `bytes32("XRP")` or `bytes32("testXRP")` for testnet).
-- `accountAddress` (`string`) -- The XRPL multisig account address (e.g., `"rUzM4ovjNkjSZ2jVJfZQ9321ikeNM6ASzh"`).
+- `accountAddress` (`string`) -- The XRPL multisig account address.
 - `testOnTeeId` (`address`) -- Optional TEE machine ID for testing (set to zero address in production).
+- `proofOwner` (`address`) -- Address that owns the proof (zero address for public proofs).
+- `claimBackAddress` (`address`) -- Address to claim back unused instruction fees.
 
 **Requirements:**
+- The account address must not be empty.
 - Wallet must be in `PRODUCTION` or `PAUSED` status.
-- Must send sufficient FLR to cover the attestation instruction fee (e.g., `1000000` wei).
+- Must send sufficient FLR to cover the attestation instruction fee.
 
 **What happens:**
 
 1. `TeeVerification.requestPMWMultisigAccountConfiguredAttestation()` is called on the Flare C-chain.
-2. The contract collects the wallet's public keys and multisig threshold from the `TeeWalletManager`.
+2. The contract collects the wallet's public keys and multisig threshold from the `TeeWalletKeyManager`.
 3. An FDC2 attestation request is formed and sent to TEE machines as an instruction.
 4. A `TeeInstructionsSent` event is emitted containing the `instructionId`.
 5. Off-chain, each TEE machine independently queries its own XRP node and verifies the account configuration (see [PMWMultisigAccountConfigured](../attestation-types/PMWMultisigAccountConfigured.md) for the full verification procedure).
@@ -148,15 +151,22 @@ Link the verified XRPL multisig account to the wallet on-chain.
 
 **Parameters:**
 - `walletId` (`bytes32`) -- The wallet ID.
-- `proof` (`IPMWMultisigAccountConfiguredProof`) -- The verified attestation proof from Step 4.
+- `proof` (`IPMWMultisigAccountConfigured.Proof`) -- The verified attestation proof from Step 4.
+- `authorizationAddress` (`address`) -- The address authorized to submit payment instructions for this account.
 
 **Requirements:**
 - Wallet must be in `PRODUCTION` or `PAUSED` status.
 - The proof must be valid (passes all signature and configuration checks).
+- The extension ID must be $0$ (system extension only).
+- The key type must match the wallet's project key type.
+- The account address must not be empty.
+- The source ID must be supported.
+- The authorization address must not be zero.
+- The account must not already be linked to a wallet.
 
 **What happens:**
 
-1. `TeePayments.addPMWMultisigAccount(walletId, proof)` is called.
+1. `TeePayments.addPMWMultisigAccount(walletId, proof, authorizationAddress)` is called.
 2. The contract validates the proof:
    - Verifies proof signatures (signing policy + cosigners).
    - Checks that the wallet's public keys match the proof's public keys.
@@ -165,7 +175,7 @@ Link the verified XRPL multisig account to the wallet on-chain.
 3. The XRP account address is linked to the `walletId` and stored in the wallet's account list.
 4. The account's initial nonce is set from the proof's `sequence` value.
 
-**Events emitted:** `PMWMultisigAccountAdded` with wallet ID and account details.
+**Events emitted:** `PMWMultisigAccountAdded(walletId, sourceId, accountAddress, sequence, authorizationAddress, batchSize, batchDurationSeconds)`
 
 ---
 
@@ -176,15 +186,16 @@ Configure batching parameters for the multisig account to group multiple payment
 **Who can call:** Wallet owner only.
 
 **Parameters:**
-- `account` (`ITeePayments.PMWMultisigAccount`) -- The multisig account, consisting of:
+- `account` (`PMWMultisigAccount`) -- The multisig account, consisting of:
   - `sourceId` (`bytes32`) -- Source chain identifier.
   - `accountAddress` (`string`) -- The XRPL multisig account address.
-- `batchSize` (`uint256`) -- Maximum number of payments per batch. Set to `1` for single-payment transactions.
-- `batchDurationSeconds` (`uint256`) -- Maximum duration in seconds for a batch to remain open. Set to `0` for immediate execution.
+- `batchSize` (`uint64`) -- Maximum number of payments per batch. Set to `1` for single-payment transactions.
+- `batchDurationSeconds` (`uint64`) -- Maximum duration in seconds for a batch to remain open. Set to `0` for immediate execution.
 
 **Requirements:**
-- The account must have been added via Step 5.
 - Caller must be the wallet owner.
+- `batchSize` must be greater than $0$ and not exceed `maxBatchSize`.
+- `batchDurationSeconds` must not exceed `maxBatchDurationSeconds`.
 
 **What happens:**
 
@@ -195,6 +206,6 @@ Configure batching parameters for the multisig account to group multiple payment
    - The batch closes when `batchSize` is reached, OR `batchDurationSeconds` have elapsed since the batch opened, OR a new reward epoch starts.
    - All payments in a closed batch share the same nonce and are included in a single XRPL transaction.
 
-**Events emitted:** `BatchSettingsSet` with the account and new settings.
+**Events emitted:** `BatchSettingsSet(walletId, sourceId, accountAddress, batchSize, batchDurationSeconds)`
 
 

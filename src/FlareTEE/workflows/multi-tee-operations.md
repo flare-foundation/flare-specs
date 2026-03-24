@@ -99,15 +99,15 @@ See [wallet-setup.md](wallet-setup.md) for the full single-TEE wallet flow.
    - See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) Step 2 for full details on XRPL account setup.
 3. **Request and verify PMWMultisigAccountConfigured attestation for each proxy:**
    - For each proxy independently:
-     - Call `TeeVerification.RequestPMWMultisigAccountConfiguredAttestation(walletId, sourceId, multisigAddress, teeId)` on the C-chain.
+     - Call `TeeVerification.requestPMWMultisigAccountConfiguredAttestation(walletId, sourceId, multisigAddress, teeId, proofOwner, claimBackAddress)` on the C-chain.
      - Parse the `TeeInstructionsSent` event to get the `instructionId`.
      - Poll the proxy's `/action/result/<instructionId>` endpoint until the proof is available.
      - Verify the proof on-chain via `TeeVerification.verifyPMWMultisigAccountConfiguredProof(walletId, proof)`.
    - The last verified proof is used for the next step.
 4. **Add PMW multisig account** -- a single on-chain operation:
-   - Call `TeePayment.AddPMWMultisigAccount(walletId, proof)` to register the multisig account.
+   - Call `TeePayments.addPMWMultisigAccount(walletId, proof, authorizationAddress)` to register the multisig account.
 5. **Set batch settings:**
-   - Call `TeePayment.SetBatchSettings(pmwMultisigAccount, batchSize, batchIndex)` to configure payment batching.
+   - Call `TeePayments.setBatchSettings(pmwMultisigAccount, batchSize, batchDurationSeconds)` to configure payment batching.
 
 **Events emitted:** `TeeInstructionsSent` (per attestation request), plus payment contract events for `AddPMWMultisigAccount` and `SetBatchSettings`.
 
@@ -121,7 +121,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
 
 **Parameters:**
 - `pmwMultisigAccount` (`ITeePaymentsPMWMultisigAccount`) -- contains `sourceId` and `accountAddress` (the multisig address).
-- `paymentInstruction` (`ITeePaymentsPaymentInstruction`) -- contains `recipientAddress`, `amount`, `fee`, and `paymentReference`.
+- `paymentInstruction` (`PaymentInstruction`) -- contains `recipientAddress`, `tokenId`, `amount`, `maxFee`, and `paymentReference`.
 
 **Requirements:**
 - Multisig account must be registered via `AddPMWMultisigAccount`.
@@ -130,7 +130,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
 
 **What happens:**
 1. **Send payment instruction** -- a single on-chain transaction:
-   - Call `TeePayment.Pay(pmwMultisigAccount, paymentInstruction)` on the C-chain.
+   - Call `TeePayments.pay(pmwMultisigAccount, paymentInstruction, claimBackAddress)` on the C-chain.
    - This emits a `TeeInstructionsSent` event with the `instructionId`.
    - The instruction is picked up by all TEE relay clients monitoring the chain.
 2. **Each TEE independently signs the transaction (automatic):**
@@ -144,7 +144,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
    - Collect the `Signers` arrays from each proxy's response and merge them into a single XRPL `Payment` transaction object.
 5. **Submit aggregated transaction to XRPL:**
    - Serialize the aggregated multisig transaction and submit it to the XRPL node via WebSocket: `{"command": "submit", "tx_blob": "<serialized_tx>"}`.
-   - If the initial submission fails (engine result is not `tesSUCCESS`), a reissue can be attempted via `TeePayment.Reissue()` with an updated fee and the failed transaction's sequence number.
+   - If the initial submission fails (engine result is not `tesSUCCESS`), a reissue can be attempted via `TeePayments.reissue()` with updated fee parameters and the failed transaction's sequence number.
 6. **Verify payment via PMWPaymentStatus attestation:**
    - Wait for the XRP indexer to catch up (typically a few seconds).
    - Submit an attestation request via `Fdc2Hub.requestAttestation(0, numberOfTees, teeIds, cosigners, cosignersThreshold, attestationType, sourceId, requestBody)` where `attestationType = bytes32("PMWPaymentStatus")` and `requestBody` is the ABI-encoded struct `(opType, senderAddress, nonce, subNonce)`.

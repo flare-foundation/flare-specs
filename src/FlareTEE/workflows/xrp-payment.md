@@ -20,25 +20,28 @@ This workflow describes sending XRP payments from a TEE-managed Protocol Managed
 **Who can call:** The project's authorized payment submission address.
 
 **Parameters:**
-- `account` (`ITeePayments.PMWMultisigAccount`) — the multisig account, consisting of:
+- `account` (`PMWMultisigAccount`) — the multisig account, consisting of:
   - `sourceId` (`bytes32`) — source chain identifier (e.g., `bytes32("XRP")` or `bytes32("testXRP")` for testnet).
   - `accountAddress` (`string`) — the XRPL multisig account address.
-- `paymentInstruction` (`ITeePayments.PaymentInstruction`) — the payment details:
+- `paymentInstruction` (`PaymentInstruction`) — the payment details:
   - `recipientAddress` (`string`) — the recipient address on the XRP Ledger.
-  - `tokenId` (`bytes32`) — token identifier; `bytes32(0)` for native XRP.
+  - `tokenId` (`bytes`) — token identifier; zero-valued for native XRP.
   - `amount` (`uint256`) — amount in drops to transfer.
-  - `fee` (`uint256`) — transaction fee offered on the XRP Ledger, in drops.
+  - `maxFee` (`uint256`) — maximum transaction fee on the XRP Ledger, in drops.
   - `paymentReference` (`bytes32`) — a 32-byte payment reference.
+- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
 - The wallet must be in `PRODUCTION` status.
 - The multisig account must be linked to the wallet.
-- The fee must meet the wallet's configured minimum fee (`minFee`).
+- The payment amount must be greater than $0$.
+- The recipient address must differ from the sender address.
+- The caller must be the authorized payment submission address for the account.
 - Sufficient FLR must be sent with the transaction to cover the instruction fee.
 
 **What happens:**
 
-1. The `TeePayments` contract calls `receivingTeesAndKeys(walletId)` on the `TeeWalletManager` contract to retrieve the list of TEE machines and key IDs that should process the instruction.
+1. The `TeePayments` contract calls `receivingTeesAndKeys(walletId)` on the `TeeWalletKeyManager` contract to retrieve the list of TEE machines and key IDs that should process the instruction.
 2. The contract forms a `PaymentInstructionMessage` containing:
    - `walletId` — the wallet from which the payment originates.
    - `teeIdKeyIdPairs` — the TEE machine and key ID pairs for signing.

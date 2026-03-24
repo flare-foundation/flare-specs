@@ -21,17 +21,21 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 
 ### Step 1: Initiate Key Restoration — `TeeWalletBackupManager.backupRestore()`
 
-**Who can call:** Any Flare user (typically the backup manager address set on the project).
+**Who can call:** Project owner or backup manager (`onlyOwnerOrBackupManager`).
 
 **Parameters:**
-- `teeId` (`address`) — the identity address of the target TEE machine on which to restore the key. This must be a different machine from the one that created the backup.
+- `teeId` (`address`) — the identity address of the target TEE machine on which to restore the key.
 - `backupId` (`BackupId`) — the identifier of the backup to restore.
 - `backupUrl` (`string`) — URL where the backup package is hosted. If no URL exists, the caller fetches the backup package from the TEE proxy and uploads it first.
+- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
-- The target TEE machine must be registered and confirmed (via [TeeAvailabilityCheck](fdc2-attestation.md) proof) in the same extension as the source machine. The proof must be recent (e.g., within $1$ day).
-- The source machine (identified in the `backupId`) must have been confirmed in the same extension at least once.
-- Smart contracts will only emit the `KEY_DATA_PROVIDER_RESTORE` instruction if the extensions of the target and source machines match.
+- The target TEE machine must be in `PRODUCTION` status.
+- The source machine (identified in `backupId.teeId`) must not be in `INITIALIZED` status.
+- The key must not already be available on the target TEE machine.
+- The key must have been confirmed (public key must exist on-chain).
+- The `publicKey` in the backup ID must match the on-chain key.
+- The target TEE's `initialSigningPolicyId` must be ≤ the backup's `rewardEpochId`.
 
 **What happens:**
 1. The contract emits a `KEY_DATA_PROVIDER_RESTORE` instruction, parameterized as `KEY_DATA_PROVIDER_RESTORE(teeId, backupId, backupUrl, nonce)`.
@@ -106,7 +110,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 3. The target `teeId` is added to the key's TEE list, indicating the key now exists on an additional machine.
 4. The key is marked as restored on this TEE.
 
-**Events emitted:** `WalletKeyConfirmed`
+**Events emitted:** `WalletKeyConfirmed(teeId, walletId, keyId, publicKey)`
 
 ---
 
