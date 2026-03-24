@@ -176,7 +176,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 2. The registry stores the code version, making it a recognized version for the extension.
 3. TEE machines running this code version can now be registered.
 
-**Events emitted:** `TeeVersionAdded(extensionId, version, codeHash, platforms, governanceHash)`
+**Events emitted:** [`TeeVersionAdded`](../Events.md#teeversionadded)
 
 ---
 
@@ -207,7 +207,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 `Status: --> INITIALIZED`
 
-**Events emitted:** `TeeMachineRegistered(teeId, teeProxyId, owner, extensionId, url, codeHash, platform)`, `TeeInstructionsSent` (attestation request)
+**Events emitted:** [`TeeMachineRegistered`](../Events.md#teemachineregistered), [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (attestation request)
 
 ---
 
@@ -231,7 +231,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 > **Note:** In practice, this step is typically combined with registration (Step 7) — calling `register()` automatically triggers the attestation request. The standalone `requestTeeAttestation()` is available for cases where attestation must be re-requested separately.
 
-**Events emitted:** `TeeInstructionsSent` (attestation instruction)
+**Events emitted:** [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (attestation instruction)
 
 ---
 
@@ -262,7 +262,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2-attestation.md).
 
-**Events emitted:** `TeeInstructionsSent` (FDC2 instruction)
+**Events emitted:** [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (FDC2 instruction)
 
 ---
 
@@ -292,7 +292,7 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 `Status: INITIALIZED --> PRODUCTION`
 
-**Events emitted:** `TeeMachineStatusChanged(teeId, PRODUCTION)`
+**Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
 
 ---
 
@@ -317,5 +317,5 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 For more details on the machine lifecycle after production, see [machine-lifecycle.md](machine-lifecycle.md).
 
-**Events emitted:** `AvailabilityCheckValidityExtended(teeId, owner, endTs)`
+**Events emitted:** [`AvailabilityCheckValidityExtended`](../Events.md#availabilitycheckvalidityextended)
 

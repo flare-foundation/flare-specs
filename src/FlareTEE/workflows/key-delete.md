@@ -38,7 +38,7 @@ Deletion removes private key material from the specified TEE but retains the key
 5. The key definition itself remains on the wallet — only the association with the specific TEE is removed.
 6. On the TEE machine, the wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) for that key are *retained* even after deletion, preventing nonce reuse if the key is later restored.
 
-**Events emitted:** `WalletKeyDeleted(teeId, walletId, keyId)`, `TeeInstructionsSent`
+**Events emitted:** [`WalletKeyDeleted`](../Events.md#walletkeydeleted), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
 > **Note:** Deleting a key from all TEEs does not remove the key definition from the wallet. The key can be restored via the [key restore workflow](key-restore.md).
 
@@ -62,7 +62,7 @@ This step removes them.
 1. The contract iterates through the TEE IDs associated with the specified key.
 2. TEE IDs corresponding to machines that no longer hold the key are removed from the key definition's TEE list.
 
-**Events emitted:** `WalletKeyDeleted(teeId, walletId, keyId)` for each removed stale TEE ID.
+**Events emitted:** [`WalletKeyDeleted`](../Events.md#walletkeydeleted) for each removed stale TEE ID.
 
 ---
 

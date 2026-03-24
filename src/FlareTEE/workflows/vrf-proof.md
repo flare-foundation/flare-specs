@@ -35,7 +35,7 @@ A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, 
 - The specified `(walletId, keyId)` pair must exist on the target TEE machine.
 - The key's signing algorithm must be `keccak256-secp256k1-vrf`.
 
-**Events emitted:** `VrfRequested(walletId, keyId, instructionId)`, `TeeInstructionsSent`
+**Events emitted:** [`VrfRequested`](../Events.md#vrfrequested), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
 ---
 

@@ -47,7 +47,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) instruction to the target TEE machine.
 2. This signals the TEE network (data providers and key admins) to begin the share collection process.
 
-**Events emitted:** `BackupRestoreTriggered(teeId, walletId, keyId, nonce)`, `TeeInstructionsSent`
+**Events emitted:** [`BackupRestoreTriggered`](../Events.md#backuprestoretriggered), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
 ---
 
@@ -118,7 +118,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 3. The target `teeId` is added to the key's TEE list, indicating the key now exists on an additional machine.
 4. The key is marked as restored on this TEE.
 
-**Events emitted:** `WalletKeyConfirmed(teeId, walletId, keyId, publicKey)`
+**Events emitted:** [`WalletKeyConfirmed`](../Events.md#walletkeyconfirmed)
 
 ---
 

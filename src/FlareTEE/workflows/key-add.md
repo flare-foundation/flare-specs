@@ -36,7 +36,7 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 5. The TEE machine automatically triggers a key backup for the newly generated key.
 
-**Events emitted:** `WalletKeyAdded(teeId, walletId, keyId)`, `TeeInstructionsSent`
+**Events emitted:** [`WalletKeyAdded`](../Events.md#walletkeyadded), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
 > **Note:** This step can be repeated to add keys on different TEE machines. Each invocation generates a unique `keyId`.
 
@@ -65,7 +65,7 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 2. Stores the public key on-chain.
 3. Adds the `teeId` to the key's TEE list, indicating the key exists on this machine.
 
-**Events emitted:** `WalletKeyConfirmed(teeId, walletId, keyId, publicKey)`
+**Events emitted:** [`WalletKeyConfirmed`](../Events.md#walletkeyconfirmed)
 
 ---
 

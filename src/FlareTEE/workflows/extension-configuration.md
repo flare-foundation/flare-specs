@@ -62,8 +62,8 @@ For background on the extension framework, see [Extensions](../Extensions/Extens
 4. The extension is now registered but has no TEE machines, code versions, or key types associated with it yet.
 
 **Events emitted:**
-- `TeeExtensionRegistered(extensionId, owner)` -- confirms the extension was created with its assigned ID
-- `TeeExtensionContractsSet(extensionId, teeExtensionStateVerifier, teeExtensionInstructionsSender)` -- records the contract addresses
+- [`TeeExtensionRegistered`](../Events.md#teeextensionregistered) -- confirms the extension was created with its assigned ID
+- [`TeeExtensionContractsSet`](../Events.md#teeextensioncontractsset) -- records the contract addresses
 
 > **Note:** After registration, call `setExtensionId()` on the instruction sender contract so it can discover its extension ID from the registry.
 
@@ -91,7 +91,7 @@ For background on the extension framework, see [Extensions](../Extensions/Extens
 3. TEE machines can now register with this code hash and platform combination.
 
 **Events emitted:**
-- `TeeVersionAdded(extensionId, version, codeHash, platforms, governanceHash)`
+- [`TeeVersionAdded`](../Events.md#teeversionadded)
 
 ---
 
@@ -116,7 +116,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. Only allowlisted addresses can register TEE machines for this extension via `TeeMachineRegistry.register()`.
 
 **Events emitted:**
-- `AllowedTeeMachineOwnersAdded(extensionId, owners)` -- when specific owners are added
+- [`AllowedTeeMachineOwnersAdded`](../Events.md#allowedteemachineownersadded) -- when specific owners are added
 
 ### Step 4b: Project Owner Allowlist -- `addAllowedTeeWalletProjectOwners()` or `allowAllTeeWalletProjectOwners()`
 
@@ -135,7 +135,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. Only allowlisted addresses can create wallet projects for this extension via `TeeWalletProjectManager.createProject()`.
 
 **Events emitted:**
-- `AllowedTeeWalletProjectOwnersAdded(extensionId, owners)` -- when specific owners are added
+- [`AllowedTeeWalletProjectOwnersAdded`](../Events.md#allowedteewalletprojectownersadded) -- when specific owners are added
 
 ---
 
@@ -159,7 +159,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. The associated signing algorithms are determined by the system-level key type registration.
 
 **Events emitted:**
-- `SupportedKeyTypesAdded(extensionId, keyTypes)`
+- [`SupportedKeyTypesAdded`](../Events.md#supportedkeytypesadded)
 
 ---
 
@@ -201,7 +201,7 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 3. Ownership of the extension is transferred to the new address.
 4. The extension owner is typically a multisig governance account for production deployments.
 
-**Events emitted:** `NewOwnerProposed(extensionId, oldOwner, newOwner)` and `NewOwnerConfirmed(extensionId, newOwner)`
+**Events emitted:** [`NewOwnerProposed`](../Events.md#newownerproposed) and [`NewOwnerConfirmed`](../Events.md#newownerconfirmed)
 
 ---
 

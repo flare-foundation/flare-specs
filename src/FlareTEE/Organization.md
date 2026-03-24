@@ -1,5 +1,6 @@
 -   [Introduction](Introduction.md)
 -   [Architecture](Architecture.md)
+-   [Events](Events.md)
 -   TEE Management
 	- [TEE Proxies](TEE%20Management/Tee%20Proxies.md)
 	- [TEE Machines](TEE%20Management/State%20and%20Status.md)

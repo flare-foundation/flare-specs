@@ -38,7 +38,7 @@ The multi-TEE approach applies to all key operations: generation, XRPL multisig 
    - Retrieve the availability proof and call `TeeMachineRegistry.toProduction(proof)` to move the machine to `PRODUCTION` status.
 2. Each registration is fully independent -- machines do not need to know about each other at this stage.
 
-**Events emitted:** `TeeMachineRegistered`, `TeeMachineStatusChanged` (per machine).
+**Events emitted:** [`TeeMachineRegistered`](../Events.md#teemachineregistered), [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged) (per machine).
 
 ---
 
@@ -69,7 +69,7 @@ The multi-TEE approach applies to all key operations: generation, XRPL multisig 
    - Call `TeeWalletKeyManager.confirmKey(proof, teeSignature)` for each key individually.
 4. **Enable wallet** -- `TeeWalletManager.enableWallet(walletId)` once the number of confirmed keys meets the multisig threshold.
 
-**Events emitted:** `WalletCreated`, `WalletAdminsSet`, `WalletAdminConfirmed`, `WalletInitialized`, `WalletMultisigThresholdSet`, `WalletKeyAdded` (per TEE), `TeeInstructionsSent` (per TEE), `WalletKeyConfirmed` (per TEE), `WalletEnabled`.
+**Events emitted:** [`WalletCreated`](../Events.md#walletcreated), [`WalletAdminsSet`](../Events.md#walletadminsset), [`WalletAdminConfirmed`](../Events.md#walletadminconfirmed), [`WalletInitialized`](../Events.md#walletinitialized), [`WalletMultisigThresholdSet`](../Events.md#walletmultisigthresholdset), [`WalletKeyAdded`](../Events.md#walletkeyadded) (per TEE), [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (per TEE), [`WalletKeyConfirmed`](../Events.md#walletkeyconfirmed) (per TEE), [`WalletEnabled`](../Events.md#walletenabled).
 
 See [wallet-setup.md](wallet-setup.md) for the full single-TEE wallet flow.
 
@@ -109,7 +109,7 @@ See [wallet-setup.md](wallet-setup.md) for the full single-TEE wallet flow.
 5. **Set batch settings:**
    - Call `TeePayments.setBatchSettings(pmwMultisigAccount, batchSize, batchDurationSeconds)` to configure payment batching.
 
-**Events emitted:** `TeeInstructionsSent` (per attestation request), `PMWMultisigAccountAdded`, `BatchSettingsSet`.
+**Events emitted:** [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (per attestation request), [`PMWMultisigAccountAdded`](../Events.md#pmwmultisigaccountadded), [`BatchSettingsSet`](../Events.md#batchsettingsset).
 
 See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the single-TEE flow and [fdc2-attestation.md](fdc2-attestation.md) for the PMWMultisigAccountConfigured attestation details.
 
@@ -131,7 +131,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
 **What happens:**
 1. **Send payment instruction** -- a single on-chain transaction:
    - Call `TeePayments.pay(pmwMultisigAccount, paymentInstruction, claimBackAddress)` on the C-chain.
-   - This emits a `TeeInstructionsSent` event with the `instructionId`.
+   - This emits a [`TeeInstructionsSent`](../Events.md#teeinstructionssent) event with the `instructionId`.
    - The instruction is picked up by all TEE relay clients monitoring the chain.
 2. **Each TEE independently signs the transaction (automatic):**
    - Each TEE node receives the payment instruction via its relay client and proxy.
@@ -151,7 +151,7 @@ See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the sin
    - Retrieve and verify the `PMWPaymentStatusProof` from each proxy via `GET <proxyUrl>/action/result/<instructionId>`.
    - Verify the proof on-chain via `PMWPaymentStatusVerifier.verify(teePaymentsAddress, proof)`.
 
-**Events emitted:** `TeeInstructionsSent` (for payment and for PMWPaymentStatus attestation).
+**Events emitted:** [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (for payment and for PMWPaymentStatus attestation).
 
 See [xrp-payment.md](xrp-payment.md) for the single-TEE payment flow and [fdc2-attestation.md](fdc2-attestation.md) for PMWPaymentStatus attestation details.
 

@@ -81,7 +81,7 @@ For full status definitions, see the [Ownership specification](../TEE%20Manageme
 3. The machine status changes to `SUSPENDED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** `TeeMachineStatusChanged(teeId, newStatus)`
+**Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
 
 **Procedure:**
 
@@ -117,7 +117,7 @@ The FDC2 verifier TEE challenges the target machine and determines its availabil
 3. The machine status changes to `PAUSED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** `TeeMachineStatusChanged(teeId, newStatus)`
+**Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
 
 ---
 
@@ -151,7 +151,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 3. The machine status changes to `PAUSED`. A new `TeeAvailabilityCheck` proof is required to return it to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** `TeeMachineSettingsUpdated(teeId, teeProxyId, url)` and `TeeMachineStatusChanged(teeId, PAUSED)` if the machine was in `PRODUCTION` or `SUSPENDED` status.
+**Events emitted:** [`TeeMachineSettingsUpdated`](../Events.md#teemachinesettingsupdated) and [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged) if the machine was in `PRODUCTION` or `SUSPENDED` status.
 
 ---
 
@@ -178,7 +178,7 @@ This is a two-step process to prevent accidental transfers.
 2. The proposed owner address is recorded on the contract.
 3. No status change occurs.
 
-**Events emitted:** `NewOwnerProposed(teeId, oldOwner, newOwner)`
+**Events emitted:** [`NewOwnerProposed`](../Events.md#newownerproposed)
 
 ### Step 5b: Confirm Ownership -- `confirmOwnership()`
 
@@ -198,7 +198,7 @@ This is a two-step process to prevent accidental transfers.
 2. The machine's `owner` field is updated to the new address.
 3. The previous owner loses all management rights.
 
-**Events emitted:** `NewOwnerConfirmed(teeId, newOwner)`
+**Events emitted:** [`NewOwnerConfirmed`](../Events.md#newownerconfirmed)
 
 Note: A TEE id can only be transferred to a new owner through this ownership change process while registered. This prevents re-registration of the machine under other owners if it is temporarily unregistered.
 
@@ -226,7 +226,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 3. The `availabilityCheckValidityEndTs` deadline is extended.
 4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares (see Rewarding -- not yet published).
 
-**Events emitted:** `AvailabilityCheckValidityExtended(teeId, owner, endTs)` (only if the deadline was extended).
+**Events emitted:** [`AvailabilityCheckValidityExtended`](../Events.md#availabilitycheckvalidityextended) (only if the deadline was extended).
 
 Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. The `confirmAvailability()` function on the `TeeVerification` contract must be called periodically before this deadline to maintain eligibility.
 
@@ -254,7 +254,7 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 3. The machine cannot operate in any capacity.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** `TeeMachineStatusChanged(teeId, BANNED)`
+**Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
 
 ### Step 7b: Unban -- `unban()`
 
@@ -276,5 +276,5 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 3. A new `TeeAvailabilityCheck` proof is required to return the machine to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** `TeeMachineStatusChanged(teeId, PAUSED)`
+**Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
 

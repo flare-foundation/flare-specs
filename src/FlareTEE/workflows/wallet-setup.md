@@ -36,7 +36,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 2. The caller (`msg.sender`) is set as the project owner.
 3. The `extensionId`, `keyType`, and `signingAlgo` are stored and are *immutable* after creation.
 
-**Events emitted:** `ProjectCreated(projectId, owner, extensionId, keyType, signingAlgo)`
+**Events emitted:** [`ProjectCreated`](../Events.md#projectcreated)
 
 > **Optional:** After creation, the project owner can set a backup manager via `setBackupManager(projectId, address)` and a default wallet via `setDefaultWallet(projectId, walletId)`.
 
@@ -60,7 +60,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 `Status: --> CREATED`
 
-**Events emitted:** `WalletCreated(projectId, walletId)`
+**Events emitted:** [`WalletCreated`](../Events.md#walletcreated)
 
 ---
 
@@ -88,7 +88,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 > **Note:** Can be called multiple times while in `CREATED` status. Each call replaces the previous admin set.
 
-**Events emitted:** `WalletAdminsSet(walletId, adminsPublicKeys, adminsThreshold)`
+**Events emitted:** [`WalletAdminsSet`](../Events.md#walletadminsset)
 
 ---
 
@@ -110,7 +110,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 > **Note:** All admins must confirm before wallet initialization can be closed (Step 7).
 
-**Events emitted:** `WalletAdminConfirmed(walletId, admin)`
+**Events emitted:** [`WalletAdminConfirmed`](../Events.md#walletadminconfirmed)
 
 ---
 
@@ -137,7 +137,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 > **Note:** Can be updated while in `CREATED` status, but once initialization is closed (Step 7), cosigners become **immutable**. The TEE machines store cosigner information as metadata alongside wallet keys to enforce cosigning requirements.
 
-**Events emitted:** `WalletCosignersSet(walletId, cosigners, cosignersThreshold)`
+**Events emitted:** [`WalletCosignersSet`](../Events.md#walletcosignersset)
 
 ---
 
@@ -159,7 +159,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 > **Note:** All cosigners must confirm before wallet initialization can be closed (Step 7).
 
-**Events emitted:** `WalletCosignerConfirmed(walletId, cosigner)`
+**Events emitted:** [`WalletCosignerConfirmed`](../Events.md#walletcosignerconfirmed)
 
 ---
 
@@ -184,7 +184,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 `Status: CREATED --> INITIALIZED`
 
-**Events emitted:** `WalletInitialized(walletId)`
+**Events emitted:** [`WalletInitialized`](../Events.md#walletinitialized)
 
 ---
 
@@ -207,7 +207,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 > **Note:** Can be updated while in `INITIALIZED` status (before enabling the wallet).
 
-**Events emitted:** `WalletMultisigThresholdSet(walletId, multisigThreshold)`
+**Events emitted:** [`WalletMultisigThresholdSet`](../Events.md#walletmultisigthresholdset)
 
 ---
 
@@ -233,7 +233,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 5. This step can be repeated multiple times to add keys on different TEE machines (each gets a unique `keyId`).
 
-**Events emitted:** `WalletKeyAdded(teeId, walletId, keyId)`, `TeeInstructionsSent`
+**Events emitted:** [`WalletKeyAdded`](../Events.md#walletkeyadded), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
 ---
 
@@ -267,7 +267,7 @@ This workflow describes creating a project, configuring a wallet, generating key
    - Verifies the public key matches the previously stored value.
    - Adds the `teeId` to the existing key's TEE list.
 
-**Events emitted:** `WalletKeyConfirmed(teeId, walletId, keyId, publicKey)`
+**Events emitted:** [`WalletKeyConfirmed`](../Events.md#walletkeyconfirmed)
 
 ---
 
@@ -290,7 +290,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 `Status: INITIALIZED --> PRODUCTION` (or `PAUSED --> PRODUCTION`)
 
-**Events emitted:** `WalletEnabled(walletId)`
+**Events emitted:** [`WalletEnabled`](../Events.md#walletenabled)
 
 ---
 
@@ -298,11 +298,11 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 - **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Projects and Ownership specification](../Operations/Projects%20and%20Ownership.md).
 - **Project ownership transfer — `proposeNewOwner()` + `confirmOwnership()`:** Project ownership transfer is a two-step process to ensure security and proper authorization.
-  - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits `NewOwnerProposed`.
-  - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits `OwnershipConfirmed`.
-- **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits `WalletPaused`. To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
+  - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits [`NewOwnerProposed`](../Events.md#newownerproposed-2).
+  - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits [`OwnershipConfirmed`](../Events.md#ownershipconfirmed).
+- **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits [`WalletPaused`](../Events.md#walletpaused). To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
 - **Setting default wallet — `TeeWalletProjectManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
 - **Setting backup manager — `TeeWalletProjectManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
-- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits `WalletKeyDeleted(teeId, walletId, keyId)`.
+- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Events.md#walletkeydeleted).
 - **Setting pausing addresses — `TeeWalletManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.
 
