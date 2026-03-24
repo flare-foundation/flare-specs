@@ -157,7 +157,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 ### Step 6: Register TEE Code Version (if new) — `TeeExtensionRegistry.addTeeVersion()`
 
-**Who can call:** Extension governance address
+**Who can call:** Extension owner only.
 
 **Parameters:**
 - `extensionId` (uint256) — the extension ID
@@ -167,8 +167,12 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 - `governanceHash` (bytes32) — TEE governance set hash
 
 **Requirements:**
-- Caller must have governance authority over the extension
-- The code hash must not already be registered for this extension (unless adding new platforms)
+- `version` must be non-empty.
+- `codeHash` must be non-zero.
+- `platforms` array must be non-empty.
+- All platforms must be system-supported.
+- `governanceHash` must be `bytes32(0)` or match the latest governance hash for the extension.
+- The code hash must not already be registered for this extension.
 
 **What happens:**
 
@@ -192,10 +196,15 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 - `claimBackAddress` (address) — address to claim back unused instruction fees
 
 **Requirements:**
-- The transaction sender must match the `initialOwner` in `machineData`
-- The signature must be valid over the machine data, signed by the TEE's private key
-- The code hash and platform must correspond to a supported code version on the extension
-- The teeId must not already be registered
+- The transaction sender must match the `initialOwner` in `machineData`.
+- The owner must be allowlisted for the extension.
+- The public key must be valid.
+- The signature must be valid over the machine data, signed by the TEE's private key.
+- The code hash and platform must correspond to a supported code version on the extension.
+- `teeProxyId` must not be zero address.
+- `url` must not be empty.
+- The `teeId` must not already be registered.
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 
@@ -207,46 +216,50 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 `Status: --> INITIALIZED`
 
-**Events emitted:** [`TeeMachineRegistered`](../Events.md#teemachineregistered), [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (attestation request)
+**Events emitted:** [`TeeMachineRegistered`](../Events.md#teemachineregistered), [`TeeAttestationRequested`](../Events.md#teeattestationrequested), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
 ---
 
 ### Step 8: Request TEE Attestation — `TeeVerification.requestTeeAttestation()`
 
-**Who can call:** Machine owner
+**Who can call:** Anyone.
 
 **Parameters:**
-- `teeId` (address) — the TEE machine's identity
+- `teeId` (address) — the TEE machine's identity.
+- `claimBackAddress` (address) — address to claim back unused instruction fees.
 
 **Requirements:**
-- The TEE machine must be registered (status `INITIALIZED` or later)
+- The TEE machine must be registered.
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 
-1. The contract generates a random challenge (32-byte string).
-2. A [`TEE_ATTESTATION`](../commands/F_REG--TEE_ATTESTATION.md) instruction is sent to the TEE machine via the instruction system.
+1. The contract checks if the previous challenge is still valid (within `challengeValidityDurationSeconds`). If so, it reuses the existing challenge. Otherwise, it generates a new random challenge via the Relay contract.
+2. A [`TEE_ATTESTATION`](../commands/F_REG--TEE_ATTESTATION.md) instruction is sent to the TEE machine.
 3. The TEE machine generates a challenge hash by ABI-encoding and hashing an `Attestation` struct containing: the challenge, public key, signing policy information, TEE state, and timestamp.
 4. The platform provider (e.g., Google Cloud) signs the challenge hash and returns the attestation response.
 5. The attestation result becomes available at the proxy.
 
 > **Note:** In practice, this step is typically combined with registration (Step 7) — calling `register()` automatically triggers the attestation request. The standalone `requestTeeAttestation()` is available for cases where attestation must be re-requested separately.
 
-**Events emitted:** [`TeeInstructionsSent`](../Events.md#teeinstructionssent) (attestation instruction)
+**Events emitted:** [`TeeAttestationRequested`](../Events.md#teeattestationrequested), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
 ---
 
 ### Step 9: FDC2 Availability Check — `TeeVerification.requestAvailabilityCheckAttestation()`
 
-**Who can call:** Machine owner
+**Who can call:** Anyone.
 
 **Parameters:**
-- `teeId` (address) — the TEE machine to check
-- `teeAttestInstructionID` (bytes32) — instruction ID from the attestation request in Step 8
-- `externalTeeId` (address) — identity of the FDC2 TEE that will perform the verification
+- `teeId` (address) — the TEE machine to check.
+- `instructionId` (bytes32) — instruction ID from the attestation request in Step 8.
+- `testOnTeeId` (address) — identity of the FDC2 TEE that will perform the verification (zero address in production).
+- `proofOwner` (address) — address that will own the resulting proof (zero address for public proofs).
+- `claimBackAddress` (address) — address to claim back unused instruction fees.
 
 **Requirements:**
-- The TEE attestation from Step 8 must have completed
-- An FDC2-capable TEE must be available to perform the availability check
+- The challenge from Step 8 must still be fresh (within `challengeValidityDurationSeconds`).
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 
@@ -268,31 +281,34 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 ### Step 10: Move to Production — `TeeMachineRegistry.toProduction()`
 
-**Who can call:** Machine owner
+**Who can call:** Machine owner (when `INITIALIZED` or `PAUSED`). Anyone (when `SUSPENDED`).
 
 **Parameters:**
-- `proof` (struct `ITeeAvailabilityCheckProof`):
+- `proof` (struct `ITeeAvailabilityCheck.Proof`):
   - `signatures` — FDC2 signing policy signatures
   - `header` — FDC2 response header
-  - `requestBody` — the availability check request (contains `teeId`, `url`, `challenge`)
+  - `requestBody` — the availability check request (contains `teeId`, `teeProxyId`, `url`, `challenge`, `instructionId`)
   - `responseBody` — the availability check response (contains `status`, `teeTimestamp`, `codeHash`, `platform`, signing policy IDs, `state`)
 
 **Requirements:**
-- The machine must be in `INITIALIZED` or `PAUSED` status (for re-activation)
-- The proof must be a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof matching the TEE's identity and data
-- The code version referenced in the proof must still be supported on the extension
+- The machine must be in `INITIALIZED`, `PAUSED`, or `SUSPENDED` status.
+- The proof's `responseBody.status` must be `OK`.
+- The proof's `header.timestamp` must be $\geq$ `lastStatusChangeTs`.
+- The proof must be a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof matching the TEE's identity and data.
+- The code version referenced in the proof must still be supported on the extension.
 
 **What happens:**
 
 1. The contract validates the FDC2 [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof — verifies signatures, checks that the proof data matches the registered machine.
-2. The machine status changes from `INITIALIZED` to `PRODUCTION`.
-3. `lastStatusChangeTs` is updated to `block.timestamp`.
-4. An `availabilityCheckValidityEndTs` deadline is set, defining how long the machine is considered available.
-5. The machine is now fully operational and can accept instructions on its extension.
+2. If transitioning from `INITIALIZED`, the contract records `initialSigningPolicyId` from the proof's response body.
+3. The machine status changes to `PRODUCTION`.
+4. `lastStatusChangeTs` is updated to `block.timestamp`.
+5. An `availabilityCheckValidityEndTs` deadline is set, defining how long the machine is considered available.
+6. The machine is now fully operational and can accept instructions on its extension.
 
-`Status: INITIALIZED --> PRODUCTION`
+`Status: INITIALIZED/PAUSED/SUSPENDED --> PRODUCTION`
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
+**Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged), [`AvailabilityCheckValidityExtended`](../Events.md#availabilitycheckvalidityextended)
 
 ---
 
@@ -306,14 +322,17 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 - `proof` (struct `ITeeAvailabilityCheckProof`) — a fresh [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation proof
 
 **Requirements:**
-- The machine must be in `PRODUCTION` status
-- The proof must be valid and match the machine's current data
+- The machine must be in `PRODUCTION` status.
+- The proof's `responseBody.status` must be `OK`.
+- The machine's `codeHash` and `platform` must still be supported by the extension.
+- The proof must be valid and match the machine's current data.
 
 **What happens:**
 
 1. Given a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof, the contract extends the availability deadline (`availabilityCheckValidityEndTs`).
-2. This must be called periodically before the current deadline expires.
-3. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
+2. The contract updates `lastSigningPolicyId` from the proof's response body.
+3. This must be called periodically before the current deadline expires.
+4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
 
 For more details on the machine lifecycle after production, see [machine-lifecycle.md](machine-lifecycle.md).
 

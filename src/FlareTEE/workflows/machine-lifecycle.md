@@ -98,24 +98,38 @@ The FDC2 verifier TEE challenges the target machine and determines its availabil
 
 ---
 
-### Step 2: Owner Pause -- `TeeMachineRegistry.pause()`
+### Step 2: Pause -- `TeeMachineRegistry.pause()`
 
-**Who can call:** The machine owner. Also callable by anyone if the current TEE code version is no longer supported.
+The `pause()` function handles two distinct paths depending on the caller and conditions:
 
 **Parameters:**
 
 - `teeId` (`address`) -- the TEE identity address of the machine to pause.
 
-**Requirements:**
+**Path 1 — Owner or disabled code version → `PAUSED`:**
 
+**Who can call:** The machine owner, or anyone if the machine's code version has been disabled.
+
+**Requirements:**
 - The machine must be in `PRODUCTION` or `SUSPENDED` status.
 
 **What happens:**
+1. The machine status changes to `PAUSED`.
+2. The machine is removed from the active pools.
+3. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-1. The caller submits the pause request for the specified `teeId`.
-2. The contract verifies the caller is the owner (or that the code version is unsupported).
-3. The machine status changes to `PAUSED`.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
+**Path 2 — Expired availability deadline → `SUSPENDED`:**
+
+**Who can call:** Anyone.
+
+**Requirements:**
+- The machine must be in `PRODUCTION` status.
+- The machine's availability check deadline (`endTs`) must have expired.
+
+**What happens:**
+1. The machine status changes to `SUSPENDED`.
+2. The machine is removed from the active pools.
+3. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
 
@@ -123,7 +137,11 @@ The FDC2 verifier TEE challenges the target machine and determines its availabil
 
 ### Step 3: Batch Pause Inactive Machines
 
-Batch pausing is not a single dedicated contract function. Instead, the `pause()` function can be called by anyone when a machine's code version is no longer supported by the extension. In practice, an operator or automated process can iterate over machines with unsupported code versions and call `pause(teeId)` for each one, effectively performing a batch pause of inactive or obsolete machines. Note that `pause()` works from both `PRODUCTION` and `SUSPENDED` statuses.
+Batch pausing is not a single dedicated contract function.
+Anyone can batch-call `pause(teeId)` in two scenarios:
+
+- **Disabled code version:** If a machine's code version is no longer supported, anyone can call `pause()` to move it from `PRODUCTION` or `SUSPENDED` to `PAUSED`.
+- **Expired availability deadline:** If a machine's availability check deadline has expired, anyone can call `pause()` to move it from `PRODUCTION` to `SUSPENDED`.
 
 Additionally, `pauseWithProof()` can be called by anyone with a valid non-availability proof, allowing community-driven suspension of machines that have gone offline (moves `PRODUCTION` to `SUSPENDED`).
 
@@ -142,16 +160,16 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 **Requirements:**
 
 - The caller must be the machine owner.
-- The machine must be in `PRODUCTION` or `SUSPENDED` status.
+- `teeProxyId` must not be the zero address.
+- `url` must not be empty.
 
 **What happens:**
 
-1. The owner submits updated proxy ID and URL for the machine.
-2. The contract updates the machine record with the new `teeProxyId` and `url`.
-3. The machine status changes to `PAUSED`. A new [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof is required to return it to `PRODUCTION` via `toProduction(proof)`.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
+1. The contract updates the machine record with the new `teeProxyId` and `url`.
+2. If the machine is in `PRODUCTION` or `SUSPENDED` status, the status changes to `PAUSED`, the machine is removed from the active pools, and a new [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof is required to return to `PRODUCTION`.
+3. If the machine is in any other status (`INITIALIZED`, `PAUSED`), only the settings are updated — no status change occurs.
 
-**Events emitted:** [`TeeMachineSettingsUpdated`](../Events.md#teemachinesettingsupdated) and [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged) if the machine was in `PRODUCTION` or `SUSPENDED` status.
+**Events emitted:** [`TeeMachineSettingsUpdated`](../Events.md#teemachinesettingsupdated), and [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged) if the machine was in `PRODUCTION` or `SUSPENDED` status.
 
 ---
 
@@ -171,6 +189,7 @@ This is a two-step process to prevent accidental transfers.
 **Requirements:**
 
 - The caller must be the current owner.
+- The `newOwner` must be allowlisted for the extension via the `TeeOwnerAllowlist` contract, or `address(0)` to cancel a pending proposal.
 
 **What happens:**
 
@@ -191,6 +210,7 @@ This is a two-step process to prevent accidental transfers.
 **Requirements:**
 
 - The caller must be the address that was proposed as the new owner.
+- The caller must still be allowlisted for the extension at confirmation time.
 
 **What happens:**
 
@@ -217,14 +237,17 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 **Requirements:**
 
 - The machine must be in `PRODUCTION` status.
-- The proof must be valid and demonstrate the machine is available (status `OK`).
+- The proof's `responseBody.status` must be `OK`.
+- The machine's `codeHash` and `platform` must still be supported by the extension.
+- The proof must be valid and match the machine's current data.
 
 **What happens:**
 
 1. The caller submits a [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof for the machine to the `TeeVerification` contract.
 2. The contract validates the proof.
 3. The `availabilityCheckValidityEndTs` deadline is extended.
-4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares (see Rewarding -- not yet published).
+4. The contract updates `lastSigningPolicyId` from the proof's response body.
+5. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
 
 **Events emitted:** [`AvailabilityCheckValidityExtended`](../Events.md#availabilitycheckvalidityextended) (only if the deadline was extended).
 
@@ -251,7 +274,7 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 1. The extension owner calls `ban(teeId)`.
 2. The machine status changes to `BANNED`.
-3. The machine cannot operate in any capacity.
+3. The machine is removed from the active pools, preventing it from being selected for any tasks.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)

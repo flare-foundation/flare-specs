@@ -100,7 +100,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
   - `restored` (`bool`) — must be `true` for restored keys.
   - `settingsVersion` (`bytes32`) — TEE settings version.
   - `settings` (`bytes`) — TEE settings data.
-- `teeSignature` (`bytes`) — signature from the TEE machine over the proof.
+- `teeSignature` (`Signature`: `{v: uint8, r: bytes32, s: bytes32}`) — signature from the TEE machine over the proof.
 
 **Requirements:**
 - The target TEE machine must be in `PRODUCTION` status.
@@ -116,7 +116,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 1. The contract verifies the proof and TEE signature.
 2. It confirms that the public key matches the existing key definition.
 3. The target `teeId` is added to the key's TEE list, indicating the key now exists on an additional machine.
-4. The key is marked as restored on this TEE.
+4. The nonce for this `teeId` is recorded on-chain for future replay protection.
 
 **Events emitted:** [`WalletKeyConfirmed`](../Events.md#walletkeyconfirmed)
 
@@ -127,7 +127,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 - **Key migration between TEEs:** Key migration moves a key from one TEE machine to another. This is a composite workflow: (1) restore the key on the new TEE using Steps 1-4 above, (2) confirm the restored key with `confirmKey()`, and (3) optionally [delete the key](key-delete.md) from the decommissioned machine. During migration, the key exists on both TEEs simultaneously until explicitly deleted from the old one, ensuring zero downtime for signing operations.
 - **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md), its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
 - **Share submission verification:** Data providers and key admins should verify on-chain events and block confirmations before submitting shares, ensuring:
-  - The `KEY_DATA_PROVIDER_RESTORE` event was emitted with sufficient confirmations.
+  - The [`BackupRestoreTriggered`](../Events.md#backuprestoretriggered) and [`TeeInstructionsSent`](../Events.md#teeinstructionssent) events were emitted with sufficient confirmations.
   - The backup from the provided URL is consistent with the backup ID.
   - The `signature` and `teeSignature` fields in the backup package match the backup ID and metadata.
 - For related workflows, see [key-add.md](key-add.md) for adding new keys, [key-delete.md](key-delete.md) for deleting keys, [wallet-setup.md](wallet-setup.md) for initial key creation, and [machine-lifecycle.md](machine-lifecycle.md) for TEE machine status management.

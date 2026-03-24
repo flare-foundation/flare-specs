@@ -38,7 +38,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 **Events emitted:** [`ProjectCreated`](../Events.md#projectcreated)
 
-> **Optional:** After creation, the project owner can set a backup manager via `setBackupManager(projectId, address)` and a default wallet via `setDefaultWallet(projectId, walletId)`.
+> **Optional:** After creation, the project owner can set a backup manager via `setBackupManager(projectId, address)`.
 
 ---
 
@@ -121,7 +121,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 **Parameters:**
 - `walletId` (bytes32) — the wallet ID
 - `cosigners` (address[]) — array of cosigner addresses
-- `cosignersThreshold` (uint256) — number of cosigner signatures required
+- `cosignersThreshold` (uint64) — number of cosigner signatures required
 
 **Requirements:**
 - Wallet must be in `CREATED` status
@@ -194,7 +194,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 **Parameters:**
 - `walletId` (bytes32) — the wallet ID
-- `multisigThreshold` (uint256) — number of keys required for multisig operations
+- `multisigThreshold` (uint64) — number of keys required for multisig operations
 
 **Requirements:**
 - Wallet must be in `INITIALIZED` status
@@ -224,6 +224,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 - Wallet must be in `INITIALIZED` status.
 - The TEE machine must be in `PRODUCTION` status.
 - The TEE machine's extension ID must match the wallet's project extension ID.
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 
@@ -254,8 +255,9 @@ This workflow describes creating a project, configuring a wallet, generating key
 - Key type and signing algorithm must match project configuration.
 - Config constants (admins, cosigners) must match the wallet's locked configuration.
 - TEE signature must be valid.
+- The proof's `nonce` must match the expected nonce stored on-chain for the specific TEE machine.
 - For new keys: `nonce == 0` and `restored == false`.
-- For restored keys: `nonce > 0` and `restored == true`.
+- For restored keys: `nonce > 0`, `restored == true`, and the `teeId` must not already be in the key's TEE list.
 
 **What happens:**
 

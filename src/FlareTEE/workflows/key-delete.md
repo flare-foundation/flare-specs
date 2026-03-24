@@ -34,7 +34,7 @@ Deletion removes private key material from the specified TEE but retains the key
 1. The contract sends a [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction to the specified TEE machine.
 2. The TEE machine verifies the `nonce` in the instruction is strictly greater than the current nonce stored for that key.
 3. The TEE machine removes the private key material from its memory.
-4. The `teeId` is removed from the key's TEE list on-chain.
+4. If the `teeId` is in the key's TEE list, it is removed. If the `teeId` is not found, the contract still proceeds — the instruction is sent as a retry mechanism.
 5. The key definition itself remains on the wallet — only the association with the specific TEE is removed.
 6. On the TEE machine, the wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) for that key are *retained* even after deletion, preventing nonce reuse if the key is later restored.
 
@@ -60,7 +60,7 @@ This step removes them.
 
 **What happens:**
 1. The contract iterates through the TEE IDs associated with the specified key.
-2. TEE IDs corresponding to machines that no longer hold the key are removed from the key definition's TEE list.
+2. TEE IDs whose on-chain status is not `PRODUCTION` are removed from the key definition's TEE list.
 
 **Events emitted:** [`WalletKeyDeleted`](../Events.md#walletkeydeleted) for each removed stale TEE ID.
 
