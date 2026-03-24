@@ -23,7 +23,7 @@ The FDC2 currently supports four attestation types:
 4. **PMWFeeProof** — provides accurate fee accounting for a range of payment nonces, comparing estimated fees (from instruction events) with actual fees (from external chain transactions).
 
 For full details on each type, see the [attestation-types](../attestation-types/) documentation.
-For the verifier server HTTP interface, see the [FDC2 Verifier Server](../component-architecture/fdc2-verifier.md) specification.
+For the verifier server HTTP interface, see the [FDC2 Verifier Server](FDC2%20Verifier%20Server.md) specification.
 
 ## Overview
 The procedure for handling attestations in the FDC2 is broadly the same as in the FDC.

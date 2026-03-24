@@ -22,7 +22,7 @@
 	- [Component Architecture](component-architecture/index.md)
 		- [TEE Node](component-architecture/tee-node.md)
 		- [TEE Proxy](component-architecture/tee-proxy.md)
-		- [FDC2 Verifier server](component-architecture/fdc2-verifier.md)
+		- [FDC2 Verifier server](Extensions/FDC2%20Verifier%20Server.md)
 		- [Relay client](component-architecture/tee-relay-client.md)
 	- [Commands](commands/index.md)
 	- [Workflows](workflows/index.md)
