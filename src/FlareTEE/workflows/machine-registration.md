@@ -176,7 +176,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 2. The registry stores the code version, making it a recognized version for the extension.
 3. TEE machines running this code version can now be registered.
 
-**Events emitted:** Version registration event (extension-specific)
+**Events emitted:** `TeeVersionAdded(extensionId, version, codeHash, platforms, governanceHash)`
 
 ---
 
@@ -224,7 +224,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 **What happens:**
 
 1. The contract generates a random challenge (32-byte string).
-2. A `TEE_ATTESTATION` instruction is sent to the TEE machine via the instruction system.
+2. A [`TEE_ATTESTATION`](../commands/F_REG--TEE_ATTESTATION.md) instruction is sent to the TEE machine via the instruction system.
 3. The TEE machine generates a challenge hash by ABI-encoding and hashing an `Attestation` struct containing: the challenge, public key, signing policy information, TEE state, and timestamp.
 4. The platform provider (e.g., Google Cloud) signs the challenge hash and returns the attestation response.
 5. The attestation result becomes available at the proxy.
@@ -292,7 +292,7 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 `Status: INITIALIZED --> PRODUCTION`
 
-**Events emitted:** Status change event
+**Events emitted:** `TeeMachineStatusChanged(teeId, PRODUCTION)`
 
 ---
 
@@ -317,5 +317,5 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 For more details on the machine lifecycle after production, see [machine-lifecycle.md](machine-lifecycle.md).
 
-**Events emitted:** Availability confirmed event
+**Events emitted:** `AvailabilityCheckValidityExtended(teeId, owner, endTs)`
 

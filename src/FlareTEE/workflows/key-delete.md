@@ -7,9 +7,9 @@ Deletion removes private key material from the specified TEE but retains the key
 
 ## Prerequisites
 
-- Wallet must be in `PRODUCTION` status.
 - The TEE machine holding the key must be in `PRODUCTION` status.
-- The key must exist on the specified TEE machine (i.e., the `teeId` must be in the key's TEE list).
+- The key must have been confirmed (public key must exist on-chain).
+- The TEE machine's extension ID must match the wallet's project extension ID.
 
 ---
 
@@ -26,15 +26,16 @@ Deletion removes private key material from the specified TEE but retains the key
 - `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
-- The TEE machine identified by `teeId` must be in `PRODUCTION` status.
-- The key must exist on the specified TEE (i.e., `teeId` must be in the key's TEE list).
+- The TEE machine must be in `PRODUCTION` status.
+- The key must have been confirmed (public key must exist on-chain).
+- The TEE machine's extension ID must match the wallet's project extension ID.
 
 **What happens:**
-1. The contract sends a `KEY_DELETE` instruction to the specified TEE machine, parameterized as `KEY_DELETE(teeId, walletId, keyId)`.
+1. The contract sends a [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction to the specified TEE machine.
 2. The TEE machine verifies the `nonce` in the instruction is strictly greater than the current nonce stored for that key.
 3. The TEE machine removes the private key material from its memory.
 4. The `teeId` is removed from the key's TEE list on-chain.
-5. The key definition itself remains on the wallet — only the association with the specific TEE is removed. The key may still exist on other TEE machines.
+5. The key definition itself remains on the wallet — only the association with the specific TEE is removed.
 6. On the TEE machine, the wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) for that key are *retained* even after deletion, preventing nonce reuse if the key is later restored.
 
 **Events emitted:** `WalletKeyDeleted(teeId, walletId, keyId)`, `TeeInstructionsSent`
@@ -45,28 +46,28 @@ Deletion removes private key material from the specified TEE but retains the key
 
 ### Step 2: Clean Up Stale TEE IDs — `TeeWalletKeyManager.cleanUpTeeIds()`
 
-After deleting keys or decommissioning TEE machines, stale TEE IDs may remain in a key's TEE list. This step removes them.
+After deleting keys or decommissioning TEE machines, stale TEE IDs may remain in a key's TEE list.
+This step removes them.
 
-**Who can call:** Project owner or wallet admin.
+**Who can call:** Project owner or backup manager.
 
 **Parameters:**
 - `walletId` (`bytes32`) — the wallet ID.
 - `keyId` (`uint64`) — the key ID whose TEE list should be cleaned.
 
 **Requirements:**
-- The key must exist on the wallet.
-- There must be stale TEE IDs in the key's TEE list (TEEs that no longer hold the key or have been decommissioned).
+- The key must exist on the wallet (public key must be non-empty).
 
 **What happens:**
 1. The contract iterates through the TEE IDs associated with the specified key.
 2. TEE IDs corresponding to machines that no longer hold the key are removed from the key definition's TEE list.
-3. This is typically used after a TEE machine has been decommissioned or retired from the network.
 
-**Events emitted:** None specified in the contract interface.
+**Events emitted:** `WalletKeyDeleted(teeId, walletId, keyId)` for each removed stale TEE ID.
 
 ---
 
 ## Notes
 
+- The `deleteKey` function does not check wallet status — it can be called regardless of whether the wallet is in `CREATED`, `INITIALIZED`, `PRODUCTION`, or `PAUSED` status.
 - For adding new keys to TEE machines, see the [key add workflow](key-add.md). For TEE machine decommissioning and status changes, see [machine lifecycle](machine-lifecycle.md).
 - On the TEE machine, wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) are retained even after deletion, preventing nonce reuse if the key is later [restored from backup](key-restore.md).

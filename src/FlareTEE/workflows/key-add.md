@@ -7,10 +7,9 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 
 ## Prerequisites
 
-- Wallet must be in `INITIALIZED` or `PRODUCTION` status.
+- Wallet must be in `INITIALIZED` status.
 - The target TEE machine must be in `PRODUCTION` status.
 - The TEE machine's extension ID must match the wallet's project extension ID.
-- The project must have a supported key type and signing algorithm configured on the extension.
 
 ---
 
@@ -18,7 +17,7 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 
 ### Step 1: Add Key — `TeeWalletKeyManager.addKey()`
 
-**Who can call:** Project owner (wallet owner).
+**Who can call:** Project owner only.
 
 **Parameters:**
 - `teeId` (`address`) — the TEE machine on which to generate the key.
@@ -26,15 +25,16 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 - `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
+- Wallet must be in `INITIALIZED` status.
 - The TEE machine must be in `PRODUCTION` status.
 - The TEE machine's extension ID must match the wallet's project extension ID.
 
 **What happens:**
 1. The contract generates a new `keyId` by incrementing the wallet's key counter.
-2. A `KEY_GENERATE` instruction is sent to the specified TEE machine, parameterized as `KEY_GENERATE(teeId, walletId, keyId, opType, opTypeConstants, adminsPublicKeys, adminsThreshold, cosigners, cosignersThreshold)`.
+2. A [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction is sent to the specified TEE machine.
 3. The instruction includes the wallet configuration (admins, cosigners), key type, and signing algorithm from the project.
 4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
-5. The TEE machine automatically triggers a [key backup](key-restore.md#automatic-key-backup) for the newly generated key.
+5. The TEE machine automatically triggers a key backup for the newly generated key.
 
 **Events emitted:** `WalletKeyAdded(teeId, walletId, keyId)`, `TeeInstructionsSent`
 
@@ -44,27 +44,19 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 
 ### Step 2: Confirm Key — `TeeWalletKeyManager.confirmKey()`
 
-**Who can call:** Project owner or backup manager.
+**Who can call:** Project owner only (for new keys).
 
 **Parameters:**
-- `proof` (`KeyExistence`) — a `TeeKeyExistence` proof from the TEE machine containing:
-  - `teeId` (`address`) — the TEE machine that generated the key.
-  - `walletId` (`bytes32`) — the wallet ID.
-  - `keyId` (`uint64`) — the key ID from `addKey`.
-  - `nonce` (`uint256`) — key nonce ($0$ for new keys).
-  - `publicKey` (`bytes`) — the generated public key.
-  - `keyType` (`bytes32`) — must match the project's key type.
-  - `signingAlgo` (`bytes32`) — must match the project's signing algorithm.
-  - `configConstants` (`KeyConfigConstants`) — wallet config with `adminsPublicKeys`, `adminsThreshold`, `cosigners`, `cosignersThreshold` (must match wallet).
-  - `restored` (`bool`) — `false` for new keys.
-  - `settingsVersion` (`bytes32`) — settings version hash.
-  - `settings` (`bytes`) — settings data.
+- `proof` (`KeyExistence`) — a key existence proof from the TEE machine.
 - `teeSignature` (`Signature`) — signature from the TEE machine over the proof.
 
 **Requirements:**
 - The TEE machine must be in `PRODUCTION` status.
+- Wallet must be in `INITIALIZED` status.
 - The key ID must exist (created by `addKey` in Step 1).
+- `publicKey` in the proof must be non-empty.
 - For new keys: `nonce == 0` and `restored == false`.
+- `settingsVersion` must be `bytes32(0)` and `settings` must be empty.
 - Key type, signing algorithm, and `configConstants` must match the project and wallet configuration.
 - The TEE signature must be valid.
 
@@ -73,7 +65,7 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 2. Stores the public key on-chain.
 3. Adds the `teeId` to the key's TEE list, indicating the key exists on this machine.
 
-**Events emitted:** `WalletKeyConfirmed`
+**Events emitted:** `WalletKeyConfirmed(teeId, walletId, keyId, publicKey)`
 
 ---
 

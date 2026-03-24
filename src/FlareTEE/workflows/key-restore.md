@@ -9,10 +9,13 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 
 ## Prerequisites
 
-- The key must have been previously generated and confirmed (via [key-add.md](key-add.md) or [wallet-setup.md](wallet-setup.md) Steps 9–10).
-- The target TEE machine must be in `PRODUCTION` status and belong to the same extension as the source machine.
-- Data providers must be enrolled in the signing policy that was active when the backup was created.
-- Key admins must have been set during wallet initialization (via `setAdmins`).
+- The key must have been previously generated and confirmed (public key must exist on-chain).
+- The target TEE machine must be in `PRODUCTION` status.
+- The source machine (identified in the backup ID) must not be in `INITIALIZED` status.
+- The key must not already be available on the target TEE machine.
+- The extension IDs of the project, source TEE, and target TEE must all match.
+- The backup's `keyType` and `signingAlgo` must match the project configuration.
+- The backup's `rewardEpochId` must be within valid bounds.
 - A backup package must be available (either from the TEE proxy or uploaded to a URL).
 
 ---
@@ -35,13 +38,16 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 - The key must not already be available on the target TEE machine.
 - The key must have been confirmed (public key must exist on-chain).
 - The `publicKey` in the backup ID must match the on-chain key.
-- The target TEE's `initialSigningPolicyId` must be ≤ the backup's `rewardEpochId`.
+- The target TEE's `initialSigningPolicyId` must be $\leq$ the backup's `rewardEpochId`.
+- The backup's `rewardEpochId` must be $\leq$ the current reward epoch ID $+ 1$.
+- The backup's `keyType` and `signingAlgo` must match the project configuration.
+- The extension IDs of the project, source TEE, and target TEE must all match.
 
 **What happens:**
-1. The contract emits a `KEY_DATA_PROVIDER_RESTORE` instruction, parameterized as `KEY_DATA_PROVIDER_RESTORE(teeId, backupId, backupUrl, nonce)`.
+1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) instruction to the target TEE machine.
 2. This signals the TEE network (data providers and key admins) to begin the share collection process.
 
-**Events emitted:** `TeeInstructionsSent`
+**Events emitted:** `BackupRestoreTriggered(teeId, walletId, keyId, nonce)`, `TeeInstructionsSent`
 
 ---
 
@@ -99,8 +105,10 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 **Requirements:**
 - The target TEE machine must be in `PRODUCTION` status.
 - The key ID must already exist on the wallet (from the original `addKey` call).
+- The `teeId` must not already be in the key's TEE list.
 - For restored keys: `nonce > 0` and `restored == true`.
 - The public key must match the originally confirmed public key.
+- `settingsVersion` must be `bytes32(0)` and `settings` must be empty.
 - The `configConstants` must match the wallet's current admin and cosigner settings.
 - The TEE signature must be valid.
 

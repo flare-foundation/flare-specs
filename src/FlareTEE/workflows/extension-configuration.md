@@ -37,7 +37,7 @@ For background on the extension framework, see [Extensions](../Extensions/Extens
 2. The deployed contract address will be used as the `_teeExtensionInstructionsSender` parameter when registering the extension in the next step.
 3. The instruction sender contract inherits from a `Base` contract that holds references to all required system contracts, and implements domain-specific instruction methods (e.g., `signTransaction()`, `generateRandomUint64()`).
 
-**Events emitted:** Standard contract creation event
+**Events emitted:** None (contract deployment).
 
 > **Note:** The instruction sender contract must call `setExtensionId()` after the extension is registered (Step 2) to discover and store its own extension ID. This is required before any instructions can be sent.
 
@@ -91,7 +91,7 @@ For background on the extension framework, see [Extensions](../Extensions/Extens
 3. TEE machines can now register with this code hash and platform combination.
 
 **Events emitted:**
-- `TeeVersionAdded(extensionId, version, codeHash, platforms)` -- confirms the code version was added
+- `TeeVersionAdded(extensionId, version, codeHash, platforms, governanceHash)`
 
 ---
 
@@ -159,7 +159,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. The associated signing algorithms are determined by the system-level key type registration.
 
 **Events emitted:**
-- `SupportedKeyTypeAdded(extensionId, keyType)` -- emitted for each key type added
+- `SupportedKeyTypesAdded(extensionId, keyTypes)`
 
 ---
 
@@ -201,7 +201,7 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 3. Ownership of the extension is transferred to the new address.
 4. The extension owner is typically a multisig governance account for production deployments.
 
-**Events emitted:** Ownership transfer events
+**Events emitted:** `NewOwnerProposed(extensionId, oldOwner, newOwner)` and `NewOwnerConfirmed(extensionId, newOwner)`
 
 ---
 

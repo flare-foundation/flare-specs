@@ -66,17 +66,18 @@ For full status definitions, see the [Ownership specification](../TEE%20Manageme
 
 **Parameters:**
 
-- `proof` (`ITeeAvailabilityCheckProof`) -- a non-availability proof using the `TeeAvailabilityCheck` attestation type. The proof must show that the machine is not available (status `DOWN`).
+- `proof` (`ITeeAvailabilityCheck.Proof`) -- a `TeeAvailabilityCheck` proof that is either invalid or shows a non-`OK` status.
 
 **Requirements:**
 
 - The machine must be in `PRODUCTION` status.
-- The timestamp of the proof must not be older than 10 minutes.
+- The proof must be either invalid (fails verification) or have a non-`OK` response status.
+- The proof timestamp must be $\geq$ `lastStatusChangeTs`.
 
 **What happens:**
 
-1. The caller submits a `TeeAvailabilityCheck` proof demonstrating that the target machine is unavailable.
-2. The contract validates the proof timestamp is within the 10-minute window.
+1. The caller submits a `TeeAvailabilityCheck` proof for the target machine.
+2. The contract validates the proof timestamp against the machine's last status change.
 3. The machine status changes to `SUSPENDED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 

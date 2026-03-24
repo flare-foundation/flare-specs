@@ -41,21 +41,10 @@ This workflow describes sending XRP payments from a TEE-managed Protocol Managed
 
 **What happens:**
 
-1. The `TeePayments` contract calls `receivingTeesAndKeys(walletId)` on the `TeeWalletKeyManager` contract to retrieve the list of TEE machines and key IDs that should process the instruction.
-2. The contract forms a `PaymentInstructionMessage` containing:
-   - `walletId` — the wallet from which the payment originates.
-   - `teeIdKeyIdPairs` — the TEE machine and key ID pairs for signing.
-   - `sourceId` — the chain identifier.
-   - `senderAddress` — the XRPL multisig account address.
-   - `recipientAddress`, `amount`, `fee`, `paymentReference` — from the user's input.
-   - `nonce` — the batch nonce, maintained per wallet.
-   - `subNonce` — the global sequence number of the payment.
-   - `batchEndTs` — the batch end timestamp.
-3. The instruction is submitted to the `TeeInstructions` contract with the `F_XRP PAY` command.
+1. The `TeePayments` contract calls `receivingTeesAndKeys(walletId)` on the `TeeWalletKeyManager` contract to retrieve the list of TEE machines and key IDs.
+2. The contract forms a [`PAY`](../commands/F_XRP--PAY.md) instruction and submits it via `TeeExtensionRegistry.sendInstructions()`.
 
-**Events emitted:** `TeeInstructionsSent` with `instructionId`.
-
-> **Note:** If the amount is `0` and the sender address equals the recipient address, a nullification transaction (an empty `AccountSet` transaction) is signed instead of a payment. The payment reference is still included.
+**Events emitted:** `TeeInstructionsSent`
 
 ---
 
@@ -173,20 +162,25 @@ If a payment fails (e.g., due to a low fee or chain-level issues), the transacti
 **Who can call:** The project's authorized payment submission address.
 
 **Parameters:**
-- `account` (`ITeePayments.PMWMultisigAccount`) — the multisig account (same as Step 1).
+- `account` (`PMWMultisigAccount`) — the multisig account (same as Step 1).
 - `nonce` (`uint64`) — the batch nonce of the original payment instruction.
 - `firstSubNonce` (`uint64`) — the sub-nonce of the first transaction in the batch.
-- `paymentInstructions` (`ITeePayments.PaymentInstruction[]`) — the list of original payment instructions in the batch, each identified by `recipientAddress`, `amount`, `paymentReference`, and `fee`.
-- `fees` (`uint256[]`) — the new fee offer(s), typically higher than the original.
-- `nullify` (`bool[]`) — per-instruction flag indicating whether to nullify instead of reissue.
+- `paymentInstructions` (`PaymentInstruction[]`) — the original payment instructions in the batch.
+- `reissueFeeParams` (`ReissueFeeParams`) — the reissue fee parameters, containing:
+  - `maxFees` (`uint256[]`) — the new maximum fees per instruction.
+  - `feeFactorScheduleBIPS` (`int16[][]`) — fee factor schedules per instruction (in BIPS).
+  - `feeDelayScheduleSeconds` (`uint16[]`) — time schedule for fee escalation (in seconds, ascending).
+- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
 - The wallet must be in `PRODUCTION` status.
-- The original payment instruction must exist on-chain.
+- The `paymentInstructions` array must be non-empty.
+- The lengths of `paymentInstructions` and `reissueFeeParams.maxFees` must match.
+- The batch hash must match the on-chain recorded hash for the nonce.
 
 **What happens:**
 
-1. The `TeePayments` contract forms a new instruction with the `F_XRP REISSUE` command. The message format and processing are identical to `F_XRP PAY`.
+1. The `TeePayments` contract forms a new instruction with the [`REISSUE`](../commands/F_XRP--REISSUE.md) command.
 2. Data providers vote and the TEE machine(s) sign the replacement transaction with the same nonce but updated fee.
 3. The signed transaction is retrieved from the TEE proxy and submitted to the XRP Ledger, following the same flow as Steps 4 and 5.
 

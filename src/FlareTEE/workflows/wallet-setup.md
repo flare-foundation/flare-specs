@@ -18,7 +18,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 ### Step 1: Create Project — `TeeWalletProjectManager.createProject()`
 
-**Who can call:** Must be allowlisted as a wallet project owner for the extension. If default extension 0, anyone can call.
+**Who can call:** Must be allowlisted as a wallet project owner for the extension.
 
 **Parameters:**
 - `extensionId` (uint256) — the TEE extension ID
@@ -228,7 +228,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 **What happens:**
 
 1. Generates a new `keyId` by incrementing the wallet's key counter.
-2. Sends a `KEY_GENERATE` instruction to the specified TEE machine.
+2. Sends a [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction to the specified TEE machine.
 3. The instruction includes the wallet configuration (admins, cosigners), key type, and signing algorithm from the project.
 4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 5. This step can be repeated multiple times to add keys on different TEE machines (each gets a unique `keyId`).
@@ -239,33 +239,23 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 ### Step 10: Confirm Key — `TeeWalletKeyManager.confirmKey()`
 
-**Who can call:** Project owner or backup manager
+**Who can call:** Project owner only (for new keys). Project owner or backup manager (for restored keys).
 
 **Parameters:**
-- `proof` (struct `KeyExistence`) — key existence proof from the TEE machine containing:
-  - `teeId` (address) — the TEE machine that generated the key
-  - `walletId` (bytes32) — the wallet ID
-  - `keyId` (uint64) — the key ID from `addKey`
-  - `nonce` (uint256) — key nonce (0 for new keys)
-  - `publicKey` (bytes) — the generated public key
-  - `keyType` (bytes32) — must match project's key type
-  - `signingAlgo` (bytes32) — must match project's signing algorithm
-  - `configConstants` (struct) — wallet config with `adminsPublicKeys`, `adminsThreshold`, `cosigners`, `cosignersThreshold` (must match wallet)
-  - `restored` (bool) — `false` for new keys, `true` for restored keys
-  - `settingsVersion` (bytes32) — settings version hash
-  - `settings` (bytes) — settings data
-- `teeSignature` (Signature: `{v: uint8, r: bytes32, s: bytes32}`) — signature from the TEE machine over the proof
+- `proof` (`KeyExistence`) — key existence proof from the TEE machine.
+- `teeSignature` (`Signature`) — signature from the TEE machine over the proof.
 
 **Requirements:**
-- Wallet must be in `INITIALIZED` status (for new keys)
-- TEE machine must be in `PRODUCTION` status
-- Key ID must exist (created by `addKey` in Step 9)
-- Nonce must match expected value
-- Key type and signing algorithm must match project configuration
-- Config constants (admins, cosigners) must match the wallet's locked configuration
-- TEE signature must be valid
-- For new keys: `nonce == 0` and `restored == false`
-- For restored keys: `nonce > 0` and `restored == true`
+- Wallet must be in `INITIALIZED` status (for new keys).
+- TEE machine must be in `PRODUCTION` status.
+- Key ID must exist (created by `addKey` in Step 9).
+- `publicKey` must be non-empty.
+- `settingsVersion` must be `bytes32(0)` and `settings` must be empty.
+- Key type and signing algorithm must match project configuration.
+- Config constants (admins, cosigners) must match the wallet's locked configuration.
+- TEE signature must be valid.
+- For new keys: `nonce == 0` and `restored == false`.
+- For restored keys: `nonce > 0` and `restored == true`.
 
 **What happens:**
 
@@ -313,6 +303,6 @@ This workflow describes creating a project, configuring a wallet, generating key
 - **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits `WalletPaused`. To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
 - **Setting default wallet — `TeeWalletProjectManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
 - **Setting backup manager — `TeeWalletProjectManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
-- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a `KEY_DELETE` instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits `WalletKeyDeleted`.
+- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits `WalletKeyDeleted(teeId, walletId, keyId)`.
 - **Setting pausing addresses — `TeeWalletManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.
 

@@ -38,7 +38,7 @@ The multi-TEE approach applies to all key operations: generation, XRPL multisig 
    - Retrieve the availability proof and call `TeeMachineRegistry.toProduction(proof)` to move the machine to `PRODUCTION` status.
 2. Each registration is fully independent -- machines do not need to know about each other at this stage.
 
-**Events emitted:** `TeeMachineRegistered`, `TeeMachineToProduction` (per machine).
+**Events emitted:** `TeeMachineRegistered`, `TeeMachineStatusChanged` (per machine).
 
 ---
 
@@ -63,7 +63,7 @@ The multi-TEE approach applies to all key operations: generation, XRPL multisig 
 2. **Set multisig threshold** -- `TeeWalletKeyManager.setMultisigThreshold(walletId, threshold)` (e.g., `threshold=2` for 2-of-3 signing).
 3. **Add one key per TEE** -- for each proxy URL:
    - Get the `teeId` from the proxy.
-   - Call `TeeWalletKeyManager.addKey(teeId, walletId)` -- this sends a `KEY_GENERATE` instruction to that specific TEE.
+   - Call `TeeWalletKeyManager.addKey(teeId, walletId, claimBackAddress)` -- this sends a [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction to that specific TEE.
    - Each TEE independently generates its own private key.
    - Retrieve the `KeyExistence` proof from each proxy.
    - Call `TeeWalletKeyManager.confirmKey(proof, teeSignature)` for each key individually.
@@ -109,7 +109,7 @@ See [wallet-setup.md](wallet-setup.md) for the full single-TEE wallet flow.
 5. **Set batch settings:**
    - Call `TeePayments.setBatchSettings(pmwMultisigAccount, batchSize, batchDurationSeconds)` to configure payment batching.
 
-**Events emitted:** `TeeInstructionsSent` (per attestation request), plus payment contract events for `AddPMWMultisigAccount` and `SetBatchSettings`.
+**Events emitted:** `TeeInstructionsSent` (per attestation request), `PMWMultisigAccountAdded`, `BatchSettingsSet`.
 
 See [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md) for the single-TEE flow and [fdc2-attestation.md](fdc2-attestation.md) for the PMWMultisigAccountConfigured attestation details.
 

@@ -20,26 +20,22 @@ The result can be verified on-chain by the `VrfVerifier` contract.
 
 **Who initiates:** The VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`).
 
-A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends an instruction with `opType = F_WALLET` and `opCommand = VRF`. The instruction's event message is a `VrfInstructionMessage` containing:
+A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../commands/F_WALLET--VRF.md) instruction.
 
-- `walletId` (`bytes32`) — the wallet ID of the VRF key
-- `keyId` (`uint64`) — the key ID within the wallet
-- `nonce` (`bytes`) — an arbitrary bytes value binding the proof to a specific request
-
-```solidity
-// Source: ITeeVrf.sol
-struct VrfInstructionMessage {
-    bytes32 walletId;
-    uint64 keyId;
-    bytes nonce;
-}
-```
+**Parameters:**
+- `walletId` (`bytes32`) — the wallet ID of the VRF key.
+- `keyId` (`uint64`) — the key ID within the wallet.
+- `nonce` (`bytes`) — an arbitrary bytes value binding the proof to a specific request.
+- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
 
 **Requirements:**
-- The `nonce` must be non-empty; the TEE rejects requests with an empty nonce.
+- The caller must be the VRF authorization address for the wallet.
+- The wallet must be in `PRODUCTION` status.
+- The `nonce` must be non-empty.
 - The specified `(walletId, keyId)` pair must exist on the target TEE machine.
+- The key's signing algorithm must be `keccak256-secp256k1-vrf`.
 
-> **Note:** This command has `immediateResult = true`, meaning the TEE produces the proof as soon as it processes the action, without waiting for an additional retrieval step.
+**Events emitted:** `VrfRequested(walletId, keyId, instructionId)`, `TeeInstructionsSent`
 
 ---
 
