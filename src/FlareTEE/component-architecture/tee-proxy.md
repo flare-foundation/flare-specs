@@ -99,8 +99,10 @@ When the TEE node posts a result via `POST /result`, the proxy:
 Configuration fields (`config.toml`):
 
 ```toml
+chain_id = 14              # Required: Flare chain ID (14 = mainnet, 16 = Coston)
 redis_port = ":6379"
 private_key_variable = "PRIVATE_KEY"
+db_sync_max_sleep_time = "10m"  # Optional: max sleep between DB sync retries on startup
 
 [db]                    # C-chain indexer DB
 [addresses]             # Relay, VoterRegistry, FlareSystemsManager
