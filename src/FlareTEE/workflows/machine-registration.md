@@ -38,7 +38,7 @@ This workflow describes deploying a TEE machine onto the Flare network, from Con
 
 **Who can call:** Machine owner (via Config API, port 5500)
 
-**Parameters:**
+**Input:**
 - `url` (string) — URL of the TEE proxy to connect to (e.g., `http://<TEE_PROXY_INTERNAL_IP>:6661`)
 
 **Requirements:**
@@ -68,7 +68,7 @@ curl --location '<TEE_MACHINE_IP>:5500/proxy' \
 
 **Who can call:** Machine owner (via Config API, port 5500)
 
-**Parameters:**
+**Input:**
 - `owner` (address) — Ethereum address of the initial owner
 
 **Requirements:**
@@ -98,7 +98,7 @@ curl --location '<TEE_MACHINE_IP>:5500/initial-owner' \
 
 **Who can call:** Machine owner (via Config API, port 5500)
 
-**Parameters:**
+**Input:**
 - `extensionId` (bytes32) — The extension ID to register the machine against
 
 **Requirements:**

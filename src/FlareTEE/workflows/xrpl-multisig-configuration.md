@@ -23,7 +23,7 @@ Convert each TEE wallet public key into an XRPL account address.
 
 **Who can call:** Anyone with access to the wallet's public keys (typically the project owner).
 
-**Parameters:**
+**Input:**
 - `publicKey` (`bytes`) -- The wallet key's public key in uncompressed format (`pubkey.X | pubkey.Y`, 64 bytes).
 
 **What happens:**
@@ -42,7 +42,7 @@ Set up a multisig account on the XRP Ledger with the derived signer addresses.
 
 **Who can call:** Anyone with an XRPL account and sufficient XRP for reserve requirements.
 
-**Parameters:**
+**Input:**
 - `signerAddresses` (`string[]`) -- XRP addresses derived in Step 1, one per wallet key.
 - `threshold` (`int`) -- The multisig threshold, matching the wallet's configured threshold.
 
@@ -115,7 +115,7 @@ Fetch the attestation proof from the TEE proxy and verify it on-chain.
 
 **Who can call:** Anyone (typically the wallet owner).
 
-**Parameters:**
+**Input:**
 - `walletId` (`bytes32`) -- The wallet ID.
 - `instructionId` (`bytes32`) -- The instruction ID from Step 3.
 - `proxyURL` (`string`) -- URL of the TEE proxy.

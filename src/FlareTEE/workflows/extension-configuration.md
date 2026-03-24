@@ -20,22 +20,14 @@ For background on the extension framework, see [Extensions](../Extensions/Extens
 
 ### Step 1: Deploy Instruction Sender Contract
 
-**Who can call:** Any address
-
-**Parameters:**
-- `_teeExtensionRegistry` (`ITeeExtensionRegistry`): Address of the `TeeExtensionRegistry` contract
-- `_teeWalletProjectManager` (`ITeeWalletProjectManager`): Address of the `TeeWalletProjectManager` contract
-- `_teeWalletManager` (`ITeeWalletManager`): Address of the `TeeWalletManager` contract
-- `_teeWalletKeyManager` (`ITeeWalletKeyManager`): Address of the `TeeWalletKeyManager` contract
-- `_teeMachineRegistry` (`ITeeMachineRegistry`): Address of the `TeeMachineRegistry` contract
-
-**Requirements:**
-- All referenced system contract addresses must be valid and deployed on the target network
-
 **What happens:**
-1. A new instruction sender contract is deployed on-chain. This contract is responsible for encoding and sending instructions to the TEE extension via `TeeExtensionRegistry.sendInstructions()`.
+1. A new instruction sender contract is deployed on-chain.
+This contract is responsible for encoding and sending instructions to the TEE extension via `TeeExtensionRegistry.sendInstructions()`.
 2. The deployed contract address will be used as the `_teeExtensionInstructionsSender` parameter when registering the extension in the next step.
-3. The instruction sender contract inherits from a `Base` contract that holds references to all required system contracts, and implements domain-specific instruction methods (e.g., `signTransaction()`, `generateRandomUint64()`).
+
+The instruction sender contract does not need to implement any specific interface.
+It only needs to be the address registered for the extension and call `TeeExtensionRegistry.sendInstructions()` with the correct parameters.
+The contract's constructor and methods are entirely defined by the extension developer.
 
 **Events emitted:** None (contract deployment).
 

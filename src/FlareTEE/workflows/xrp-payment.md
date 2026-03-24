@@ -89,7 +89,7 @@ Fetch the signed XRPL transaction from the TEE proxy.
 
 **Endpoint:** `GET /action/result/<actionId>`
 
-**Parameters:**
+**Input:**
 - `actionId` (`bytes32`) — the `instructionId` from Step 1.
 
 **What happens:**
@@ -108,7 +108,7 @@ Submit the multisigned transaction to the XRP Ledger.
 
 **Who can call:** Anyone.
 
-**Parameters:**
+**Input:**
 - The signed XRPL transaction JSON from Step 4 (with all required signatures combined).
 
 **What happens:**
