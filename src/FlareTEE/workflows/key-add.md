@@ -28,6 +28,7 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 - Wallet must be in `INITIALIZED` status.
 - The TEE machine must be in `PRODUCTION` status.
 - The TEE machine's extension ID must match the wallet's project extension ID.
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 1. The contract generates a new `keyId` by incrementing the wallet's key counter.

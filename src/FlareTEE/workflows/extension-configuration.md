@@ -40,7 +40,7 @@ The contract's constructor and methods are entirely defined by the extension dev
 **Who can call:** Any address (the caller becomes the extension owner)
 
 **Parameters:**
-- `_teeExtensionStateVerifier` (`address`): Address of a state verifier contract for the extension. Can be `address(0)` initially if no state verification is needed.
+- `_teeExtensionStateVerifier` (`ITeeExtensionStateVerifier`): State verifier contract for the extension. Can be `address(0)` initially if no state verification is needed.
 - `_teeExtensionInstructionsSender` (`address`): Address of the instruction sender contract deployed in Step 1. Must be non-zero.
 
 **Requirements:**

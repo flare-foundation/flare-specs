@@ -33,7 +33,7 @@ The multi-TEE approach applies to all key operations: generation, XRPL multisig 
    - Retrieve TEE info from the proxy via `/info` endpoint.
    - Extract the `teeId` and `proxyId` from the signed TEE info response.
    - Call `GET <proxyUrl>/info` to retrieve the `SignedTeeInfoResponse`. Extract the `teeId`, `publicKey`, `codeHash`, `platform`, `extensionId`, `proxyId`, and `dataSignature`.
-   - Call `TeeMachineRegistry.register(machineData, signature, teeProxyId, teeUrl)` where `machineData` is constructed from the `/info` response fields and `signature` is the `dataSignature` from the response.
+   - Call `TeeMachineRegistry.register(machineData, signature, teeProxyId, url, claimBackAddress)` where `machineData` is constructed from the `/info` response fields and `signature` is the `dataSignature` from the response.
    - Request a [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation via the FDC2 flow.
    - Retrieve the availability proof and call `TeeMachineRegistry.toProduction(proof)` to move the machine to `PRODUCTION` status.
 2. Each registration is fully independent -- machines do not need to know about each other at this stage.
@@ -56,7 +56,7 @@ The multi-TEE approach applies to all key operations: generation, XRPL multisig 
 
 **What happens:**
 1. **Create one project and one wallet** -- a single on-chain operation, same as the single-TEE flow:
-   - `TeeWalletProjectManager.createProject(extensionId, keyType, signingAlgo, authorizationAddress)`
+   - `TeeWalletProjectManager.createProject(extensionId, keyType, signingAlgo)`
    - `TeeWalletManager.createWallet(projectId)`
    - `TeeWalletManager.setAdmins(walletId, adminsPublicKeys, adminsThreshold)` followed by `confirmAdmin()` for each admin.
    - `TeeWalletManager.closeWalletInitialization(walletId)`

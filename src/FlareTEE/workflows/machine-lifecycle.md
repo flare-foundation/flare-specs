@@ -87,8 +87,8 @@ For full status definitions, see the [Ownership specification](../TEE%20Manageme
 
 To obtain a non-availability proof and pause a machine:
 
-1. Call `TeeVerification.requestTeeAttestation(teeId)` to trigger a TEE attestation on the target machine.
-2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, teeAttestInstructionId, externalTeeId)` to request an FDC2 availability check using an external TEE. Parse the `TeeInstructionsSent` event to obtain the `instructionId`.
+1. Call `TeeVerification.requestTeeAttestation(teeId, claimBackAddress)` to trigger a TEE attestation on the target machine.
+2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, instructionId, testOnTeeId, proofOwner, claimBackAddress)` to request an FDC2 availability check. Parse the [`TeeInstructionsSent`](../Events.md#teeinstructionssent) event to obtain the `instructionId`.
 3. Poll `<proxyUrl>/action/result/<instructionId>` until the proof is available.
 4. Call `TeeMachineRegistry.pauseWithProof(proof)` with the retrieved proof.
 
@@ -232,7 +232,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **Parameters:**
 
-- `proof` (`ITeeAvailabilityCheckProof`) -- a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof for the machine.
+- `proof` (`ITeeAvailabilityCheck.Proof`) -- a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof for the machine.
 
 **Requirements:**
 

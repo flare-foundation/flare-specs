@@ -177,6 +177,7 @@ If a payment fails (e.g., due to a low fee or chain-level issues), the transacti
 - The `paymentInstructions` array must be non-empty.
 - The lengths of `paymentInstructions` and `reissueFeeParams.maxFees` must match.
 - The batch hash must match the on-chain recorded hash for the nonce.
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 
@@ -184,5 +185,6 @@ If a payment fails (e.g., due to a low fee or chain-level issues), the transacti
 2. Data providers vote and the TEE machine(s) sign the replacement transaction with the same nonce but updated fee.
 3. The signed transaction is retrieved from the TEE proxy and submitted to the XRP Ledger, following the same flow as Steps 4 and 5.
 
-**Nullification:** To nullify a payment instead of reissuing it, set the `nullify` flag to `true` for the corresponding instruction. This produces a cheap `AccountSet` transaction that consumes the blockchain nonce without transferring funds. Nullification is useful when the original payment should be cancelled rather than retried.
+**Nullification:** To nullify a payment, submit a reissue where the payment amount is $0$ and the sender address equals the recipient address.
+The TEE machine signs an `AccountSet` transaction that consumes the blockchain nonce without transferring funds.
 

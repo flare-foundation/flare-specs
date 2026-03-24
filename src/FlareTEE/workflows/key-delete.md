@@ -29,6 +29,7 @@ Deletion removes private key material from the specified TEE but retains the key
 - The TEE machine must be in `PRODUCTION` status.
 - The key must have been confirmed (public key must exist on-chain).
 - The TEE machine's extension ID must match the wallet's project extension ID.
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 1. The contract sends a [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction to the specified TEE machine.

@@ -42,6 +42,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 - The backup's `rewardEpochId` must be $\leq$ the current reward epoch ID $+ 1$.
 - The backup's `keyType` and `signingAlgo` must match the project configuration.
 - The extension IDs of the project, source TEE, and target TEE must all match.
+- The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
 1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) instruction to the target TEE machine.
