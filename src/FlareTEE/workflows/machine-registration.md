@@ -103,7 +103,7 @@ curl --location '<TEE_MACHINE_IP>:5500/initial-owner' \
 
 **Requirements:**
 - Must be called before on-chain registration
-- Once the machine is registered and verified via a `TeeAvailabilityCheck` proof, the extension ID becomes **fixed and cannot be changed**
+- Once the machine is registered and verified via a [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof, the extension ID becomes **fixed and cannot be changed**
 
 **What happens:**
 
@@ -250,7 +250,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 **What happens:**
 
-1. The contract sends a `TeeAvailabilityCheck` attestation request through the FDC2 system.
+1. The contract sends a [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation request through the FDC2 system.
 2. The FDC2 verifier TEE challenges the target machine and verifies:
    - The machine is reachable at the registered URL
    - The attestation response is valid and fresh
@@ -279,12 +279,12 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 **Requirements:**
 - The machine must be in `INITIALIZED` or `PAUSED` status (for re-activation)
-- The proof must be a valid `TeeAvailabilityCheck` proof matching the TEE's identity and data
+- The proof must be a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof matching the TEE's identity and data
 - The code version referenced in the proof must still be supported on the extension
 
 **What happens:**
 
-1. The contract validates the FDC2 `TeeAvailabilityCheck` proof — verifies signatures, checks that the proof data matches the registered machine.
+1. The contract validates the FDC2 [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof — verifies signatures, checks that the proof data matches the registered machine.
 2. The machine status changes from `INITIALIZED` to `PRODUCTION`.
 3. `lastStatusChangeTs` is updated to `block.timestamp`.
 4. An `availabilityCheckValidityEndTs` deadline is set, defining how long the machine is considered available.
@@ -303,7 +303,7 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 **Who can call:** Anyone
 
 **Parameters:**
-- `proof` (struct `ITeeAvailabilityCheckProof`) — a fresh `TeeAvailabilityCheck` attestation proof
+- `proof` (struct `ITeeAvailabilityCheckProof`) — a fresh [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation proof
 
 **Requirements:**
 - The machine must be in `PRODUCTION` status
@@ -311,7 +311,7 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 
 **What happens:**
 
-1. Given a valid `TeeAvailabilityCheck` proof, the contract extends the availability deadline (`availabilityCheckValidityEndTs`).
+1. Given a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof, the contract extends the availability deadline (`availabilityCheckValidityEndTs`).
 2. This must be called periodically before the current deadline expires.
 3. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
 

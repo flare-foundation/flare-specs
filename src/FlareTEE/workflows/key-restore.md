@@ -125,7 +125,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 ## Notes
 
 - **Key migration between TEEs:** Key migration moves a key from one TEE machine to another. This is a composite workflow: (1) restore the key on the new TEE using Steps 1-4 above, (2) confirm the restored key with `confirmKey()`, and (3) optionally [delete the key](key-delete.md) from the decommissioned machine. During migration, the key exists on both TEEs simultaneously until explicitly deleted from the old one, ensuring zero downtime for signing operations.
-- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via `TeeAvailabilityCheck`, its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
+- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md), its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
 - **Share submission verification:** Data providers and key admins should verify on-chain events and block confirmations before submitting shares, ensuring:
   - The `KEY_DATA_PROVIDER_RESTORE` event was emitted with sufficient confirmations.
   - The backup from the provided URL is consistent with the backup ID.

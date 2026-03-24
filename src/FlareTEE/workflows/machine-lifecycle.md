@@ -52,9 +52,9 @@ For full status definitions, see the [Ownership specification](../TEE%20Manageme
 ## Prerequisites
 
 - The TEE machine must be registered on the `TeeMachineRegistry` smart contract.
-- For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [machine-registration.md](machine-registration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid `TeeAvailabilityCheck` proof and a supported code version.
+- For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [machine-registration.md](machine-registration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof and a supported code version.
 - The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
-- For proof-based operations, a valid `TeeAvailabilityCheck` FDC2 proof is required (see [fdc2-attestation.md](fdc2-attestation.md)).
+- For proof-based operations, a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) FDC2 proof is required (see [fdc2-attestation.md](fdc2-attestation.md)).
 
 ---
 
@@ -66,7 +66,7 @@ For full status definitions, see the [Ownership specification](../TEE%20Manageme
 
 **Parameters:**
 
-- `proof` (`ITeeAvailabilityCheck.Proof`) -- a `TeeAvailabilityCheck` proof that is either invalid or shows a non-`OK` status.
+- `proof` (`ITeeAvailabilityCheck.Proof`) -- a [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof that is either invalid or shows a non-`OK` status.
 
 **Requirements:**
 
@@ -76,7 +76,7 @@ For full status definitions, see the [Ownership specification](../TEE%20Manageme
 
 **What happens:**
 
-1. The caller submits a `TeeAvailabilityCheck` proof for the target machine.
+1. The caller submits a [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof for the target machine.
 2. The contract validates the proof timestamp against the machine's last status change.
 3. The machine status changes to `SUSPENDED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
@@ -148,7 +148,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 
 1. The owner submits updated proxy ID and URL for the machine.
 2. The contract updates the machine record with the new `teeProxyId` and `url`.
-3. The machine status changes to `PAUSED`. A new `TeeAvailabilityCheck` proof is required to return it to `PRODUCTION` via `toProduction(proof)`.
+3. The machine status changes to `PAUSED`. A new [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof is required to return it to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** [`TeeMachineSettingsUpdated`](../Events.md#teemachinesettingsupdated) and [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged) if the machine was in `PRODUCTION` or `SUSPENDED` status.
@@ -212,7 +212,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **Parameters:**
 
-- `proof` (`ITeeAvailabilityCheckProof`) -- a valid `TeeAvailabilityCheck` proof for the machine.
+- `proof` (`ITeeAvailabilityCheckProof`) -- a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof for the machine.
 
 **Requirements:**
 
@@ -221,7 +221,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **What happens:**
 
-1. The caller submits a `TeeAvailabilityCheck` proof for the machine to the `TeeVerification` contract.
+1. The caller submits a [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof for the machine to the `TeeVerification` contract.
 2. The contract validates the proof.
 3. The `availabilityCheckValidityEndTs` deadline is extended.
 4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares (see Rewarding -- not yet published).
@@ -273,7 +273,7 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 
 1. The extension owner calls `unban(teeId)`.
 2. The machine status changes from `BANNED` to `PAUSED`.
-3. A new `TeeAvailabilityCheck` proof is required to return the machine to `PRODUCTION` via `toProduction(proof)`.
+3. A new [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof is required to return the machine to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)

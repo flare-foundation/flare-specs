@@ -191,7 +191,7 @@ The following table shows how each field of the `ProveResponse` (from the action
 
 2. **Decode the response header.** ABI-decode `ProveResponse.ResponseHeader` into the `Fdc2ResponseHeader` struct. This yields the `attestationType`, `sourceId`, `thresholdBIPS`, `proofOwner`, `cosigners`, `cosignersThreshold`, and `timestamp` fields.
 
-3. **Decode request and response bodies.** ABI-decode `ProveResponse.RequestBody` and `ProveResponse.ResponseBody` into the attestation-type-specific structs. For example, for `TeeAvailabilityCheck`, the response body decodes into a struct with `status`, `teeTimestamp`, `codeHash`, `platform`, `initialSigningPolicyId`, `lastSigningPolicyId`, and `state`.
+3. **Decode request and response bodies.** ABI-decode `ProveResponse.RequestBody` and `ProveResponse.ResponseBody` into the attestation-type-specific structs. For example, for [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md), the response body decodes into a struct with `status`, `teeTimestamp`, `codeHash`, `platform`, `initialSigningPolicyId`, `lastSigningPolicyId`, and `state`.
 
 4. **Decompose signatures.** Convert the raw signature bytes into Solidity `Signature` structs by splitting each $65$-byte ECDSA signature into `(v, r, s)` components:
    - `r` = first $32$ bytes.
@@ -215,7 +215,7 @@ The verifying contract (e.g., `TeeVerification`) validates the proof by:
    - If `teeSignatures` are present: the `Fdc2Verification` contract verifies each TEE signature using `ecrecover` against the recomputed hash, confirming the signing TEE's identity.
    - If `signingPolicySignatures` are present: the `Relay` contract verifies the data provider signatures against the current signing policy.
    - If `cosignerSignatures` are present: each is verified against the cosigner addresses listed in the response header.
-4. **Validating response data** — the contract checks attestation-specific fields (e.g., code hash, platform, signing policy hashes for `TeeAvailabilityCheck`; account configuration for `PMWMultisigAccountConfigured`).
+4. **Validating response data** — the contract checks attestation-specific fields (e.g., code hash, platform, signing policy hashes for [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md); account configuration for [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md)).
 
 ### Attestation-Specific Proof Structs
 

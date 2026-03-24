@@ -3,7 +3,7 @@
 ## Overview
 
 This sub-workflow describes the common process for submitting, voting on, and verifying an FDC2 attestation request.
-It applies to all three attestation types: `TeeAvailabilityCheck`, `PMWMultisigAccountConfigured`, and `PMWPaymentStatus`.
+It applies to all three attestation types: [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md), [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md), and [`PMWPaymentStatus`](../attestation-types/PMWPaymentStatus.md).
 For full FDC2 details, see the [FDC2 specification](../Extensions/FTDC.md).
 
 ## Prerequisites

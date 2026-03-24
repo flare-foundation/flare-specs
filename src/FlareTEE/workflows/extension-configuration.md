@@ -172,7 +172,7 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 **Endpoints:**
 - `POST /proxy` -- set the TEE proxy URL (e.g., `http://<TEE_PROXY_INTERNAL_IP>:6661`)
 - `POST /initial-owner` -- set the initial owner address (immutable once set)
-- `POST /extension-id` -- set the extension ID (fixed after `TeeAvailabilityCheck` verification)
+- `POST /extension-id` -- set the extension ID (fixed after [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) verification)
 
 **Events emitted:** None (off-chain configuration)
 

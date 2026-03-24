@@ -64,7 +64,7 @@ After this step, the XRPL account can only authorize transactions through multis
 
 #### XRPL Account Configuration Requirements
 
-The `PMWMultisigAccountConfigured` attestation verifier checks the XRPL account's signer list, quorum, account flags, and regular key status. All checks must pass for the attestation to return `status = ok`. In summary, the account must have:
+The [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md) attestation verifier checks the XRPL account's signer list, quorum, account flags, and regular key status. All checks must pass for the attestation to return `status = ok`. In summary, the account must have:
 
 - A signer list matching the wallet's public keys, each with `SignerWeight = 1`
 - `SignerQuorum` matching the wallet's multisig threshold
@@ -77,7 +77,7 @@ For the complete verification rules and example `account_info` responses, see [P
 
 ---
 
-### Step 3: Request `PMWMultisigAccountConfigured` Attestation
+### Step 3: Request [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md) Attestation
 
 Submit an FDC2 attestation request to verify that the XRPL multisig account is correctly configured.
 

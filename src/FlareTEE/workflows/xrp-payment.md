@@ -124,9 +124,9 @@ Submit the multisigned transaction to the XRP Ledger.
 
 ---
 
-### Step 6: Verify Payment (Optional) — `PMWPaymentStatus` FDC2 Attestation
+### Step 6: Verify Payment (Optional) — [`PMWPaymentStatus`](../attestation-types/PMWPaymentStatus.md) FDC2 Attestation
 
-Request a `PMWPaymentStatus` attestation to verify the on-chain status of the payment.
+Request a [`PMWPaymentStatus`](../attestation-types/PMWPaymentStatus.md) attestation to verify the on-chain status of the payment.
 
 **Who can call:** Anyone.
 
@@ -138,7 +138,7 @@ Request a `PMWPaymentStatus` attestation to verify the on-chain status of the pa
 
 **What happens:**
 
-1. An FDC2 attestation request is submitted via `Fdc2Hub.requestAttestation()` with the `PMWPaymentStatus` attestation type.
+1. An FDC2 attestation request is submitted via `Fdc2Hub.requestAttestation()` with the [`PMWPaymentStatus`](../attestation-types/PMWPaymentStatus.md) attestation type.
 2. TEE machines independently look up the transaction on the XRP Ledger using the `senderAddress` and `nonce`.
 3. The attestation response includes:
    - `recipientAddress` — the recipient from the on-chain payment instruction.
