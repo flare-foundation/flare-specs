@@ -6,25 +6,13 @@ Each data provider and cosigner runs its own instance.
 
 ![TEE Relay Client architecture](images/tee-relay-client.svg)
 
-## Component Overview
+## Data Flow
 
-### Data Flow
-
-Three-stage pipeline connected by Go channels:
-
-1. **Collector** → `cToR` channel → **Router** → `rToS` channel → **Sender**
-
-Each stage runs as an independent goroutine; channels provide backpressure.
+Three-stage pipeline: **Collector** → **Router** → **Sender**.
 
 ## Collector
 
-Monitors the C-chain indexer database for `TeeInstructionsSent` events:
-
-- **Event source**: MySQL database (C-chain indexer), filtering by `topic0` (event signature) and `address` (`TeeExtensionRegistry` contract).
-- **Polling interval**: $2$ seconds.
-- **Sync validation**: waits for the indexer to be synced before starting.
-- **Deduplication**: maintains a query window (`From = To` after each batch) to avoid re-processing.
-- **Output**: batches of raw log entries sent to the router via channel.
+Monitors the C-chain for `TeeInstructionsSent` events and passes batches of raw log entries to the router.
 
 ## Router
 
@@ -32,12 +20,12 @@ Parses raw logs into typed instruction events, filters them, and dispatches to s
 
 ### Filtering
 
-Two filter modes based on the `is_cosigner` configuration:
+Two filter modes:
 
 | Mode | Filter Behavior |
 |---|---|
-| **Provider** (`is_cosigner = false`) | Accepts all instructions. Used by entities in the signing policy. |
-| **Cosigner** (`is_cosigner = true`) | Only accepts instructions where the relay client's address appears in the `cosigners` list. |
+| **Provider** | Accepts all instructions. Used by entities in the signing policy. |
+| **Cosigner** | Only accepts instructions where the relay client's address appears in the `cosigners` list. |
 
 ### Instruction Classification
 
@@ -51,21 +39,70 @@ Each instruction is classified into one of three types based on its operation:
 
 ### Base Processor
 
-Signs the instruction with the relay client's key and passes it to the sender. Handles most instruction types (key generation, key deletion, XRP payments, VRF, TEE attestation, etc.).
+Signs the instruction with the relay client's key and passes it to the sender.
+Handles most instruction types (key generation, key deletion, XRP payments, VRF, TEE attestation, etc.).
 
 ### FDC Processor
 
 FDC2 attestation with external verifier integration:
 
 1. Decodes the instruction to extract `attestationType` and `sourceId`.
-2. Routes to the appropriate FDC queue based on the `(attestationType, sourceId)` pair.
-3. The queue dequeues instructions with rate limiting (`max_dequeues_per_second`, `max_workers`).
-4. The FDC handler sends the attestation request to the configured verifier server.
-5. The verifier returns the attestation response.
-6. The handler computes the FDC vote hash from the attestation response.
-7. The instruction is signed and passed to the sender.
+2. Routes to the appropriate queue based on the `(attestationType, sourceId)` pair.
+3. Sends the attestation request to the configured verifier server.
+4. The verifier returns the attestation response.
+5. The handler computes the FDC vote hash from the attestation response.
+6. The instruction is signed and passed to the sender.
 
-**FDC Queue Configuration** (per `(attestationType, sourceId)` pair):
+### Backup Processor
+
+Wallet key backup restoration (`KEY_DATA_PROVIDER_RESTORE`):
+
+1. Fetches the encrypted backup package from the URL specified in the instruction.
+2. Validates the backup package consistency (backup ID matches request parameters, signatures are valid).
+3. Identifies which key splits belong to the relay client (matches by public key).
+4. Decrypts the key splits using the relay client's private key.
+5. Re-encrypts the shares for the target TEE machine using the TEE's public key.
+6. Signs the instruction with the encrypted share as `additionalVariableMessage` and backup metadata as `additionalFixedMessage`.
+7. Passes to the sender.
+
+## Sender
+
+Receives signed instructions and relays them to TEE proxies.
+For each instruction, sends to every TEE machine in the instruction's TEE list.
+
+## Instruction Data Structure
+
+Each instruction in the pipeline carries:
+
+- `Event` — the parsed `TeeInstructionsSent` event (extension ID, op type, op command, message, cosigners, TEE machines).
+- `Tees` — deduplicated list of target TEE machines (each with ID and URL).
+- `GeneralData` — the instruction payload (without TEE-specific fields).
+- `Signatures` — one ECDSA signature per TEE machine (the hash changes when the TEE ID changes).
+
+---
+
+## Implementation Details
+
+### Pipeline Concurrency
+
+Three-stage pipeline connected by Go channels:
+
+```
+Collector → cToR channel → Router → rToS channel → Sender
+```
+
+Each stage runs as an independent goroutine; channels provide backpressure.
+
+### Collector Internals
+
+- **Event source**: MySQL database (C-chain indexer), filtering by `topic0` (event signature) and `address` (`TeeExtensionRegistry` contract).
+- **Polling interval**: $2$ seconds.
+- **Sync validation**: waits for the indexer to be synced before starting.
+- **Deduplication**: maintains a query window (`From = To` after each batch) to avoid re-processing.
+
+### FDC Queue Configuration
+
+Per `(attestationType, sourceId)` pair:
 
 | Parameter | Description |
 |---|---|
@@ -76,30 +113,15 @@ FDC2 attestation with external verifier integration:
 
 Each verifier is configured with a URL, API key, and the `(attestationType, sourceId)` pair it handles.
 
-### Backup Processor
+### Backup Processing Details
 
-Wallet key backup restoration (`KEY_DATA_PROVIDER_RESTORE`):
+- Decryption uses ECIES (converts ECDSA key to ECIES for backup share decryption).
+- Backup packages are limited to $500$ KiB.
 
-1. Fetches the encrypted backup package from the URL specified in the instruction.
-2. Validates the backup package consistency (backup ID matches request parameters, signatures are valid).
-3. Identifies which key splits belong to the relay client (matches by public key).
-4. Decrypts the key splits using the relay client's private key (ECIES decryption).
-5. Re-encrypts the shares for the target TEE machine using the TEE's public key.
-6. Signs the instruction (with `additionalVariableMessage` set to the encrypted share and `additionalFixedMessage` set to the backup metadata).
-7. Passes to the sender.
+### Sender Retry Logic
 
-**Size limits**: backup packages are limited to $500$ KiB.
-
-## Sender
-
-Receives signed instructions and relays them to TEE proxies:
-
-1. For each instruction, spawns a goroutine per TEE machine in the instruction's TEE list.
-2. Prepares a TEE-specific instruction (sets the `teeId` and matches the corresponding signature).
-3. Sends `POST /instruction` to the TEE proxy at the machine's URL.
-4. Retries on failure ($3$ attempts, $10$-second delays, $1$-minute total timeout).
-
-## Signing and Key Management
+For each instruction, spawns a goroutine per TEE machine.
+Retries on failure: $3$ attempts, $10$-second delays, $1$-minute total timeout.
 
 ### Signer Interface
 
@@ -111,32 +133,11 @@ type Signer interface {
 }
 ```
 
-### Local Signer
+**Local Signer:** Private key loaded from an environment variable. Signing uses EIP-191 personal signature format. Decryption converts ECDSA key to ECIES.
 
-Private key loaded from an environment variable:
-- **Signing**: EIP-191 personal signature format using `crypto.Sign()`.
-- **Decryption**: converts ECDSA key to ECIES for backup share decryption.
-- **Identification**: derives public key coordinates for backup matching.
+**Remote Signer:** Delegates to an external service (e.g., FSP client) via `POST /sign`, `POST /decrypt`, `GET /id`. Retry logic: $3$ attempts, $10$-second delays, $5$-second per-request timeout. Optional API key authentication.
 
-### Remote Signer
-
-Delegates cryptographic operations to an external service (e.g., FSP client):
-- `POST /sign` — batch signing of hashes.
-- `POST /decrypt` — decryption of encrypted data.
-- `GET /id` — retrieve public key.
-- Retry logic: $3$ attempts, $10$-second delays, $5$-second per-request timeout.
-- Optional API key authentication.
-
-## Instruction Data Structure
-
-Each instruction in the pipeline carries:
-
-- `Event` — the parsed `TeeInstructionsSent` event (extension ID, op type, op command, message, cosigners, TEE machines).
-- `Tees` — deduplicated list of target TEE machines (each with ID and URL).
-- `GeneralData` — the instruction payload (without TEE-specific fields).
-- `Signatures` — one ECDSA signature per TEE machine (the hash changes when the TEE ID changes).
-
-## Configuration
+### Configuration
 
 ```toml
 tee_extension_registry = "0x..."   # TeeExtensionRegistry contract address
@@ -167,7 +168,7 @@ server.key_name = "X-API-KEY"
 server.key = "secret"
 ```
 
-## External Dependencies
+### External Dependencies
 
 - **C-chain indexer database** (MySQL) — source of `TeeInstructionsSent` events.
 - **TEE proxy nodes** (HTTP) — receive signed instructions.

@@ -1,23 +1,9 @@
 # Go Verifier API Architecture
 
 The Go verifier API is an FDC2 verifier server that validates attestation requests.
-Each attestation type (TeeAvailabilityCheck, PMWPaymentStatus, PMWMultisigAccountConfigured) is loaded as a module with its own verification logic, data sources, and configuration.
+Each attestation type is loaded as a module with its own verification logic, data sources, and configuration.
 
 ![Go Verifier API architecture](images/go-verifier-api.svg)
-
-## Component Overview
-
-### Generic Verifier Pattern
-
-All attestation types implement the same interface:
-
-```go
-type Verifier[Req any, Res any] interface {
-    Verify(ctx context.Context, req Req) (Res, error)
-}
-```
-
-Request and response types are defined in `go-flare-common/pkg/tee/structs/connector/autogen.go`, generated from Solidity interface ABIs to match the on-chain proof structures.
 
 ## HTTP Endpoints
 
@@ -41,37 +27,29 @@ All endpoints (except `/api/health`) require API key authentication via the `X-A
 
 ## Module Loading
 
-`VERIFIER_TYPE` selects which attestation type module is loaded at startup. Each module instantiates its own service, verifier, external data connections, and HTTP handlers. One attestation type per process.
+One attestation type module is loaded at startup per process.
+Each module instantiates its own service, verifier, external data connections, and HTTP handlers.
 
 ## TeeAvailabilityCheck Module
 
 ### Verification Flow
 
-1. Fetch the TEE action result from the proxy at `GET /action/result/{instructionId}`.
+1. Fetch the TEE action result from the proxy.
 2. Validate the challenge matches the request.
 3. Validate the proxy signature matches `teeProxyId`.
-4. **URL validation** — check the proxy URL against SSRF attacks (block private IPs, metadata endpoints, link-local addresses).
-5. **CRL checking** — fetch and verify Certificate Revocation Lists for the attestation certificate chain.
-6. **JWT validation** — verify the Google Confidential Space attestation token:
-   - `eat_nonce` matches the hash of the TEE info data.
-   - `dbgstat` equals `disabled-since-boot` (production mode).
-   - `swname` equals `CONFIDENTIAL_SPACE`.
-   - `submods.confidential_space.support_attributes` contains `STABLE`.
-7. **TEE identity check** — verify the `teeId` from the response matches the address derived from the public key.
-8. **Signing policy check** — verify `lastSigningPolicyHash` and `initialSigningPolicyHash` match the on-chain values from the Relay contract.
+4. Validate the proxy URL against SSRF attacks.
+5. Verify Certificate Revocation Lists for the attestation certificate chain.
+6. Validate the platform attestation token (production mode, correct software, stable version).
+7. Verify the $\mathrm{TEE}_{\mathrm{ID}}$ from the response matches the address derived from the public key.
+8. Verify signing policy hashes match the on-chain values from the Relay contract.
 9. Return status: `OK`, `OBSOLETE` (missing `STABLE` attribute), or `DOWN` (from poller).
 
 ### TEE Poller
 
-Background goroutine monitoring TEE machine availability:
-
-- **Polling interval**: every $1$ minute.
-- **Active machine list**: fetched from the `TeeMachineRegistry` contract.
-- **Worker pool**: $10$ concurrent workers query each TEE's proxy `/info` endpoint.
-- **Sample management**: retains the latest $5$ samples per TEE in a circular buffer.
-- **Sample states**: `VALID` (all checks pass), `INVALID` (data-level failure), `INDETERMINATE` (infrastructure failure).
-- **DOWN detection**: if all $5$ samples are `INVALID`, the TEE is reported as `DOWN`.
-- **Monitoring endpoint**: `GET /poller/tees` returns all TEE samples for external monitoring.
+Background process monitoring TEE machine availability.
+Periodically queries each active TEE machine's proxy for attestation data.
+Classifies samples as `VALID` (all checks pass), `INVALID` (data-level failure), or `INDETERMINATE` (infrastructure failure).
+If all recent samples are `INVALID`, the TEE is reported as `DOWN`.
 
 ### External Dependencies
 
@@ -84,17 +62,17 @@ Background goroutine monitoring TEE machine availability:
 ### Verification Flow
 
 1. Compute the deterministic instruction ID from `(opType, PAY, sourceId, senderAddress, nonce)`.
-2. Query the C-chain indexer database for the `TeeInstructionsSent` event log matching `extensionId = 0` and the instruction ID.
+2. Query the C-chain indexer for the `TeeInstructionsSent` event log matching `extensionId = 0` and the instruction ID.
 3. Decode the `PaymentInstructionMessage` from the event.
-4. Query the XRP indexer database for the transaction matching `senderAddress` and `nonce` (XRP sequence number).
-5. Determine transaction status: `tesSUCCESS` prefix → success ($0$), otherwise → reverted ($1$).
+4. Query the XRP indexer for the transaction matching `senderAddress` and `nonce` (XRP sequence number).
+5. Determine transaction status: `tesSUCCESS` prefix → success, otherwise → reverted.
 6. Compute `receivedAmount` from `AffectedNodes` in the XRP transaction metadata.
 7. Return response with `transactionStatus`, `receivedAmount`, `transactionFee`, `revertReason`, `transactionId`, `blockNumber`, `blockTimestamp`.
 
 ### External Dependencies
 
-- PostgreSQL — XRP transaction indexer (source database).
-- MySQL — C-chain indexer (event logs).
+- XRP transaction indexer (source database).
+- C-chain indexer (event logs).
 
 ## PMWMultisigAccountConfigured Module
 
@@ -126,17 +104,51 @@ Background goroutine monitoring TEE machine availability:
 
 ### External Dependencies
 
-- PostgreSQL — XRP transaction indexer.
-- MySQL — C-chain indexer.
+- XRP transaction indexer.
+- C-chain indexer.
 
-## Security
+---
+
+## Implementation Details
+
+### Generic Verifier Pattern
+
+All attestation types implement the same Go interface:
+
+```go
+type Verifier[Req any, Res any] interface {
+    Verify(ctx context.Context, req Req) (Res, error)
+}
+```
+
+Request and response types are defined in `go-flare-common/pkg/tee/structs/connector/autogen.go`, generated from Solidity interface ABIs to match the on-chain proof structures.
+
+### TEE Poller Internals
+
+- **Polling interval**: every $1$ minute.
+- **Active machine list**: fetched from the `TeeMachineRegistry` contract.
+- **Worker pool**: $10$ concurrent workers query each TEE's proxy `/info` endpoint.
+- **Sample management**: retains the latest $5$ samples per TEE in a circular buffer.
+- **DOWN detection**: if all $5$ samples are `INVALID`, the TEE is reported as `DOWN`.
+- **Monitoring endpoint**: `GET /poller/tees` returns all TEE samples for external monitoring.
+
+### JWT Validation (TeeAvailabilityCheck)
+
+Google Confidential Space attestation token checks:
+
+- `eat_nonce` matches the hash of the TEE info data.
+- `dbgstat` equals `disabled-since-boot` (production mode).
+- `swname` equals `CONFIDENTIAL_SPACE`.
+- `submods.confidential_space.support_attributes` contains `STABLE`.
+
+### Security
 
 - **API key authentication** — all verification endpoints require a valid `X-API-KEY` header.
 - **URL/SSRF validation** — blocks private IPs, metadata endpoints, and dangerous address ranges before connecting to TEE proxies.
 - **CRL checking** — certificate revocation lists are fetched and cached (LRU, $4$-hour TTL, max $100$ entries) to detect revoked attestation certificates.
 - **Security headers** — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
 
-## Configuration
+### Configuration
 
 Environment variables:
 
