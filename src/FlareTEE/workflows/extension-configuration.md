@@ -73,9 +73,13 @@ The contract's constructor and methods are entirely defined by the extension dev
 - `_governanceHash` (`bytes32`): Optional governance hash. Can be `bytes32(0)` if not applicable. If provided, it must match the latest governance hash.
 
 **Requirements:**
-- Caller must be the extension owner
-- All platforms in `_platforms` must be in the system-supported platforms list (added by governance via `addSystemSupportedPlatforms`)
-- If `_governanceHash` is non-zero, it must match the latest governance hash
+- Caller must be the extension owner.
+- `_version` must be non-empty.
+- `_codeHash` must be non-zero.
+- `_platforms` must be non-empty, with no duplicates.
+- All platforms must be in the system-supported platforms list.
+- The code hash must not already be registered for this extension.
+- If `_governanceHash` is non-zero, it must match the latest governance hash for the extension.
 
 **What happens:**
 1. The code hash is mapped to the provided version info.

@@ -131,12 +131,7 @@ Fetch the attestation proof from the TEE proxy and verify it on-chain.
    - `RequestBody` -- The original request (`accountAddress`, `publicKeys`, `threshold`).
    - `ResponseBody` -- The attestation result (`status`, `sequence`).
    - `Signatures` -- Signing policy signatures, TEE signatures, and cosigner signatures.
-3. The proof is verified on-chain via `TeeVerification.verifyPMWMultisigAccountConfiguredProof(walletId, proof)`:
-   - Verifies signing policy signatures.
-   - Verifies TEE and cosigner signatures.
-   - Checks that the wallet's public keys match the proof's public keys.
-   - Checks that the multisig threshold matches.
-   - Verifies `ResponseBody.status` is `ok`.
+3. The proof is verified on-chain via `TeeVerification.verifyPMWMultisigAccountConfiguredProof(walletId, proof)`.
 4. If verification succeeds, the `sequence` number (XRPL account sequence) is extracted from the response body for use as the initial nonce.
 
 **Events emitted:** None (read-only verification call).

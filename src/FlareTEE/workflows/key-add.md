@@ -33,9 +33,8 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 **What happens:**
 1. The contract generates a new `keyId` by incrementing the wallet's key counter.
 2. A [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction is sent to the specified TEE machine.
-3. The instruction includes the wallet configuration (admins, cosigners), key type, and signing algorithm from the project.
-4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
-5. The TEE machine automatically triggers a key backup for the newly generated key.
+3. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
+4. The TEE machine automatically triggers a key backup for the newly generated key.
 
 **Events emitted:** [`WalletKeyAdded`](../Events.md#walletkeyadded), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
 
@@ -52,13 +51,10 @@ For key data structures, see [Key Management](../TEE%20Management/Key%20Manageme
 - `teeSignature` (`Signature`) — signature from the TEE machine over the proof.
 
 **Requirements:**
-- The TEE machine must be in `PRODUCTION` status.
 - Wallet must be in `INITIALIZED` status.
+- The TEE machine must be in `PRODUCTION` status.
 - The key ID must exist (created by `addKey` in Step 1).
-- `publicKey` in the proof must be non-empty.
-- For new keys: `nonce == 0` and `restored == false`.
-- `settingsVersion` must be `bytes32(0)` and `settings` must be empty.
-- Key type, signing algorithm, and `configConstants` must match the project and wallet configuration.
+- The proof must be consistent with the on-chain wallet and project configuration.
 - The TEE signature must be valid.
 
 **What happens:**

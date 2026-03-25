@@ -89,28 +89,14 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 **Who can call:** Project owner or backup manager.
 
 **Parameters:**
-- `proof` (`KeyExistence`) — a `TeeKeyExistence` proof from the target TEE machine containing:
-  - `teeId` (`address`) — the target TEE's identity address.
-  - `walletId` (`bytes32`) — the wallet ID.
-  - `keyId` (`uint64`) — the key ID.
-  - `nonce` (`uint256`) — must be greater than $0$ for restored keys.
-  - `publicKey` (`bytes`) — must match the original key's public key.
-  - `keyType` (`bytes32`) — must match the project's key type.
-  - `signingAlgo` (`bytes32`) — must match the project's signing algorithm.
-  - `configConstants` (`KeyConfigConstants`) — must match the wallet's admin and cosigner configuration.
-  - `restored` (`bool`) — must be `true` for restored keys.
-  - `settingsVersion` (`bytes32`) — TEE settings version.
-  - `settings` (`bytes`) — TEE settings data.
-- `teeSignature` (`Signature`: `{v: uint8, r: bytes32, s: bytes32}`) — signature from the TEE machine over the proof.
+- `proof` (`KeyExistence`) — a key existence proof from the target TEE machine.
+- `teeSignature` (`Signature`) — signature from the TEE machine over the proof.
 
 **Requirements:**
 - The target TEE machine must be in `PRODUCTION` status.
 - The key ID must already exist on the wallet (from the original `addKey` call).
 - The `teeId` must not already be in the key's TEE list.
-- For restored keys: `nonce > 0` and `restored == true`.
-- The public key must match the originally confirmed public key.
-- `settingsVersion` must be `bytes32(0)` and `settings` must be empty.
-- The `configConstants` must match the wallet's current admin and cosigner settings.
+- The proof must be consistent with the on-chain wallet and project configuration.
 - The TEE signature must be valid.
 
 **What happens:**

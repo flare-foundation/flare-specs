@@ -69,9 +69,9 @@ After submitting the attestation request, poll the TEE proxy until the proof is 
 1. **Poll the proxy** — call `GET <proxyUrl>/action/result/<instructionId>` using the `instructionId` from the `TeeInstructionsSent` event emitted in Step 1. Repeat until the response contains a completed proof.
 2. **Decode the proof** — parse the response to extract the `Fdc2ResponseHeader`, `RequestBody`, and `ResponseBody` for the specific attestation type.
 3. **Verify and publish on-chain** — call the appropriate verification contract function to validate the proof and apply its result. The specific function depends on the attestation type:
-   - **TeeAvailabilityCheck**: `TeeMachineRegistry.toProduction(proof)` or `TeeMachineRegistry.confirmAvailability(proof)` or `TeeMachineRegistry.pauseWithProof(proof)`
-   - **PMWMultisigAccountConfigured**: `TeeVerification.verifyPMWMultisigAccountConfiguredProof(walletId, proof)` followed by `TeePayment.AddPMWMultisigAccount(walletId, proof)`
-   - **PMWPaymentStatus**: verify via `PMWPaymentStatusVerifier.verify(teePaymentsAddress, proof)`
+   - [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md): `TeeMachineRegistry.toProduction(proof)` or `TeeVerification.confirmAvailability(proof)` or `TeeMachineRegistry.pauseWithProof(proof)`
+   - [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md): `TeeVerification.verifyPMWMultisigAccountConfiguredProof(walletId, proof)` followed by `TeePayments.addPMWMultisigAccount(walletId, proof, authorizationAddress)`
+   - [`PMWPaymentStatus`](../attestation-types/PMWPaymentStatus.md): verify via `PMWPaymentStatusVerifier.verify(teePaymentsAddress, proof)`
 
 ---
 

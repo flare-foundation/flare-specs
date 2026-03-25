@@ -250,14 +250,9 @@ This workflow describes creating a project, configuring a wallet, generating key
 - Wallet must be in `INITIALIZED` status (for new keys).
 - TEE machine must be in `PRODUCTION` status.
 - Key ID must exist (created by `addKey` in Step 9).
-- `publicKey` must be non-empty.
-- `settingsVersion` must be `bytes32(0)` and `settings` must be empty.
-- Key type and signing algorithm must match project configuration.
-- Config constants (admins, cosigners) must match the wallet's locked configuration.
-- TEE signature must be valid.
-- The proof's `nonce` must match the expected nonce stored on-chain for the specific TEE machine.
-- For new keys: `nonce == 0` and `restored == false`.
-- For restored keys: `nonce > 0`, `restored == true`, and the `teeId` must not already be in the key's TEE list.
+- The proof must be consistent with the on-chain wallet and project configuration.
+- The TEE signature must be valid.
+- For restored keys: the `teeId` must not already be in the key's TEE list.
 
 **What happens:**
 

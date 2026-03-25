@@ -284,22 +284,16 @@ For more details on the FDC2 attestation process, see [fdc2-attestation.md](fdc2
 **Who can call:** Machine owner (when `INITIALIZED` or `PAUSED`). Anyone (when `SUSPENDED`).
 
 **Parameters:**
-- `proof` (struct `ITeeAvailabilityCheck.Proof`):
-  - `signatures` — FDC2 signing policy signatures
-  - `header` — FDC2 response header
-  - `requestBody` — the availability check request (contains `teeId`, `teeProxyId`, `url`, `challenge`, `instructionId`)
-  - `responseBody` — the availability check response (contains `status`, `teeTimestamp`, `codeHash`, `platform`, signing policy IDs, `state`)
+- `proof` (`ITeeAvailabilityCheck.Proof`) — a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof for the machine.
 
 **Requirements:**
 - The machine must be in `INITIALIZED`, `PAUSED`, or `SUSPENDED` status.
-- The proof's `responseBody.status` must be `OK`.
-- The proof's `header.timestamp` must be $\geq$ `lastStatusChangeTs`.
-- The proof must be a valid [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof matching the TEE's identity and data.
+- The proof must be valid and show status `OK`.
 - The code version referenced in the proof must still be supported on the extension.
 
 **What happens:**
 
-1. The contract validates the FDC2 [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof — verifies signatures, checks that the proof data matches the registered machine.
+1. The contract validates the FDC2 [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) proof.
 2. If transitioning from `INITIALIZED`, the contract records `initialSigningPolicyId` from the proof's response body.
 3. The machine status changes to `PRODUCTION`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
