@@ -9,6 +9,7 @@ This workflow describes sending XRP payments from a TEE-managed Protocol Managed
 - **Completed wallet-setup workflow** — the wallet must be in `PRODUCTION` status (see [wallet-setup.md](wallet-setup.md)).
 - **Completed XRPL multisig configuration workflow** — a multisig account must be linked to the wallet via `TeePayments.addPMWMultisigAccount()` (see [xrpl-multisig-configuration.md](xrpl-multisig-configuration.md)).
 - **Batch settings configured** — `TeePayments.setBatchSettings()` must have been called for the multisig account (see [Step 6 of xrpl-multisig-configuration.md](xrpl-multisig-configuration.md#step-6-set-batch-settings-optional)).
+- **Fee schedule configured (optional)** — `TeePayments.setFeeSchedule()` can be called to set a custom fee escalation schedule. If not set, the default schedule (100% of `maxFee` at 0s delay) is used. See [Fee Scheduling](../Extensions/PMW/Transactions.md#fee-scheduling).
 - **TEE machine(s) in PRODUCTION status** — at least one TEE machine holding the wallet's keys must be registered and operational.
 
 ---

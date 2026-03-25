@@ -39,7 +39,8 @@ struct TeeIdKeyIdPair {
 
 ### Fee Schedule
 
-The `feeSchedule` field encodes a list of fee entries for progressive fee escalation. Each entry specifies a fee amount and a time delay. The TEE machine signs all fee schedule entries upfront and returns the results progressively — each result is posted back to the proxy after the specified delay. This mechanism allows automatic fee escalation if earlier transactions are not confirmed on the XRP Ledger.
+The `feeSchedule` field encodes a list of fee entries for progressive fee escalation.
+For the binary encoding format, fee calculation formula, and nullification behavior, see [Fee Scheduling](../Extensions/PMW/Transactions.md#fee-scheduling).
 
 The `feeSchedule` must not be empty; an empty fee schedule causes an error.
 

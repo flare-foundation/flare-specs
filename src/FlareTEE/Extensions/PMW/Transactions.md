@@ -71,37 +71,94 @@ At this point, the batch is closed and the batched payments are issued by the `T
 - This process continues until time $t +d$, at which point the transactions $(T_0, \dots, T_i)$ in the batch are issued even if 
 $\vert \mathrm{T}_\mathrm{list} \vert  < S$.
 
+## Fee Scheduling
+
+The payment system supports *progressive fee escalation*.
+When a payment instruction is sent to a TEE machine, it includes a *fee schedule* — a list of fee entries, each specifying a fee factor and a time delay.
+The TEE machine signs transactions for all fee entries upfront and posts the results to the proxy progressively according to the delay schedule.
+If the first transaction is not confirmed on the external chain, higher-fee versions become available automatically.
+
+### Fee Schedule Format
+
+The fee schedule is a binary-encoded byte array.
+Each entry is $4$ bytes:
+
+| Bytes | Type | Description |
+|---|---|---|
+| $0$–$1$ | `int16` (big-endian) | Fee factor in BIPS ($-10000$ to $+10000$, non-zero). |
+| $2$–$3$ | `uint16` (big-endian) | Delay in seconds from the start of processing. |
+
+Entries must have strictly ascending delays.
+
+### Fee Calculation
+
+For each entry, the transaction fee is computed as:
+
+$$\mathrm{fee} = \dfrac{|\mathrm{factorBIPS}| \times \mathrm{maxFee}}{10000}$$
+
+where `maxFee` is the maximum fee specified in the payment instruction.
+
+### Nullification
+
+A negative `factorBIPS` value triggers a *nullification*: the TEE signs an `AccountSet` transaction instead of a `Payment` transaction.
+This consumes the blockchain nonce without transferring funds.
+Nullification is used to cancel a stuck payment.
+
+### Default Fee Schedule
+
+If no custom fee schedule is set for an account, the default schedule is used:
+
+```
+0x27100000
+```
+
+This decodes to a single entry: $10000$ BIPS ($100\%$ of `maxFee`) at $0$ seconds delay.
+
+### Configuration
+
+The wallet owner sets a persistent fee schedule per account via `TeePayments.setFeeSchedule()`:
+
+**Parameters:**
+- `account` (`PMWMultisigAccount`) — the multisig account.
+- `factorsBIPS` (`int16[]`) — fee factors in BIPS for each schedule entry.
+- `delaysSeconds` (`uint16[]`) — corresponding delays in seconds (strictly ascending).
+
+The schedule is stored on-chain and applied to all subsequent payment batches for the account.
+
+**Events emitted:** [`FeeScheduleSet`](../../Events.md#feescheduleset)
+
+### TEE Processing
+
+When the TEE machine receives a payment instruction with a fee schedule:
+
+1. All fee entries are signed upfront — one XRPL transaction per entry.
+2. A background process posts the signed transactions to the proxy progressively, each after its configured delay.
+3. Intermediate results use status $3$, $4$, $5$, etc. (one per non-final entry).
+The final result uses status $1$.
+4. Each result is cumulative — it includes all transactions from the first entry up to and including the current one.
+
+### Reissue Override
+
+When reissuing a failed payment via `TeePayments.reissue()`, the caller can override the fee schedule per instruction using `ReissueFeeParams`:
+
+- `maxFees` (`uint256[]`) — new maximum fees, one per instruction.
+- `feeFactorScheduleBIPS` (`int16[][]`) — per-instruction fee factor schedules.
+- `feeDelayScheduleSeconds` (`uint16[]`) — shared delay schedule across all instructions in the batch.
+
+If `feeFactorScheduleBIPS` is empty, the account's stored fee schedule (or the default) is used.
+
 ## Reissuance and Nullification
-Although unlikely, payments issued by PMW addresses can fail.
-For example, payments may fail when the offered fee is too low or due to issues on the external chain.
-*Reissuance* and *nullification* processes are in place to handle these situations.
-Nullification refers to a cheap transaction that is always processed and consumes the blockchain nonce.
 
-A reissue transaction is issued by calling the function `reissue(data)` at the `teePayments` contract, with the input argument `data` consisting of:
+Payments issued by PMW addresses can fail, for example when the offered fee is too low or due to issues on the external chain.
+*Reissuance* re-submits the payment instruction with updated fee parameters.
+*Nullification* submits a cheap transaction that consumes the blockchain nonce without transferring funds.
 
-- `walletId`: The wallet ID of the original transaction.
-- `nonce`: The batch nonce of the payment instruction that is to be reissued.
-- `firstSubNonce`: The sub nonce of the first transaction in the batch.
-- The list of payment instructions in the batch identified by:
-	- `recipientAddress`  
-	- `amount`    
-	- `paymentReference`    
-	- `fee`.
-- `fees`: The new fee offer(s), typically larger than before.
-- `nullify`: A flag indicating whether a regular reissue transaction should be sent or a nullification transaction instead.
+A reissue is triggered by calling `TeePayments.reissue()`.
+For the full parameter list, see the [xrp-payment workflow](../../workflows/xrp-payment.md).
+
+Nullification is achieved by setting a negative `factorBIPS` in the fee schedule (see [Fee Scheduling](#fee-scheduling) above).
 
 ### Checking Transaction Status
-To help determine the possibility of unsuccessful payments, an FDC attestation type is available to to determine the status of a transaction.
-Such an attestation request takes as input:
 
-- `walletID`
-- `nonce`
-
-while the response of the attestation request includes:
-
-- The input to the request.
-- The data for the payment instruction.
-- The amount spent, including the fee and the payment itself.
-- The status of the transaction. This value can be successful or nullified, or some other status specific to the underlying chain.
-
-The purpose of such a request is to prove that a payment was either nullified or reverted.[more detail tbd]
+The [`PMWPaymentStatus`](../../attestation-types/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on the external chain.
+The response includes the transaction status (success or reverted), the received amount, the transaction fee, and the revert reason if applicable.
