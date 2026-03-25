@@ -66,36 +66,8 @@ Once the voting threshold is reached, the TEE proxy delivers the action to the T
 
 ### Step 4: Retrieve Result
 
-The action result is available from the TEE proxy. The response is a JSON object containing:
-
-```json
-{
-    "walletId": "bytes32",
-    "keyId": "uint64",
-    "nonce": "bytes",
-    "proof": {
-        "gamma": { "x": "uint256", "y": "uint256" },
-        "c": "uint256",
-        "s": "uint256",
-        "u": { "x": "uint256", "y": "uint256" },
-        "cGamma": { "x": "uint256", "y": "uint256" },
-        "v": { "x": "uint256", "y": "uint256" },
-        "zInv": "uint256"
-    }
-}
-```
-
-Where:
-
-- `gamma` — curve point $(\gamma_x, \gamma_y)$, the VRF output: $\gamma = \mathrm{sk} \cdot \mathrm{HashToCurve}(\mathrm{nonce})$.
-- `c` — the challenge scalar.
-- `s` — the response scalar: $s = k - \mathrm{sk} \cdot c \mod N$.
-- `u` — witness point $c \cdot \mathrm{pk} + s \cdot G$.
-- `cGamma` — witness point $c \cdot \gamma$.
-- `v` — witness point $c \cdot \gamma + s \cdot H$.
-- `zInv` — field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
-
-The four witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM.
+The action result is available from the TEE proxy.
+For the response format, see the [`VRF`](../commands/F_WALLET--VRF.md) command reference.
 
 ---
 

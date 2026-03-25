@@ -20,16 +20,10 @@ All FDC2 attestation types follow the same process. The specific request and res
 
 ### Step 1: Submit Attestation Request (User Action)
 
-Submit an attestation request as an [instruction](../Operations/Instructions.md) on the System Extension. The request contains:
-
-```solidity
-struct Fdc2AttestationRequest {
-    Fdc2RequestHeader header;
-    bytes requestBody;
-}
-```
-
-Additionally, the instruction includes a TEE list (`numberOfTees`, `TeeIds`) indicating which TEE machines should participate. If `numberOfTees` is set to `0`, the `Fdc2Hub` contract selects machines randomly from the registered set.
+Submit an attestation request as an [instruction](../Operations/Instructions.md) on the System Extension.
+The request format is defined in the [FDC2 specification](../Extensions/FTDC.md#request-format).
+The instruction includes a TEE list indicating which TEE machines should participate.
+If the number of TEEs is set to $0$, the `Fdc2Hub` contract selects machines randomly from the registered set.
 
 Depending on the attestation type, the request is submitted through a convenience contract (e.g., `TeeVerification.requestAvailabilityCheckAttestation()`, `TeeVerification.requestPMWMultisigAccountConfiguredAttestation()`) or directly via `Fdc2Hub.requestAttestation()`.
 
