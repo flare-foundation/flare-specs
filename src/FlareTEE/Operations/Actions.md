@@ -70,7 +70,11 @@ The main data stored in the response itself varies depending on the content of t
 
 - `id`: As above.
 - `submissionTag`: As above.
-- `status`: Indicates the status of the execution in $\mathrm{uint}8$. Typically $0$ for error and $1$ for success, with higher values available for more complicated actions.
+- `status`: Indicates the status of the execution in $\mathrm{uint8}$:
+  - $0$: Error/invalid.
+  - $1$: Success.
+  - $2$: In-progress (async operations such as XRP payments where results are posted progressively).
+  - $3+$: Scheduled responses (used for [fee schedule progression](../Extensions/PMW/Transactions.md#fee-scheduling)).
 - `log`: Optional; in cases where status is not success, an exception log is provided. Empty if the status is success.
 - `opType`: As indicated in the instruction.
 - `opCommand`: As indicated in the instruction.

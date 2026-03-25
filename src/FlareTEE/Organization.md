@@ -21,7 +21,6 @@
 -   References
 	- Smart Contracts
 	- [Component Architecture](component-architecture/index.md)
-		- [TEE Node](component-architecture/tee-node.md)
 		- [TEE Proxy](component-architecture/tee-proxy.md)
 		- [FDC2 Verifier server](Extensions/FDC2%20Verifier%20Server.md)
 		- [Relay client](component-architecture/tee-relay-client.md)
