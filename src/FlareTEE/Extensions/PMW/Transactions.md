@@ -1,6 +1,6 @@
 # Payments
 Payments in the PMW infrastructure are handled via a dedicated `TeePayments` smart contract.
-This contract receives user payment requests, parsing and submitting them as an [instruction](Instructions.md) to the `TeeInstructions` smart contract.
+This contract receives user payment requests, parsing and submitting them as an [instruction](../../Operations/Instructions.md) to the `TeeInstructions` smart contract.
 This page details the features and options of the payments system for PMWs.
 
 ## Payment Instructions
@@ -29,7 +29,7 @@ Upon receiving a payment instruction `pay(account, paymentInstruction)`, the `Te
 
 1. The payments contract calls the `receivingTeesAndKeys(walletId)` function on the `TeeWalletManager` contract for the default project's wallet from which the payment is to be sent. This returns a list of TEE machines to which instructions should be sent.
 2. The payments contract then forms and submits the instruction `paymentInstruction` that sends the payment to the `TeeInstructions` contract. The format of this instruction is listed below.
-3. The data providers and TEEs follow the usual process from an instruction to an [action](Actions.md), with the action result containing the data necessary to submit the signed payment transaction on chain $C$ made available at the relevant TEE proxies.
+3. The data providers and TEEs follow the usual process from an instruction to an [action](../../Operations/Actions.md), with the action result containing the data necessary to submit the signed payment transaction on chain $C$ made available at the relevant TEE proxies.
 4. The signed payment instruction can now be submitted on $C$ by any entity.
 
 In step 2, the `paymentInstruction` is a binary encoded message.

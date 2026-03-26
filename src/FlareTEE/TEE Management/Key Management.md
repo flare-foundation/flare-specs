@@ -3,7 +3,7 @@ In order to ensure consistent availability of the keys stored inside TEE machine
 Firstly, TEEs provide *key existence* proofs to verify the existence of private keys.
 Secondly, in case of any unexpected issues with the TEE machines, a key backup process is in place to restore lost keys.
 This page describes these processes.
-Related content on the data structures surrounding keys can be found [here](Projects and Ownership.md).
+Related content on the data structures surrounding keys can be found [here](../Operations/Projects and Ownership.md).
 
 ## Wallet Private Key Data Structure
 Each private key on a TEE machine is described by the following data structure:
@@ -76,7 +76,7 @@ bytes settings;
 }
 ```
 where `nonce` is a fresh nonce, `restored` is set to True if the key was restored on to the TEE machine (and otherwise false) ,`configConstants` describes configuration of the private key data structure, and the final two fields describe configurations of the TEEs settings.
-The rest of the fields are defined by the [project](Projects and Ownership.md) on which the key is active, and identify properties of the wallet and key.
+The rest of the fields are defined by the [project](../Operations/Projects and Ownership.md) on which the key is active, and identify properties of the wallet and key.
 
 ## VRF Keys
 In addition to standard ECDSA signing keys, a TEE machine can hold *VRF keys*, used for verifiable random number generation.
@@ -203,7 +203,7 @@ The restore function then works as follows:
 1. Each data provider and key admin who holds a backup package for the backup ID extracts its holder backup package.
 2. They each decrypt their key share found in their backup package $\mathrm{Backup}_i$ to recover their key share(s). For example, the $j$th key admin recovers the share ${S_\mathrm{ka}}^j$.
 3. Next, the key share is encrypted under the public key corresponding to TEE ID of the TEE machine on which the key is being restored, e.g. computing $\mathrm{Enc}_{\mathrm{TEE}_\mathrm{id}}({S_\mathrm{ka}}^j)$.
-4. Once their encryption is prepared, they send an [instruction](Instructions) to the relevant TEE proxy containing the backup metadata as the `additionalFixedMessage` and the encrypted share as the `additionalVariableMessage`.
+4. Once their encryption is prepared, they send an [instruction](../Operations/Instructions.md) to the relevant TEE proxy containing the backup metadata as the `additionalFixedMessage` and the encrypted share as the `additionalVariableMessage`.
 5. The TEE proxy sets the `submissionTag` field in the action structure to `end`, keeping voting open for the maximal possible duration. At the end of voting, assuming it received enough shares from both data providers and key admins such that key recovery is possible, it prepares the recovery action and submits the encrypted shares to the TEE machine.
 6. The TEE machine completes the action, decrypting all key shares, recovering shares of the initial split $S_\mathrm{dp}$ and $S_\mathrm{ka}$, from which it recovers $K$.
 7. Once the action is complete, the TEE machine returns an action response to the TEE proxy, indicating the success (or not) of the recovery process. Additionally, the machine returns a list of entities who returned invalid key shares, if any.
@@ -221,7 +221,7 @@ This section lists the available contract calls.
 ### TeeWalletKeyManager Contract Calls
 Unless otherwise specified, calls to the wallet key manager contrat are only valid if made by the owner of the wallet. The calls include:
 
-- `addKey(walletId, teeId)`:  Creates a [key definition](Projects and Ownership.md) structure with the next sequential key ID for the wallet ID and issues the `KEY_GENERATE` instruction. 
+- `addKey(walletId, teeId)`:  Creates a [key definition](../Operations/Projects and Ownership.md) structure with the next sequential key ID for the wallet ID and issues the `KEY_GENERATE` instruction.
 - `confirmKey(proof)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof. 
 -  `deleteKey(teeId, walletId, keyId)`: Deletes the specified key from the specified TEE machine by triggering the `KEY_DELETE` instruction. 
 - `cleanUpTeeIds(walletId, keyId)`: Removes TEE IDs from the key definition of the specified key. 

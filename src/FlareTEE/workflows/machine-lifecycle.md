@@ -3,7 +3,7 @@
 ## Overview
 
 After a TEE machine reaches `PRODUCTION` status (see [machine-registration.md](machine-registration.md)), the machine owner can perform management operations including pausing, updating settings, transferring ownership, confirming availability, and governance-level banning.
-For full details, see [Ownership](../TEE%20Management/Ownership.md) and [State and Status](../TEE%20Management/State%20and%20Status.md).
+For canonical lifecycle semantics, see [Ownership](../TEE Management/Ownership.md) and [State and Status](../TEE Management/State and Status.md).
 
 ### Status Transition Diagram
 
@@ -47,7 +47,7 @@ The following diagram shows the implemented machine statuses and the transitions
                      PAUSED
 ```
 
-For full status definitions, see the [Ownership specification](../TEE%20Management/Ownership.md#statuses).
+For full status definitions, see the [Ownership specification](../TEE Management/Ownership.md#statuses).
 
 ## Prerequisites
 
@@ -300,4 +300,3 @@ Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
 **Events emitted:** [`TeeMachineStatusChanged`](../Events.md#teemachinestatuschanged)
-

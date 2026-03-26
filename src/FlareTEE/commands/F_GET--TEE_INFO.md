@@ -2,7 +2,7 @@
 
 ## Description
 
-Calculates TEE attestation for a given challenge and returns the attestation result. This is a direct [action](../Actions.md) triggered by the [TEE proxy](../Tee%20Proxies.md) without any signatures.
+Calculates TEE attestation for a given challenge and returns the attestation result. This is a direct [action](../Operations/Actions.md) triggered by the [TEE proxy](../TEE Management/Tee Proxies.md) without any signatures.
 
 ## Action message
 

@@ -26,7 +26,7 @@ The structure of the `data` field is fixed as below:
 - `message`: A byte encoded message listing the parameters of the action. In case of instruction related commands, this is an instruction without `additionalVariableMessage` and `signature`, which are put in the parent struct. In case of direct instructions, it is a marshalled/serialized direct instruction payload
 
 ## Action Processing
-Once a TEE machine receives a signed action from the proxy, it is added to the [processing queue](TEEOwnership.md) to be completed.
+Once a TEE machine receives a signed action from the proxy, it is added to the [processing queue](../TEE Management/Tee Proxies.md#processing-queues) to be completed.
 When the action is at the top of the queue, the TEE processes it and removes it from the queue.
 The nature of this processing depends on the extension, and type of action, and any input parameters.
 For example, in the PMW case, the action may be to sign a transaction to be completed on the external chain.
@@ -109,4 +109,4 @@ In this case, the reward data is included in the result of the action, consistin
 - `version`: Encoding version for the data.
 - `signature`: Signature by the TEE machine of $\mathrm{hash}($`voteHash`$,$`additionalData`$)$ using the key corresponding to $\mathrm{TEE}_{\mathrm{ID}}$. 
 
-How this data is used for rewarding is given in [rewarding](rewarding.md).
+How this data is used for rewarding is given in [rewarding](../../FSP/Rewarding.md).

@@ -3,6 +3,7 @@
 ## Overview
 
 This workflow describes creating a project, configuring a wallet, generating keys on TEE machines, and enabling the wallet for production use.
+For canonical ownership, wallet, and key semantics, see [Projects and Ownership](../Operations/Projects and Ownership.md) and [Key Management](../TEE Management/Key Management.md).
 
 ## Prerequisites
 
@@ -293,7 +294,7 @@ This workflow describes creating a project, configuring a wallet, generating key
 
 ## Notes
 
-- **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Projects and Ownership specification](../Operations/Projects%20and%20Ownership.md).
+- **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Projects and Ownership specification](../Operations/Projects and Ownership.md).
 - **Project ownership transfer — `proposeNewOwner()` + `confirmOwnership()`:** Project ownership transfer is a two-step process to ensure security and proper authorization.
   - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits [`NewOwnerProposed`](../Events.md#newownerproposed-2).
   - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits [`OwnershipConfirmed`](../Events.md#ownershipconfirmed).
@@ -302,4 +303,3 @@ This workflow describes creating a project, configuring a wallet, generating key
 - **Setting backup manager — `TeeWalletProjectManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
 - **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Events.md#walletkeydeleted).
 - **Setting pausing addresses — `TeeWalletManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.
-

@@ -2,18 +2,18 @@
 -   [Architecture](Architecture.md)
 -   [Events](Events.md)
 -   TEE Management
-	- [TEE Proxies](TEE%20Management/Tee%20Proxies.md)
-	- [TEE Machines](TEE%20Management/State%20and%20Status.md)
-	- [Key Management](TEE%20Management/Key%20Management.md)
-	- [Registration and Management](TEE%20Management/Ownership.md)
+	- [TEE Proxies](TEE Management/Tee Proxies.md)
+	- [TEE Machines](TEE Management/State and Status.md)
+	- [Key Management](TEE Management/Key Management.md)
+	- [Registration and Management](TEE Management/Ownership.md)
 -   Operations
 	- [TEE Instructions](Operations/Instructions.md)
 	- [Action Instructions](Operations/Actions.md)
 	- [Voting](Operations/Voting.md)
-	- [Projects and Ownership](Operations/Projects%20and%20Ownership.md)
+	- [Projects and Ownership](Operations/Projects and Ownership.md)
 -   Extensions
 	- [FCE](Extensions/Extensions.md)
-	- [System Extension](Extensions/System%20Extension.md)
+	- [System Extension](Extensions/System Extension.md)
 	- PMW
 		- [Overview](Extensions/PMW/PMW.md)
 		- [Transactions](Extensions/PMW/Transactions.md)
@@ -22,7 +22,7 @@
 	- Smart Contracts
 	- [Component Architecture](component-architecture/index.md)
 		- [TEE Proxy](component-architecture/tee-proxy.md)
-		- [FDC2 Verifier server](Extensions/FDC2%20Verifier%20Server.md)
+		- [FDC2 Verifier server](Extensions/FDC2 Verifier Server.md)
 		- [Relay client](component-architecture/tee-relay-client.md)
 	- [Commands](commands/index.md)
 	- [Workflows](workflows/index.md)

@@ -1,5 +1,5 @@
 # Flare Data Connector v2 (FDC2)
-The Flare Data Connector v2 (FDC2) is an application on the [system extension](System%20Extension.md).
+The Flare Data Connector v2 (FDC2) is an application on the [system extension](System Extension.md).
 It is a TEE-based alternative to the FDC, managed via the `Fdc2Hub` smart contract.
 In the FDC2, users submit attestation requests as an [instruction](../Operations/Instructions.md) on the system extension, indicating a collection of TEE machines on which the attestation is to be confirmed.
 As in the FDC, Flare's data providers are responsible for confirming the attestations.
@@ -23,7 +23,7 @@ The FDC2 currently supports four attestation types:
 4. **PMWFeeProof** — provides accurate fee accounting for a range of payment nonces, comparing estimated fees (from instruction events) with actual fees (from external chain transactions).
 
 For full details on each type, see the [attestation-types](../attestation-types/) documentation.
-For the verifier server HTTP interface, see the [FDC2 Verifier Server](FDC2%20Verifier%20Server.md) specification.
+For the verifier server HTTP interface, see the [FDC2 Verifier Server](FDC2 Verifier Server.md) specification.
 
 ## Overview
 The procedure for handling attestations in the FDC2 is broadly the same as in the FDC.

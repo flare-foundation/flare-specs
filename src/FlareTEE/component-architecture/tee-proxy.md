@@ -3,10 +3,11 @@
 The TEE proxy controls access to the TEE node.
 It manages instruction voting, action queuing, result storage, signing-policy synchronization, wallet tracking, and key backups.
 External clients interact with the proxy, not the TEE node directly.
+This page summarizes the current implementation and complements, but does not replace, the consolidated [TEE Proxies](../TEE Management/Tee Proxies.md) specification.
 
 ![TEE Proxy architecture](images/tee-proxy.svg)
 
-For the full proxy specification including APIs, state stores, processing queues, and security model, see [TEE Proxies](../TEE%20Management/Tee%20Proxies.md).
+For the full proxy specification including APIs, state stores, processing queues, and security model, see [TEE Proxies](../TEE Management/Tee Proxies.md).
 
 ## Voting System
 

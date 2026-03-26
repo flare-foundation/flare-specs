@@ -9,11 +9,11 @@ This page describes the high-level architecture of the system, including the res
 
 The system comprises three components, each with defined responsibilities:
 
-1. **Smart contracts**: These govern the underlying logic and control from the Flare blockchain. This includes the management of compute extensions, the registration and attestation of TEE machines, the issuance of messages ([instructions](Instructions.md)) to be relayed to TEE machines, and some administration of private keys generated and stored within the TEE machines.
+1. **Smart contracts**: These govern the underlying logic and control from the Flare blockchain. This includes the management of compute extensions, the registration and attestation of TEE machines, the issuance of messages ([instructions](Operations/Instructions.md)) to be relayed to TEE machines, and some administration of private keys generated and stored within the TEE machines.
 
 2. **Data providers and cosigners**: These entities function as instruction relayers, augmenting instructions with necessary external data, thereby facilitating decentralized computation. These augmented instructions are subsequently signed by each data provider and cosigner before being transmitted to the machines residing in Trusted Execution Environments (TEE machines).
 
-3. **TEE machines**: The TEE machines check that instructions are received with adequate consensus from the data providers and cosigners. Upon receiving the successful relay of instructions, the TEE machine executes the corresponding computation. The result of this computation is then signed with a relevant private key (either the machine's identity key or specialized keys held on the machine) and made available via the [TEE proxy](Ownership.md). Typical results include signed payment transactions for external blockchains or signed attestations usable within smart contracts. See [Actions](Actions.md) for the structure of action processing.
+3. **TEE machines**: The TEE machines check that instructions are received with adequate consensus from the data providers and cosigners. Upon receiving the successful relay of instructions, the TEE machine executes the corresponding computation. The result of this computation is then signed with a relevant private key (either the machine's identity key or specialized keys held on the machine) and made available via the [TEE proxy](TEE Management/Tee Proxies.md). Typical results include signed payment transactions for external blockchains or signed attestations usable within smart contracts. See [Actions](Operations/Actions.md) for the structure of action processing.
 
 ## Deployment Topology
 
@@ -23,13 +23,13 @@ A TEE machine deployed as part of FCC consists of the following infrastructure:
 
 1. **TEE machine**: The confidential VM running the TEE node, run inside a platform such as Google Confidential Compute.
 
-2. **TEE proxy**: A proxy server managing instructions [voting](Voting.md), action queues, and API access. See [TEE Proxies](Tee%20Proxies.md) for details.
+2. **TEE proxy**: A proxy server managing instructions [voting](Operations/Voting.md), action queues, and API access. See [TEE Proxies](TEE Management/Tee Proxies.md) for details.
 
 3. **C-chain indexer**: A MySQL-backed indexer letting the TEE proxy track information about updates to signing policies.
 
 4. **REDIS**: Persistent storage for proxy state including voting processes, action queues, and key data.
 
-Data providers and cosigners each run a [Relay Client](Relay%20Client.md) that monitors the C-chain for instruction events, augments and signs instructions, and forwards them to the appropriate TEE proxies.
+Data providers and cosigners each run a [Relay Client](component-architecture/tee-relay-client.md) that monitors the C-chain for instruction events, augments and signs instructions, and forwards them to the appropriate TEE proxies.
 
 ## Design Philosophy
 
@@ -52,7 +52,7 @@ Consequently, the TEE machine is designed to handle duplicate instructions grace
 
 The TEE machine is designed to be as sealed as possible to minimize injection vectors.
 
-1. **Untrusted Proxies**: The [TEE Proxy](Tee%20Proxies.md) corresponding to a TEE machine is considered an untrusted component. Instructions sent by the proxy to the machine are only executed if it is signed appropriately by data providers and cosigners. Thus, the TEE machine does not trust the proxy except to relay instructions. While the proxy acts as a filter in normal operation, a malicious proxy can theoretically censor, delay, or flood the processing queue. 
+1. **Untrusted Proxies**: The [TEE Proxy](TEE Management/Tee Proxies.md) corresponding to a TEE machine is considered an untrusted component. Instructions sent by the proxy to the machine are only executed if it is signed appropriately by data providers and cosigners. Thus, the TEE machine does not trust the proxy except to relay instructions. While the proxy acts as a filter in normal operation, a malicious proxy can theoretically censor, delay, or flood the processing queue.
 
 2. **Consensus-Based Verification**: The TEE machine does not independently query blockchain RPC nodes to verify events. Instead, it relies entirely on the consensus of data providers.
 

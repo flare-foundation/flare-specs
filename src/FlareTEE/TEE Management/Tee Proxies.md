@@ -19,11 +19,11 @@ Until the confirmation is obtained, there is no guarantee that the proxy relayed
 ## Signing Policy
 The TEE proxy is responsible for maintaining an up to date copy of Flare's signing policy at both the TEE machine and at the proxy itself.
 Without the signing policy, the TEE proxy and machine are unable to determine when a vote has passed successfully.
-For details on signing policy parameters and its generation and relaying lifecycle, see [Signing Policies](Signing%20Policies.md).
+For details on signing policy parameters and its generation and relaying lifecycle, see [Signing Policy](../../FSP/SigningPolicy.md).
 
 On initialization, the TEE proxy sets the signing policy at the TEE machine using an [`INITIALIZE_POLICY`](../commands/F_POLICY--INITIALIZE_POLICY.md) command, proving the current policy.
 As part of its initial [attestation](State and Status.md), the signing policy of the TEE machine is checked on registration by Flare's data providers to ensure that the correct policy was given.
-To remain up to date, the proxy has access to a C-chain indexer to obtain new signing policies and relays them to the TEE machine using an [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) [direct instruction](Instructions.md), ensuring that the TEE machine's policy is up to date.
+To remain up to date, the proxy has access to a C-chain indexer to obtain new signing policies and relays them to the TEE machine using an [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) [direct instruction](../Operations/Instructions.md), ensuring that the TEE machine's policy is up to date.
 
 ## Processing Queues
 The TEE proxy is responsible for managing three types of processing queues, with operations labelled according to their appropriate queue type:

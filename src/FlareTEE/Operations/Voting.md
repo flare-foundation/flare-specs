@@ -54,7 +54,7 @@ Formally, the data structure stored at the TEE proxy contains:
 ### Voting Transparency
 The voting process requires Flare's data providers to provide votes, including signed instructions, to the TEE proxies.
 Since the data providers are rewarded for completing this process, the TEE proxy must store and provide information about the arrival time of the signatures. 
-This is the information stored in `voteHash`, an iteratively computed hash tracking information about vote arrival. Information about how this data is used for rewarding can be found in [rewarding](Rewarding.md).
+This is the information stored in `voteHash`, an iteratively computed hash tracking information about vote arrival. Information about how this data is used for rewarding can be found in [rewarding](../../FSP/Rewarding.md).
 
 On arrival of the first vote, the initial `voteHash` is computed as a hash of an ABI encoding of the Solidity struct containing the instruction ID and hash, as well as the ID of the TEE and reward epoch:
 

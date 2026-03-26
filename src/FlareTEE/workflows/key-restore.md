@@ -5,7 +5,7 @@
 This workflow covers restoring a signing key from backup onto a new TEE machine.
 Key restoration is necessary when a TEE machine becomes unavailable, is decommissioned, or when migrating keys between machines.
 The process requires cooperation from both data providers and key admins.
-For the backup scheme (Shamir secret sharing, packaging, and distribution), see [Key Management](../TEE%20Management/Key%20Management.md).
+For the backup scheme (Shamir secret sharing, packaging, and distribution), see [Key Management](../TEE Management/Key Management.md).
 
 ## Prerequisites
 

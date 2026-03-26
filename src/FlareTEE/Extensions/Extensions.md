@@ -25,7 +25,7 @@ Each extension registered on the `TeeExtensionRegistry` contract has the followi
 
 ## System vs. Custom Extensions
 
-Extensions are identified by a unique extension ID. Extension ID $0$ is reserved for the [system extension](System%20Extension.md), which hosts core infrastructure (PMW and FDC2). Custom extensions use extension IDs greater than $0$.
+Extensions are identified by a unique extension ID. Extension ID $0$ is reserved for the [system extension](System Extension.md), which hosts core infrastructure (PMW and FDC2). Custom extensions use extension IDs greater than $0$.
 
 The distinction is enforced via an operation type prefix system:
 
@@ -36,7 +36,7 @@ The distinction is enforced via an operation type prefix system:
 To initialize a new extension, a Flare user calls the function `register(teeExtensionStateVerifier, teeExtensionInstructionsSender)` on the `TeeExtensionRegistry` smart contract.
 The address that calls this function automatically becomes the owner of the extension; note that this address will typically differ from the instruction sender address.
 
-The initialization call does not register any TEEs to the extension, which must be registered separately as described [here](../TEE%20Management/Ownership.md).
+The initialization call does not register any TEEs to the extension, which must be registered separately as described [here](../TEE Management/Ownership.md).
 
 ## Extension Lifecycle
 Compute extensions may change or upgrade code versions over time, incorporating additional functionalities or deprecating existing ones. This is achieved by adding and/or removing active code versions on the extension as described in the next section.

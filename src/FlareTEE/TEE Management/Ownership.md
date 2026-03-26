@@ -1,11 +1,11 @@
 # TEE Machine Registration and Management
 TEE ownership on Flare is decentralized: permitted operators of TEE machines can register their devices on the network to participate in Flare Confidential Compute's protocols. 
-Owners are incentivized to participate in Flare Confidential Compute via a [rewarding mechanism](Rewarding.md). 
+Owners are incentivized to participate in Flare Confidential Compute via a [rewarding mechanism](../../FSP/Rewarding.md).
 This page documents the responsibilities of TEE owners on Flare, including registration, management, and upgrading.
 
 ## Registration
 Registration is the process by which a TEE owner deploys their TEE machine for operation within Flare Confidential Compute.
-When a TEE is registered, it is registered to a specific TEE [extension](Extension.md), and not the network as a whole.
+When a TEE is registered, it is registered to a specific TEE [extension](../Extensions/Extensions.md), and not the network as a whole.
 To register a TEE, its owner submits a transaction:
 
 ```solidity
@@ -22,7 +22,7 @@ The `machineData` field is in the following format:
 5. **publicKey**: The public key of the TEE, corresponding to its identity.
 
 The registration transaction places the machine in an `INITIALIZED` status.
-To complete registration and enter production, an [FDC2](FTDC.md) `teeAvailabilityCheck` attestation proof must be obtained and submitted via `toProduction(proof)`, confirming that the machine's state is correct.
+To complete registration and enter production, an [FDC2](../Extensions/FTDC.md) `teeAvailabilityCheck` attestation proof must be obtained and submitted via `toProduction(proof)`, confirming that the machine's state is correct.
 Once the attestation proof is accepted, the status changes to `PRODUCTION`, indicating that the machine is active on its extension.
 
 ### Machine Registry Contract

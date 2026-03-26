@@ -1,6 +1,8 @@
 # Component Architecture
 
-This section documents the internal architecture of the main FlareTEE software components. Each document covers the component's modules, data flow, and key interfaces.
+This section documents the internal architecture of the main FlareTEE software components.
+These pages describe the current implementation and support the consolidated specification, but they are not the canonical owners of protocol semantics.
+Each document covers the component's modules, data flow, and key interfaces.
 
 ## Components
 

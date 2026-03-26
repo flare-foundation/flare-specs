@@ -25,7 +25,7 @@ On initialization of a given wallet, the owner sets whether or not cosigners are
 This determines parameters $(n,k)$ for a threshold signature, with $k$ of the $n$ cosigner addresses required to sign an instruction that uses a key before the key holding TEE machine executes it.
 
 Once the cosigner addresses and threshold for a wallet are set, they can not be changed.
-This can be useful for [cosigner enforcement](Instructions.md/Cosigners).
+This can be useful for [cosigner enforcement](Instructions.md#cosigners).
 For example, in the PMW case, TEE machines store immalleable cosigner information as metadata alongside the keys for the wallet so that they can check whether each instruction has been appropriately signed.
 ## Data Structures
 Formally, the components are a sequence of nested data structures, with each one being a field within the above structure.
@@ -80,7 +80,7 @@ The `keyDefinitions` field in the wallet keys data structure contains informatio
 Each key is identified via a *key definition* data structure, formatted as follows:
 
 -  `keyId`: A unique identifier, calculated sequentially each time a new key definition is introduced.
-- `tees`: A list of TEE machine IDs on which the key exists. This field is updated using a `TeeKeyExistence` [proof](Key Management.md). 
+- `tees`: A list of TEE machine IDs on which the key exists. This field is updated using a `TeeKeyExistence` [proof](../TEE Management/Key Management.md).
 - `publicKey`: The public part of the key pair, set by the owner on provision of `TeeKeyExistence` proof.
 
 ## Project and Wallet Manager Contracts

@@ -4,6 +4,7 @@
 
 This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
 The result can be verified on-chain by the `VrfVerifier` contract.
+For canonical VRF key semantics, see [Key Management](../TEE Management/Key Management.md) and the [`F_WALLET--VRF`](../commands/F_WALLET--VRF.md) command reference.
 
 ## Prerequisites
 
@@ -42,7 +43,7 @@ A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, 
 
 ### Step 2: Voting
 
-Data providers vote on the instruction following the standard voting process (see [extension-instructions.md](extension-instructions.md)). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
+Data providers vote on the instruction following the standard [voting process](../Operations/Voting.md). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
 
 ---
 
@@ -101,4 +102,3 @@ where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma 
   | Zero denominator for `zInv` (probability $\approx 1/P$) | Proof generation fails; extremely unlikely |
 
 - **Cryptographic reference:** The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
-
