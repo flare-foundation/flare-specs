@@ -32,9 +32,10 @@ The nature of this processing depends on the extension, and type of action, and 
 For example, in the PMW case, the action may be to sign a transaction to be completed on the external chain.
 
 ### Queue Processing Modes
-The TEE machine processes actions from different queues with different concurrency modes:
-1. **Direct queue**: Processed sequentially (one action at a time).
-2. **Main queue**: This may have several workers processing actions concurrently.
+The TEE machine processes actions from three independent queues:
+1. **Direct queue**: Processed sequentially (one action at a time). Used for proxy-initiated operations such as policy updates and TEE info requests.
+2. **Main queue**: May have several workers processing actions concurrently. Used for instruction-based actions that have passed the voting threshold.
+3. **Backup queue**: Processed sequentially. Used for key backup actions triggered by policy updates.
 
 ### Execution Guarantees
 The processing for each action has a limited processing time.
@@ -47,10 +48,10 @@ If all retries fail, result pushing is abandoned.
 
 The decision flow for action processing at the TEE machine is as follows:
 
-1. Depending on the type of action (direct or instruction), the body of the action is parsed and `opType` and `opCommand` are extracted.
-2. If the command is a system command (`F_*`), the Flare TEE node app checks if the specific command is supported. If supported, it is executed and the result is returned to the proxy. If not, an error result is returned.
-3. If the command is a non-system command, the action is forwarded to the compute extension app through the `/action` API route. This route is timed out at 2 seconds with only one retry. If this is unsuccessful, an error result is returned to the proxy with status 2 (timeout).
-4. At the action processing point (either the Flare TEE node app or by the compute extension code), the available signatures and threshold requirements are verified. Instructions require sufficient weight of signatures, whereas direct actions do not require any (e.g. `F_GET` commands).
+1. The body of the action is parsed and `opType` and `opCommand` are extracted.
+2. For instruction actions, the available signatures and threshold requirements are verified against the signing policy. Direct actions skip this check.
+3. If the `(opType, opCommand)` pair matches a registered processor, that processor executes the action and returns the result.
+4. If the pair is not registered and the TEE machine has extension forwarding enabled, the action is forwarded to the compute extension service. If forwarding is not enabled, an error result is returned.
 
 ### Cosigner Enforcement
 

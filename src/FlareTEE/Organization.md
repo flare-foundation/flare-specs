@@ -18,12 +18,10 @@
 		- [Overview](Extensions/PMW/PMW.md)
 		- [Transactions](Extensions/PMW/Transactions.md)
 	- [FDC](Extensions/FTDC.md)
--   References
-	- Smart Contracts
-	- [Component Architecture](component-architecture/index.md)
-		- [TEE Proxy](component-architecture/tee-proxy.md)
+	-   References
+		- Smart Contracts
 		- [FDC2 Verifier server](Extensions/FDC2 Verifier Server.md)
-	- [Commands](commands/index.md)
-   - [Events](Events.md)
-	- [Workflows](workflows/index.md)
-	- [Attestation Types](attestation-types/index.md)
+		- [Commands](commands/index.md)
+	   - [Events](Events.md)
+		- [Workflows](workflows/index.md)
+		- [Attestation Types](attestation-types/index.md)

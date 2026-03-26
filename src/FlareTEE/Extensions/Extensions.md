@@ -29,7 +29,11 @@ Extensions are identified by a unique extension ID. Extension ID $0$ is reserved
 
 The distinction is enforced via an operation type prefix system:
 
-- **System operations** use the `F_` prefix (e.g., `F_WALLET`, `F_XRP`, `F_FDC2`). These can only be processed by the system extension (extension ID $0$) and are handled by dedicated processors in the TEE node.
+- **System operations** use the `F_` prefix (e.g., `F_WALLET`, `F_XRP`, `F_FDC2`).
+These are handled by dedicated built-in processors on every TEE machine, regardless of which extension the machine belongs to.
+At the smart contract level, sending system operations via `sendInstructions()` is restricted to extension ID $0$, unless the caller is a governance-registered system instruction sender.
+Some system operations (e.g., `F_WALLET` key operations, `F_GET`, `F_POLICY`) are fundamental TEE operations used by all extensions.
+Others (e.g., `F_XRP`, `F_FDC2`) are specific to the [system extension's](System%20Extension.md) PMW and FDC2 applications.
 - **Custom operations** do not use the `F_` prefix (e.g., `SAY_HELLO`, `ORDERBOOK`). These are forwarded by the TEE node to the extension service running alongside the TEE machine.
 
 ## Initializing an Extension
@@ -92,6 +96,7 @@ When `sendInstructions` is called, the contract validates:
 
 1. All TEE machines belong to the same extension ID.
 2. Non-production TEEs are rejected for non-system operations.
-3. System operations (`F_` prefix) can only be sent from extension ID $0$.
-4. The fee is sufficient to cover the operation.
-5. The cosigner threshold does not exceed the number of cosigners.
+3. The caller must be either a registered system instruction sender or the extension's designated `instructionsSender`.
+4. For non-system-sender callers, system operations (`F_` prefix) can only be sent from extension ID $0$.
+5. The fee is sufficient to cover the operation.
+6. The cosigner threshold does not exceed the number of cosigners.

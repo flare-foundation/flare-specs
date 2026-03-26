@@ -101,7 +101,8 @@ Such a command is known as a *direct instruction*.
 Typically direct instructions are not triggered by a specific message on smart contracts. 
 They are used for specific configurations or setups such as upgrade version approvals or banning by governance signers, direct configurations, and similar administrative operations.
 
-Direct instructions are submitted to the TEE proxy via the `/direct-instruction` API route.
+Direct instructions are submitted to the TEE proxy via `POST /direct`, which is optionally enabled per proxy deployment and requires API key authentication.
+This endpoint explicitly blocks system operations (`F_` prefix) and is intended for custom extension operations only.
 The signature collection for direct instructions occurs out-of-band, with the sender responsible for gathering the required signatures before submission.
 Direct instructions bypass the standard [relay client](../Relay Client.md) path.
 
