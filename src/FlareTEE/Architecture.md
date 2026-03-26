@@ -29,7 +29,7 @@ A TEE machine deployed as part of FCC consists of the following infrastructure:
 
 4. **REDIS**: Persistent storage for proxy state including voting processes, action queues, and key data.
 
-Data providers and cosigners each run a [Relay Client](component-architecture/tee-relay-client.md) that monitors the C-chain for instruction events, augments and signs instructions, and forwards them to the appropriate TEE proxies.
+Data providers and cosigners each run a [Relay Client](Relay Client.md) that monitors the C-chain for instruction events, augments and signs instructions, and forwards them to the appropriate TEE proxies.
 
 ## Design Philosophy
 

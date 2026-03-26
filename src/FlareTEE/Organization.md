@@ -1,6 +1,5 @@
 -   [Introduction](Introduction.md)
 -   [Architecture](Architecture.md)
--   [Events](Events.md)
 -   TEE Management
 	- [TEE Proxies](TEE Management/Tee Proxies.md)
 	- [TEE Machines](TEE Management/State and Status.md)
@@ -11,6 +10,7 @@
 	- [Action Instructions](Operations/Actions.md)
 	- [Voting](Operations/Voting.md)
 	- [Projects and Ownership](Operations/Projects and Ownership.md)
+-   [Relay Client](Relay Client.md)
 -   Extensions
 	- [FCE](Extensions/Extensions.md)
 	- [System Extension](Extensions/System Extension.md)
@@ -23,7 +23,7 @@
 	- [Component Architecture](component-architecture/index.md)
 		- [TEE Proxy](component-architecture/tee-proxy.md)
 		- [FDC2 Verifier server](Extensions/FDC2 Verifier Server.md)
-		- [Relay client](component-architecture/tee-relay-client.md)
 	- [Commands](commands/index.md)
+   - [Events](Events.md)
 	- [Workflows](workflows/index.md)
 	- [Attestation Types](attestation-types/index.md)
