@@ -15,7 +15,7 @@ The workflow beginning from instantiating a project to using keys in production 
 4. The owner finishes initialization by calling the `closeWalletInitialization` function on the wallet manager contract. This sets the wallet status to `initialized`.
 5. Once initialized, the owner can generate private keys for the wallet by calling the `addKey` function on the wallet manager contract. This function issues an instruction to designated TEE machines to generate private keys.
 6. On generating a key, the TEE machine provides a key existence proof that is relayed to the wallet manager contract on-chain (by any address on Flare) using the `confirmKey` function.
-7. Once enough keys are confirmed the owner can enable the wallet for production by calling the `enableWallet` function on the wallet manager smart contract. To call the enable wallet function, an FDC2 proof of a properly configured multisig must first be obtained, using the attestation type `TeeMultisigAccountConfigured`. The amount of keys required corresponds to the multisig threshold set up by the project owner (see below).
+7. Once enough keys are confirmed and the multisig threshold is set, the owner can enable the wallet for production by calling the `enableWallet` function on the wallet manager smart contract. The number of confirmed keys must meet or exceed the multisig threshold.
 8. The wallet is enabled and its status is set to `production`.
 
 ### Cosigners
@@ -105,7 +105,6 @@ The function calls available at these contracts are listed here.
 - `setCosigners(walletId, cosigners, cosignersThreshold)`: Sets signing threshold and addresses for cosigners. This call is optional, and only for the case where cosigners are used.
 - `confirmCosigner(walletId)`: Sent by one of the specified cosigner addreses in `cosigners`, this confirms  the cosigner address  `cosigner` that called the function as one of the key admins for the wallet ID.
 - `closeWalletInitialization(walletId)`: Closes wallet initialization. Once the wallet is close, cosigners and key admins are locked, and keys can be added to the wallet. This function cannot be called until at least one admin public key is set and all admins and cosigners are confirmed. This can only be called by the project owner.
--  `setMultisigThreshold(walletId, threshold)`: Sets the multisig threshold $k$ for the wallet, defining how many key signatures are required to authorize a transaction. This can only be called by the project owner.
 - `pauseWallet(walletId)`: Pauses the wallet. Indicates that existing payment instructions should be reverted.
 - `enableWallet(walletId)`: Changes the wallet's status to production. Indicates that instructions can be issued.
 - `setPausingAddresses(walletId, pausingAddresses)`: Sets the pausing addresses on all active TEE machines with keys belonging to the wallet by issuing the `SET_PAUSING_ADDRESSES` instruction. This can be called only by the project owner.

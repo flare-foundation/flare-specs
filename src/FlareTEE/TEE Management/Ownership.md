@@ -3,6 +3,20 @@ TEE ownership on Flare is decentralized: permitted operators of TEE machines can
 Owners are incentivized to participate in Flare Confidential Compute via a [rewarding mechanism](../../FSP/Rewarding.md).
 This page documents the responsibilities of TEE owners on Flare, including registration, management, and upgrading.
 
+## Owner Allowlist
+
+Machine ownership and wallet project ownership are gated by the `TeeOwnerAllowlist` contract.
+Each extension maintains its own allowlist of permitted machine owners and permitted wallet project owners.
+The allowlist is checked during:
+
+- `TeeMachineRegistry.register()` — the registering owner must be allowlisted as a machine owner for the extension.
+- `TeeMachineRegistry.proposeNewOwner()` — the proposed new owner must be allowlisted (or `address(0)` to cancel).
+- `TeeMachineRegistry.confirmOwnership()` — the confirming owner must still be allowlisted at confirmation time.
+- `TeeWalletProjectManager.createProject()` — the caller must be allowlisted as a wallet project owner for the extension.
+
+The extension owner manages the allowlist via `addAllowedTeeMachineOwners`, `removeAllowedTeeMachineOwners`, `addAllowedTeeWalletProjectOwners`, and `removeAllowedTeeWalletProjectOwners`.
+An extension can also enable open access (allow any address) via `allowAllTeeMachineOwners` or `allowAllTeeWalletProjectOwners`.
+
 ## Registration
 Registration is the process by which a TEE owner deploys their TEE machine for operation within Flare Confidential Compute.
 When a TEE is registered, it is registered to a specific TEE [extension](../Extensions/Extensions.md), and not the network as a whole.
@@ -43,7 +57,7 @@ A registered TEE machine can have one of the following statuses:
 2. `PRODUCTION`: The machine is fully operational and accepts all instructions. Can be paused or suspended.
 3. `SUSPENDED`: The machine has been suspended based on a non-availability proof ([`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation). Can transition to `PAUSED` via `pause()` or be banned.
 4. `PAUSED`: The machine has been paused by the owner, an unsupported code version, a settings update, or an unban. Can be reverted to `PRODUCTION` by providing a new availability proof.
-5. `BANNED`: The machine has been banned by governance and cannot operate. Can only be reversed by `unban()`, which moves to `PAUSED`.
+5. `BANNED`: The machine has been banned by the extension owner and cannot operate. Can only be reversed by `unban()`, which moves to `PAUSED`.
 
 ### Availability Deadline
 When a machine enters `PRODUCTION` status via `toProduction(proof)`, it is considered in production only up to a certain timestamp (`availabilityCheckValidityEndTs`).
@@ -58,14 +72,14 @@ The following set of management functions are available to the TEE owner:
 
 ### teeMachineRegistry Functions
 1. `register(machineData, signature, teeProxyId, teeUrl)`: Registers the TEE machine as described above.
-2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported. Can only be called by the owner.
+2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported. Can be called by the owner when `INITIALIZED` or `PAUSED`; can be called by anyone when `SUSPENDED`.
 3. `pause(teeId)`: Changes the status to `PAUSED`. Available when the machine status is `PRODUCTION` or `SUSPENDED`. Can be called by the owner, or by anyone if the current TEE code version is no longer supported.
 4. `pauseWithProof(proof)`: Suspends the TEE machine (sets status to `SUSPENDED`) based on a non-availability proof using the [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation type. The timestamp of the proof must not be older than $10$ minutes. Can be called by anyone.
 5. `proposeNewOwner(teeId, newOwner)`: Proposes a new owner for the TEE machine. Can only be called by the current owner.
 6. `confirmOwnership(teeId)`: Called by the proposed new owner of the machine. When called after `proposeNewOwner(teeId, newOwner)`, the ownership of the TEE machine on Flare is changed to `newOwner`.
 7. `updateTeeMachineSettings(teeId, teeProxyId, url)`: Updates the proxy ID and URL of the TEE machine. Available when the machine is in `PRODUCTION` or `SUSPENDED` status. Any change sets the status to `PAUSED`, and a new proof is needed to return it to `PRODUCTION`.
-8. `ban(teeId)`: Bans a TEE machine, setting its status to `BANNED`. Can only be called by governance.
-9. `unban(teeId)`: Unbans a previously banned TEE machine, setting its status to `PAUSED`. Can only be called by governance.
+8. `ban(teeId)`: Bans a TEE machine, setting its status to `BANNED`. Can only be called by the extension owner.
+9. `unban(teeId)`: Unbans a previously banned TEE machine, setting its status to `PAUSED`. Can only be called by the extension owner.
 
 ### teeVerification Functions
 

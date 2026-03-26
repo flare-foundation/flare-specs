@@ -20,6 +20,7 @@ All endpoints (except `/api/health`) require API key authentication via the `X-A
 
 | HTTP Status | Meaning | Examples |
 |---|---|---|
+| $400$ | Bad request | Nonce range exceeds maximum size, malformed input. |
 | $422$ | Data/validation error | Record not found, TEE validation failure, invalid input. |
 | $503$ | Infrastructure error (retryable) | DB connection failure, insufficient samples, network error. |
 | $500$ | Unexpected error | Encoding failure, unknown error. |

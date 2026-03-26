@@ -50,7 +50,7 @@ Certain instruction families impose additional relay-side requirements.
 
 ### FDC2
 For [FDC2](Extensions/FTDC.md), the relay client obtains or constructs the attestation response off-chain.
-It places the encoded `requestBody` into `additionalFixedMessage`.
+It places the attestation response into `additionalFixedMessage`.
 It places its signature over the attestation response hash into `additionalVariableMessage`.
 
 ### Key Restoration

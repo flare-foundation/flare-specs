@@ -76,13 +76,12 @@ The proxy state is managed through a combination of REDIS-backed and in-memory s
 
 - **Action store**: ([`actionId`, `submissionTag`] $\rightarrow$ `actionData`), tracks the data for a given action identity. This information is stored for $30$ days.
 - **Action result store**: ([`actionId`, `submissionTag`, `result`] $\rightarrow$ `actionResult`), tracks the result for a given action identity. This information is stored for $14$ days for standard results, and $30$ minutes for submit-type results.
-- **Signing policy store**: (`rewardEpochId` $\rightarrow$ `signingPolicyData`), tracks the signing policy data for a given reward epoch.
-- **Backup store**: (`backupIdHash` $\rightarrow$ `backupData`), tracks the data related to key backups stored by the TEE machine. Backup packages are extracted from the TEE machine each time [`TEE_INFO`](../commands/F_GET--TEE_INFO.md) is called. This data is stored for $8$ days.
+- **Backup store**: (`backupIdHash` $\rightarrow$ `backupData`), tracks the data related to key backups stored by the TEE machine. Backup packages are extracted from the TEE machine when triggered by [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) results and key generation or restore events. This data is stored for $8$ days.
 - **Backup index store**: ([`walletId`, `keyId`] $\rightarrow$ `backupIdHash`), maps a wallet key to the latest backup ID hash, enabling lookup of the most recent backup for a given key. This data is stored for $8$ days.
 
 ### Last Attestation
 The last available attestation is updated through the [`TEE_INFO`](../commands/F_GET--TEE_INFO.md) action. 
-This is updated by the TEE proxy every $10$ seconds, which generates a random challenge and calls the action.
+This is updated by the TEE proxy every $10$ seconds, which derives a challenge from the latest C-chain block hash and calls the action.
 
 ### Key Data Store
 The key data store stores the list of keys stored on the TEE for participation in the PMW protocol.
@@ -107,7 +106,7 @@ This section lists the possible API calls.
 	- **Request**: `instruction`, the TEE instruction.
 	The proxy validates the target TEE ID, the operation pair, and the signer identity before the vote is accepted or advanced.
 
-		- **200 OK**: Returns a receipt containing `instructionHash`, `sequence`, `signature`, `additionalVariableMessage`, `timestamp`, `voteHash`, and a `signature` by the proxy identity.
+		- **200 OK**: Returns a receipt containing `instructionHash`, `sequence`, `signature`, `additionalVariableMessageHash`, `timestamp`, `voteHash`, and a `signature` by the proxy identity.
 
 		- **400 Bad Request**: The instruction is malformed or exceeds the supported voting constraints of the proxy deployment.
 
@@ -137,7 +136,7 @@ These APIs are used to read data and results from the TEE proxy.
 
 	- **200 OK**: Returns `teeInfo` (containing `challenge`, `publicKey`, `initialSigningPolicyId`, `initialSigningPolicyHash`, `lastSigningPolicyId`, `lastSigningPolicyHash`, `state`, `teeTimestamp`, `platform`, `attestation`, and `proxySignature`).
 
-	- **404 Not Found**: No latest attestation available (can occur at proxy startup).
+	- **503 Service Unavailable**: Proxy not yet initialized (no attestation available; can occur at proxy startup).
 
 - **`GET /wallet/<walletId>/<keyId>`**: Returns the latest key info from the key data store. Returns:
 
@@ -149,7 +148,7 @@ These APIs are used to read data and results from the TEE proxy.
 
 - **`GET /action/result/<actionId>?submissionTag=<tag>`**: Returns the result of an action. The default submission tag is `threshold`. Returns:
 
-	- **200 OK**:  `data` (the action result) and `proxySignature`, the signature over `hash(hash(data.data), actionId, submissionTag)`.
+	- **200 OK**:  `data` (the action result) and `proxySignature`, the signature over `hash(data.data)`.
 
 	- **400 Bad Request**: Malformed `actionId` or `submissionTag` was received.
 
@@ -157,7 +156,7 @@ These APIs are used to read data and results from the TEE proxy.
 
 - **`GET /action/status/<rewardEpochId>/<instructionId>`**: Returns diagnostic data about voting processes related to the given `instructionId` from the specified `rewardEpochId`. Returns:
 
-	- **200 OK**:  `instructionId`, `finalizedHash` (zero-valued if none finalized), and `voteResults`, a list of entries each containing `instructionHash`, `weight`, `totalWeight`, `threshold`, `cosignersVoted`, and `cosignersThreshold`.
+	- **200 OK**:  `instructionId`, `finalizedHash` (zero-valued if none finalized), and `voteResults`, a list of entries each containing `instructionHash`, `weight`, `threshold`, `cosigners`, `cosignersThreshold`, `finalized`, `start`, and `end`.
 
 	- **400 Bad Request**: Malformed `rewardEpochId` or `instructionId` was received.
 
@@ -185,7 +184,7 @@ Internal APIs are behind a firewall, accessible only to the owner and the TEE ma
 
 	- **400 Bad Request**: Invalid `queueId`.
 
-	- **404 Not Found**: Empty queue.
+	- **200 OK**: Returns `null` if the queue is empty.
 
 - **`POST /result`**: Pushes an action result back to the TEE proxy for the pair (`actionId`, `submissionTag`). Returns:
 

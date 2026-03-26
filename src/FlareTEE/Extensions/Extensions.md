@@ -79,7 +79,7 @@ A variety of functions are available on the `TeeExtensionRegistry` smart contrac
 
 ### Sending Instructions
 
-- `sendInstructions(instructionId, teeIds, opType, opCommand, message, cosigners, cosignerThreshold)`: Sends an instruction to the specified TEE machines. All TEE machines must belong to the same extension. The extension's `instructionsSender` contract must be the caller.
+- `sendInstructions(teeIds, instructionParams)`: Sends an instruction to the specified TEE machines. The `instructionParams` struct contains `opType`, `opCommand`, `message`, `cosigners`, `cosignersThreshold`, and `claimBackAddress`. All TEE machines must belong to the same extension. The caller must be either the extension's `instructionsSender` or a registered system instruction sender.
 
 ### System Administration Functions (Governance Only)
 

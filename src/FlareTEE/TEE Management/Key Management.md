@@ -222,17 +222,12 @@ This section lists the available contract calls.
 ### TeeWalletKeyManager Contract Calls
 Unless otherwise specified, calls to the wallet key manager contrat are only valid if made by the owner of the wallet. The calls include:
 
-- `addKey(walletId, teeId)`:  Creates a [key definition](../Operations/Projects and Ownership.md) structure with the next sequential key ID for the wallet ID and issues the `KEY_GENERATE` instruction.
-- `confirmKey(proof)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof. 
--  `deleteKey(teeId, walletId, keyId)`: Deletes the specified key from the specified TEE machine by triggering the `KEY_DELETE` instruction. 
-- `cleanUpTeeIds(walletId, keyId)`: Removes TEE IDs from the key definition of the specified key. 
-- `receivingTeesAndKeys(walletId)`: Returns a list of TEE machine IDs and URLs to which wallet instructions should be sent and also pairs of TEE IDs and key IDs that will be used in signing. If there are less than the usual $n$ signatures available from TEEs (due to a machine being down), a notification is returned. Similarly, if the required $k$ value for the multisig of the wallet cannot be achieved, the transaction reverts. 
-
-Triggered instructions are sent by the wallet manager contract to the instruction contract.
-They are parameterized by:
-
--   `KEY_GENERATE(teeId, walletId, keyId, opType, opTypeConstants, adminsPublicKeys, adminsThreshold, cosigners, cosignersThreshold)`   
--   `KEY_DELETE(teeId, walletId, keyId)`.
+- `addKey(teeId, walletId, claimBackAddress)`:  Creates a [key definition](../Operations/Projects and Ownership.md) structure with the next sequential key ID for the wallet ID and issues the [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction. Payable.
+- `confirmKey(proof, teeSignature)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof and TEE signature.
+- `deleteKey(teeId, walletId, keyId, claimBackAddress)`: Deletes the specified key from the specified TEE machine by triggering the [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction. Payable.
+- `setMultisigThreshold(walletId, multisigThreshold)`: Sets the multisig threshold for the wallet. Wallet must be in `INITIALIZED` status.
+- `cleanUpTeeIds(walletId, keyId)`: Removes stale TEE IDs (those not in `PRODUCTION` status) from the key definition. Can be called by owner or backup manager.
+- `receivingTeesAndKeys(walletId)`: Returns a list of TEE machine IDs and URLs to which wallet instructions should be sent and also pairs of TEE IDs and key IDs that will be used in signing. If there are less than the usual $n$ signatures available from TEEs (due to a machine being down), a [`WalletKeysNotAvailable`](../Events.md#walletkeysnotavailable) event is emitted. If the required $k$ value for the multisig of the wallet cannot be achieved, the transaction reverts.
 
 ### TeeWalletBackupManager Contract Calls
 Since backups are triggered automatically, the `TeeWalletBackupManager` contract only has a single call:
