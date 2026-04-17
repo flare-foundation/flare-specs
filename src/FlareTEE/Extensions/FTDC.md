@@ -1,4 +1,4 @@
-# Flare Data Connector v2 (FDC2)
+# Flare TEE Data Connector
 The Flare Data Connector v2 (FDC2) is an application on the [system extension](System Extension.md).
 It is a TEE-based alternative to the FDC, managed via the `Fdc2Hub` smart contract.
 In the FDC2, users submit attestation requests as an [instruction](../Operations/Instructions.md) on the system extension, indicating a collection of TEE machines on which the attestation is to be confirmed.
@@ -13,17 +13,6 @@ This presents two upgrades over the FDC:
 - Removal of the on-chain voting process means that any request which can be verified by enough data providers will be responded to.
 
 As part of the system extension of the Flare Confidential Compute architecture, the FDC2 handles specific types of attestation requests relating to the liveness and security of the TEE machines and the status of PMW operations.
-
-## Attestation Types
-The FDC2 currently supports four attestation types:
-
-1. **TeeAvailabilityCheck** — verifies TEE machine availability, code integrity, and platform attestation freshness.
-2. **PMWPaymentStatus** — verifies the status of a PMW payment transaction on an external chain.
-3. **PMWMultisigAccountConfigured** — proves that a multisig account on an external chain is correctly configured for PMW use.
-4. **PMWFeeProof** — provides accurate fee accounting for a range of payment nonces, comparing estimated fees (from instruction events) with actual fees (from external chain transactions).
-
-For full details on each type, see the [attestation-types](../attestation-types/) documentation.
-For the verifier server HTTP interface, see the [FDC2 Verifier Server](FDC2 Verifier Server.md) specification.
 
 ## Overview
 The procedure for handling attestations in the FDC2 is broadly the same as in the FDC.
@@ -41,7 +30,19 @@ The procedure for handling an FDC2 request is as follows:
 6. The TEE returns the action result to the TEE proxy, including both the list of data provider signatures $\mathrm{Sign}_i (\mathrm{Att_{response}})$ for each data provider $i$ that voted and its own $\mathrm{Sign}_{\mathrm{ID}}(\mathrm{Att_{response}})$ over the attestation response.
 7. The FDC2 confirmation of the request can now be fetched from a participating TEE proxy and published on Flare. This step is typically completed by the data providers.
 
-### Request Format
+## Attestation Types
+The FDC2 currently supports four attestation types:
+
+1. **TeeAvailabilityCheck**: Verifies TEE machine availability, code integrity, and platform attestation freshness.
+2. **PMWPaymentStatus**: Verifies the status of a PMW payment transaction on an external chain.
+3. **PMWMultisigAccountConfigured**: Proves that a multisig account on an external chain is correctly configured for PMW use.
+4. **PMWFeeProof**: Provides accurate fee accounting for a range of payment nonces, comparing estimated fees (from instruction events) with actual fees (from external chain transactions).
+
+For full details on each type, see the [attestation-types](../attestation-types/) documentation.
+For the verifier server HTTP interface, see the [FDC2 Verifier Server](FDC2 Verifier Server.md) specification.
+
+## Formatting
+
 An attestation request takes the form of a Solidity struct:
 
 ```solidity
@@ -71,6 +72,7 @@ The TEE proxy extracts these values from the instruction event and applies them 
 The `attestationType` and `sourceId` fields denote the attestation type and the data source of the attestation.
 The `thresholdBIPS` field denotes the weight of data provider signatures required in step 5, and must exceed $40\%$.
 
+
 ### Response Format
 An attestation response consists of three parts:
 
@@ -96,13 +98,19 @@ struct Fdc2ResponseHeader {
 The format of the response body is a Solidity struct whose exact format depends on the attestation type of the request.
 
 ### Signature Computation
-
 Data providers, cosigners, and the TEE machine each need to sign the attestation response.
 To do so, the response header, request body, and response body are each separately ABI-encoded and hashed, then the outputs of the three hashes are hashed together.
 Finally, this hash is prepended with a $6$-byte protocol prefix `0x010000000000` and hashed a final time. That is, the signed hash is:
 
-$$\mathrm{hash}(\texttt{0x010000000000} \| \mathrm{hash}(\mathrm{hash}(\text{ABIencode}(\text{responseHeader})), \mathrm{hash}(\text{ABIencode}(\text{requestBody})), \mathrm{hash}(\text{ABIencode}(\text{responseBody}))))$$
-
+```
+hash(0x010000000000,
+hash(
+hash(ABIencode(response_header)),
+hash(ABIencode(requestBody)),
+hash(ABIencode(responseBody))
+)
+)
+```
 > **Note on interoperability:** The $6$-byte prefix matches the format of a protocol message with a Merkle root (with `protocolId = 1`, `votingRoundId = 0`, and `isSecureRandom = 0`). This ensures interoperability with the existing Relay contract verification used in the FDC.
 
 ### Instruction Format
@@ -111,6 +119,7 @@ These include:
 
 - `additionalFixedMessage`: The ABI encoding of the `requestBody`.
 - `additionalVariableMessage`: The signature over the hash generated from the attestation response.
+
 The corresponding relay behavior is summarized in [Relay Client](../Relay Client.md#fdc2).
 
 ### Action Result Format
@@ -156,9 +165,9 @@ The `Fdc2Signatures` struct bundles all three signature types:
 ```solidity
 // Source: IFdc2Verification.sol
 struct Fdc2Signatures {
-    bytes signingPolicySignatures;   // relay-formatted data provider signatures
-    Signature[] teeSignatures;       // TEE machine signatures (v, r, s)
-    Signature[] cosignerSignatures;  // cosigner signatures (v, r, s)
+    bytes signingPolicySignatures;
+    Signature[] teeSignatures;
+    Signature[] cosignerSignatures;
 }
 ```
 
@@ -188,35 +197,32 @@ The following table shows how each field of the `ProveResponse` (from the action
 
 ### Assembly Steps
 
-1. **Fetch the action result** from the TEE proxy via `GET /action/result/<instructionId>`. The `data` field of the result contains the JSON-encoded `ProveResponse`.
+1. **Fetch the action result**: Fetch from the TEE proxy via `GET /action/result/<instructionId>`. The `data` field of the result contains the JSON-encoded `ProveResponse`.
 
-2. **Decode the response header.** ABI-decode `ProveResponse.ResponseHeader` into the `Fdc2ResponseHeader` struct. This yields the `attestationType`, `sourceId`, `thresholdBIPS`, `proofOwner`, `cosigners`, `cosignersThreshold`, and `timestamp` fields.
+2. **Decode the response header**: ABI-decode `ProveResponse.ResponseHeader` into the `Fdc2ResponseHeader` struct. This yields the `attestationType`, `sourceId`, `thresholdBIPS`, `proofOwner`, `cosigners`, `cosignersThreshold`, and `timestamp` fields.
 
-3. **Decode request and response bodies.** ABI-decode `ProveResponse.RequestBody` and `ProveResponse.ResponseBody` into the attestation-type-specific structs. For example, for [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md), the response body decodes into a struct with `status`, `teeTimestamp`, `codeHash`, `platform`, `initialSigningPolicyId`, `lastSigningPolicyId`, and `state`.
+3. **Decode request and response bodies**: ABI-decode `ProveResponse.RequestBody` and `ProveResponse.ResponseBody` into the attestation-type-specific structs.
 
-4. **Decompose signatures.** Convert the raw signature bytes into Solidity `Signature` structs by splitting each $65$-byte ECDSA signature into `(v, r, s)` components:
-   - `r` = first $32$ bytes.
-   - `s` = next $32$ bytes.
-   - `v` = last byte (recovery ID, typically $27$ or $28$).
+4. **Decompose signatures**: Convert the raw signature bytes into Solidity `Signature` structs by splitting each $65$-byte ECDSA signature into its `(v, r, s)` components.
 
 5. **Assemble the `Fdc2Signatures` struct:**
    - `signingPolicySignatures` = `ProveResponse.DataProviderSignatures` (used as-is in relay format).
    - `teeSignatures` = array of decomposed `TEESignature`(s).
    - `cosignerSignatures` = array of decomposed `CosignerSignatures`.
 
-6. **Construct the final `Proof` struct** and submit it to the verifying contract.
+6. **Submission**: Construct the final `Proof` struct and submit it to the verifying contract.
 
 ### On-Chain Verification
 
-The verifying contract (e.g., `TeeVerification`) validates the proof by:
+The verifying contract (e.g., `TeeVerification`) validates the proof with the following process:
 
-1. **Checking the response header** — verifying that the `attestationType` and `sourceId` match the expected values.
-2. **Recomputing the message hash** — the contract independently hashes the header, request body, and response body, prepends the $6$-byte protocol prefix, and hashes again. This reproduces the hash that was originally signed.
-3. **Verifying signatures** — depending on the proof type:
-   - If `teeSignatures` are present: the `Fdc2Verification` contract verifies each TEE signature using `ecrecover` against the recomputed hash, confirming the signing TEE's identity.
-   - If `signingPolicySignatures` are present: the `Relay` contract verifies the data provider signatures against the current signing policy.
-   - If `cosignerSignatures` are present: each is verified against the cosigner addresses listed in the response header.
-4. **Validating response data** — the contract checks attestation-specific fields (e.g., code hash, platform, signing policy hashes for [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md); account configuration for [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md)).
+1. **Checking response header**: Verifies that the `attestationType` and `sourceId` match the expected values.
+2. **Recomputing the message hash**: The contract independently hashes the header, request body, and response body, prepends the $6$-byte protocol prefix, and hashes again. This reproduces the hash that was originally signed.
+3. **Verifying signatures**: This stage depends on the proof type:
+   - If `teeSignatures` are present, the `Fdc2Verification` contract verifies each TEE signature using `ecrecover` against the recomputed hash, confirming the signing TEE's identity.
+   - If `signingPolicySignatures` are present, the `Relay` contract verifies the data provider signatures against the current signing policy.
+   - If `cosignerSignatures` are present, each is verified against the cosigner addresses listed in the response header.
+4. **Validating response data**: The contract checks relevant attestation-specific fields (e.g., code hash, platform, signing policy hashes for [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md); account configuration for [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md)).
 
 ### Attestation-Specific Proof Structs
 

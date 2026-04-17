@@ -41,3 +41,5 @@ PMW handles these functions by implementing the following specific functionaliti
 2. **Nonce (transaction sequence) management**: Careful management guarantees that each payment instruction can be issued with a particular nonce only. 
 3. **Reissuance or nullification**: A stuck transaction with a specific nonce can be reissued with the same data on a different (higher) fee, or nullified by a trivial transaction that consumes the nonce at minimal cost.
 4. **Proving transaction execution status**: A proof of execution status through an FDC attestation can be obtained once the nonce is consumed, allowing protocols to verify payment outcomes and handle errors automatically.
+
+> **Note:** BTC support is planned but not yet implemented.

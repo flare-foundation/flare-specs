@@ -73,34 +73,35 @@ $\vert \mathrm{T}_\mathrm{list} \vert  < S$.
 
 ## Fee Scheduling
 
-The payment system supports *progressive fee escalation*.
-When a payment instruction is sent to a TEE machine, it includes a *fee schedule* — a list of fee entries, each specifying a fee factor and a time delay.
-The TEE machine signs transactions for all fee entries upfront and posts the results to the proxy progressively according to the delay schedule.
-If the first transaction is not confirmed on the external chain, higher-fee versions become available automatically.
+The PMW payment structure supports progressive fee escalation.
+When a payment instruction is sent to a TEE machine, it includes a *fee schedule*.
+This schedule comprises a list of *fee entries*, with each entry specifying a fee factor and a time delay.
+The TEE machine signs transactions for all fee entries upfront, posting the results to the proxy progressively according to the delay schedule.
+Thus, if the first transaction is not confirmed on the external chain the higher-fee versions become available automatically.
 
 ### Fee Schedule Format
 
 The fee schedule is a binary-encoded byte array.
-Each entry is $4$ bytes:
+Each entry $F = (f, t)$ consists of $4$ bytes, the first two of which describe the fee $f$ and the second the delay $t$:
 
 | Bytes | Type | Description |
 |---|---|---|
 | $0$–$1$ | `int16` (big-endian) | Fee factor in BIPS ($-10000$ to $+10000$, non-zero). |
-| $2$–$3$ | `uint16` (big-endian) | Delay in seconds from the start of processing. |
+| $2$–$3$ | `uint16` (big-endian) | Delay time in seconds. |
 
-Entries must have strictly ascending delays.
+Note that the delay time is measured in seconds from the start of processing, and entries must have strictly ascending delays.
 
 ### Fee Calculation
 
-For each entry, the transaction fee is computed as:
+For each entry, the corresponding transaction fee ($\mathrm{fee}$) is computed as:
 
-$$\mathrm{fee} = \dfrac{|\mathrm{factorBIPS}| \times \mathrm{maxFee}}{10000}$$
+$$\mathrm{fee} = \dfrac{|f| \times \mathrm{maxFee}}{10000}$$
 
 where `maxFee` is the maximum fee specified in the payment instruction.
 
 ### Nullification
 
-A negative `factorBIPS` value triggers a *nullification*: the TEE signs an `AccountSet` transaction instead of a `Payment` transaction.
+A negative $f$ value triggers a nullification: the TEE signs an `AccountSet` transaction instead of a `Payment` transaction.
 This consumes the blockchain nonce without transferring funds.
 Nullification is used to cancel a stuck payment.
 
@@ -116,49 +117,35 @@ This decodes to a single entry: $10000$ BIPS ($100\%$ of `maxFee`) at $0$ second
 
 ### Configuration
 
-The wallet owner sets a persistent fee schedule per account via `TeePayments.setFeeSchedule()`:
+The wallet owner can set a persistent fee schedule per account by calling `TeePayments.setFeeSchedule()`, which takes as input:
 
-**Parameters:**
-- `account` (`PMWMultisigAccount`) — the multisig account.
-- `factorsBIPS` (`int16[]`) — fee factors in BIPS for each schedule entry.
-- `delaysSeconds` (`uint16[]`) — corresponding delays in seconds (strictly ascending).
+- `account`: The multisig account.
+- `factorsBIPS`: The fee factors in BIPS for each schedule entry.
+- `delaysSeconds`: The corresponding delays in seconds (strictly ascending).
 
 The schedule is stored on-chain and applied to all subsequent payment batches for the account.
 
-**Events emitted:** [`FeeScheduleSet`](../../Events.md#feescheduleset)
-
-### TEE Processing
-
-When the TEE machine receives a payment instruction with a fee schedule:
-
-1. All fee entries are signed upfront — one XRPL transaction per entry.
-2. A background process posts the signed transactions to the proxy progressively, each after its configured delay.
-3. Intermediate results use status $3$, $4$, $5$, etc. (one per non-final entry).
-The final result uses status $1$.
-4. Each result is cumulative — it includes all transactions from the first entry up to and including the current one.
+Calling this function emits a [`FeeScheduleSet`](../../Events.md#feescheduleset) event.
 
 ### Reissue Override
 
-When reissuing a failed payment via `TeePayments.reissue()`, the caller can override the fee schedule per instruction using `ReissueFeeParams`:
+When reissuing a failed payment via `TeePayments.reissue()`, the caller can override the fee schedule using `ReissueFeeParams` in the form:
 
-- `maxFees` (`uint256[]`) — new maximum fees, one per instruction.
-- `feeFactorScheduleBIPS` (`int16[][]`) — per-instruction fee factor schedules.
-- `feeDelayScheduleSeconds` (`uint16[]`) — shared delay schedule across all instructions in the batch.
+- `maxFees`: New maximum fees, with one listed per instruction.
+- `feeFactorScheduleBIPS`: A new fee factor schedule, again listed per instruction.
+- `feeDelayScheduleSeconds`: A shared delay schedule across all instructions in the batch.
 
 If `feeFactorScheduleBIPS` is empty, the account's stored fee schedule (or the default) is used.
 
 ## Reissuance and Nullification
+Although unlikely, payments issued by PMW addresses can fail.
+For example, payments may fail when the offered fee is too low or due to issues on the external chain.
+*Reissuance* and *nullification* processes are in place to handle these situations.
 
-Payments issued by PMW addresses can fail, for example when the offered fee is too low or due to issues on the external chain.
-*Reissuance* re-submits the payment instruction with updated fee parameters.
-*Nullification* submits a cheap transaction that consumes the blockchain nonce without transferring funds.
-
-A reissue is triggered by calling `TeePayments.reissue()`.
-For the full parameter list, see the [xrp-payment workflow](../../workflows/xrp-payment.md).
-
-Nullification is achieved by setting a negative `factorBIPS` in the fee schedule (see [Fee Scheduling](#fee-scheduling) above).
+A reissue transaction is issued by calling the function `reissue(data)` at the `teePayments` contract.
+The input parameters for this function can be found in the relevant [workflow](../../workflows/xrp-payment.md)
+A nullification transaction be acheived with the same function by setting a negative fee as explained [above](#fee-scheduling).
 
 ### Checking Transaction Status
-
-The [`PMWPaymentStatus`](../../attestation-types/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on the external chain.
+To help determine the possibility of unsuccessful payments, the [`PMWPaymentStatus`](../../attestation-types/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on an external chain.
 The response includes the transaction status (success or reverted), the received amount, the transaction fee, and the revert reason if applicable.
