@@ -107,11 +107,9 @@ This section lists the possible API calls.
 
 	- **400 Bad Request**: The instruction is malformed or exceeds the supported voting constraints of the proxy deployment.
 
-		- **400 Bad Request**: The instruction is malformed or exceeds the supported voting constraints of the proxy deployment.
+	- **403 Forbidden**: The sender is not allowed to start a voting process (not a data provider). The sender should retry after a short delay.
 
-		- **403 Forbidden**: The sender is not allowed to start a voting process (not a data provider). The sender should retry after a short delay.
-
-		- **429 Too Many Requests**: The data provider is rejected due to too many started requests. The relay client should retry.
+	- **429 Too Many Requests**: The data provider is rejected due to too many started requests. The relay client should retry.
 
 	- **500 Internal Server Error**: Other errors, with the exception message given as `description`.
 
