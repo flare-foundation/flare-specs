@@ -44,7 +44,7 @@ $$(\text{walletId}, \text{keyId}) \Rightarrow (\text{nonce}, \text{pauseNonce}, 
 Where the fields represent:
 
 - `nonce`: The key nonce, used for replay protection in state-changing operations such as `KEY_DELETE`.
-- `pauseNonce`: A randomly generated nonce reserved for future `PAUSE` and `RESUME` operations.
+- `pauseNonce`: A randomly generated nonce reserved for `PAUSE` and `RESUME` operations.
 - `status`: The key status (e.g. `active`, `paused`).
 - `expiry`: The expiry time of the key. After the expiry time is reached, the key is automatically deleted from the machine.
 
@@ -204,7 +204,6 @@ The restore function then works as follows:
 2. They each decrypt their key share found in their backup package $\mathrm{Backup}_i$ to recover their key share(s). For example, the $j$th key admin recovers the share ${S_\mathrm{ka}}^j$.
 3. Next, the key share is encrypted under the public key corresponding to TEE ID of the TEE machine on which the key is being restored, e.g. computing $\mathrm{Enc}_{\mathrm{TEE}_\mathrm{id}}({S_\mathrm{ka}}^j)$.
 4. Once their encryption is prepared, they send an [instruction](../Operations/Instructions.md) to the relevant TEE proxy containing the backup metadata as the `additionalFixedMessage` and the encrypted share as the `additionalVariableMessage`.
-The corresponding relay behavior is summarized in [Relay Client](../Relay Client.md#key-restoration).
 5. The TEE proxy sets the `submissionTag` field in the action structure to `end`, keeping voting open for the maximal possible duration. At the end of voting, assuming it received enough shares from both data providers and key admins such that key recovery is possible, it prepares the recovery action and submits the encrypted shares to the TEE machine.
 6. The TEE machine completes the action, decrypting all key shares, recovering shares of the initial split $S_\mathrm{dp}$ and $S_\mathrm{ka}$, from which it recovers $K$.
 7. Once the action is complete, the TEE machine returns an action response to the TEE proxy, indicating the success (or not) of the recovery process. Additionally, the machine returns a list of entities who returned invalid key shares, if any.
@@ -220,14 +219,20 @@ Keys and backups are managed by users through two contracts: the `TeeWalletKeyMa
 This section lists the available contract calls.
 
 ### TeeWalletKeyManager Contract Calls
-Unless otherwise specified, calls to the wallet key manager contrat are only valid if made by the owner of the wallet. The calls include:
+Unless otherwise specified, calls to the wallet key manager contract are only valid if made by the owner of the wallet. The calls include:
 
-- `addKey(teeId, walletId, claimBackAddress)`:  Creates a [key definition](../Operations/Projects and Ownership.md) structure with the next sequential key ID for the wallet ID and issues the [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction. Payable.
-- `confirmKey(proof, teeSignature)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof and TEE signature.
-- `deleteKey(teeId, walletId, keyId, claimBackAddress)`: Deletes the specified key from the specified TEE machine by triggering the [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction. Payable.
+- `addKey(teeId, walletId, claimBackAddress)`:  Creates a [key definition](../Operations/Projects and Ownership.md) structure with the next sequential key ID for the wallet ID and issues the [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction.
+- `confirmKey(proof)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof and signature.
+-  `deleteKey(teeId, walletId, keyId)`: Deletes the specified key from the specified TEE machine by triggering the [`KEY_DELETE`](../commands/F_WALLET--KEY_DELETE.md) instruction.
 - `setMultisigThreshold(walletId, multisigThreshold)`: Sets the multisig threshold for the wallet. Wallet must be in `INITIALIZED` status.
-- `cleanUpTeeIds(walletId, keyId)`: Removes stale TEE IDs (those not in `PRODUCTION` status) from the key definition. Can be called by owner or backup manager.
-- `receivingTeesAndKeys(walletId)`: Returns a list of TEE machine IDs and URLs to which wallet instructions should be sent and also pairs of TEE IDs and key IDs that will be used in signing. If there are less than the usual $n$ signatures available from TEEs (due to a machine being down), a [`WalletKeysNotAvailable`](../Events.md#walletkeysnotavailable) event is emitted. If the required $k$ value for the multisig of the wallet cannot be achieved, the transaction reverts.
+- `cleanUpTeeIds(walletId, keyId)`: Removes old TEE IDs (those not in `PRODUCTION` status) from the key definition. Can be called by owner or backup manager.
+- `receivingTeesAndKeys(walletId)`: Returns a list of TEE machine IDs and URLs to which wallet instructions should be sent and also pairs of TEE IDs and key IDs that will be used in signing. If there are less than the usual $n$ signatures available from TEEs (due to a machine being down), a [`WalletKeysNotAvailable`](../Events.md#walletkeysnotavailable) event is emitted. Similarly, if the required $k$ value for the multisig of the wallet cannot be achieved, the transaction reverts. 
+
+Triggered instructions are sent by the wallet manager contract to the instruction contract.
+They are parameterized by:
+
+-   `KEY_GENERATE(teeId, walletId, keyId, opType, opTypeConstants, adminsPublicKeys, adminsThreshold, cosigners, cosignersThreshold)`   
+-   `KEY_DELETE(teeId, walletId, keyId)`.
 
 ### TeeWalletBackupManager Contract Calls
 Since backups are triggered automatically, the `TeeWalletBackupManager` contract only has a single call:

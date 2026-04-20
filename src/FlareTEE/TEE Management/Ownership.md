@@ -4,18 +4,17 @@ Owners are incentivized to participate in Flare Confidential Compute via a [rewa
 This page documents the responsibilities of TEE owners on Flare, including registration, management, and upgrading.
 
 ## Owner Allowlist
+Machine ownership and [wallet project ownership](../Operations/Projects%20and%20Ownership.md) are gated by the `TeeOwnerAllowlist` contract.
+Each extension maintains its own allowlist, defining permitted machine owners and permitted wallet project owners on the extension.
+The allowlist is checked as part of several functions:
 
-Machine ownership and wallet project ownership are gated by the `TeeOwnerAllowlist` contract.
-Each extension maintains its own allowlist of permitted machine owners and permitted wallet project owners.
-The allowlist is checked during:
+- `TeeMachineRegistry.register()`: The registering owner must be allowlisted as a machine owner for the extension.
+- `TeeMachineRegistry.proposeNewOwner()`: The proposed new owner must be allowlisted (or `address(0)` to cancel).
+- `TeeMachineRegistry.confirmOwnership()`: The confirming owner must still be allowlisted at confirmation time.
+- `TeeWalletProjectManager.createProject()`: The caller must be allowlisted as a wallet project owner for the extension.
 
-- `TeeMachineRegistry.register()` — the registering owner must be allowlisted as a machine owner for the extension.
-- `TeeMachineRegistry.proposeNewOwner()` — the proposed new owner must be allowlisted (or `address(0)` to cancel).
-- `TeeMachineRegistry.confirmOwnership()` — the confirming owner must still be allowlisted at confirmation time.
-- `TeeWalletProjectManager.createProject()` — the caller must be allowlisted as a wallet project owner for the extension.
-
-The extension owner manages the allowlist via `addAllowedTeeMachineOwners`, `removeAllowedTeeMachineOwners`, `addAllowedTeeWalletProjectOwners`, and `removeAllowedTeeWalletProjectOwners`.
-An extension can also enable open access (allow any address) via `allowAllTeeMachineOwners` or `allowAllTeeWalletProjectOwners`.
+The extension owner adds and removes entries from the allowlist via `addAllowedTeeMachineOwners`, `removeAllowedTeeMachineOwners`, `addAllowedTeeWalletProjectOwners`, and `removeAllowedTeeWalletProjectOwners`.
+An extension can also enable open access (allow any address) by calling `allowAllTeeMachineOwners` or `allowAllTeeWalletProjectOwners`.
 
 ## Registration
 Registration is the process by which a TEE owner deploys their TEE machine for operation within Flare Confidential Compute.
@@ -53,11 +52,11 @@ The `teeMachineRegistry` smart contract keeps a record of each registered TEE ma
 ## Statuses
 A registered TEE machine can have one of the following statuses:
 
-1. `INITIALIZED`: Initial status after registration, indicating that the machine is not yet verified and operational. Transitions to `PRODUCTION` via `toProduction()`.
-2. `PRODUCTION`: The machine is fully operational and accepts all instructions. Can be paused or suspended.
+1. `INITIALIZED`: Initial status after registration, indicating that the machine is not yet verified and operational. Allows transitioning to `PRODUCTION` via `toProduction()`.
+2. `PRODUCTION`: The machine is fully operational and accepts all instructions. Allows pausing and suspending.
 3. `SUSPENDED`: The machine has been suspended based on a non-availability proof ([`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation). Can transition to `PAUSED` via `pause()` or be banned.
-4. `PAUSED`: The machine has been paused by the owner, an unsupported code version, a settings update, or an unban. Can be reverted to `PRODUCTION` by providing a new availability proof.
-5. `BANNED`: The machine has been banned by the extension owner and cannot operate. Can only be reversed by `unban()`, which moves to `PAUSED`.
+4. `PAUSED`: The machine has been paused by the owne, an unsupported code version, a settings update, or an unban. Prevents receiving any instructions. Can be reverted to `PRODUCTION` by providing a new availability proof.
+5. `BANNED`: The machine has been banned and cannot operate. This status can only be reveresed by `unban()`, which moves the status to `PAUSED`.
 
 ### Availability Deadline
 When a machine enters `PRODUCTION` status via `toProduction(proof)`, it is considered in production only up to a certain timestamp (`availabilityCheckValidityEndTs`).
@@ -72,7 +71,7 @@ The following set of management functions are available to the TEE owner:
 
 ### teeMachineRegistry Functions
 1. `register(machineData, signature, teeProxyId, teeUrl)`: Registers the TEE machine as described above.
-2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported. Can be called by the owner when `INITIALIZED` or `PAUSED`; can be called by anyone when `SUSPENDED`.
+2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported.  Can be called by the owner when the machine status is `INITIALIZED` or `PAUSED`; can be called by anyone when `SUSPENDED`.
 3. `pause(teeId)`: Changes the status to `PAUSED`. Available when the machine status is `PRODUCTION` or `SUSPENDED`. Can be called by the owner, or by anyone if the current TEE code version is no longer supported.
 4. `pauseWithProof(proof)`: Suspends the TEE machine (sets status to `SUSPENDED`) based on a non-availability proof using the [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) attestation type. The timestamp of the proof must not be older than $10$ minutes. Can be called by anyone.
 5. `proposeNewOwner(teeId, newOwner)`: Proposes a new owner for the TEE machine. Can only be called by the current owner.

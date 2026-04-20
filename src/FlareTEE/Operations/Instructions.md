@@ -15,7 +15,8 @@ This page documents these features.
 An instruction event is the method by which a Flare user submits an instruction to one or more TEEs on a specific extension, instructing those machines to perform a certain action. 
 They do so by submitting an instruction event to the `teeExtensionRegistry` smart contract on Flare.
 
-Instruction events do not need to contain all required information to complete the action; rather, data providers and cosigners pick up the instruction on Flare, package it together with the information needed to perform the action, sign the resulting TEE instructions, and relay them to the TEEs (see [Relay Client](../Relay Client.md)).
+Instruction events do not need to contain all required information to complete the action.
+Instead, data providers and cosigners pick up the instruction on Flare, package it together with the information needed to perform the action, sign the resulting TEE instructions, and relay them to the TEEs (see [Relay Client](../Relay Client.md)).
 
 An instruction event emitted on Flare has the following data structure:
 
@@ -45,7 +46,7 @@ Note that it is in theory possible for a weighted majority of data providers to 
 Each extension that intends to use cosigner fields must prepare its own protection against such an attack.
 For example, requiring the [action response](Actions.md) to include the cosigner signatures allows a contract on Flare to confirm that the cosigners signed the instruction.
 
-For a detailed discussion of how cosigner enforcement is handled at the system and extension level, including mitigation against 50%+ data provider attacks, see [Cosigner Enforcement](Actions.md#cosigner-enforcement)
+For a detailed discussion of how cosigner enforcement is handled at the system and extension level, including mitigation against 50%+ data provider attacks, see [Cosigner Enforcement](Actions.md#cosigner-enforcement).
 The corresponding relay-role restrictions are summarized in [Relay Client](../Relay Client.md).
 
 ## TEE Instructions
@@ -102,7 +103,6 @@ Typically direct instructions are not triggered by a specific message on smart c
 They are used for specific configurations or setups such as upgrade version approvals or banning by governance signers, direct configurations, and similar administrative operations.
 
 Direct instructions are submitted to the TEE proxy via `POST /direct`, which is optionally enabled per proxy deployment and requires API key authentication.
-This endpoint explicitly blocks system operations (`F_` prefix) and is intended for custom extension operations only.
 The signature collection for direct instructions occurs out-of-band, with the sender responsible for gathering the required signatures before submission.
 Direct instructions bypass the standard [relay client](../Relay Client.md) path.
 
