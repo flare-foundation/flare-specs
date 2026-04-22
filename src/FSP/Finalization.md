@@ -56,11 +56,13 @@ where protocolID is of type $\mathrm{uint}8$, votingRoundID is $\mathrm{uint}32$
 
 ### Threshold
 
-The threshold value $t$ is set in the signing policy, and is set to $5\%$ of the total signing weight.
-In the unlikely case where a round is started on one signing policy but expected to be rewarded in another, it is raised by one fifth to $12 * t /10$.
+The threshold value $t$ is set in the signing policy, and is set to $50\%$ of the total signing weight.
+If the total weight is not even, the threshold is rounded up.
+The threshold is fulfilled if the collected weight is above the threshold.
+In the unlikely case where a round is expected to be included in the reward epoch that has not begun yet, the threshold it is raised by one fifth to $12 * t /10$.
 
 Formally, let $v$ be the votingRoundID of the message being finalized, $r$ be the ID of current active signingPolicy, $\mathrm{expected}(v)$ be the [expected reward epoch](Epochs.md#reward-epoch) for $v$, and $x$ be the ID of the last initialized signingPolicy.
-If $\mathrm{expected}(v) = r$ the threshold is the usual $5\%$.
+If $\mathrm{expected}(v) = r$ the threshold is the usual $50\%$.
 If $\mathrm{expected}(v) > r$ and $x=r$, the threshold is increased.
 
 ## Rewarding
@@ -73,8 +75,8 @@ Let $V(i)$ be the total designated rewards for a protocol in voting round $i$ an
 
 In each round, the selected entity is rewarded if they make a transaction from signingPolicyAddress inside the grace period that either:
 
-* finalizes the protocol for the round.
-* would finalize the protocol for the round but the protocol is already finalized.
+- finalizes the protocol for the round.
+- would finalize the protocol for the round but the protocol is already finalized.
 
 Each entity completing such a transaction receives an equal share $\dfrac{V(i)}{N(i)}$, with a proportion shared among their delegators as usual.
 If a selected entity does not make such a transaction, their portion gets burned.
