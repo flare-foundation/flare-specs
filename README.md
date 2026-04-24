@@ -45,6 +45,42 @@ This repository contains the technical specifications for Flare's core protocols
 - [Rewarding](src/FTSO/Rewarding.md)
 - [Encoding Reference](src/FTSO/Encoding.md)
 
+### Flare Confidential Compute (FlareTEE)
+
+- [Introduction](src/FlareTEE/Introduction.md)
+- [Architecture](src/FlareTEE/Architecture.md)
+- Operations
+  - [Instructions](src/FlareTEE/Operations/Instructions.md)
+  - [Actions](src/FlareTEE/Operations/Actions.md)
+  - [Voting](src/FlareTEE/Operations/Voting.md)
+  - [Relay Client](src/FlareTEE/Operations/RelayClient.md)
+  - [Projects and Configuration](src/FlareTEE/Operations/ProjectsAndConfiguration.md)
+- Extensions
+  - [Overview](src/FlareTEE/Extensions/Overview.md)
+  - [System Extension](src/FlareTEE/Extensions/SystemExtension.md)
+  - [FDC2](src/FlareTEE/Extensions/FDC2.md)
+  - [FDC2 Verifier Server](src/FlareTEE/Extensions/Fdc2VerifierServer.md)
+  - [PMW](src/FlareTEE/Extensions/PMW/PMW.md)
+  - [PMW Transactions](src/FlareTEE/Extensions/PMW/Transactions.md)
+- TEE Management
+  - [Registration](src/FlareTEE/TeeManagement/Registration.md)
+  - [State and Attestation](src/FlareTEE/TeeManagement/StateAndAttestation.md)
+  - [Key Management](src/FlareTEE/TeeManagement/KeyManagement.md)
+  - [TEE Proxy](src/FlareTEE/TeeManagement/TeeProxy.md)
+- [Events](src/FlareTEE/Types/Abi/Events/index.md)
+- References
+  - [Commands](src/FlareTEE/Commands/index.md)
+  - [Workflows](src/FlareTEE/Workflows/index.md)
+  - [Attestation Types](src/FlareTEE/AttestationTypes/index.md)
+  - [Type Reference](src/FlareTEE/Types/index.md)
+
+## Terminology
+
+Cross-cutting definitions used across protocols:
+
+- [Roles](src/Terminology/Roles.md)
+- [Concepts](src/Terminology/Concepts.md)
+
 ## Utilities
 
 Shared cryptographic and mathematical utilities used across protocols:
