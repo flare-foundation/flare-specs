@@ -12,15 +12,7 @@ Attestation request body:
 - `challenge` — Random challenge for the attestation request.
 - `instructionId` — Instruction ID for the attestation request.
 
-```solidity
-struct RequestBody {
-    address teeId;
-    address teeProxyId;
-    string url;
-    bytes32 challenge;
-    bytes32 instructionId;
-}
-```
+The request body is formatted as the [`TeeAvailabilityCheck.RequestBody`](../Types/Abi/AttestationType.md#requestbody) struct.
 
 ## Response
 
@@ -37,26 +29,7 @@ Attestation response body:
 - `lastSigningPolicyId` — From the TEE proxy attestation result.
 - `state` — From the TEE proxy attestation result.
 
-```solidity
-enum AvailabilityCheckStatus { OK, OBSOLETE, DOWN }
-
-struct TeeAvailabilityCheckTeeState {
-    bytes systemState;
-    bytes32 systemStateVersion;
-    bytes state;
-    bytes32 stateVersion;
-}
-
-struct ResponseBody {
-    AvailabilityCheckStatus status;
-    uint64 teeTimestamp;
-    bytes32 codeHash;
-    bytes32 platform;
-    uint32 initialSigningPolicyId;
-    uint32 lastSigningPolicyId;
-    TeeAvailabilityCheckTeeState state;
-}
-```
+The response body is formatted as the [`TeeAvailabilityCheck.ResponseBody`](../Types/Abi/AttestationType.md#responsebody) struct, using the [`AvailabilityCheckStatus`](../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../Types/Abi/TeeMachine.md#teestate).
 
 ## Chain Support
 

@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow describes how a caller sends a custom instruction to a non-system extension and retrieves the result.
-Canonical instruction, action, and extension-routing semantics belong to [Instructions](../Operations/Instructions.md), [Actions](../Operations/Actions.md), and [Extensions](../Extensions/Extensions.md).
+Canonical instruction, action, and extension-routing semantics belong to [Instructions](../Operations/Instructions.md), [Actions](../Operations/Actions.md), and [Extensions](../Extensions/Overview.md).
 This page focuses on the procedural flow rather than the internal implementation of any specific extension.
 
 ## Prerequisites
@@ -24,15 +24,15 @@ The instruction must define:
 - the custom `opType`,
 - the custom `opCommand`,
 - the encoded `message`,
-- any required `cosigners`, and
-- the `cosignerThreshold`.
+- any required [`cosigners`](../../Terminology/Roles.md#cosigner), and
+- the `cosignersThreshold`.
 
 The meaning of `opType`, `opCommand`, and `message` is owned by the extension itself and should be documented with the extension contracts or application documentation.
 
 ### Step 2: Providers and Cosigners Relay the Instruction
 
-After the on-chain instruction is emitted, data providers and any required cosigners prepare the corresponding [TEE instruction](../Operations/Instructions.md).
-They sign and relay it to the target TEE proxies using the standard FlareTEE instruction flow.
+After the on-chain instruction is emitted, [data providers](../../Terminology/Roles.md#data-provider) and any required cosigners prepare the corresponding [TEE instruction](../Operations/Instructions.md).
+They sign and relay it to the target TEE proxies using the standard FCC instruction flow.
 
 ### Step 3: The Proxy Routes the Action to the Extension
 
@@ -63,6 +63,6 @@ Signature and authorization requirements for direct actions remain extension-spe
 
 ## Notes
 
-- Define the custom `opType`, `opCommand`, and payload encoding with the extension, not in the core FlareTEE pages.
+- Define the custom `opType`, `opCommand`, and payload encoding with the extension, not in the core FCC pages.
 - Use [Actions](../Operations/Actions.md) as the owner page for `submissionTag`, `status`, and response semantics.
 - Current implementation details such as ports, timeouts, and internal extension APIs are not canonical workflow rules and should stay in implementation-facing documentation.

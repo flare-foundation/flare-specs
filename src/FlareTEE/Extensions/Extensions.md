@@ -1,7 +1,7 @@
 # TEE Extensions
 Applications within the Flare Confidential Compute infrastructure are managed via a system of *extensions*.
 Each application is run on an extension, defining the code deployed by TEEs participating in the application along with other information.
-An [initial extension](System Extension.md), known as the *system extension*, operates certain TEE protocols necessary for the functionality of the TEE infrastructure.
+An [initial extension](SystemExtension.md), known as the *system extension*, operates certain TEE protocols necessary for the functionality of the TEE infrastructure.
 New extensions can be proposed and managed by users on Flare. Functionally, TEE extensions extend the concept of smart contracts on Flare to enable the use of TEE machines.
 
 ## Defining an Extension
@@ -26,11 +26,11 @@ Each extension registered on the `TeeExtensionRegistry` contract is identified b
 ## System vs. Custom Extensions
 
 Extensions are identified by a unique extension ID.
-Extension ID $0$ is reserved for the [system extension](System Extension.md), which hosts core infrastructure (PMW and FDC2). Custom extensions use extension IDs greater than $0$.
+Extension ID $0$ is reserved for the [system extension](SystemExtension.md), which hosts core infrastructure (PMW and FDC2). Custom extensions use extension IDs greater than $0$.
 
 The distinction is enforced via an operation type prefix system.
 System operations use the `F_` prefix (e.g., `F_WALLET`, `F_XRP`, `F_FDC2`) and are handled by dedicated processors on every TEE machine.
-System operations include both fundamtenal TEE operations necessary for all extensions and operations specific to the [system extension's](System%20Extension.md) PMW and FDC2 applications.
+System operations include both fundamtenal TEE operations necessary for all extensions and operations specific to the [system extension's](SystemExtension.md) PMW and FDC2 applications.
 Sending system operations using `sendInstructions()` is restricted to the system extension unless the caller is a governance-registered system instruction sender.
 Custom operations do not use the `F_` prefix.
 
@@ -38,7 +38,7 @@ Custom operations do not use the `F_` prefix.
 To initialize a new extension, a Flare user calls the function `register(teeExtensionStateVerifier, teeExtensionInstructionsSender)` on the `teeExtensionRegistry` smart contract, with the two parameters definining the state verifier and instruction sender address for the extension.
 The address that calls this function automatically becomes the owner of the extension; note that this address will typically differ from the instruction sender address.
 
-The initialization call does not register any TEEs to the extension, which must be registered separately as described [here](../TEE Management/Ownership.md).
+The initialization call does not register any TEEs to the extension, which must be registered separately as described [here](../TeeManagement/Registration.md).
 
 ## Extension Lifecycle
 Compute extensions may change or upgrade code versions over time, incorporating additional functionalities or deprecating existing ones.

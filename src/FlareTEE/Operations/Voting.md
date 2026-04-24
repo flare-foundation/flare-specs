@@ -1,5 +1,5 @@
 # Voting
-In the Flare Confidential Compute architecture, *voting* is the process in which enough signatures from data providers and cosigners are collected to prepare an appropriately signed [action](Actions.md).
+In the Flare Confidential Compute architecture, *voting* is the process in which enough signatures from [data providers](../../Terminology/Roles.md#data-provider) and [cosigners](../../Terminology/Roles.md#cosigner) are collected to prepare an appropriately signed [action](Actions.md).
 Data providers and cosigners send their signatures validating an instruction to the TEE proxy corresponding to the TEE machine on which the action will take place.
 Once the proxy has received sufficient weight of signatures, it passes the action to the corresponding machine.
 
@@ -41,7 +41,7 @@ Formally, the data structure stored at the TEE proxy contains:
 - `instruction`: The instruction with an empty additionalVariableMessage.
 - `threshold`: Threshold weight of signatures required given the current signing policy. Fetched on initialization of the voting process from the initial instruction. Has a minimum value of $30\%$.
 - `cosigners`: List of cosigners permitted to sign the instruction.
-- `cosignerThreshold`: The threshold number of cosigner signatures required.
+- `cosignersThreshold`: The threshold number of cosigner signatures required.
 - `weight`: Total accumulated weight of provider and count of cosigner signatures thus far.
 - `startTime`: The timestamp at which the first vote was received at the TEE proxy, measured up to the second.
 - `endTime`: The timestamp after which no further votes will be accepted, also measured up to the second.
@@ -56,44 +56,11 @@ The voting process requires Flare's data providers to provide votes, including s
 Since the data providers are rewarded for completing this process, the TEE proxy must store and provide information about the arrival time of the signatures. 
 This is the information stored in `voteHash`, an iteratively computed hash tracking information about vote arrival. Information about how this data is used for rewarding can be found in [rewarding](../../FSP/Rewarding.md).
 
-On arrival of the first vote, the initial `voteHash` is computed as a hash of an ABI encoding of the Solidity struct containing the instruction ID and hash, as well as the ID of the TEE and reward epoch:
+The initial `voteHash` is computed from the ABI encoding of the [`VoteSequenceInit`](../Types/Abi/Voting.md#votesequenceinit) struct, given a sequence number of $0$.
+On arrival of subsequent votes, a new `voteHash` is computed by hashing the ABI encoding of the [`VoteSequenceNext`](../Types/Abi/Voting.md#votesequencenext) struct, with each subsequent vote hash given a sequence number one higher than the previous.
+The `signature`, `additionalVariableMessageHash`, and `timestamp` fields are those taken from the incoming vote.
 
-```Solidity
-struct VoteSequenceInit {
-bytes32 instructionId;
-bytes32 instructionHash;
-uint32 rewardEpochId;
-address teeId;
-}
-```
-This `voteHash` is given a sequence number of $0$. 
-On arrival of subsequent votes, a new `voteHash` is computed by hashing the ABI encoding of the Solidity struct `voteSequenceNext` defined as:
-
-``` Solidity
-struct VoteSequenceNext {
-bytes32 voteHash;
-uint64 sequence;
-bytes signature;
-bytes32 additionalVariableMessageHash
-uint64 timestamp;
-}
-```
-with each subsequent vote hash given a sequence number one higher than the previous. 
-The `signature`, `additionalVariableMessageHash`, and `timestamp` fields are those taken from the incoming vote. 
-
-Each time a new vote arrives and a new `voteHash` is computed, the TEE proxy signs a hash of the `VoteReceipt` message, again an ABI encoding of a Solidity struct containing
-
-```Solidity
-struct VoteReceipt {
-bytes32 instructionHash;
-uint64 sequence;
-bytes signature;
-bytes32 additionalVariableMessageHash
-uint64 timestamp;
-bytes32 voteHash;
-}
-```
-with the fields each filled by those of the corresponding vote. 
+Each time a new vote arrives and a new `voteHash` is computed, the TEE proxy signs a hash of the [`VoteReceipt`](../Types/Abi/Voting.md#votereceipt) struct, with the fields filled by those of the corresponding vote.
 That is, 
 $$
 \mathrm{VoteHash}_i = \mathrm{hash}(\mathrm{VoteSequenceNext}_{i}) 

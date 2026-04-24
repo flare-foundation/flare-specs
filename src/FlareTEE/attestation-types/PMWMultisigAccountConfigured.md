@@ -30,7 +30,7 @@ Currently, `PMWMultisigAccountConfigured` is used for XRP.
 1. Query [`account_info`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_info) on an XRP node for the given `accountAddress`, with `ledger_index: "validated"` and `signer_lists: true`.
 
 2. **Validate signer list:**
-   - Check [`signer_lists`](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/signerlist) to obtain signer addresses and their weights.
+   - Check [`signer_lists`](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-Types/signerlist) to obtain signer addresses and their weights.
    - Convert `publicKeys` from the request body to XRPL account addresses for matching.
    - Verify that each `SignerWeight` equals 1.
 

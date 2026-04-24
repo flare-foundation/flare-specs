@@ -6,7 +6,7 @@ Keys are identified by a *wallet key* data structure.
 Each project has an *owner*, a governance address on Flare which handles administration for the project and its wallets and keys.
 
 ## Project Workflow
-The owner of a project is the address with permissions to set up wallets, cosigners, and keys for the project.
+The owner of a project is the address with permissions to set up wallets, [cosigners](../../Terminology/Roles.md#cosigner), and keys for the project.
 The workflow beginning from instantiating a project to using keys in production follows a sequence of steps:
 
 1. The Flare user creates a project by calling the `createProject` function on the `TeeWalletProjectManager` contract from address $F$. The owner of the new project is the Flare address $F$.
@@ -19,7 +19,7 @@ The workflow beginning from instantiating a project to using keys in production 
 8. The wallet is enabled and its status is set to `production`.
 
 ### Cosigners
-In step 3 of the above process, the project owner set admin and cosigner addresses for the wallet.
+In step 3 of the above process, the [project owner](../../Terminology/Roles.md#project-owner) set admin and cosigner addresses for the wallet.
 The requirements on cosigning for projects are determined on a per-wallet basis by the wallet owner.
 On initialization of a given wallet, the owner sets whether or not cosigners are required for transactions on it, as well as the corresponding signing threshold.
 This determines parameters $(n,k)$ for a threshold signature, with $k$ of the $n$ cosigner addresses required to sign an instruction that uses a key before the key holding TEE machine executes it.
@@ -80,7 +80,7 @@ The `keyDefinitions` field in the wallet keys data structure contains informatio
 Each key is identified via a *key definition* data structure, formatted as follows:
 
 -  `keyId`: A unique identifier, calculated sequentially each time a new key definition is introduced.
-- `tees`: A list of TEE machine IDs on which the key exists. This field is updated using a `TeeKeyExistence` [proof](../TEE Management/Key Management.md).
+- `tees`: A list of TEE machine IDs on which the key exists. This field is updated using a `TeeKeyExistence` [proof](../TeeManagement/KeyManagement.md).
 - `publicKey`: The public part of the key pair, set by the owner on provision of `TeeKeyExistence` proof.
 
 ## Project and Wallet Manager Contracts
@@ -101,7 +101,7 @@ The function calls available at these contracts are listed here.
 	- Multisig confirmation of changes in config settings such as halting and resuming signings.
 
 	Can be called by the owner until `closeWalletInitialization` is called.
-- `confirmAdmin(walletId)`: Sent by one of the specified admin addresses in `adminPublicKeys`, this confirms the admin public key `adminPublicKey` that called the function as one of the key admins for the wallet ID.
+- `confirmAdmin(walletId)`: Sent by one of the specified admin addresses in `adminPublicKeys`, this confirms the admin public key `adminPublicKey` that called the function as one of the [key admins](../../Terminology/Roles.md#key-admin) for the wallet ID.
 - `setCosigners(walletId, cosigners, cosignersThreshold)`: Sets signing threshold and addresses for cosigners. This call is optional, and only for the case where cosigners are used.
 - `confirmCosigner(walletId)`: Sent by one of the specified cosigner addreses in `cosigners`, this confirms  the cosigner address  `cosigner` that called the function as one of the key admins for the wallet ID.
 - `closeWalletInitialization(walletId)`: Closes wallet initialization. Once the wallet is close, cosigners and key admins are locked, and keys can be added to the wallet. This function cannot be called until at least one admin public key is set and all admins and cosigners are confirmed. This can only be called by the project owner.

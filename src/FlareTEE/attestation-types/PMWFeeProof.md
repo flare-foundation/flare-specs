@@ -6,16 +6,7 @@ The `PMWFeeProof` attestation type provides accurate fee accounting for Protocol
 
 Attestation request body:
 
-```solidity
-// Source: IPMWFeeProof.sol
-struct RequestBody {
-    bytes32 opType;        // wallet operation type (e.g., F_XRP)
-    string senderAddress;  // source chain sender address
-    uint64 fromNonce;      // inclusive start of nonce range
-    uint64 toNonce;        // inclusive end of nonce range
-    uint64 untilTimestamp;  // Flare chain block timestamp cutoff for reissue events
-}
-```
+The request body is formatted as the [`PMWFeeProof.RequestBody`](../Types/Abi/AttestationType.md#requestbody-2) struct.
 
 - `opType` — the wallet operation type, used to compute deterministic instruction IDs for event lookup.
 - `senderAddress` — the sender address on the external chain (e.g., an XRP address).
@@ -27,13 +18,7 @@ struct RequestBody {
 
 Attestation response body:
 
-```solidity
-// Source: IPMWFeeProof.sol
-struct ResponseBody {
-    uint256 actualFee;     // sum of executed transaction fees (in drops)
-    uint256 estimatedFee;  // sum of maxFees from pay and reissue events (in drops)
-}
-```
+The response body is formatted as the [`PMWFeeProof.ResponseBody`](../Types/Abi/AttestationType.md#responsebody-2) struct.
 
 - `actualFee` — the total fees actually spent on the external chain for all transactions in the nonce range, summed in minimal units (drops for XRP).
 - `estimatedFee` — the total estimated fees based on the `maxFee` values from the on-chain pay and reissue instruction events, summed in minimal units.

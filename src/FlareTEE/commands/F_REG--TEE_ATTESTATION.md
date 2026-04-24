@@ -6,24 +6,7 @@ Calculates TEE attestation for a given challenge and returns the attestation res
 
 ## Event message
 
-The instruction event is decoded into a `TeeAttestation` struct wrapping the machine data and challenge:
-
-```solidity
-// Source: ITeeVerification.sol
-struct TeeAttestation {
-    TeeMachineWithAttestationData teeMachine; // TEE machine data
-    bytes32 challenge;                         // random challenge
-}
-
-// Source: ITeeMachineRegistry.sol
-struct TeeMachineWithAttestationData {
-    address teeId;        // TEE machine id
-    address initialTeeId; // initial TEE machine id
-    string url;           // TEE machine URL
-    bytes32 codeHash;     // code hash of the TEE
-    bytes32 platform;     // platform of the TEE
-}
-```
+The instruction event is decoded into a [`TeeAttestation`](../Types/Abi/TeeMachine.md#teeattestation) struct wrapping the [`TeeMachineWithAttestationData`](../Types/Abi/TeeMachine.md#teemachinewithattestationdata) and challenge.
 
 ## Fixed message
 
@@ -39,18 +22,7 @@ struct TeeMachineWithAttestationData {
 
 ## Action result
 
-TEE attestation response as provided by the platform, serialized under the result message. The result structure is the same as [TEE_INFO](F_GET--TEE_INFO.md):
-
-```go
-// Source: tee-node/pkg/types/tee.go
-type TeeInfoResponse struct {
-    TeeInfo       TeeInfo       `json:"teeInfo"`
-    MachineData   MachineData   `json:"machineData"`
-    DataSignature hexutil.Bytes `json:"dataSignature"`
-    Attestation   hexutil.Bytes `json:"attestation"`
-}
-```
-
+TEE attestation response formatted as [`TeeInfoResponse`](../Types/Wire/TeeMachine.md#teeinforesponse).
 See [TEE_INFO](F_GET--TEE_INFO.md) for full field descriptions.
 
 ## Notes

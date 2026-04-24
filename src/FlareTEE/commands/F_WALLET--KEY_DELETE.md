@@ -10,15 +10,7 @@ Note that on the TEE machine the nonce related to `(walletId, keyId)` is kept an
 
 ## Event message
 
-```solidity
-// Source: ITeeWalletKeyManager.sol
-struct KeyDelete {
-    address teeId;    // TEE machine id where the key should be deleted
-    bytes32 walletId; // wallet id of the key to be deleted
-    uint64 keyId;     // key id of the key to be deleted
-    uint256 nonce;    // nonce for (walletId, keyId); must be higher than the one on the TEE machine
-}
-```
+The event message is formatted as the [`KeyDelete`](../Types/Abi/Key.md#keydelete) struct.
 
 ## Fixed message
 
@@ -34,15 +26,7 @@ struct KeyDelete {
 
 ## Action result
 
-Marshalled key ID pair:
-
-```go
-// Source: tee-node/pkg/wallets/wallets.go
-type KeyIDPair struct {
-    WalletID common.Hash `json:"walletId"` // wallet id
-    KeyID    uint64      `json:"keyId"`    // key id
-}
-```
+Marshalled [`KeyIDPair`](../Types/Wire/Key.md#keyidpair).
 
 The result contains the `walletId` and `keyId` of the deleted key.
 

@@ -12,30 +12,7 @@ The `sourceId` should be `XRP` or `testXRP`.
 
 ## Event message
 
-```solidity
-// Source: ITeePayments.sol
-struct PaymentInstructionMessage {
-    bytes32 walletId;                 // wallet id on which the payment is done
-    TeeIdKeyIdPair[] teeIdKeyIdPairs; // pairs of TEE id and key id
-    bytes32 sourceId;                 // id of the chain where the transaction is to be performed
-    string senderAddress;             // address sending
-    string recipientAddress;          // address receiving
-    bytes tokenId;                    // token identifier (variable length); zero-valued for native XRP
-    uint256 amount;                   // amount of the token transferred
-    uint256 maxFee;                   // maximum fee for the transaction
-    bytes feeSchedule;               // encoded fee schedule for progressive fee escalation
-    bytes32 paymentReference;         // payment reference of the transaction
-    uint64 nonce;                     // nonce of the transaction
-    uint64 subNonce;                  // unused
-    uint64 batchEndTs;                // unused
-}
-
-// Source: ITeeIdKeyIdPair.sol
-struct TeeIdKeyIdPair {
-    address teeId; // TEE machine id
-    uint64 keyId;  // key id
-}
-```
+The event message is formatted as the [`PaymentInstructionMessage`](../Types/Abi/Payment.md#paymentinstructionmessage) struct, which references [`TeeIdKeyIdPair`](../Types/Abi/Common.md#teeidkeyidpair).
 
 ### Fee Schedule
 

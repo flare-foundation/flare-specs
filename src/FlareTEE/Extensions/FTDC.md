@@ -1,8 +1,8 @@
 # Flare TEE Data Connector
-The Flare Data Connector v2 (FDC2) is an application on the [system extension](System Extension.md).
+The Flare Data Connector v2 (FDC2) is an application on the [system extension](SystemExtension.md).
 It is a TEE-based alternative to the FDC, managed via the `Fdc2Hub` smart contract.
 In the FDC2, users submit attestation requests as an [instruction](../Operations/Instructions.md) on the system extension, indicating a collection of TEE machines on which the attestation is to be confirmed.
-As in the FDC, Flare's data providers are responsible for confirming the attestations.
+As in the FDC, Flare's [data providers](../../Terminology/Roles.md#data-provider) are responsible for confirming the attestations.
 
 However, unlike in the FDC where the requests are confirmed in a sequence of $90$-second rounds using an on-chain voting process, in the FDC2 providers vote by submitting the attestations to participating TEEs.
 Upon receiving a sufficient weight of votes for an attestation, the TEE machines sign the attestation response with their identity key.
@@ -22,7 +22,7 @@ However, the voting process is changed from bit-voting in the FDC to a TEE-based
 Correspondingly, Merkle proofs are replaced by TEE verification, which means that requests are no longer confirmed in batches.
 The procedure for handling an FDC2 request is as follows:
 
-1. A user submits an attestation request $\mathrm{Att} = (\mathrm{data}, \mathrm{source}, \mathrm{TEE}_\mathrm{list}, \mathrm{cosigners}, \mathrm{cosigner \ threshold})$ to the FDC2 in the form of an instruction on the system extension. The precise syntax of an attestation request is explained below, but note that the cosigner fields are optional.
+1. A user submits an attestation request $\mathrm{Att} = (\mathrm{data}, \mathrm{source}, \mathrm{TEE}_\mathrm{list}, \mathrm{cosigners}, \mathrm{cosigner \ threshold})$ to the FDC2 in the form of an instruction on the system extension. The precise syntax of an attestation request is explained below, but note that the [cosigner](../../Terminology/Roles.md#cosigner) fields are optional.
 2. Flare's data providers pick up the instruction from Flare and confirm (off-chain) that the pair $(\mathrm{data}, \mathrm{source})$ in $\mathrm{Att}$ represents valid data from the specified source. In the case where the request includes cosigners, the cosigners also perform this step.
 3. Assuming the request is valid, each provider and cosigner packages the instruction together with the attestation response. They then prepare a signed TEE instruction including the provider signature $\mathrm{Sign}_i (\mathrm{Att_{response}})$ over the attestation response. The exact format of this signature is explained below.
 4. Each provider sends the signed TEE instruction to the TEE proxies corresponding to the TEE machines included in the instruction argument $\mathrm{TEE}_\mathrm{list}$.
@@ -38,27 +38,12 @@ The FDC2 currently supports four attestation types:
 3. **PMWMultisigAccountConfigured**: Proves that a multisig account on an external chain is correctly configured for PMW use.
 4. **PMWFeeProof**: Provides accurate fee accounting for a range of payment nonces, comparing estimated fees (from instruction events) with actual fees (from external chain transactions).
 
-For full details on each type, see the [attestation-types](../attestation-types/) documentation.
-For the verifier server HTTP interface, see the [FDC2 Verifier Server](FDC2 Verifier Server.md) specification.
+For full details on each type, see the [attestation-types](../AttestationTypes/) documentation.
+For the verifier server HTTP interface, see the [FDC2 Verifier Server](Fdc2VerifierServer.md) specification.
 
 ## Formatting
 
-An attestation request takes the form of a Solidity struct:
-
-```solidity
-// Source: IFdc2Hub.sol
-struct Fdc2AttestationRequest {
-    Fdc2RequestHeader header;
-    bytes requestBody;
-}
-
-struct Fdc2RequestHeader {
-    bytes32 attestationType;
-    bytes32 sourceId;
-    uint16 thresholdBIPS;
-    address proofOwner;
-}
-```
+An attestation request takes the form of the [`Fdc2AttestationRequest`](../Types/Abi/Fdc2.md#fdc2attestationrequest) struct, containing a [`Fdc2RequestHeader`](../Types/Abi/Fdc2.md#fdc2requestheader) and a type-specific `requestBody`.
 
 The `header` provides information about the attestation and the `requestBody` contains the payload data.
 The `proofOwner` field specifies the address that owns the proof; a zero address indicates a public proof.
@@ -80,20 +65,7 @@ An attestation response consists of three parts:
 - The `requestBody` from the request.
 - The attestation response body.
 
-The format of the response header is similar to the header of the request, except that it also includes cosigner information and a timestamp:
-
-```solidity
-// Source: IFdc2Hub.sol
-struct Fdc2ResponseHeader {
-    bytes32 attestationType;
-    bytes32 sourceId;
-    uint16 thresholdBIPS;
-    address proofOwner;
-    address[] cosigners;
-    uint64 cosignersThreshold;
-    uint64 timestamp;
-}
-```
+The format of the response header is defined by the [`Fdc2ResponseHeader`](../Types/Abi/Fdc2.md#fdc2responseheader) struct, which extends the request header with cosigner information and a timestamp.
 
 The format of the response body is a Solidity struct whose exact format depends on the attestation type of the request.
 
@@ -117,26 +89,14 @@ hash(ABIencode(responseBody))
 In the [instruction](../Operations/Instructions.md) sent to the TEE proxy as part of handling the attestation, the data providers and cosigners must propagate certain fields in the instruction correctly.
 These include:
 
-- `additionalFixedMessage`: The ABI encoding of the `requestBody`.
+- `additionalFixedMessage`: The ABI-encoded attestation response body.
 - `additionalVariableMessage`: The signature over the hash generated from the attestation response.
 
-The corresponding relay behavior is summarized in [Relay Client](../Relay Client.md#fdc2).
+The corresponding relay behavior is summarized in [Relay Client](../Operations/RelayClient.md#fdc2).
 
 ### Action Result Format
 In the final step of the process, an attestation proof is published on Flare.
-The action result contains the following data:
-
-```go
-// Source: tee-node/pkg/fdc/fdc.go
-type ProveResponse struct {
-    ResponseHeader         hexutil.Bytes   // ABI-encoded Fdc2ResponseHeader
-    RequestBody            hexutil.Bytes   // original request body
-    ResponseBody           hexutil.Bytes   // attestation response body
-    TEESignature           hexutil.Bytes   // TEE machine signature of the message hash
-    CosignerSignatures     []hexutil.Bytes // cosigner signatures
-    DataProviderSignatures hexutil.Bytes   // signing policy signatures in relay format
-}
-```
+The action result is formatted as the [`ProveResponse`](../Types/Wire/Fdc2.md#proveresponse) struct.
 
 The `DataProviderSignatures` field is encoded in relay format using the signing policy, enabling on-chain verification through the existing Relay contract infrastructure.
 
@@ -148,39 +108,7 @@ The `ProveResponse` returned from the TEE proxy's action result API must be conv
 
 ### On-Chain Proof Structure
 
-Each attestation type defines a `Proof` struct following the same pattern:
-
-```solidity
-// Source: e.g., ITeeAvailabilityCheck.sol, IPMWPaymentStatus.sol
-struct Proof {
-    IFdc2Verification.Fdc2Signatures signatures;
-    IFdc2Hub.Fdc2ResponseHeader header;
-    RequestBody requestBody;
-    ResponseBody responseBody;
-}
-```
-
-The `Fdc2Signatures` struct bundles all three signature types:
-
-```solidity
-// Source: IFdc2Verification.sol
-struct Fdc2Signatures {
-    bytes signingPolicySignatures;
-    Signature[] teeSignatures;
-    Signature[] cosignerSignatures;
-}
-```
-
-Where each `Signature` is:
-
-```solidity
-// Source: ISignature.sol
-struct Signature {
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-}
-```
+Each attestation type defines a [`Proof`](../Types/Abi/Fdc2.md#proof) struct following the same pattern, using the [`Fdc2Signatures`](../Types/Abi/Fdc2.md#fdc2signatures) bundle and [`Signature`](../Types/Abi/Common.md#signature) type.
 
 ### Mapping ProveResponse to Proof
 
@@ -222,7 +150,7 @@ The verifying contract (e.g., `TeeVerification`) validates the proof with the fo
    - If `teeSignatures` are present, the `Fdc2Verification` contract verifies each TEE signature using `ecrecover` against the recomputed hash, confirming the signing TEE's identity.
    - If `signingPolicySignatures` are present, the `Relay` contract verifies the data provider signatures against the current signing policy.
    - If `cosignerSignatures` are present, each is verified against the cosigner addresses listed in the response header.
-4. **Validating response data**: The contract checks relevant attestation-specific fields (e.g., code hash, platform, signing policy hashes for [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md); account configuration for [`PMWMultisigAccountConfigured`](../attestation-types/PMWMultisigAccountConfigured.md)).
+4. **Validating response data**: The contract checks relevant attestation-specific fields (e.g., code hash, platform, signing policy hashes for [`TeeAvailabilityCheck`](../AttestationTypes/TeeAvailabilityCheck.md); account configuration for [`PMWMultisigAccountConfigured`](../AttestationTypes/PMWMultisigAccountConfigured.md)).
 
 ### Attestation-Specific Proof Structs
 

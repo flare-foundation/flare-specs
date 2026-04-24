@@ -8,14 +8,7 @@ The final random value is derived as `keccak256(gamma_x || gamma_y)`, where `gam
 
 ## Event message
 
-```solidity
-// Source: ITeeVrf.sol
-struct VrfInstructionMessage {
-    bytes32 walletId; // wallet id of the VRF key
-    uint64 keyId;     // key id within the wallet
-    bytes nonce;      // arbitrary nonce binding the proof to a specific request
-}
-```
+The event message is formatted as the [`VrfInstructionMessage`](../Types/Abi/Key.md#vrfinstructionmessage) struct.
 
 ## Fixed message
 

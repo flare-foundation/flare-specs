@@ -7,7 +7,6 @@ A direct instruction used to update the policy on the TEE machine. This instruct
 ## Action message
 
 ```go
-// Source: tee-node/pkg/types/policy.go
 type UpdatePolicyRequest struct {
     NewPolicy  MultiSignedPolicy // new policy with signatures
     PublicKeys []PublicKey        // public keys corresponding to the signing policy

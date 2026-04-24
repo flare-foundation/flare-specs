@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow covers registering and configuring a custom TEE extension, from deploying the instruction sender contract through to configuring the TEE node.
-For background on the extension framework, see [Extensions](../Extensions/Extensions.md).
+For background on the extension framework, see [Extensions](../Extensions/Overview.md).
 
 ## Prerequisites
 
@@ -54,8 +54,8 @@ The contract's constructor and methods are entirely defined by the extension dev
 4. The extension is now registered but has no TEE machines, code versions, or key types associated with it yet.
 
 **Events emitted:**
-- [`TeeExtensionRegistered`](../Events.md#teeextensionregistered) -- confirms the extension was created with its assigned ID
-- [`TeeExtensionContractsSet`](../Events.md#teeextensioncontractsset) -- records the contract addresses
+- [`TeeExtensionRegistered`](../Types/Abi/Events/TeeExtensionRegistry.md#teeextensionregistered) -- confirms the extension was created with its assigned ID
+- [`TeeExtensionContractsSet`](../Types/Abi/Events/TeeExtensionRegistry.md#teeextensioncontractsset) -- records the contract addresses
 
 > **Note:** After registration, call `setExtensionId()` on the instruction sender contract so it can discover its extension ID from the registry.
 
@@ -87,7 +87,7 @@ The contract's constructor and methods are entirely defined by the extension dev
 3. TEE machines can now register with this code hash and platform combination.
 
 **Events emitted:**
-- [`TeeVersionAdded`](../Events.md#teeversionadded)
+- [`TeeVersionAdded`](../Types/Abi/Events/TeeExtensionRegistry.md#teeversionadded)
 
 ---
 
@@ -112,9 +112,9 @@ This step configures which addresses are permitted to register TEE machines and 
 3. Only allowlisted addresses can register TEE machines for this extension via `TeeMachineRegistry.register()`.
 
 **Events emitted:**
-- [`AllowedTeeMachineOwnersAdded`](../Events.md#allowedteemachineownersadded) -- when specific owners are added
+- [`AllowedTeeMachineOwnersAdded`](../Types/Abi/Events/TeeOwnerAllowlist.md#allowedteemachineownersadded) -- when specific owners are added
 
-### Step 4b: Project Owner Allowlist -- `addAllowedTeeWalletProjectOwners()` or `allowAllTeeWalletProjectOwners()`
+### Step 4b: [Project Owner](../../Terminology/Roles.md#project-owner) Allowlist -- `addAllowedTeeWalletProjectOwners()` or `allowAllTeeWalletProjectOwners()`
 
 **Who can call:** Extension owner only
 
@@ -131,7 +131,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. Only allowlisted addresses can create wallet projects for this extension via `TeeWalletProjectManager.createProject()`.
 
 **Events emitted:**
-- [`AllowedTeeWalletProjectOwnersAdded`](../Events.md#allowedteewalletprojectownersadded) -- when specific owners are added
+- [`AllowedTeeWalletProjectOwnersAdded`](../Types/Abi/Events/TeeOwnerAllowlist.md#allowedteewalletprojectownersadded) -- when specific owners are added
 
 ---
 
@@ -155,20 +155,20 @@ This step configures which addresses are permitted to register TEE machines and 
 3. The associated signing algorithms are determined by the system-level key type registration.
 
 **Events emitted:**
-- [`SupportedKeyTypesAdded`](../Events.md#supportedkeytypesadded)
+- [`SupportedKeyTypesAdded`](../Types/Abi/Events/TeeExtensionRegistry.md#supportedkeytypesadded)
 
 ---
 
 ### Step 6: Configure TEE Node -- Config API
 
-Before the TEE machine can be registered on-chain, it must be configured with the proxy URL, initial owner, and extension ID via the TEE Configuration API (not yet published) on port 5500. These are the same three endpoints used in [machine-registration.md](machine-registration.md) Steps 2–4, which documents the full Config API details including curl examples and requirements.
+Before the TEE machine can be registered on-chain, it must be configured with the proxy URL, initial owner, and extension ID via the TEE Configuration API (not yet published) on port 5500. These are the same three endpoints used in [MachineRegistration.md](MachineRegistration.md) Steps 2–4, which documents the full Config API details including curl examples and requirements.
 
 **Who can call:** TEE machine owner (network access to port 5500 required)
 
 **Endpoints:**
 - `POST /proxy` -- set the TEE proxy URL (e.g., `http://<TEE_PROXY_INTERNAL_IP>:6661`)
 - `POST /initial-owner` -- set the initial owner address (immutable once set)
-- `POST /extension-id` -- set the extension ID (fixed after [`TeeAvailabilityCheck`](../attestation-types/TeeAvailabilityCheck.md) verification)
+- `POST /extension-id` -- set the extension ID (fixed after [`TeeAvailabilityCheck`](../AttestationTypes/TeeAvailabilityCheck.md) verification)
 
 **Events emitted:** None (off-chain configuration)
 
@@ -197,13 +197,13 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 3. Ownership of the extension is transferred to the new address.
 4. The extension owner is typically a multisig governance account for production deployments.
 
-**Events emitted:** [`NewOwnerProposed`](../Events.md#newownerproposed) and [`NewOwnerConfirmed`](../Events.md#newownerconfirmed)
+**Events emitted:** [`NewOwnerProposed`](../Types/Abi/Events/TeeExtensionRegistry.md#newownerproposed) and [`NewOwnerConfirmed`](../Types/Abi/Events/TeeExtensionRegistry.md#newownerconfirmed)
 
 ---
 
 ## Notes
 
-- After completing extension configuration, proceed to [Machine Registration](machine-registration.md) to register TEE machines, then [Wallet Setup](wallet-setup.md) to create wallet projects and keys, and finally [Extension Instructions](extension-instructions.md) to send custom instructions.
+- After completing extension configuration, proceed to [Machine Registration](MachineRegistration.md) to register TEE machines, then [Wallet Setup](WalletSetup.md) to create wallet projects and keys, and finally [Extension Instructions](ExtensionInstructions.md) to send custom instructions.
 - The extension owner is typically a multisig governance account for production deployments.
 - All three TEE node configuration endpoints (Step 6) can alternatively be set via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) before the TEE node starts.
 

@@ -9,7 +9,6 @@ Re-signs a previously issued XRP payment transaction for resubmission, typically
 Same as [PAY](F_XRP--PAY.md).
 
 ```solidity
-// Source: ITeePayments.sol
 struct PaymentInstructionMessage {
     bytes32 walletId;
     TeeIdKeyIdPair[] teeIdKeyIdPairs;

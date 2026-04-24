@@ -4,12 +4,12 @@
 
 This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
 The result can be verified on-chain by the `VrfVerifier` contract.
-For canonical VRF key semantics, see [Key Management](../TEE Management/Key Management.md) and the [`F_WALLET--VRF`](../commands/F_WALLET--VRF.md) command reference.
+For canonical VRF key semantics, see [Key Management](../TeeManagement/KeyManagement.md) and the [`F_WALLET--VRF`](../Commands/F_WALLET--VRF.md) command reference.
 
 ## Prerequisites
 
-- **TEE machine in PRODUCTION status** — the machine holding the VRF key must be registered and operational (see [machine-registration.md](machine-registration.md))
-- **Wallet in PRODUCTION status** — the wallet must be enabled via the [wallet-setup workflow](wallet-setup.md)
+- **TEE machine in PRODUCTION status** — the machine holding the VRF key must be registered and operational (see [MachineRegistration.md](MachineRegistration.md))
+- **Wallet in PRODUCTION status** — the wallet must be enabled via the [wallet-setup workflow](WalletSetup.md)
 - **Wallet with a VRF key** — a key with signing algorithm `keccak256-secp256k1-vrf` must already be generated and confirmed
 - **VRF authorization address set** — the caller must be the VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`)
 
@@ -21,7 +21,7 @@ For canonical VRF key semantics, see [Key Management](../TEE Management/Key Mana
 
 **Who initiates:** The VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`).
 
-A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../commands/F_WALLET--VRF.md) instruction.
+A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../Commands/F_WALLET--VRF.md) instruction.
 
 **Parameters:**
 - `walletId` (`bytes32`) — the wallet ID of the VRF key.
@@ -37,13 +37,13 @@ A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, 
 - The key's signing algorithm must be `keccak256-secp256k1-vrf`.
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
-**Events emitted:** [`VrfRequested`](../Events.md#vrfrequested), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
+**Events emitted:** [`VrfRequested`](../Types/Abi/Events/TeeVrf.md#vrfrequested), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 ---
 
 ### Step 2: Voting
 
-Data providers vote on the instruction following the standard [voting process](../Operations/Voting.md). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
+[Data providers](../../Terminology/Roles.md#data-provider) vote on the instruction following the standard [voting process](../Operations/Voting.md). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
 
 ---
 
@@ -68,7 +68,7 @@ Once the voting threshold is reached, the TEE proxy delivers the action to the T
 ### Step 4: Retrieve Result
 
 The action result is available from the TEE proxy.
-For the response format, see the [`VRF`](../commands/F_WALLET--VRF.md) command reference.
+For the response format, see the [`VRF`](../Commands/F_WALLET--VRF.md) command reference.
 
 ---
 

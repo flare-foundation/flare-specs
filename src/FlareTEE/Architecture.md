@@ -1,59 +1,56 @@
 # Architecture
-Flare Confidential Compute (FCC) extends the Flare blockchain with the capabilities of Trusted Execution Environments (TEEs).
 
-This page describes the high-level architecture of the system, including the responsibilities of its components, the design philosophy, and the trust model.
-
-![Architecture overview](images/architecture-overview.svg)
+![Architecture overview](Images/architecture-overview.svg)
 
 ## System Components
 
-The system comprises three components, each with defined responsibilities:
+1. **Smart contracts**: Govern extension management, TEE machine registration and attestation, [instruction](Operations/Instructions.md) issuance, and private key administration on the Flare blockchain.
 
-1. **Smart contracts**: These govern the underlying logic and control from the Flare blockchain. This includes the management of compute extensions, the registration and attestation of TEE machines, the issuance of messages ([instructions](Operations/Instructions.md)) to be relayed to TEE machines, and some administration of private keys generated and stored within the TEE machines.
+2. **[Data providers](../Terminology/Roles.md#data-provider) and [cosigners](../Terminology/Roles.md#cosigner)**: Each run a [relay client](Operations/RelayClient.md) that monitors the Flare C-chain for [instruction events](Operations/Instructions.md#instruction-events).
+   The relay client signs each instruction with its operator's private key and forwards it to the relevant [TEE proxies](TeeManagement/TeeProxy.md).
+   For certain operations (such as FDC2 attestations and key restores), the relay client also [augments](Operations/RelayClient.md#instruction-augmentation) the instruction with off-chain data before signing.
+   Data providers may relay any instruction under the current signing policy; cosigners may only relay instructions in which their address appears in the `cosigners` list.
 
-2. **Data providers and cosigners**: These entities function as instruction relayers, augmenting instructions with necessary external data, thereby facilitating decentralized computation. These augmented instructions are subsequently signed by each data provider and cosigner before being transmitted to the machines residing in Trusted Execution Environments (TEE machines).
-
-3. **TEE machines**: The TEE machines check that instructions are received with adequate consensus from the data providers and cosigners. Upon receiving the successful relay of instructions, the TEE machine executes the corresponding computation. The result of this computation is then signed with a relevant private key (either the machine's identity key or specialized keys held on the machine) and made available via the [TEE proxy](TEE Management/Tee Proxies.md). Typical results include signed payment transactions for external blockchains or signed attestations usable within smart contracts. See [Actions](Operations/Actions.md) for the structure of action processing.
+3. **TEE machines**: Receive [actions](Operations/Actions.md) derived from relayed instructions or [direct instructions](Operations/Instructions.md#direct-instructions).
+   For relayed instructions, the TEE proxy aggregates signatures from data providers and cosigners until the [voting](Operations/Voting.md) threshold defined by the current signing policy is met, then queues the resulting action for execution.
+   If the instruction specifies cosigners, a separate cosigner threshold must also be reached.
+   Upon processing an action, the TEE machine signs the result with a relevant private key (either the machine's identity key or a key held on the machine, as described in [Key Management](TeeManagement/KeyManagement.md)) and returns it to the [TEE proxy](TeeManagement/TeeProxy.md).
+   Results may include signed transactions for external blockchains, signed attestations, or other operation-specific outputs.
+   See [Actions](Operations/Actions.md) for the action structure.
 
 ## Deployment Topology
 
-![Deployment topology](images/deployment-topology.svg)
+![Deployment topology](Images/deployment-topology.svg)
 
-A TEE machine deployed as part of FCC consists of the following infrastructure:
+Each [TEE operator](../Terminology/Roles.md#tee-operator) deploys the following infrastructure:
 
-1. **TEE machine**: The confidential VM running the TEE node, run inside a platform such as Google Confidential Compute.
+1. **TEE machine**: A confidential VM hosting the TEE node on a platform such as Google Confidential Compute.
+   When a custom [extension](Extensions/Overview.md) is deployed, a separate extension app runs alongside the node app within the same VM, communicating over a local HTTP interface.
 
-2. **TEE proxy**: A proxy server managing instructions [voting](Operations/Voting.md), action queues, and API access. See [TEE Proxies](TEE Management/Tee Proxies.md) for details.
+2. **TEE proxy**: A proxy server managing instruction [voting](Operations/Voting.md), action queues, and API access.
+   See [TEE Proxy](TeeManagement/TeeProxy.md) for details.
 
-3. **C-chain indexer**: A MySQL-backed indexer letting the TEE proxy track information about updates to signing policies.
+3. **C-chain indexer**: A database-backed indexer used by the TEE proxy to track signing policy updates.
 
-4. **REDIS**: Persistent storage for proxy state including voting processes, action queues, and key data.
+4. **Redis**: Persistent storage for proxy state including voting processes, action queues, and key data.
 
-Data providers and cosigners each run a [Relay Client](Relay Client.md) that monitors the C-chain for instruction events, augments and signs instructions, and forwards them to the appropriate TEE proxies.
+## Trust Model
 
-## Design Philosophy
+### Best-Effort Relay
 
-The FCC architecture adopts specific design choices to handle network unreliability and minimize the attack surface.
-The system operates on a "verify and execute" model rather than a strictly ordered message delivery model.
+The relay layer is _best effort_: delivery and ordering are not guaranteed.
+Instructions may arrive duplicated or out of order.
 
-### Fire and Forget
+1. **Default replayability**: The system does not enforce a global nonce.
+   Any instruction can be relayed to a TEE machine multiple times.
 
-The instruction relaying layer is treated as not fully reliable. 
-Clients operate on a "fire and forget" principle, meaning they may relay instructions without guaranteeing delivery or ordering.
-Consequently, the TEE machine is designed to handle duplicate instructions gracefully:
+2. **State-changing operations**: Commands that alter TEE state (e.g., key deletion, key restoration, or stateful custom [extension](Extensions/Overview.md) operations) must implement replay protection internally (e.g., via nonces).
 
-1. **Default Replayability**: By default, any instruction can be relayed to the TEE machine multiple times. The system does not enforce a global, protocol-level nonce for every instruction.
+### TEE Isolation
 
-2. **State-Changing Operations**: Commands that alter the TEE state (e.g. payments, key generation, key restoration) must implement specific replay protection. This is achieved via strict per-machine or per-key nonces checked internally by the TEE machine.
+1. **Untrusted proxies**: The [TEE proxy](TeeManagement/TeeProxy.md) is considered untrusted.
+   The TEE machine independently verifies that each instruction carries sufficient data provider and cosigner signatures before executing it.
+   A malicious proxy can censor, delay, or flood the processing queue, but cannot cause unauthorized execution.
 
-3. **Stateless Operations**: Commands that do not alter state (e.g., signing a fixed message or pure computation) are permitted to be executed multiple times without harm.
-
-### Trust Model and TEE Isolation
-
-The TEE machine is designed to be as sealed as possible to minimize injection vectors.
-
-1. **Untrusted Proxies**: The [TEE Proxy](TEE Management/Tee Proxies.md) corresponding to a TEE machine is considered an untrusted component. Instructions sent by the proxy to the machine are only executed if it is signed appropriately by data providers and cosigners. Thus, the TEE machine does not trust the proxy except to relay instructions. While the proxy acts as a filter in normal operation, a malicious proxy can theoretically censor, delay, or flood the processing queue.
-
-2. **Consensus-Based Verification**: The TEE machine does not independently query blockchain RPC nodes to verify events. Instead, it relies entirely on the consensus of data providers.
-
-3. **Execution Logic**: The TEE machine operates on the logic: "Accept any input from the queue, verify signatures against the signing policy, and execute. If the operation requires uniqueness (state change), enforce it internally; otherwise, proceed." Thus, the TEE machine is isolated to only receive commands from the proxy, and only execute appropriately signed commands.
+2. **Consensus-based verification**: The TEE machine does not query blockchain nodes directly.
+   It relies entirely on the consensus of data providers to learn about on-chain events.

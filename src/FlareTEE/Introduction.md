@@ -1,20 +1,37 @@
 # Introduction
-Flare Confidential Compute is an infrastructure project deployed on the Flare network to handle the secure outsourcing of operations to registered cloud-based Trusted Execution Environments (TEEs).
- A TEE is a secure, isolated, operating environment trusted to run specified code and store objects securely in memory.
- They are able to attest to their state, so that they will honestly execute instructions given to them in accordance to their code.
 
-Flare users issue instructions to TEEs participating in Flare Confidential Compute via smart contracts on Flare, which are picked up by the data providers and relayed to the TEE network.
-Once a TEE has received the instruction from a majority of data providers, it fulfils the instruction.
-The results of the TEEs work is then relayed back onto the Flare network by the data providers or other participating entity. 
+Flare Confidential Compute (FCC) extends the Flare blockchain with Trusted Execution Environments (TEEs), enabling the secure outsourcing of operations to registered cloud-based TEE machines.
+A TEE is an isolated operating environment trusted to run specified code and store objects securely in memory.
+TEEs can attest to their state, ensuring honest execution of instructions in accordance with their code.
 
-This documentation describes the processes and infrastructure that enable Flare Confidential Compute in technical detail.
-It also describes two particular functions of Flare Confidential Compute: Protocol Managed Wallets [(PMWs)](Extensions/PMW/PMW.md) allow Flare users to control wallet accounts on external blockchains from Flare, and the Flare Data Connector [(FDC2)](Extensions/FTDC.md) that allows TEEs to verify the existence of external events.
-A more high level description can be found in the accompanying White Paper.
+## Instruction Flow
+
+Flare users issue instructions to TEEs via smart contracts on Flare.
+[Data providers](../Terminology/Roles.md#data-provider) monitor the chain for these instructions, [augment](Operations/RelayClient.md#instruction-augmentation) them where required, and relay them to the TEE network.
+Once a TEE has received the instruction from a majority of data providers, it executes it and produces an [action response](Operations/Actions.md#responses).
+Action responses are publicly available from the TEE proxy and can be relayed back on-chain as a proof, among other uses.
+Actions may also have external side effects: a PMW action signs a transaction on an external blockchain, and a custom [extension](#extensions) action can interact with any external service.
+Some TEE deployments also allow [_direct instructions_](Operations/Instructions.md#direct-instructions) that bypass the on-chain flow entirely.
 
 ## Extensions
-Flare Confidential Compute manages the outsourcing of operations through a system of extensions. An extension on Flare Confidential Compute hosts a set of functions that can be sent to TEEs that are registered to that extension, with users calling these instructions via associated smart contracts.
-For example, the [System Extension](Extensions/System Extension.md) hosts the PMW infrastructure, with users able to submit transaction instructions for their external wallet on Flare, which are then relayed to participating TEEs to perform.
 
-Flare's users can create their own Flare Confidential Compute extensions, defining custom instructions to be performed by the TEE network.
-Each extension is defined by the code to be deployed on the TEE network, as specified by the user.
-In this way, the flexible design of Flare Confidential Compute allows Flare's users to leverage the security properties of the TEEs as they see fit, deploying their own code and instructions on the TEEs through the Flare infrastructure.
+FCC manages the outsourcing of operations through a system of _extensions_.
+An extension consists of smart contracts on Flare and one or more registered TEE machines running the extension's code.
+The contracts define the instructions users can submit; the TEE machines execute them in a secure environment.
+For example, the [System Extension](Extensions/SystemExtension.md) hosts the PMW infrastructure, allowing users to submit transaction instructions for their external wallets on Flare to be executed by the extension's TEE machines.
+
+Developers can create their own FCC extensions, defining custom smart contracts and TEE machine software.
+Each extension is identified by a unique extension ID, and its TEE machines are isolated from those of other extensions.
+
+## Further Reading
+
+| Section | Description |
+|---------|-------------|
+| [Architecture](Architecture.md) | System components, deployment topology, and trust model. |
+| [Operations](Operations/Instructions.md) | How instructions, actions, voting, and relay clients work. |
+| [Extensions](Extensions/Overview.md) | The extension framework and built-in extensions (PMW, FDC2, System Extension). |
+| [TEE Management](TeeManagement/Registration.md) | Machine registration, key management, state attestation, and the TEE proxy. |
+| [Commands](Commands/index.md) | Reference for all TEE command types. |
+| [Workflows](Workflows/index.md) | Step-by-step operational procedures. |
+| [Attestation Types](AttestationTypes/index.md) | FDC2 attestation request and response schemas. |
+| [Types](Types/index.md) | ABI and wire data structures used across the specification. |

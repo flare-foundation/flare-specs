@@ -1,7 +1,7 @@
 # System Extension
-Each [extension](Extensions.md) within Flare Confidential Compute is identified by a unique extension ID.
+Each [extension](Overview.md) within Flare Confidential Compute is identified by a unique extension ID.
 The *system extension* is the extension with extension ID $0$. This initial extension is implemented by Flare.
-The system extension takes advantage of Flare's data providers to source additional compute and data provision resources.
+The system extension takes advantage of Flare's [data providers](../../Terminology/Roles.md#data-provider) to source additional compute and data provision resources.
 The system extension hosts two system applications, each with a variety of instructions: the Flare TEE Data Connector v2 (FDC2) and the Protocol Managed Wallet (PMW) infrastructure.
 
 Unlike FCE extensions, which are defined and managed by Flare's users, the system extension is implemented and maintained by Flare itself. 
@@ -29,7 +29,7 @@ The system operation types are:
 The FDC2 is a TEE-based variant of the Flare Data Connector (FDC), Flare's enshrined oracle for validating and importing external data to Flare's EVM state. 
 The FDC uses consensus among Flare's data providers to attest to external data.
 In the FDC2, this attestation is performed by data providers then validated by TEEs in response to instruction by the providers.
-More information on the FDC2 can be found in its own [specification](FTDC.md).
+More information on the FDC2 can be found in its own [specification](FDC2.md).
 
 In the context of Flare Confidential Compute, the FDC2 serves two purposes: firstly, it is the system by which the state of a TEE machine is validated, ensuring that TEEs participating in operations on Flare are running the correctly specified code and state. 
 Secondly, it offers latency advantages over the FDC, and thus may be preferable for some users who would otherwise want to use the FDC.

@@ -4,12 +4,14 @@
 
 Restores a previously backed-up key onto a target TEE machine. Data providers and wallet admins fetch the backup package, verify its consistency, and re-encrypt their shares with the target TEE's public key. The TEE machine reconstructs the private key from these shares and returns a signed `KeyExistence` proof.
 
-Data providers and wallet admins fetch the backup package from the `backupUrl`. They check the consistency of the package and consistency with the `backupId`. They check registration and attestation of the machine with `teeId` (also verifying that the code version is not banned). If everything is valid, they extract their encrypted share package, decrypt it, and encrypt it with the public key of `teeId`.
+Data providers and wallet admins fetch the backup package from the `backupUrl`.
+They validate that the package metadata matches all [`BackupId`](../Types/Abi/Key.md#backupid) fields in the instruction: `teeId`, `walletId`, `keyId`, `keyType`, `signingAlgo`, `publicKey`, `rewardEpochId`, and `randomNonce`.
+They check registration and attestation of the machine with `teeId` (also verifying that the code version is not banned).
+If everything is valid, they extract their encrypted share package, decrypt it, and encrypt it with the public key of `teeId`.
 
 ## Event message
 
 ```solidity
-// Source: ITeeWalletBackupManager.sol
 struct KeyDataProviderRestore {
     PublicKey teePublicKey; // public key of the target TEE machine
     BackupId backupId;      // backup identification data
@@ -28,7 +30,6 @@ struct BackupId {
     bytes32 randomNonce;  // random nonce for uniqueness
 }
 
-// Source: IPublicKey.sol
 struct PublicKey {
     bytes32 x; // x coordinate of the public key
     bytes32 y; // y coordinate of the public key

@@ -10,14 +10,14 @@ The address that corresponds to the public key is defined to be the machine's id
 This key is stored securely inside the memory of the machine and represented on-chain as a `PublicKey` struct.
 
 Each TEE also has an initial identity $\mathrm{TEE}_\mathrm{ID}^*$, which is equal to $\mathrm{TEE}_\mathrm{ID}$ unless the machine is a replica of some other TEE with identity ${\mathrm{TEE}_\mathrm{ID}}'$, in which case its initial ID is a copy of the original TEE's identity, $\mathrm{TEE}_\mathrm{ID}^* = {\mathrm{TEE}_\mathrm{ID}}'$. 
-Additionally, each booted TEE has an [owner address](Ownership.md).
+Additionally, each booted TEE has an [owner address](Registration.md).
 
 ## Signing Policy
-In order to be able to receive instructions from Flare's data providers, each participating TEE must have access to the current signing policy. 
+In order to be able to receive instructions from Flare's [data providers](../../Terminology/Roles.md#data-provider), each participating TEE must have access to the current signing policy. 
 Otherwise, they will not be able to follow instructions that have been signed by a weighted majority of Flare's providers. 
 
 On registering, the TEE is equipped with the current signing policy, and is only registered if the signing policy included in its initial attestation (see below) is correct. 
-This signing policy must be updated at the end of each reward epoch by the owner, and is done so by the [proxy](Tee Proxies.md).
+This signing policy must be updated at the end of each reward epoch by the owner, and is done so by the [proxy](TeeProxy.md).
 
 ## TEE State
  The state of a TEE refers to properties of the machine and its memory that would not immediately be shared by a replicated copy of the TEE running the same code.
@@ -42,15 +42,7 @@ The machine state is encoded into a `teeState` struct for use in [attestations](
 1. **System state**: Defined by Flare. Intended for state variables managed by the FCC framework as functionality is extended.
 2. **Custom compute extension state**: Defined by the FCE to which the TEE is registered extension.
 
-This encoding is formatted as:
-```solidity
-struct TEEState {
-	bytes systemState;
-	bytes32 systemStateVersion;
-	bytes state;
-	bytes32 stateVersion;
-}
-```
+This encoding is formatted as the [`TeeState`](../Types/Abi/TeeMachine.md#teestate) struct.
 
 The `systemState` and `state` fields are ABI encodings of version-specific structs.
 Each code version is aware of the state encoding version for both the system and compute extension state.
@@ -67,24 +59,11 @@ The exact response format depends on the TEE platform, as the signed attestation
 A TEE machine operator provides an attestation response to a *challenge*, a $32$-byte string provided by a challenger.
 The challenger can be any entity who wants to confirm the state of the TEE machine.
 Upon receiving the challenge, the TEE machine generates a challenge hash specific to the machine.
-To generate the challenge hash, the following Solidity struct is ABI encoded and then hashed:
-
-```solidity
-struct Attestation {
-	bytes32 challenge;
-	PublicKey publicKey;
-	uint32 initialSigningPolicyId;
-	bytes32 initialSigningPolicyHash;
-	uint32 lastSigningPolicyId;
-	bytes32 lastSigningPolicyHash;
-	teeState state;
-	uint64 teeTimestamp;
-}
-```
-where the public key is the key that corresponds to $\mathrm{TEE}_\mathrm{ID}$.
-The initial and last signing policy refer to the first and most recent signing policy available to the TEE respectively.
-The state `teeState` is encoded as the Solidity struct defined above and ABI encoded for compatibility.
+To generate the challenge hash, the [`Attestation`](../Types/Abi/TeeMachine.md#attestation) struct is ABI encoded and then hashed.
+The `publicKey` is the key that corresponds to $\mathrm{TEE}_\mathrm{ID}$.
+The initial and last signing policies refer to the first and most recent signing policy available to the TEE respectively.
+The `state` field is encoded as the [`TeeState`](../Types/Abi/TeeMachine.md#teestate) struct.
 The `teeTimestamp` refers to the local timestamp at the TEE machine at time of attestation.
-Thus, the TEE-specific challenge is $\mathrm{hash}(\mathrm{Attestation})$, the hash of the given struct.
+Thus, the TEE-specific challenge is $\mathrm{hash}(\mathrm{Attestation})$.
 
 Once the TEE specific challenge is created, the platform provider signs the challenge and returns the response.

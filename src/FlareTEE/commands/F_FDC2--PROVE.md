@@ -6,20 +6,7 @@ Processes an FDC2 attestation request end-to-end: data providers independently v
 
 ## Event message
 
-```solidity
-// Source: IFdc2Hub.sol
-struct Fdc2AttestationRequest {
-    Fdc2RequestHeader header; // request header
-    bytes requestBody;        // attestation request body
-}
-
-struct Fdc2RequestHeader {
-    bytes32 attestationType; // attestation type identifier
-    bytes32 sourceId;        // source chain identifier
-    uint16 thresholdBIPS;    // threshold in BIPS for considering proving successful
-    address proofOwner;      // address that owns the proof (zero address for public proofs)
-}
-```
+The event message is formatted as the [`Fdc2AttestationRequest`](../Types/Abi/Fdc2.md#fdc2attestationrequest) struct, containing a [`Fdc2RequestHeader`](../Types/Abi/Fdc2.md#fdc2requestheader).
 
 Additionally, the instruction event includes:
 
@@ -41,32 +28,7 @@ Additionally, the instruction event includes:
 
 ## Action result
 
-```go
-// Source: tee-node/pkg/fdc/fdc.go
-type ProveResponse struct {
-    ResponseHeader         hexutil.Bytes   // ABI-encoded Fdc2ResponseHeader
-    RequestBody            hexutil.Bytes   // original request body
-    ResponseBody           hexutil.Bytes   // attestation response body
-    TEESignature           hexutil.Bytes   // TEE machine signature of the message hash
-    CosignerSignatures     []hexutil.Bytes // cosigner signatures
-    DataProviderSignatures hexutil.Bytes   // signing policy signatures in relay format
-}
-```
-
-The response header structure:
-
-```solidity
-// Source: IFdc2Hub.sol
-struct Fdc2ResponseHeader {
-    bytes32 attestationType;   // attestation type
-    bytes32 sourceId;          // source chain ID
-    uint16 thresholdBIPS;      // threshold in BIPS
-    address proofOwner;        // proof owner address
-    address[] cosigners;       // cosigner addresses
-    uint64 cosignersThreshold; // cosigners threshold
-    uint64 timestamp;          // timestamp of the response
-}
-```
+The action result is formatted as the [`ProveResponse`](../Types/Wire/Fdc2.md#proveresponse) struct, which contains a [`Fdc2ResponseHeader`](../Types/Abi/Fdc2.md#fdc2responseheader).
 
 ## Notes
 

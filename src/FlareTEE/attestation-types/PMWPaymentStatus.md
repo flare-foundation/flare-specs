@@ -51,25 +51,7 @@ $$\mathrm{instructionId} = \mathrm{keccak256}(\mathrm{abi.encode}(\mathrm{opType
 
 If the wallet allows batch transactions, multiple `TeeInstructionsSent` events with the same nonce will be emitted. Decode the `message` field for each event and filter by the required `subNonce`.
 
-The `message` field in `TeeInstructionsSent` contains a `PaymentInstructionMessage`:
-
-```solidity
-struct PaymentInstructionMessage {
-    bytes32 walletId;
-    TeeIdKeyIdPair[] teeIdKeyIdPairs;
-    bytes32 sourceId;
-    string senderAddress;
-    string recipientAddress;
-    bytes tokenId;
-    uint256 amount;
-    uint256 maxFee;
-    bytes32 paymentReference;
-    bytes feeSchedule;
-    uint64 nonce;
-    uint64 subNonce;
-    uint64 batchEndTs;
-}
-```
+The `message` field in `TeeInstructionsSent` contains a [`PaymentInstructionMessage`](../Types/Abi/Payment.md#paymentinstructionmessage).
 
 ### 2. Find Transaction on External Chain
 
@@ -103,4 +85,4 @@ struct PaymentInstructionMessage {
 
 - The XRP indexer supports finding transactions via `sourceAddress` and `nonce`, as well as via `paymentReference`.
 - The `deliveredAmount` and receiver can be calculated from `AffectedNodes` in the XRP transaction metadata.
-- For partial payments, consult the [delivered_amount field documentation](https://xrpl.org/docs/concepts/payment-types/partial-payments#the-delivered_amount-field).
+- For partial payments, consult the [delivered_amount field documentation](https://xrpl.org/docs/concepts/payment-Types/partial-payments#the-delivered_amount-field).

@@ -6,30 +6,7 @@ Triggers generation of a key on a TEE machine. Smart contracts ensure that an in
 
 ## Event message
 
-```solidity
-// Source: ITeeWalletKeyManager.sol
-struct KeyGenerate {
-    address teeId;                     // TEE machine id where the key should be generated
-    bytes32 walletId;                  // wallet id to which the key should be assigned
-    uint64 keyId;                      // key id to be assigned to the key
-    bytes32 keyType;                   // key type of the wallet
-    bytes32 signingAlgo;               // hashing and signing algorithm of the key
-    KeyConfigConstants configConstants; // key configuration constants
-}
-
-struct KeyConfigConstants {
-    PublicKey[] adminsPublicKeys;  // admin public keys for the wallet
-    uint64 adminsThreshold;       // threshold of admin signatures required
-    address[] cosigners;          // cosigner addresses
-    uint64 cosignersThreshold;    // threshold of cosigner signatures required
-}
-
-// Source: IPublicKey.sol
-struct PublicKey {
-    bytes32 x; // x coordinate of the public key
-    bytes32 y; // y coordinate of the public key
-}
-```
+The event message is formatted as the [`KeyGenerate`](../Types/Abi/Key.md#keygenerate) struct, which references [`KeyConfigConstants`](../Types/Abi/Key.md#keyconfigconstants) and [`PublicKey`](../Types/Abi/Common.md#publickey).
 
 ## Fixed message
 
@@ -45,35 +22,9 @@ struct PublicKey {
 
 ## Action result
 
-- `keyExistence` -- ABI encoded `KeyExistence`:
+- `keyExistence` — ABI encoded [`KeyExistence`](../Types/Abi/Key.md#keyexistence).
 
-```solidity
-// Source: ITeeWalletKeyManager.sol
-struct KeyExistence {
-    address teeId;                     // TEE machine id
-    bytes32 walletId;                  // wallet id
-    uint64 keyId;                      // key id
-    bytes32 keyType;                   // key type
-    bytes32 signingAlgo;               // signing algorithm
-    bytes publicKey;                   // generated public key
-    uint256 nonce;                     // key nonce
-    bool restored;                     // false for freshly generated keys
-    KeyConfigConstants configConstants; // key configuration constants
-    bytes32 settingsVersion;           // settings version hash
-    bytes settings;                    // encoded settings
-}
-```
-
-- `signature` -- ECDSA signature of the `keyExistence` hash by the TEE machine's identity key:
-
-```solidity
-// Source: ISignature.sol
-struct Signature {
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-}
-```
+- `signature` — ECDSA [`Signature`](../Types/Abi/Common.md#signature) of the `keyExistence` hash by the TEE machine's identity key.
 
 ## Notes
 

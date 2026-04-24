@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow covers adding a new signing key to a TEE machine for an existing wallet.
-For canonical key semantics and data structures, see [Key Management](../TEE Management/Key Management.md) and [Projects and Ownership](../Operations/Projects and Ownership.md).
+For canonical key semantics and data structures, see [Key Management](../TeeManagement/KeyManagement.md) and [Projects and Configuration](../Operations/ProjectsAndConfiguration.md).
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ For canonical key semantics and data structures, see [Key Management](../TEE Man
 
 ### Step 1: Add Key — `TeeWalletKeyManager.addKey()`
 
-**Who can call:** Project owner only.
+**Who can call:** [Project owner](../../Terminology/Roles.md#project-owner) only.
 
 **Parameters:**
 - `teeId` (`address`) — the TEE machine on which to generate the key.
@@ -32,11 +32,11 @@ For canonical key semantics and data structures, see [Key Management](../TEE Man
 
 **What happens:**
 1. The contract generates a new `keyId` by incrementing the wallet's key counter.
-2. A [`KEY_GENERATE`](../commands/F_WALLET--KEY_GENERATE.md) instruction is sent to the specified TEE machine.
+2. A [`KEY_GENERATE`](../Commands/F_WALLET--KEY_GENERATE.md) instruction is sent to the specified TEE machine.
 3. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 4. The TEE machine automatically triggers a key backup for the newly generated key.
 
-**Events emitted:** [`WalletKeyAdded`](../Events.md#walletkeyadded), [`TeeInstructionsSent`](../Events.md#teeinstructionssent)
+**Events emitted:** [`WalletKeyAdded`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeyadded), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 > **Note:** This step can be repeated to add keys on different TEE machines. Each invocation generates a unique `keyId`.
 
@@ -62,11 +62,11 @@ For canonical key semantics and data structures, see [Key Management](../TEE Man
 2. Stores the public key on-chain.
 3. Adds the `teeId` to the key's TEE list, indicating the key exists on this machine.
 
-**Events emitted:** [`WalletKeyConfirmed`](../Events.md#walletkeyconfirmed)
+**Events emitted:** [`WalletKeyConfirmed`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeyconfirmed)
 
 ---
 
 ## Notes
 
-- To remove keys from TEE machines, see the [key delete workflow](key-delete.md). To restore keys from backup onto a new TEE, see the [key restore workflow](key-restore.md).
-- For key definitions and project configuration details, see [Projects and Ownership](../Operations/Projects and Ownership.md).
+- To remove keys from TEE machines, see the [key delete workflow](KeyDelete.md). To restore keys from backup onto a new TEE, see the [key restore workflow](KeyRestore.md).
+- For key definitions and project configuration details, see [Projects and Configuration](../Operations/ProjectsAndConfiguration.md).

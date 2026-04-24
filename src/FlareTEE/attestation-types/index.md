@@ -1,6 +1,6 @@
 # Attestation Types
 
-FlareTEE uses the FDC2 protocol to verify off-chain and cross-chain state. Each attestation type defines a specific request/response schema that verifier servers validate before the result is confirmed on-chain.
+FCC uses the FDC2 protocol to verify off-chain and cross-chain state. Each attestation type defines a specific request/response schema that verifier servers validate before the result is confirmed on-chain.
 
 ## Attestation Type Index
 

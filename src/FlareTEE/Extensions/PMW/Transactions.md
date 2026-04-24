@@ -21,7 +21,7 @@ The `paymentInstruction` argument describes the payment itself:
 - `paymentReference`: The $32$-byte payment reference.
 
 From a user perspective, this contract call is all that is required to send a transaction from their wallet.
-The payments contract and Flare's data providers handle the required interaction with the Flare Confidential Compute infrastructure.
+The payments contract and Flare's [data providers](../../../Terminology/Roles.md#data-provider) handle the required interaction with the Flare Confidential Compute infrastructure.
 Note that if batching is enabled (see below), the user experience allows for multiple payments to be issued in a single transaction on $C$, with the user sending the payment instructions in quick succession on Flare.
 
 ### Underlying Machinery
@@ -117,15 +117,15 @@ This decodes to a single entry: $10000$ BIPS ($100\%$ of `maxFee`) at $0$ second
 
 ### Configuration
 
-The wallet owner can set a persistent fee schedule per account by calling `TeePayments.setFeeSchedule()`, which takes as input:
+The wallet owner can set a persistent fee schedule per project or per account by calling `TeePaymentsFeeScheduleManager.setProjectFeeSchedule()` or `TeePaymentsFeeScheduleManager.setAccountFeeSchedule()`, which take as input:
 
-- `account`: The multisig account.
-- `factorsBIPS`: The fee factors in BIPS for each schedule entry.
-- `delaysSeconds`: The corresponding delays in seconds (strictly ascending).
+- The project ID (and account address, for the per-account variant).
+- `sourceId`: The source chain identifier.
+- `schedule`: An array of `FeeSchedule` entries specifying fee factors and delays.
 
-The schedule is stored on-chain and applied to all subsequent payment batches for the account.
+The schedule is stored on-chain and applied to all subsequent payment batches.
 
-Calling this function emits a [`FeeScheduleSet`](../../Events.md#feescheduleset) event.
+These functions emit [`ProjectFeeScheduleSet`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#projectfeescheduleset) or [`AccountFeeScheduleSet`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#accountfeescheduleset) respectively.
 
 ### Reissue Override
 
@@ -143,9 +143,9 @@ For example, payments may fail when the offered fee is too low or due to issues 
 *Reissuance* and *nullification* processes are in place to handle these situations.
 
 A reissue transaction is issued by calling the function `reissue(data)` at the `teePayments` contract.
-The input parameters for this function can be found in the relevant [workflow](../../workflows/xrp-payment.md)
+The input parameters for this function can be found in the relevant [workflow](../../Workflows/XrpPayment.md)
 A nullification transaction be acheived with the same function by setting a negative fee as explained [above](#fee-scheduling).
 
 ### Checking Transaction Status
-To help determine the possibility of unsuccessful payments, the [`PMWPaymentStatus`](../../attestation-types/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on an external chain.
+To help determine the possibility of unsuccessful payments, the [`PMWPaymentStatus`](../../AttestationTypes/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on an external chain.
 The response includes the transaction status (success or reverted), the received amount, the transaction fee, and the revert reason if applicable.

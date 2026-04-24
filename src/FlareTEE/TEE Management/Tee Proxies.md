@@ -1,8 +1,8 @@
-# TEE Proxies
-A *TEE Proxy* is a proxy server controlling access to the TEE environment.
+# TEE Proxy
+A *TEE proxy* is a proxy server controlling access to the TEE environment.
 Each TEE machine has a corresponding TEE proxy, which is responsible for ferrying information to and from the TEE machine, so that access to the machine itself is controlled.
-TEE proxies receive instructions and collect signatures from data providers and cosigners, distribute them to the TEE machines, and return the results of the corresponding actions on request. 
-They handle their interactions by a system of internal and external API calls. 
+TEE proxies receive instructions and collect signatures from [data providers](../../Terminology/Roles.md#data-provider) and [cosigners](../../Terminology/Roles.md#cosigner), distribute them to the TEE machines, and return the results of the corresponding actions on request.
+They handle their interactions by a system of internal and external API calls.
 Additionally, they host a collection of internal logic to manage action queues and logic for instructions.
 
 ## Proxy Security
@@ -21,9 +21,9 @@ The TEE proxy is responsible for maintaining an up to date copy of Flare's signi
 Without the signing policy, the TEE proxy and machine are unable to determine when a vote has passed successfully.
 For details on signing policy parameters and its generation and relaying lifecycle, see [Signing Policy](../../FSP/SigningPolicy.md).
 
-On initialization, the TEE proxy sets the signing policy at the TEE machine using the [`INITIALIZE_POLICY`](../commands/F_POLICY--INITIALIZE_POLICY.md) command, proving the current policy.
-As part of its initial [attestation](State and Status.md), the signing policy of the TEE machine is checked on registration by Flare's data providers to ensure that the correct policy was given.
-To remain up to date, the proxy has access to a C-chain indexer to obtain new signing policies and relays them to the TEE machine using an [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) [direct instruction](../Operations/Instructions.md), ensuring that the TEE machine's policy is up to date.
+On initialization, the TEE proxy sets the signing policy at the TEE machine using the [`INITIALIZE_POLICY`](../Commands/F_POLICY--INITIALIZE_POLICY.md) command, proving the current policy.
+As part of its initial [attestation](StateAndAttestation.md), the signing policy of the TEE machine is checked on registration by Flare's data providers to ensure that the correct policy was given.
+To remain up to date, the proxy has access to a C-chain indexer to obtain new signing policies and relays them to the TEE machine using an [`UPDATE_POLICY`](../Commands/F_POLICY--UPDATE_POLICY.md) [direct instruction](../Operations/Instructions.md), ensuring that the TEE machine's policy is up to date.
 
 ## Signing Threshold Resolution
 The proxy determines the effective cosigner set and any instruction-specific threshold overrides for an [instruction](../Operations/Instructions.md) according to the instruction family.
@@ -31,8 +31,8 @@ The determination for different instructions is as follows:
 
 1. For `PAY` and `REISSUE`, cosigners are taken from the wallet configuration.
 2. For `KEY_DATA_PROVIDER_RESTORE`, cosigners and thresholds are taken from the backup metadata used in the restore flow.
-3. For [`PROVE`](../commands/F_FDC2--PROVE.md), the data-provider threshold is taken from `thresholdBIPS` in the FDC2 request header, with the current signing policy default used if the value is zero.
-4. For other instructions, the proxy uses the `cosigners` and `cosignerThreshold` fields carried by the instruction itself.
+3. For [`PROVE`](../Commands/F_FDC2--PROVE.md), the data-provider threshold is taken from `thresholdBIPS` in the FDC2 request header, with the current signing policy default used if the value is zero.
+4. For other instructions, the proxy uses the `cosigners` and `cosignersThreshold` fields carried by the instruction itself.
 
 These rules determine how the proxy evaluates incoming signatures when a [voting](../Operations/Voting.md) process is initialized and advanced.
 
@@ -51,14 +51,14 @@ The following limits are examples of a compatible limit profile:
 ## Processing Queues
 The TEE proxy is responsible for managing three types of processing queues, with operations labelled according to their appropriate queue type:
 
-1. **Direct Queue**: A queue filled by the proxy itself, usually used for GET type operations.
+1. **Direct Queue**: A queue for [direct instructions](../Operations/Instructions.md#direct-instructions), both proxy-initiated system operations and externally submitted custom extension operations.
 2. **Backup Queue**: A queue for backup-related actions.
 3. **Main Action Queues**: A queue for actions of all other types, in particular instructions with sufficient weight of signatures.
 
 The queues are independent, and the TEE proxy may apply specific filtering per queue.
 The proxy can prioritize its own internal requests, especially read operations. 
 All queue data is persistently stored in the REDIS database.
-Direct actions are created internally by the proxy for [`TEE_INFO`](../commands/F_GET--TEE_INFO.md), [`KEY_INFO`](../commands/F_GET--KEY_INFO.md), [`INITIALIZE_POLICY`](../commands/F_POLICY--INITIALIZE_POLICY.md), [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md), and [`TEE_BACKUP`](../commands/F_GET--TEE_BACKUP.md) operations.
+Direct actions are created internally by the proxy for [`TEE_INFO`](../Commands/F_GET--TEE_INFO.md), [`KEY_INFO`](../Commands/F_GET--KEY_INFO.md), [`INITIALIZE_POLICY`](../Commands/F_POLICY--INITIALIZE_POLICY.md), [`UPDATE_POLICY`](../Commands/F_POLICY--UPDATE_POLICY.md), and [`TEE_BACKUP`](../Commands/F_GET--TEE_BACKUP.md) operations.
 These are not submitted through the external API, but are instead generated by the proxy's own periodic services and policy update logic.
 
 ## Proxy State
@@ -73,18 +73,18 @@ The proxy state is managed through a combination of REDIS-backed and in-memory s
 
 - **Action store**: ([`actionId`, `submissionTag`] $\rightarrow$ `actionData`), tracks the data for a given action identity. This information is stored for $30$ days.
 - **Action result store**: ([`actionId`, `submissionTag`, `result`] $\rightarrow$ `actionResult`), tracks the result for a given action identity. This information is stored for $14$ days for standard results, and $30$ minutes for submit-type results.
-- **Backup store**: (`backupIdHash` $\rightarrow$ `backupData`), tracks the data related to key backups stored by the TEE machine. Backup packages are extracted from the TEE machine when triggered by [`UPDATE_POLICY`](../commands/F_POLICY--UPDATE_POLICY.md) results and key generation or restore events. This data is stored for $8$ days.
+- **Backup store**: (`backupIdHash` $\rightarrow$ `backupData`), tracks the data related to key backups stored by the TEE machine. Backup packages are extracted from the TEE machine when triggered by [`UPDATE_POLICY`](../Commands/F_POLICY--UPDATE_POLICY.md) results and key generation or restore events. This data is stored for $8$ days.
 - **Backup index store**: ([`walletId`, `keyId`] $\rightarrow$ `backupIdHash`), maps a wallet key to the latest backup ID hash, enabling lookup of the most recent backup for a given key. This data is stored for $8$ days.
 
 ### Last Attestation
-The last available attestation is updated through the [`TEE_INFO`](../commands/F_GET--TEE_INFO.md) action. 
+The last available attestation is updated through the [`TEE_INFO`](../Commands/F_GET--TEE_INFO.md) action. 
 This is updated by the TEE proxy every $10$ seconds, which derives a challenge from the latest C-chain block hash and calls the action.
 
 ### Key Data Store
 The key data store stores the list of keys stored on the TEE for participation in the PMW protocol.
-This store is updated by calling the [`KEY_INFO`](../commands/F_GET--KEY_INFO.md) action, which returns a list of `teeKeyExistenceProofs` from the TEE machine, proving the existence of each key.
+This store is updated by calling the [`KEY_INFO`](../Commands/F_GET--KEY_INFO.md) action, which returns a list of `teeKeyExistenceProofs` from the TEE machine, proving the existence of each key.
 Each proof is packaged into a pair (`timestamp`, `proof`) containing the timestamp at the proxy for the most recent update and the proof of existence.
-The [`KEY_INFO`](../commands/F_GET--KEY_INFO.md) action is called with a refresh period of approximately $60$ minutes.
+The [`KEY_INFO`](../Commands/F_GET--KEY_INFO.md) action is called with a refresh period of approximately $60$ minutes.
 Key data is stored in-memory and refreshed on each sync cycle.
 Entries for deleted keys are cleared when absent from the TEE response.
 
@@ -113,7 +113,7 @@ This section lists the possible API calls.
 
 	- **500 Internal Server Error**: Other errors, with the exception message given as `description`.
 
-- **`POST /direct`**: Submits a direct instruction for non-system operations. Optionally enabled per proxy deployment. Requires API key authentication. System operations (`F_` prefix) are explicitly rejected. The possible responses are:
+- **`POST /direct`**: Submits a direct instruction for non-system operations. Optionally enabled per proxy deployment. Can be secured by API key authentication. System operations (`F_` prefix) are explicitly rejected. The possible responses are:
 
 	- **Request**: `directInstruction` the direct instruction consisting of both the message and the signatures.
 

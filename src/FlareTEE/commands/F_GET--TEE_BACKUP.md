@@ -28,7 +28,6 @@ Returns the latest backup package for a specific key. This is a direct instructi
 ## Action result
 
 ```go
-// Source: tee-node/pkg/wallets/wallets.go
 type TEEBackupResponse struct {
     BackupID     WalletBackupID // backup id structure
     WalletBackup []byte         // JSON-encoded backup package containing the TEE signature

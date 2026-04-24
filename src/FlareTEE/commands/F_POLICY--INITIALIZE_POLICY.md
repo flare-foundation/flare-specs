@@ -7,7 +7,6 @@ A direct instruction used to initialize the signing policy on the TEE machine. T
 ## Action message
 
 ```go
-// Source: tee-node/pkg/types/policy.go
 type InitializePolicyRequest struct {
     InitialPolicyBytes []byte    // bytes encoded signing policy as emitted in the
                                  // SigningPolicyInitialized event

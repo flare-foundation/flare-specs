@@ -1,8 +1,8 @@
 # Instructions
 Within the Flare Confidential Compute infrastructure, messages are sent to the TEE machines via a system of *instructions*.
 Instructions come in two types:
-- Messages submitted by Flare users to be relayed to the TEEs by Flare's data providers are known as *instruction events*, or sometimes *action instructions*.
-- Instruction events are then then packaged, augmented, and signed by the providers, and possibly cosigners, into a corresponding *TEE instruction*, which are relayed to the TEEs. 
+- Messages submitted by Flare users to be relayed to the TEEs by Flare's [data providers](../../Terminology/Roles.md#data-provider) are known as *instruction events*, or sometimes *action instructions*.
+- Instruction events are then then packaged, augmented, and signed by the providers, and possibly [cosigners](../../Terminology/Roles.md#cosigner), into a corresponding *TEE instruction*, which are relayed to the TEEs. 
 
 Once a TEE instruction is assembled by a data provider or cosigner, it is signed and relayed to the TEE machines via their proxy servers. 
 Once a TEE proxy receives a threshold weight of signatures for a TEE instruction, it is packaged as an [action](Actions.md) and placed in a queue to be performed by the TEE machine. 
@@ -16,7 +16,7 @@ An instruction event is the method by which a Flare user submits an instruction 
 They do so by submitting an instruction event to the `teeExtensionRegistry` smart contract on Flare.
 
 Instruction events do not need to contain all required information to complete the action.
-Instead, data providers and cosigners pick up the instruction on Flare, package it together with the information needed to perform the action, sign the resulting TEE instructions, and relay them to the TEEs (see [Relay Client](../Relay Client.md)).
+Instead, data providers and cosigners pick up the instruction on Flare, package it together with the information needed to perform the action, sign the resulting TEE instructions, and relay them to the TEEs (see [Relay Client](RelayClient.md)).
 
 An instruction event emitted on Flare has the following data structure:
 
@@ -28,7 +28,7 @@ An instruction event emitted on Flare has the following data structure:
 - `opCommand`: The type of command issued, letting the data providers know how to process the instruction.
 - `message`: Binary data representing the parameters for the specific command issued; this is the information providers and cosigners use to build the instruction that they send to the TEE.
 - `cosigners`: An optional parameter listing the set of cosigners for the command (see below for more details).
-- `cosignerThreshold`: The threshold of cosigner signatures required to accept the instruction.
+- `cosignersThreshold`: The threshold of cosigner signatures required to accept the instruction.
 - `fee`: Fee paid by the user on Flare for the instruction.
 
 ### Thresholds
@@ -39,7 +39,7 @@ This process is known as [voting](Voting.md).
 ### Cosigners 
 Similarly, certain extensions and instructions permit the use of *cosigners* to increase security. 
 A cosigner is a Flare address that the user who issued the instruction event assigns to vote to increase the security of the instruction. 
-In an instruction event with the `cosigners` and `cosignerThreshold` fields included, the TEE proxy will only accept the corresponding TEE instruction upon receiving both the threshold weight of data provider signatures and an amount of cosigner signatures exceeding `cosignerThreshold` from the designated cosigner addresses. 
+In an instruction event with the `cosigners` and `cosignersThreshold` fields included, the TEE proxy will only accept the corresponding TEE instruction upon receiving both the threshold weight of data provider signatures and an amount of cosigner signatures exceeding `cosignersThreshold` from the designated cosigner addresses. 
 The possible addresses valid to be included `cosigners` depends on the extension and instruction; some extensions may indicate valid cosigner addresses, but in other cases any addresses can be used.
 
 Note that it is in theory possible for a weighted majority of data providers to delete or change the cosigner fields in a given instruction to circumvent the extra security provided.
@@ -47,12 +47,12 @@ Each extension that intends to use cosigner fields must prepare its own protecti
 For example, requiring the [action response](Actions.md) to include the cosigner signatures allows a contract on Flare to confirm that the cosigners signed the instruction.
 
 For a detailed discussion of how cosigner enforcement is handled at the system and extension level, including mitigation against 50%+ data provider attacks, see [Cosigner Enforcement](Actions.md#cosigner-enforcement).
-The corresponding relay-role restrictions are summarized in [Relay Client](../Relay Client.md).
+The corresponding relay-role restrictions are summarized in [Relay Client](RelayClient.md).
 
 ## TEE Instructions
 After an instruction event has been emitted on Flare, it is the duty of the data providers, and any optional cosigners, to respond to the event by preparing a *TEE instruction*, then signing this instruction and forwarding it to the appropriate TEE(s) via their proxy servers.
 Additionally, the providers and cosigners augment the instruction with the required information needed by the TEE machine to complete the required action.
-The prescribed relay behavior for this step is given in [Relay Client](../Relay Client.md).
+The prescribed relay behavior for this step is given in [Relay Client](RelayClient.md).
 
 ### Instruction Format
 Thus, a TEE proxy receives this instruction from a data provider (or cosigner) in two parts: firstly a package $\text{data}$ containing the instruction and information needed by the TEE machine to implement it.
@@ -70,29 +70,14 @@ The package $\text{data}$ contains all the information that the TEE machine need
 - `opCommand`: As in the instruction event.
 - `originalMessage`: The `message` from the instruction event.
 - `cosigners`: As in the instruction event.
-- `cosignerThreshold`: As in the instruction event.
+- `cosignersThreshold`: As in the instruction event.
 - `additionalFixedMessage`: Binary data depending on the command, fixed accross all providers and cosigners.
 - `additionalVariableMessage`: Binary data depending on the command, specific to the data provider or cosigner.
 
 
 ### Signature Format
-To compute the signature, first the following struct defining the command is ABI encoded:
-
-```Solidity
-struct TeeInstruction {
-bytes32 instructionId;
-address teeId;
-uint64 timestamp;
-uint32 rewardEpochId;
-bytes32 opType;
-bytes32 opCommand;
-address[] cosigners;
-uint64 cosignerThreshold;
-bytes originalMessage;
-bytes additionalFixedMessage;
-}
-```
-then, the ABI encoding is hashed into `instructionHash`. Finally, the signature is taken over the data $\mathrm{Hash}($`instructionHash`, `additionalVariableMessage`$)$. 
+To compute the signature, the [`TeeInstruction`](../Types/Abi/Instruction.md#teeinstruction) struct is ABI encoded and hashed into `instructionHash`.
+The signature is then taken over the data $\mathrm{Hash}($`instructionHash`, `additionalVariableMessage`$)$. 
 
 > **Note on `instructionHash` vs `instructionId`:** Instructions are typically identified by `instructionId` (the unique event index from the smart contract), but for counting confirmations during the [voting process](Voting.md) on the TEE proxy, `instructionHash` is used instead. The `instructionHash` is defined as the hash of the instruction data excluding `additionalVariableMessage`, allowing the proxy to match votes from different providers on the same instruction content regardless of their individual variable messages.
 
@@ -100,11 +85,17 @@ then, the ABI encoding is hashed into `instructionHash`. Finally, the signature 
 In certain circumstances, governance or administrating addresses are able to directly instruct participating TEEs via their proxies, circumventing the need for commands to be signed and packaged by data providers and cosigners. 
 Such a command is known as a *direct instruction*. 
 Typically direct instructions are not triggered by a specific message on smart contracts. 
-They are used for specific configurations or setups such as upgrade version approvals or banning by governance signers, direct configurations, and similar administrative operations.
+They are used for specific configurations or setups such as upgrade version approvals or banning by [governance signers](../../Terminology/Roles.md#governance-signer), direct configurations, and similar administrative operations.
 
-Direct instructions are submitted to the TEE proxy via `POST /direct`, which is optionally enabled per proxy deployment and requires API key authentication.
-The signature collection for direct instructions occurs out-of-band, with the sender responsible for gathering the required signatures before submission.
-Direct instructions bypass the standard [relay client](../Relay Client.md) path.
+There are two sources of direct instructions:
+
+- *External*: submitted to the TEE proxy via `POST /direct`, which is optionally enabled per proxy deployment and can be secured by API key authentication.
+This endpoint explicitly blocks system operations (`F_` prefix) and is intended for custom extension operations only.
+The signature collection for external direct instructions occurs out-of-band, with the sender responsible for gathering the required signatures before submission.
+- *Proxy-initiated*: the proxy itself creates direct actions for system operations such as [`TEE_INFO`](../Commands/F_GET--TEE_INFO.md), [`KEY_INFO`](../Commands/F_GET--KEY_INFO.md), [`INITIALIZE_POLICY`](../Commands/F_POLICY--INITIALIZE_POLICY.md), [`UPDATE_POLICY`](../Commands/F_POLICY--UPDATE_POLICY.md), and [`TEE_BACKUP`](../Commands/F_GET--TEE_BACKUP.md).
+These are generated by the proxy's own periodic services and policy update logic, not submitted through any external API.
+
+In both cases, direct instructions bypass the standard [relay client](RelayClient.md) path and the data provider [voting](Voting.md) process.
 
 The payload for a direct instruction sent to the TEE proxy is simpler than a normal instruction, and consists of only three parts, defined in the same manner as above:
 
