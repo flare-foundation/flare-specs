@@ -38,6 +38,17 @@ The registration transaction places the machine in an `INITIALIZED` status.
 To complete registration and enter production, an [FDC2](../Extensions/FDC2.md) `teeAvailabilityCheck` attestation proof must be obtained and submitted via `toProduction(proof)`, confirming that the machine's state is correct.
 Once the attestation proof is accepted, the status changes to `PRODUCTION`, indicating that the machine is active on its extension.
 
+### TEE ID derivation
+
+A TEE machine's identity is a public/private key pair generated inside the enclave at deployment.
+The corresponding `teeId` is the Ethereum-style address of that public key — the last $20$ bytes of $\mathrm{keccak256}(\mathrm{publicKey})$, the same derivation Flare uses for ordinary addresses.
+
+`teeId` is therefore _not_ the address of the caller of `register`.
+The caller (constrained by `msg.sender == machineData.initialOwner`) is the [TEE operator](../../Terminology/Roles.md#tee-operator), recorded separately as the machine's owner.
+The `signature` argument is a proof-of-possession of the TEE's identity private key over $\mathrm{keccak256}(\mathrm{ABI.encode}(\mathrm{machineData}))$, produced following the [Ethereum Signed Message](../../Utilities/Signing.md) procedure.
+The contract recovers the signer address from this signature and requires it to equal `address(publicKey)`, then stores that address as `teeId`.
+This binds `teeId` to a specific TEE without trusting the caller, and prevents anyone from registering a `teeId` whose private key they do not control.
+
 ### Machine Registry Contract
 The `teeMachineRegistry` smart contract keeps a record of each registered TEE machine, consisting of:
 
