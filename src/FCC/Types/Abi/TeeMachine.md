@@ -3,6 +3,25 @@
 Types related to TEE machine attestation and registration, used for ABI encoding and on-chain verification.
 For the JSON wire types returned by TEE proxy APIs, see [TEE Machine (wire)](../Wire/TeeMachine.md).
 
+## TeeMachine
+
+Identifies a TEE machine and the location of its [TEE proxy](../../TeeManagement/TeeProxy.md).
+Carried in the [`TeeInstructionsSent`](Events/TeeExtensionRegistry.md#teeinstructionssent) event's `teeMachines` field; one record per destination machine.
+
+
+```json
+{
+  "$id": "TeeMachine",
+  "type": "object",
+  "properties": {
+    "teeId": { "type": "string", "format": "address", "description": "TEE machine ID." },
+    "teeProxyId": { "type": "string", "format": "address", "description": "Proxy identity address." },
+    "url": { "type": "string", "description": "Base URL of the TEE proxy." }
+  },
+  "required": ["teeId", "teeProxyId", "url"]
+}
+```
+
 ## TeeState
 
 Encodes the state of a TEE machine for use in [attestations](#attestation).

@@ -22,6 +22,17 @@ Additionally, the instruction event includes:
 
 - `signature` — signature by data provider of the attestation response only.
 
+## Augmentation procedure
+
+Before signing the TEE instruction, the [relay client](../Operations/RelayClient.md) populates `additionalFixedMessage` and `additionalVariableMessage` as follows:
+
+1. Send the attestation request to an [FDC2 verifier server](../Extensions/Fdc2VerifierServer.md) and obtain the response body.
+2. Place the response body into `additionalFixedMessage`.
+3. Compute the [attestation response hash](../Extensions/FDC2.md#signature-computation) and sign it with the relay client's private key.
+4. Place the signature into `additionalVariableMessage`.
+
+If the verifier rejects the request, the instruction is dropped; transient errors are retried.
+
 ## Additional action data
 
 /

@@ -92,7 +92,7 @@ These include:
 - `additionalFixedMessage`: The ABI-encoded attestation response body.
 - `additionalVariableMessage`: The signature over the hash generated from the attestation response.
 
-The corresponding relay behavior is summarized in [Relay Client](../Operations/RelayClient.md#fdc2).
+The corresponding relay behavior is summarized in the [`F_FDC2 PROVE` augmentation procedure](../Commands/F_FDC2--PROVE.md#augmentation-procedure).
 
 ### Action Result Format
 In the final step of the process, an attestation proof is published on Flare.

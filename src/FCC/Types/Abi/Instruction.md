@@ -30,3 +30,4 @@ The signature is computed over $\mathrm{Hash}($`instructionHash`$,$ `additionalV
 
 > **Note:** The `additionalVariableMessage` field is not part of the `TeeInstruction` struct.
 > It is provider-specific and signed separately alongside the `instructionHash`.
+> See [Instruction (wire)](../Wire/Instruction.md) for the JSON envelope that carries both alongside the signature.
