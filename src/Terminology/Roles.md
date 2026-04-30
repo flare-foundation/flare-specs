@@ -4,7 +4,7 @@ This page defines the roles and actors that appear across the Flare protocol spe
 
 ## Data Provider
 
-A *data provider* (also referred to as a *voter*, *validator*, or *infrastructure provider*) is an off-chain participant registered as an [entity](../FSP/Voters.md#entity-definition) on Flare.
+A *data provider* (also referred to as a *voter*, *validator*, *infrastructure provider*, or *entity*) is an off-chain participant registered as an [entity](../FSP/Voters.md#entity-definition) on Flare.
 Data providers accrue vote power from the Flare community via delegations of wrapped FLR tokens (WFLR) or stakes.
 They participate in all Flare protocols: operating a Flare validator node, submitting and finalizing voting round data in the [Flare Systems Protocol](../FSP/Introduction.md), providing price feeds in [FTSO](../FTSO/Introduction.md), confirming attestations in [FDC](../FDC/Introduction.md), and running [relay clients](../FCC/Operations/RelayClient.md) to relay instructions to TEE machines in [FCC](../FCC/Introduction.md).
 Data providers must complete [voter registration](../FSP/Voters.md#voter-registration) every reward epoch.
