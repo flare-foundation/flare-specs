@@ -7,9 +7,9 @@ TEEs can attest to their state, ensuring honest execution of instructions in acc
 ## Instruction Flow
 
 Flare users issue instructions to TEEs via smart contracts on Flare.
-[Data providers](../Terminology/Roles.md#data-provider) monitor the chain for these instructions, [augment](Operations/RelayClient.md#instruction-augmentation) them where required, and relay them to the TEE network.
+[Data providers](../Terminology/Roles.md#data-provider) monitor the chain for these instructions, format them appropriately, and relay them to the TEE network.
 Once a TEE has received the instruction from a majority of data providers, it executes it and produces an [action response](Operations/Actions.md#responses).
-Action responses are publicly available from the TEE proxy and can be relayed back on-chain as a proof, among other uses.
+Action responses are publicly available from the TEE proxy and can be relayed back on-chain.
 Actions may also have external side effects: a PMW action signs a transaction on an external blockchain, and a custom [extension](#extensions) action can interact with any external service.
 Some TEE deployments also allow [_direct instructions_](Operations/Instructions.md#direct-instructions) that bypass the on-chain flow entirely.
 

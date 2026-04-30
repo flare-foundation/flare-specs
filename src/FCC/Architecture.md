@@ -12,7 +12,7 @@
    Data providers may relay any instruction under the current signing policy; cosigners may only relay instructions in which their address appears in the `cosigners` list.
 
 3. **TEE machines**: Receive [actions](Operations/Actions.md) derived from relayed instructions or [direct instructions](Operations/Instructions.md#direct-instructions).
-   For relayed instructions, the TEE proxy aggregates signatures from data providers and cosigners until the [voting](Operations/Voting.md) threshold defined by the current signing policy is met, then queues the resulting action for execution.
+   For relayed instructions, the TEE proxy aggregates signatures from data providers until the [voting](Operations/Voting.md) threshold defined by the current signing policy is met, then queues the resulting action for execution.
    If the instruction specifies cosigners, a separate cosigner threshold must also be reached.
    Upon processing an action, the TEE machine signs the result with a relevant private key (either the machine's identity key or a key held on the machine, as described in [Key Management](TeeManagement/KeyManagement.md)) and returns it to the [TEE proxy](TeeManagement/TeeProxy.md).
    Results may include signed transactions for external blockchains, signed attestations, or other operation-specific outputs.
@@ -32,7 +32,7 @@ Each [TEE operator](../Terminology/Roles.md#tee-operator) deploys the following 
 
 3. **C-chain indexer**: A database-backed indexer used by the TEE proxy to track signing policy updates.
 
-4. **Redis**: Persistent storage for proxy state including voting processes, action queues, and key data.
+4. **REDIS**: Persistent storage for proxy state including voting processes, action queues, and key data.
 
 ## Trust Model
 
