@@ -4,7 +4,7 @@ Any user holding FAssets can start a redemption process. The redeemer sends in F
 
 ## Redemption flow
 
-1) The redeemer starts the redemption for a whole number of lots.
+1) The redeemer starts the redemption for a whole number of lots for `redeem` or any amount for `redeemAmount` and `redeemWithTag`.
 2) System chooses one or more redemption tickets from the front of the redemption FIFO queue. The number of chosen redemption tickets is capped (to avoid high gas consumption) so if the redemption amount requires too many tickets, only partial redemption will be performed.
 3) The system burns FAssets from the redeemer’s account in the amount of the total of the selected redemption tickets. (If there are not enough FAssets on the redeemer’s account, the redemption fails immediately.)
 4) For every agent participating in the redemption, the system issues an event with redemption payment information:
@@ -14,7 +14,7 @@ Any user holding FAssets can start a redemption process. The redeemer sends in F
    * the last underlying block and the last underlying timestamp to complete the payment,
    * optionally an **executor** address which can trigger redemption default if the agent doesn’t pay in the underlying - this allows a minting UI to execute redemption default on the users behalf, sparing the user extra operations after redemption default time (which can be several hours). If the executor is used, the redeemer should send some FLR/SGB with the request to compensate the executor (the amount is agreed off-chain).
 5) Every agent pays the redeemer on the underlying chain with a payment reference included with their payment as a memo field. The agent can pay the redemption from any address - not only the agent’s underlying address.
-6) Once payment is performed and finalised, the agent uses the Flare data connector to prove the payment.
+6) Once payment is performed and finalized, the agent uses the Flare data connector to prove the payment.
 7) Once the payment proof is presented to the FAsset system, the agent’s (and pool) collateral that was backing those FAssets is freed.
 
 ### Redemption flow diagram
@@ -53,11 +53,17 @@ When the payment proofs are not available anymore (typically 14 days after the p
 
 Since an agent vault has only one underlying address, there is some limit on the number of transactions that can be paid per minute. On the other hand, redemption requests to an agent with a large position can arrive from multiple addresses, which is much faster, plus the Flare/Songbird chain is faster than most. Therefore it would be possible to DDOS an agent and force them to miss the redemption payment time, triggering redemption payment defaults and obtaining collateral with premium.
 
-To prevent this, some extra time is added to each redemption when there are many redemptions to the same agent in a short time period. This is done in such a way that every single redemption payment has some minimum time (e.g. 30s or 1min, depending on the underlying chain) before the next one has to be paid, without eventually running out of time. (The exact formula used is similar to the leaky bucket algorithm used in rate limiters.)
+To prevent this, some extra time is added to each redemption when there are many redemptions to the same agent in a short time period. Each simultaneous request adds `redemptionPaymentExtensionSeconds` to the redemption payment time (cumulative). As time passes without new requests, the redemption payment time slowly diminishes back to the default value. The exact formula used is similar to the leaky bucket algorithm used in rate limiters.
+
+The `redemptionPaymentExtensionSeconds` setting is managed separately from other settings by the `RedemptionTimeExtensionFacet` (stored in its own diamond storage slot) and can be changed by governance through the AssetManagerController with rate-limiting constraints.
 
 ### Redeemer blocked by the stablecoin operator
 
 If the redeemer is blocked by the stablecoin operator, it may happen that the redemption default payment is impossible in vault collateral. In this case the redeemer is paid in pool collateral, but only under two conditions: the agent must have enough pool tokens that can be slashed and the payment must not push the pool into liquidation.
+
+### Rejecting redemption with invalid address
+
+A malicious redeemer could try to force redemption payment default by providing an invalid target underlying address. In this case, the agent can reject the redemption by presenting an `AddressValidity` proof from the Flare Data Connector showing that the address is invalid. On successful rejection, the redemption is considered fulfilled and the agents collateral is released. This is handled by the `rejectInvalidRedemption` method.
 
 ## Redemption fee
 
@@ -65,7 +71,7 @@ The redemption fee is the portion of the underlying asset that is not returned t
 
 Imagine the following flow:
 
-1) Agent is minted against: 100 fXRP and gets paid 100 XRP + 2 XRP fee.
+1) Agent is minted against: 100 FXRP and gets paid 100 XRP + 2 XRP fee.
 2) The Agent withdraws the fee and their address now holds 100 XRP.
 3) The agent is redeemed against so they have to pay out 100 XRP.
 4) But if they do pay the full 100 XRP, they will have no gas to pay for the transaction. The redemption fee comes to solve this problem. The fee creates a margin between the redeemed amount and the underlying asset value to be paid. This margin allows the agent to cover gas costs, while a portion is converted into fAssets and allocated to the pool.
@@ -82,3 +88,18 @@ An agent can self close their position or part of their position. This is simila
 Self close can also be used by the agent to stop liquidations, since it reduces the amount of FAssets the agent is backing.
 
 The self-closed amount need not be a whole number of lots and can even be less than one lot. Therefore self-closing is the preferred way to redeem an agent's dust.
+
+## Redeem any amount
+
+Unlike ordinary `redeem`, the `redeemAmount` method allows redeeming **any amount** of FAssets, not only whole lots. This is useful for users who want to redeem amounts of FAssets that are not whole number of lots, e.g. to redeem yields.
+
+However, to prevent very small redemptions that would cost agents more than the received fee, no redemption can be smaller than `minimumRedeemAmountUBA` (a system setting).
+
+## Redeem with tag
+
+This is a small addition to `redeem` functionality that allows redeemer to request that an XRP destination tag is added to the redemption payment. This is useful for users who want to redeem to an exchange.
+
+Like `redeemAmount`, it also allows redeeming any amount of FAssets, not only whole lots.
+
+Since redemption with tag requires a new FDC proof type which supports destination tag and since the redeem amount is not a whole number of lots, there are new methods `redeemWithTag`, `confirmXRPRedemptionPayment`, and `xrpRedemptionPaymentDefault`. A new event `RedemptionWithTagRequested` is emitted on a successful request for redemption with tag.
+It only works on XRP chain, so a flag `redeemWithTagSupported` is added that signifies the support.
