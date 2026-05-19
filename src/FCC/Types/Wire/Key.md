@@ -5,7 +5,7 @@ For the corresponding ABI types used for on-chain encoding, see [Key (ABI)](../A
 
 ## SignedKeyExistenceProof
 
-Returned by `GET /wallet/<walletId>/<keyId>` and the [`KEY_INFO`](../../Commands/F_GET--KEY_INFO.md) action.
+Returned by `GET /wallet/<walletId>/<keyId>` and the [`KEY_INFO`](../../Operations/Commands/F_GET/KeyInfo.md) action.
 Wraps an ABI-encoded [`KeyExistence`](../Abi/Key.md#keyexistence) struct with a TEE identity signature.
 
 
@@ -57,7 +57,7 @@ The decoded fields use the following JSON representation:
 
 ## KeyIDPair
 
-Returned in the action result of a [`KEY_DELETE`](../../Commands/F_WALLET--KEY_DELETE.md) command.
+Returned in the action result of a [`KEY_DELETE`](../../Operations/Commands/F_WALLET/KeyDelete.md) command.
 
 
 ```json

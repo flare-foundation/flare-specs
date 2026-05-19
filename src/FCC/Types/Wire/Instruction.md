@@ -1,12 +1,12 @@
 # Instruction Wire Types
 
-JSON types for [TEE instructions](../../Operations/Instructions.md#tee-instructions) submitted by [relay clients](../../Operations/RelayClient.md) to the [TEE proxy](../../TeeManagement/TeeProxy.md).
+JSON types for [instructions](../../Operations/Instructions.md) submitted by [relay clients](../../Components/RelayClient.md) to the [TEE proxy](../../Components/TeeProxy.md).
 For the corresponding ABI struct used to compute `instructionHash`, see [Instruction (ABI)](../Abi/Instruction.md).
 
 ## Instruction
 
-The JSON body posted at [`POST /instruction`](../../TeeManagement/TeeProxy.md#external-write-apis).
-`signature` is produced by the relaying [data provider](../../../Terminology/Roles.md#data-provider) or [cosigner](../../../Terminology/Roles.md#cosigner) over [`HashForSigning(data)`](#hashforsigning) following the [Ethereum Signed Message](../../../Utilities/Signing.md) procedure.
+The JSON body posted at [`POST /instruction`](../../Components/TeeProxy.md#external-write-apis).
+`signature` is produced by the relaying [data provider](../../../Terminology/Roles.md#data-provider) or [cosigner](../../Operations/Instructions.md#cosigners) over [`hashForSigning`](../../Operations/Instructions.md#hashes).
 
 
 ```json
@@ -15,7 +15,7 @@ The JSON body posted at [`POST /instruction`](../../TeeManagement/TeeProxy.md#ex
   "type": "object",
   "properties": {
     "data": { "$ref": "#data" },
-    "signature": { "type": "string", "format": "bytes", "description": "ECDSA signature over HashForSigning(data)." }
+    "signature": { "type": "string", "format": "bytes", "description": "ECDSA signature over [`hashForSigning`](../../Operations/Instructions.md#hashes)." }
   },
   "required": ["data", "signature"]
 }
@@ -50,7 +50,7 @@ Carries every field of the [`TeeInstruction`](../Abi/Instruction.md#teeinstructi
 
 ## DirectInstruction
 
-The JSON body posted at [`POST /direct`](../../TeeManagement/TeeProxy.md#external-write-apis) for [direct instructions](../../Operations/Instructions.md#direct-instructions).
+The JSON body posted at [`POST /direct`](../../Components/TeeProxy.md#external-write-apis) for [direct actions](../../Operations/Actions.md#direct-actions).
 The proxy rejects bodies with a system (`F_`) `opType`.
 
 ```json
@@ -66,13 +66,3 @@ The proxy rejects bodies with a system (`F_`) `opType`.
 }
 ```
 
-## HashForSigning
-
-For a [`Data`](#data) value $d$, the hash that is signed is
-
-$$
-\mathrm{HashForSigning}(d) = \mathrm{Hash}(\mathrm{instructionHash},\ \mathrm{Hash}(d.\mathrm{additionalVariableMessage})),
-$$
-
-where `instructionHash` is the keccak-256 hash of the ABI-encoded [`TeeInstruction`](../Abi/Instruction.md#teeinstruction) struct constructed from the fields of $d$ other than `additionalVariableMessage`.
-The final ECDSA signature is produced from $\mathrm{HashForSigning}(d)$ following the [Ethereum Signed Message](../../../Utilities/Signing.md) procedure.

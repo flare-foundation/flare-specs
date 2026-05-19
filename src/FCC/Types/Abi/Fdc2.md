@@ -1,6 +1,6 @@
 # FDC2 Types
 
-Types related to the [Flare TEE Data Connector](../../Extensions/FDC2.md) (FDC2).
+Types related to the [Flare TEE Data Connector](../../Extensions/FDC2/README.md) (FDC2).
 
 ## Fdc2AttestationRequest
 

@@ -5,8 +5,8 @@ For the corresponding ABI types used for on-chain proof verification, see [FDC2 
 
 ## ProveResponse
 
-Action result returned by the TEE machine for an FDC2 [`PROVE`](../../Commands/F_FDC2--PROVE.md) command.
-Must be converted into a [Proof](../Abi/Fdc2.md#proof) struct for on-chain verification; see [FDC2](../../Extensions/FDC2.md#assembling-a-proof-for-on-chain-verification) for the mapping.
+Action result returned by the TEE machine for an FDC2 [`PROVE`](../../Extensions/FDC2/Commands/Prove.md) command.
+Must be converted into a [Proof](../Abi/Fdc2.md#proof) struct for on-chain verification; see [FDC2](../../Extensions/FDC2/Concepts.md#assembling-a-proof-for-on-chain-verification) for the mapping.
 
 
 ```json

@@ -1,6 +1,6 @@
 # Attestation Type Schemas
 
-Request and response body types for FDC2 [attestation types](../../AttestationTypes/).
+Request and response body types for FDC2 [attestation types](../../Extensions/FDC2/AttestationTypes/).
 
 ## TeeAvailabilityCheck
 

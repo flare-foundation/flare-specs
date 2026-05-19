@@ -21,11 +21,8 @@ An elliptic curve public key represented as its $(x, y)$ coordinates.
 
 ## Signature
 
-An ECDSA signature decomposed into its $(v, r, s)$ components.
-This is the on-chain representation used in Solidity structs.
-
-Over HTTP, signatures are instead transmitted as a single `0x`-prefixed hex string encoding the $65$-byte concatenation $r \mathbin\| s \mathbin\| v$, where $r$ and $s$ are $32$ bytes each and $v$ is $1$ byte.
-See [Signature (wire)](../Wire/Common.md#signature) for the wire representation.
+An ECDSA signature in Flare's [on-chain convention](../../../Utilities/Signing.md#encoding-conventions): a `(v, r, s)` triple.
+The corresponding off-chain representation is the [`Signature` wire type](../Wire/Common.md#signature).
 
 
 ```json
