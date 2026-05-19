@@ -1,113 +1,101 @@
 # Actions
-In the Flare Confidential Compute architecture, an *action* is a data structure prepared by a TEE proxy for processing by its associated TEE machine.
-Actions are prepared in response to instructions for which the TEE proxy has received the necessary amount of signatures to accept.
-Once pushed to the TEE machine, the command corresponding to the action is executed, with the results returned to the TEE proxy.
-The TEE proxy hosts an API making action results available to interested users. 
 
-## Action Structure
-The data structure of an action sent to a TEE machine has the following syntax:
+An _action_ is the payload a [TEE proxy](../Components/TeeProxy.md) hands its [TEE machine](../Components/TeeMachine.md) for execution.
+An action is one of:
 
-- `data`: The data required to execute the action. The structure of this data is given below.
-- `signatures`: The signatures of the [data providers](../../Terminology/Roles.md#data-provider) and [cosigners](../../Terminology/Roles.md#cosigner) who assembled the corresponding instruction. 
-- `additionalVariableMessages`: The set of `additionalVariableMessage` variables sent by the signers, arranged in the same order as the list of signatures. Empty for actions resulting from direct instructions.
-- `timestamps`: The timestamps of arrival of the instructions from the signers, arranged in the same order as the signatures. If the action does not arise from an instruction, only a single timestamp is given, included by the TEE proxy [unclear on this?].
-- `additionalActionData`: Byte encoded data provided by the TEE proxy, necessary in certain cases where the proxy must provide extra information to the machine.
+- An [_instruction action_](#instruction-actions): carries an [instruction](Instructions.md) that has passed [voting](Voting.md#pass-conditions), together with the contributing [signer](Instructions.md#signers) signatures.
+- A [_direct action_](#direct-actions): built without voting from a [`DirectInstruction`](../Types/Wire/Instruction.md#directinstruction) payload.
 
-> **Note:** Actions are not considered as trusted inputs to TEE machines. Consequently, the TEE machine must independently check input data and verify that the signatures meet the required threshold before executing an action. The `signatures` field exists precisely for this purpose.
+The TEE machine [executes the action](../Components/TeeMachine.md#action-processing) and posts an [action response](#action-responses) back to the proxy.
 
-The structure of the `data` field is fixed as below:
+## Instruction Actions
 
-- `id`: A unique identifier for the action.
-- `type`: "Direct" or "Instruction" depending on whether or not the instruction was direct.
-- `submissionTag`: Indicates purpose of the action submission. Custom submission tags are supported, but common values include:
-	- `threshold`: Used when the action is generated from an instruction at the point where the threshold of signatures is achieved.
-	- `end`: Used when the action is generated from the instruction at the end of a voting process.
-	- `submit`: Used for actions generated from direct instructions, where only a single submission is intended.
-- `message`: A byte encoded message listing the parameters of the action. In case of instruction related commands, this is an instruction without `additionalVariableMessage` and `signature`, which are put in the parent struct. In case of direct instructions, it is a marshalled/serialized direct instruction payload
+An instruction action is built by the proxy when a [vote box](Voting.md#vote-boxes) [passes](Voting.md#pass-conditions) or closes.
+It carries the instruction's authored content (the same [`TeeInstruction`](../Types/Abi/Instruction.md#teeinstruction) every signer signed) once, plus three parallel per-signer lists collected during voting — each signer's [signature](../../Utilities/Signing.md), the optional [`additionalVariableMessage`](Instructions.md#augmentation) they attached, and the timestamp at which their submission arrived at the proxy.
 
-## Action Processing
-Once a TEE machine receives a signed action from the proxy, it is added to the [processing queue](../TeeManagement/TeeProxy.md#processing-queues) to be completed.
-When the action is at the top of the queue, the TEE processes it and removes it from the queue.
-The nature of this processing depends on the extension, and type of action, and any input parameters.
-For example, in the PMW case, the action may be to sign a transaction to be completed on the external chain.
+The proxy populates each [`Action`](../Types/Wire/Action.md#action) field as follows:
 
-### Queue Processing Modes
-The TEE machine processes actions from three independent queues:
-1. **Direct queue**: Processed sequentially (one action at a time). Used for proxy-initiated operations such as policy updates and TEE info requests.
-2. **Main queue**: May have several workers processing actions concurrently. Used for instruction-based actions that have passed the voting threshold.
-3. **Backup queue**: Processed sequentially. Used for key backup actions triggered by policy updates.
+1. `data.id`: The instruction's `instructionId`.
+2. `data.type`: `"instruction"`.
+3. `data.submissionTag`: `"threshold"` or `"end"` per [voting outcomes](Voting.md#outcomes).
+4. `data.message`: JSON-encoded `TeeInstruction`.
+5. `signatures`: Per-signer signatures, ordered by arrival at the proxy.
+6. `additionalVariableMessages`: Each signer's `additionalVariableMessage`, ordered to match `signatures`.
+7. `timestamps`: Per-signer arrival timestamps, ordered to match `signatures`.
+8. `additionalActionData`: Empty.
 
-### Execution Guarantees
-The processing for each action has a limited processing time.
-If the processing time exceeds this limit, the operation is terminated as an exception.
-Every exception is caught, and consequently some type of result is always produced.
-Pushing action results back to the TEE proxy executes several retries if it fails.
-If all retries fail, result pushing is abandoned.
+## Direct Actions
 
-### Command Routing
+A _direct action_ wraps a [`DirectInstruction`](../Types/Wire/Instruction.md#directinstruction) payload.
+The payload originates in one of two ways:
 
-The decision flow for action processing at the TEE machine is as follows:
+- _External_: an authorized client builds a `DirectInstruction` and submits it to the proxy's [`POST /direct`](../Components/TeeProxy.md#external-write-apis) endpoint, optionally enabled per deployment.
+  When enabled, the proxy authenticates requests (e.g. via API key).
+  The endpoint rejects any operation in the system (`F_`) namespace; it is intended for custom [extension](../Extensions/Concepts.md#system-vs-custom-extensions) operations.
+- _Proxy-initiated_: the proxy constructs a `DirectInstruction` for system services:
+  - [`TEE_INFO`](Commands/F_GET/TeeInfo.md) — periodic liveness and state polling.
+  - [`INITIALIZE_POLICY`](Commands/F_POLICY/InitializePolicy.md) — on proxy startup.
+  - [`UPDATE_POLICY`](Commands/F_POLICY/UpdatePolicy.md) — when the proxy observes a new [signing policy](../../FSP/SigningPolicy.md) on-chain.
+  - [`KEY_INFO`](Commands/F_GET/KeyInfo.md) — periodic wallet sync.
+  - `KEY_PROOF` — fetched during wallet sync for keys lacking a stored proof.
+  - [`TEE_BACKUP`](Commands/F_GET/TeeBackup.md) — on new key generation and after every signing policy update.
 
-1. The body of the action is parsed and `opType` and `opCommand` are extracted.
-2. For instruction actions, the available signatures and threshold requirements are verified against the signing policy. Direct actions skip this check.
-3. If the `(opType, opCommand)` pair matches a registered processor, that processor executes the action and returns the result.
-4. If the pair is not registered and the TEE machine has extension forwarding enabled, the action is forwarded to the compute extension service. If forwarding is not enabled, an error result is returned.
+The proxy then builds the [`Action`](../Types/Wire/Action.md#action), populating each field as follows:
 
-### Cosigner Enforcement
+1. `data.id`: Cryptographically random 32-byte identifier generated by the proxy.
+2. `data.type`: `"direct"`.
+3. `data.submissionTag`: `"submit"`.
+4. `data.message`: JSON-encoded `DirectInstruction`.
+5. `signatures`, `additionalVariableMessages`, `timestamps`, `additionalActionData`: Empty.
 
-Required cosigners are published in [instruction](Instructions.md) events.
-However, a weighted majority of malicious data providers could delete cosigners from the instruction or change them. 
-The TEE proxy and Flare TEE logic would then not be aware of the requirement for cosigners and would execute the action without cosigner verification.
+## Action Results
 
-Mitigations for this are up to the extension in question:
+An [`ActionResult`](../Types/Wire/Action.md#actionresult) is the per-action outcome the TEE machine produces; it is then wrapped in an [`ActionResponse`](#action-responses) and posted to the proxy.
+Field population depends on whether the action belongs to a system [command](Commands/README.md) — processed locally by the TEE machine — or to a custom extension.
 
-- For system extension instructions that result in actions that use keys on the machine (except the `teeId` key), the existence of a threshold of cosigner signatures is checked and enforced by the Flare TEE node app.
-- FCE extensions are responsible for their own cosigner enforcement. They can use the same mechanism as the system extension to authorize usage of private keys. Additionally, enforcement may be done externally, for example by requiring that action results contain both the TEE machine signature and the cosigner signatures as part of the result. For example, the `F_FDC2 PROVE` command allows a verifying contract to require signatures from multiple TEE machines and multiple cosigners.
+### System Commands
 
-## Responses
-After a TEE machine processes an action, it returns an *action response* to the corresponding TEE proxy.
-The response is signed by the TEE, confirming for the proxy that the response came from the machine itself. 
-The main data stored in the response itself varies depending on the content of the action, with the response sent as a pair $(\mathrm{result}, \mathrm{sign})$, with $\mathrm{result}$ formatted as follows:
+The TEE machine processes system commands locally — both the [infrastructure commands](Commands/README.md) and the system extension's application commands ([PMW](../Extensions/PMW/Commands/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../Extensions/FDC2/Commands/README.md) `F_FDC2 PROVE`).
+It populates each field as follows:
 
-- `id`: As above.
-- `submissionTag`: As above.
-- `status`: Indicates the status of the execution in $\mathrm{uint}8$. Typically $0$ for error and $1$ for success, with higher values available for more complicated actions.
-  - $0$: Error/invalid.
-  - $1$: Success.
-  - $2$: In-progress (used for async operations such as XRP payments where results are posted progressively).
-  - $3+$: Scheduled responses (used for [fee schedule progression](../Extensions/PMW/Transactions.md#fee-scheduling)).
-- `log`: Optional; in cases where status is not success, an exception log is provided. Empty if the status is success.
-- `opType`: As indicated in the instruction.
-- `opCommand`: As indicated in the instruction.
-- `version`: The version of the result, defining how the result `data` is encoded.
-- `additionalResultStatus`: Optional; additional messages from the TEE machine to the proxy.
-- `data`: Binary encoded result of the action, typically including a signature by some key stored on the TEE machine. Structure depends on the action instruction and version of the machine.
+- `id`, `submissionTag`: copied from the inbound `Action.data`.
+- `opType`, `opCommand`: copied from the `TeeInstruction` or `DirectInstruction` parsed from `Action.data.message`.
+- `version`: `"1.0.0"`.
+- `status`: a `uint8`:
+  - `0` — error/invalid (action rejected or processing error).
+  - `1` — success.
+  - `2` — in-progress (awaiting the final result; produced by async commands whose work has not yet completed).
+  - `3` — deadline exceeded.
+- `log`: human-readable message for non-success statuses; empty on success.
+- `additionalResultStatus`: optional supplemental status set by some commands.
+- `data`: a JSON-encoded payload: the [`RewardingData`](Rewarding.md#rewardingdata) for `end` actions; a command-specific structure otherwise.
 
-The signature $\mathrm{sign}$ is the signature over the hash
+### Custom Extension Commands
 
-$\mathrm{hash}(\mathrm{hash}($`data`$),$ `id`$,$ $\mathrm{hash}$$($`submissionTag`$)$$,$ `status`$)$.
+Custom extension commands run in an external extension HTTP service alongside the TEE machine; the TEE machine acts as a relay.
 
-performed by the private key corresponding to the unique identity $\mathrm{TEE}_{\mathrm{ID}}$ of the TEE machine, and contains no other action response information, with `data` a self-contained store of the result of the action.
+For `threshold` and `submit` actions:
 
-## Proxy Result Hooks
-After a TEE machine pushes an action result to the TEE proxy, the result is first stored in the action result store (Redis). Based on the `status`, `opType`, `opCommand`, and `additionalResultStatus` fields, the TEE proxy can trigger additional post-processing actions. For example, the proxy can contact external services and, based on their responses, provide additional information and possibly resubmit an action with `additionalActionData` and a custom `submissionTag`.
+1. The TEE machine forwards the inbound [`Action`](../Types/Wire/Action.md#action) JSON to the extension's `/action` endpoint.
+2. The extension processes the action and returns a JSON-encoded `ActionResult` in the HTTP response body.
+3. The TEE machine takes that response verbatim and wraps it in an [`ActionResponse`](#action-responses).
 
-## Reward Data
-Alongside the result of the action, certain action responses will be accompanied by reward data to help determine the distribution of fees as rewards amongst data providers on Flare.
-Reward data is included in the action response in the case where the `submissionTag` is set to "end".
-In this case, the reward data is included in the result of the action, consisting of the following structure:
+The proxy keys storage on the returned `(id, submissionTag)` without cross-checking the inbound action, so an extension that doesn't echo `id`, `submissionTag`, `opType`, and `opCommand` faithfully produces an unreachable result.
+`status` `0` and `1` are terminal outcomes and never overwritten once stored; transient values (`status` $\geq 2$) can only be overwritten by a strictly greater transient or by a terminal — letting the extension signal how close the action is to completion.
 
-- `voteSequence`: Data about the voting for the action containing:
-	- `voteHash`: The hash of the [vote queue](Voting.md).
-	- `instructionID`: The unique ID of the instruction.
-	- `instructionHash`: The hash of the instruction.
-	- `rewardEpochID`: The ID of the reward epoch in which the instruction was issued.
-	- `teeID`: The unique identity of the TEE.
-	- `signatures`: The list of data provider signatures.
-	- `additionalVariableMessageHashes`: A list of hashes of each `additionalVariableMessage` included by the providers, in the same order as the list of signatures.
-	- `timestamps`: The list of timestamps of the votes, in the same order as the signatures.
-- `additionalData`: A binary encoding of any additional required rewarding data that is known to the TEE, depending on the instruction and instruction type.
-- `version`: Encoding version for the data.
-- `signature`: Signature by the TEE machine of $\mathrm{hash}($`voteHash`$,$`additionalData`$)$ using the key corresponding to $\mathrm{TEE}_{\mathrm{ID}}$. 
+For `end` instruction actions, the TEE machine builds the result locally as in [System Commands](#system-commands), leaves `additionalResultStatus` empty, and does not call the extension — the extension's logic already ran at `threshold`, and `RewardingData` is computed entirely from action inputs and the TEE machine's signing key.
 
-How this data is used for rewarding is given in [rewarding](../../FSP/Rewarding.md).
+## Action Responses
+
+An [`ActionResponse`](../Types/Wire/Action.md#actionresponse) is the TEE machine's signed wrapper around an [`ActionResult`](#action-results), posted to the proxy at `POST <proxyURL>/result`.
+It carries three fields:
+
+- `result`: the [`ActionResult`](#action-results).
+- `signature`: the TEE machine's signature over `result`, produced with its $\mathrm{TEE}_{\mathrm{ID}}$ key:
+
+  $$
+  \mathrm{Hash}(r) = \mathrm{keccak256}(\mathrm{keccak256}(r.\mathrm{data}) \,\|\, r.\mathrm{id} \,\|\, \mathrm{keccak256}(r.\mathrm{submissionTag}) \,\|\, r.\mathrm{status}),
+  $$
+
+  where $r$ is `result`.
+- `proxySignature`: added by the [proxy](../Components/TeeProxy.md) on the [external result API](../Components/TeeProxy.md#external-read-apis); produced with the proxy's identity key over $\mathrm{keccak256}(r.\mathrm{data})$, so external consumers can authenticate the proxy as well as the machine.

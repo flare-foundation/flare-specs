@@ -1,76 +1,50 @@
 # Voting
-In the Flare Confidential Compute architecture, *voting* is the process in which enough signatures from [data providers](../../Terminology/Roles.md#data-provider) and [cosigners](../../Terminology/Roles.md#cosigner) are collected to prepare an appropriately signed [action](Actions.md).
-Data providers and cosigners send their signatures validating an instruction to the TEE proxy corresponding to the TEE machine on which the action will take place.
-Once the proxy has received sufficient weight of signatures, it passes the action to the corresponding machine.
 
-## Voting Process
-A *voting process* is initialized when a data provider sends a signed instruction on an active signing policy to a TEE proxy. 
-Here, active means either of the last two signing policies relayed to the TEE machine. 
-Once a vote process is initialized, it is active for two minutes, or until the vote has passed with enough signatures. 
-The amount of required signatures depends on the corresponding instruction, which includes parameters defining the weight of data provider signatures and number of cosigner signatures required. 
-Once enough signatures have been received, the vote passes successfully, and the instruction can be turned into an action. 
-On the other hand, if the vote process ends via time out, the vote has failed and no action is taken.
+_Voting_ is the [TEE proxy](../Components/TeeProxy.md) procedure that turns signed copies of an [instruction](Instructions.md) into a signed [action](Actions.md).
 
-### Initialization and Conclusion
-A TEE proxy on the signing policy for reward epoch $j$ receives a signed instruction from a data provider at time $T$.
-At this point, the voting process begins, identified by `instructionHash`.
-The proxy initializes a set of voters $V$ and a threshold $t$, fetched from the first instruction.
-Each time the proxy receives a new vote from a provider with index $i$, $i$ is added to the set of voters $V$.
-The vote remains open until either:
+## Proxy Flow
 
-- The weight of set $V$ of providers who have voted exceeds the threshold, satisfying $\sum_{i \in V} W_i > t$.
--  The time reaches $T + 120$ seconds.
+For each instruction submitted via [`POST /instruction`](../Components/TeeProxy.md#external-write-apis), the proxy:
 
-At which point, the voting process ends.
-If the cosigner option was enabled on the instruction, then the first end condition (weight of providers) also requires that more cosigners than the cosigner threshold have submitted a vote for the instruction.
+1. Recovers the [signer](Instructions.md#signers)'s address from the signature over [`hashForSigning`](Instructions.md#hashes).
+2. Routes the submission to the [vote box](#vote-boxes) keyed by the instruction.
+3. Counts the vote toward the [data provider](../../Terminology/Roles.md#data-provider) tally if the address is in the [signing policy](../../FSP/SigningPolicy.md) for the instruction's reward epoch, the [cosigner](Instructions.md#cosigners) tally if it appears in the instruction's `cosigners` list, or both.
 
-If the voting process ends because the threshold weight has been exceeded (and the cosigner threshold reached, if applicable), the vote concludes successfully and the proxy sends the instruction to the TEE machine as an [action](Actions.md).
-A successful voting process produces two actions with submission tags `"threshold"` (at the point where the threshold is first reached) and `"end"` (at the conclusion of the voting period).
-In some cases, only the `"threshold"` submission is produced.
+Once the box reaches its [pass conditions](#pass-conditions), the proxy produces [actions](Actions.md) for the destination [TEE machine](../Components/TeeMachine.md); see [Outcomes](#outcomes).
 
-If the vote fails (the threshold was not reached by `endTime`), the voting process is deleted from the proxy and no further actions are taken.
+## Vote Boxes
 
-### Vote Tally Data Structure
-The voting process for an instruction is identified by the relevant `instructionHash`.
- There may be several concurrent voting processes under the same `instructionID`, but only one will reach the signing threshold first and thus be executed by the TEE machine.
- At that point, each other voting process under the same `instructionID` are invalidated. 
-  
-The state of a vote process is tracked at the TEE proxy, which stores information given to it by the data provider who started the vote, and tallies the current state of the votes (signatures) received by providers and cosigners. 
-Formally, the data structure stored at the TEE proxy contains:
+Each voting process runs in a _vote box_:
 
-- `instruction`: The instruction with an empty additionalVariableMessage.
-- `threshold`: Threshold weight of signatures required given the current signing policy. Fetched on initialization of the voting process from the initial instruction. Has a minimum value of $30\%$.
-- `cosigners`: List of cosigners permitted to sign the instruction.
-- `cosignersThreshold`: The threshold number of cosigner signatures required.
-- `weight`: Total accumulated weight of provider and count of cosigner signatures thus far.
-- `startTime`: The timestamp at which the first vote was received at the TEE proxy, measured up to the second.
-- `endTime`: The timestamp after which no further votes will be accepted, also measured up to the second.
-- `proposer`: The (Flare) address that initialized the voting process.
-- `votes`: Tracks the list of current voters. For each voter, the information `voterAddress` is stored, along with the list (`sequence`, `signature`, `relativeTime`, `additionalVariableMessage`). Relative time is the time after `startTime` that the vote was received, measured in seconds.
-- `signatureCount`: Count of received signatures. This is used internally, to store the `sequence` field in votes.
-- `voteHash`: A hash used to prevent tampering with the voter sequence. See the next section for more details.
-- `status`: Initially set to active when the vote is initialized, then set to closed by the end of the voting process. At this point, no more votes are accepted.
+- Keyed by the carrying instruction's [`instructionId` and `instructionHash`](Instructions.md#hashes).
+- Opened by the first valid signature from a data provider on a previously unseen pair, then closed after a deployment-configured expiration window.
+  Cosigner-only signers cannot open a box; submissions that would do so are rejected and should be retried until a data provider has opened a matching box.
+- Each signer may contribute at most one vote per box.
 
-### Voting Transparency
-The voting process requires Flare's data providers to provide votes, including signed instructions, to the TEE proxies.
-Since the data providers are rewarded for completing this process, the TEE proxy must store and provide information about the arrival time of the signatures. 
-This is the information stored in `voteHash`, an iteratively computed hash tracking information about vote arrival. Information about how this data is used for rewarding can be found in [rewarding](../../FSP/Rewarding.md).
+## Pass Conditions
 
-The initial `voteHash` is computed from the ABI encoding of the [`VoteSequenceInit`](../Types/Abi/Voting.md#votesequenceinit) struct, given a sequence number of $0$.
-On arrival of subsequent votes, a new `voteHash` is computed by hashing the ABI encoding of the [`VoteSequenceNext`](../Types/Abi/Voting.md#votesequencenext) struct, with each subsequent vote hash given a sequence number one higher than the previous.
-The `signature`, `additionalVariableMessageHash`, and `timestamp` fields are those taken from the incoming vote.
+A vote box _passes_ as soon as both conditions hold:
 
-Each time a new vote arrives and a new `voteHash` is computed, the TEE proxy signs a hash of the [`VoteReceipt`](../Types/Abi/Voting.md#votereceipt) struct, with the fields filled by those of the corresponding vote.
-That is, 
 $$
-\mathrm{VoteHash}_i = \mathrm{hash}(\mathrm{VoteSequenceNext}_{i}) 
+\sum_{i \in V} W_i > t \qquad\text{and}\qquad C \geq c,
 $$
-where
-$$
-\mathrm{VoteSequenceNext}_{i} = (\mathrm{VoteHash}_{i -1}, i, \mathrm{Sign}_i, \mathrm{hash}(\mathrm{VarMess}_i), \mathrm{Time}_i)
-$$
-where the final three parameters are the signature, additional variable message, and timestamp of the $\mathrm{i}$th vote.
-The TEE proxy signs each of these hashes.
 
-On conclusion of the action, the TEE machine itself signs the final `voteHash`; between this signature and the signer data in the [action result](Actions.md), all intermediate hashes and signatures can be reconstructed. 
-This allows signer data published on-chain for rewarding purposes to be verified.
+where $V$ is the set of voting data providers, $W_i$ their weights under that signing policy, $t$ the data provider threshold, $C$ the count of cosigner signatures, and $c$ the cosigner threshold.
+The cosigner term is vacuous when the carrying instruction lists no cosigners.
+
+$t$ is the [signing policy's threshold](../../FSP/SigningPolicy.md#normalized-weights) for every command (including all user-defined commands) except [`F_FDC2 PROVE`](../Extensions/FDC2/Commands/Prove.md), which may carry a per-instruction override.
+
+If the box closes without these conditions ever holding, it is silently dropped.
+
+## Outcomes
+
+A passing box produces two [instruction actions](Actions.md#instruction-actions), tagged in [`submissionTag`](../Types/Wire/Action.md#actiondata):
+
+1. `threshold`: Produced when the box passes.
+   The TEE machine executes the operation; the action's [result data](Actions.md#action-results) carries the operation output.
+2. `end`: Produced when the box closes.
+   The TEE machine emits the [`RewardingData`](Rewarding.md#rewardingdata) payload as the action's result data and performs no further operation work (system commands may run a consistency check at this stage and downgrade the status if it fails).
+
+[`F_WALLET KEY_DATA_PROVIDER_RESTORE`](Commands/F_WALLET/KeyDataProviderRestore.md) is the exception: both actions are produced at close so the proxy can collect additional shares before key reconstruction.
+
+Each accepted vote is acknowledged in the [`POST /instruction`](../Components/TeeProxy.md#external-write-apis) response with a signed receipt that feeds [reward attribution](Rewarding.md).
