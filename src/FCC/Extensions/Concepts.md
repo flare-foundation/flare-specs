@@ -1,4 +1,5 @@
-# TEE Extensions
+# Extension Concepts
+
 Applications within the Flare Confidential Compute infrastructure are managed via a system of *extensions*.
 Each application is run on an extension, defining the code deployed by TEEs participating in the application along with other information.
 An [initial extension](SystemExtension.md), known as the *system extension*, operates certain TEE protocols necessary for the functionality of the TEE infrastructure.
@@ -12,6 +13,8 @@ Extensions are designed to be flexible, and thus are defined by only two feature
 - A set of TEE machines registered to the extension, which run the supported code versions. Each is identified by a unique TEE identity.
 
 This pair is sufficient for enabling the desired functionality of an extension: a specified set of TEEs each run the supported code and thus can implement the instructions available on the extension.
+
+Extensions whose TEE machines custody long-lived signing keys also maintain their own pool of [projects, wallets, and keys](../TeeManagement/Wallets.md) — each project is pinned to a single extension at creation and does not cross extension boundaries.
 
 ## Extension Data Structure
 
@@ -46,7 +49,7 @@ This is achieved by adding and/or removing active code versions on the extension
 Each extension is created and managed by its owner account, typically a multisig governance account specific to the extension.
 
 While TEE machines within an extension may run the same code, their state can differ.
-For example, in the case of [PMWs](PMW.md), each TEE machine has different wallet keys.
+For example, in the case of [PMWs](PMW/README.md), each TEE machine has different wallet keys.
 Each machine may behave differently based on its state.
 Users interact with selected machines via their specific identities and execute functions on them, whose outputs depend on this state.
 Users may employ multiple machines for redundancy and multisig-type consensus calculations to partially circumvent this.

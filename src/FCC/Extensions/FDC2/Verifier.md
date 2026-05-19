@@ -1,6 +1,6 @@
 # FDC2 Verifier Server
 
-The FDC2 verifier server validates attestation requests on behalf of [data providers](../../Terminology/Roles.md#data-provider) as part of the [FDC2](FDC2.md) protocol.
+The FDC2 verifier server validates attestation requests on behalf of [data providers](../../../Terminology/Roles.md#data-provider) as part of the [FDC2](README.md) protocol.
 Each data provider runs a verifier instance for each attestation type it supports.
 One attestation type module is loaded at startup per process.
 
@@ -30,10 +30,10 @@ All endpoints (except `/api/health`) require API key authentication via the `X-A
 Each module instantiates its own service, verifier, external data connections, and HTTP handlers.
 The supported attestation types are:
 
-- [TeeAvailabilityCheck](../AttestationTypes/TeeAvailabilityCheck.md)
-- [PMWPaymentStatus](../AttestationTypes/PMWPaymentStatus.md)
-- [PMWMultisigAccountConfigured](../AttestationTypes/PMWMultisigAccountConfigured.md)
-- [PMWFeeProof](../AttestationTypes/PMWFeeProof.md)
+- [TeeAvailabilityCheck](AttestationTypes/TeeAvailabilityCheck.md)
+- [PMWPaymentStatus](AttestationTypes/PMWPaymentStatus.md)
+- [PMWMultisigAccountConfigured](AttestationTypes/PMWMultisigAccountConfigured.md)
+- [PMWFeeProof](AttestationTypes/PMWFeeProof.md)
 
 ## Security
 
