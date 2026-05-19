@@ -147,5 +147,5 @@ The input parameters for this function can be found in the relevant [workflow](.
 A nullification transaction be acheived with the same function by setting a negative fee as explained [above](#fee-scheduling).
 
 ### Checking Transaction Status
-To help determine the possibility of unsuccessful payments, the [`PMWPaymentStatus`](../../AttestationTypes/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on an external chain.
+To help determine the possibility of unsuccessful payments, the [`PMWPaymentStatus`](../../Extensions/FDC2/AttestationTypes/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on an external chain.
 The response includes the transaction status (success or reverted), the received amount, the transaction fee, and the revert reason if applicable.

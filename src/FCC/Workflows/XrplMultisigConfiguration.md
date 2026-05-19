@@ -64,7 +64,7 @@ After this step, the XRPL account can only authorize transactions through multis
 
 #### XRPL Account Configuration Requirements
 
-The [`PMWMultisigAccountConfigured`](../AttestationTypes/PMWMultisigAccountConfigured.md) attestation verifier checks the XRPL account's signer list, quorum, account flags, and regular key status. All checks must pass for the attestation to return `status = ok`. In summary, the account must have:
+The [`PMWMultisigAccountConfigured`](../Extensions/FDC2/AttestationTypes/PMWMultisigAccountConfigured.md) attestation verifier checks the XRPL account's signer list, quorum, account flags, and regular key status. All checks must pass for the attestation to return `status = ok`. In summary, the account must have:
 
 - A signer list matching the wallet's public keys, each with `SignerWeight = 1`
 - `SignerQuorum` matching the wallet's multisig threshold
@@ -73,11 +73,11 @@ The [`PMWMultisigAccountConfigured`](../AttestationTypes/PMWMultisigAccountConfi
 
 On success, the account's `Sequence` number is returned as the initial nonce for payment transactions.
 
-For the complete verification rules and example `account_info` responses, see [PMWMultisigAccountConfigured](../AttestationTypes/PMWMultisigAccountConfigured.md).
+For the complete verification rules and example `account_info` responses, see [PMWMultisigAccountConfigured](../Extensions/FDC2/AttestationTypes/PMWMultisigAccountConfigured.md).
 
 ---
 
-### Step 3: Request [`PMWMultisigAccountConfigured`](../AttestationTypes/PMWMultisigAccountConfigured.md) Attestation
+### Step 3: Request [`PMWMultisigAccountConfigured`](../Extensions/FDC2/AttestationTypes/PMWMultisigAccountConfigured.md) Attestation
 
 Submit an FDC2 attestation request to verify that the XRPL multisig account is correctly configured.
 
@@ -102,7 +102,7 @@ Submit an FDC2 attestation request to verify that the XRPL multisig account is c
 2. The contract collects the wallet's public keys and multisig threshold from the `TeeWalletKeyManager`.
 3. An FDC2 attestation request is formed and sent to TEE machines as an instruction.
 4. A [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event is emitted containing the `instructionId`.
-5. Off-chain, each TEE machine independently queries its own XRP node and verifies the account configuration (see [PMWMultisigAccountConfigured](../AttestationTypes/PMWMultisigAccountConfigured.md) for the full verification procedure).
+5. Off-chain, each TEE machine independently queries its own XRP node and verifies the account configuration (see [PMWMultisigAccountConfigured](../Extensions/FDC2/AttestationTypes/PMWMultisigAccountConfigured.md) for the full verification procedure).
 6. TEE machines return signed attestation responses to the TEE proxy.
 
 **Events emitted:** [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) with `instructionId`.

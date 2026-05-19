@@ -4,7 +4,7 @@
 
 This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
 The result can be verified on-chain by the `VrfVerifier` contract.
-For canonical VRF key semantics, see [Key Management](../TeeManagement/KeyManagement.md) and the [`F_WALLET--VRF`](../Commands/F_WALLET--VRF.md) command reference.
+For canonical VRF key semantics, see [Key Management](../TeeManagement/Keys.md) and the [`F_WALLET--VRF`](../Operations/Commands/F_WALLET/Vrf.md) command reference.
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ For canonical VRF key semantics, see [Key Management](../TeeManagement/KeyManage
 
 **Who initiates:** The VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`).
 
-A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../Commands/F_WALLET--VRF.md) instruction.
+A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../Operations/Commands/F_WALLET/Vrf.md) instruction.
 
 **Parameters:**
 - `walletId` (`bytes32`) — the wallet ID of the VRF key.
@@ -55,10 +55,10 @@ Once the voting threshold is reached, the TEE proxy delivers the action to the T
 2. **Loads** the private key for the specified `(walletId, keyId)` pair from wallet storage.
 3. **Validates** that the key's signing algorithm is `keccak256-secp256k1-vrf`. Any other algorithm is rejected.
 4. **Computes** the ECVRF proof using the secp256k1 curve:
-   - Hashes the nonce to a curve point $H = \mathrm{HashToCurve}(\mathrm{nonce})$ via iterative Keccak-256 hashing until a valid x-coordinate is found.
+   - Hashes the nonce to a curve point $H = \mathrm{HashToCurve}(\mathrm{nonce})$ via iterative keccak256 hashing until a valid x-coordinate is found.
    - Computes the VRF output $\gamma = \mathrm{sk} \cdot H$.
    - Samples a random scalar $k$ and computes commitment points $U = k \cdot G$ and $V = k \cdot H$.
-   - Derives the challenge $c = \mathrm{HashToZn}(\mathrm{Pack}(G, H, \mathrm{pk}, \gamma, U, V))$ using ABI-encoded Keccak-256 reduced modulo $N$.
+   - Derives the challenge $c = \mathrm{HashToZn}(\mathrm{Pack}(G, H, \mathrm{pk}, \gamma, U, V))$ using ABI-encoded keccak256 reduced modulo $N$.
    - Computes the response $s = k - \mathrm{sk} \cdot c \mod N$.
    - Pre-computes witness points for on-chain verification: $c\gamma$, and $z_{\mathrm{inv}} = (\mathrm{cGamma}_x - V_x)^{-1} \mod P$.
 5. **Returns** the JSON-encoded result to the TEE proxy.
@@ -68,7 +68,7 @@ Once the voting threshold is reached, the TEE proxy delivers the action to the T
 ### Step 4: Retrieve Result
 
 The action result is available from the TEE proxy.
-For the response format, see the [`VRF`](../Commands/F_WALLET--VRF.md) command reference.
+For the response format, see the [`VRF`](../Operations/Commands/F_WALLET/Vrf.md) command reference.
 
 ---
 
@@ -101,4 +101,4 @@ where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma 
   | `HashToCurve` fails (no valid point found in $256$ iterations) | Proof generation fails |
   | Zero denominator for `zInv` (probability $\approx 1/P$) | Proof generation fails; extremely unlikely |
 
-- **Cryptographic reference:** The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative Keccak-256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
+- **Cryptographic reference:** The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative keccak256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.

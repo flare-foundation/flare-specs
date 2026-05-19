@@ -43,7 +43,7 @@ This workflow describes sending XRP payments from a TEE-managed Protocol Managed
 **What happens:**
 
 1. The `TeePayments` contract calls `receivingTeesAndKeys(walletId)` on the `TeeWalletKeyManager` contract to retrieve the list of TEE machines and key IDs.
-2. The contract forms a [`PAY`](../Commands/F_XRP--PAY.md) instruction and submits it via `TeeExtensionRegistry.sendInstructions()`.
+2. The contract forms a [`PAY`](../Extensions/PMW/Commands/Pay.md) instruction and submits it via `TeeExtensionRegistry.sendInstructions()`.
 
 **Events emitted:** [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
@@ -125,9 +125,9 @@ Submit the multisigned transaction to the XRP Ledger.
 
 ---
 
-### Step 6: Verify Payment (Optional) — [`PMWPaymentStatus`](../AttestationTypes/PMWPaymentStatus.md) FDC2 Attestation
+### Step 6: Verify Payment (Optional) — [`PMWPaymentStatus`](../Extensions/FDC2/AttestationTypes/PMWPaymentStatus.md) FDC2 Attestation
 
-Request a [`PMWPaymentStatus`](../AttestationTypes/PMWPaymentStatus.md) attestation to verify the on-chain status of the payment.
+Request a [`PMWPaymentStatus`](../Extensions/FDC2/AttestationTypes/PMWPaymentStatus.md) attestation to verify the on-chain status of the payment.
 
 **Who can call:** Anyone.
 
@@ -139,7 +139,7 @@ Request a [`PMWPaymentStatus`](../AttestationTypes/PMWPaymentStatus.md) attestat
 
 **What happens:**
 
-1. An FDC2 attestation request is submitted via `Fdc2Hub.requestAttestation()` with the [`PMWPaymentStatus`](../AttestationTypes/PMWPaymentStatus.md) attestation type.
+1. An FDC2 attestation request is submitted via `Fdc2Hub.requestAttestation()` with the [`PMWPaymentStatus`](../Extensions/FDC2/AttestationTypes/PMWPaymentStatus.md) attestation type.
 2. TEE machines independently look up the transaction on the XRP Ledger using the `senderAddress` and `nonce`.
 3. The attestation response includes:
    - `recipientAddress` — the recipient from the on-chain payment instruction.
@@ -152,7 +152,7 @@ Request a [`PMWPaymentStatus`](../AttestationTypes/PMWPaymentStatus.md) attestat
    - `blockNumber`, `blockTimestamp` — the ledger index and timestamp.
 4. The attestation proof is retrieved from the TEE proxy and can be verified on-chain (e.g., via a `PMWPaymentStatusVerifier` contract).
 
-See [PMWPaymentStatus](../AttestationTypes/PMWPaymentStatus.md) for the full attestation type specification.
+See [PMWPaymentStatus](../Extensions/FDC2/AttestationTypes/PMWPaymentStatus.md) for the full attestation type specification.
 
 ---
 
@@ -182,7 +182,7 @@ If a payment fails (e.g., due to a low fee or chain-level issues), the transacti
 
 **What happens:**
 
-1. The `TeePayments` contract forms a new instruction with the [`REISSUE`](../Commands/F_XRP--REISSUE.md) command.
+1. The `TeePayments` contract forms a new instruction with the [`REISSUE`](../Extensions/PMW/Commands/Reissue.md) command.
 2. Data providers vote and the TEE machine(s) sign the replacement transaction with the same nonce but updated fee.
 3. The signed transaction is retrieved from the TEE proxy and submitted to the XRP Ledger, following the same flow as Steps 4 and 5.
 

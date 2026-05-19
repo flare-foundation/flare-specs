@@ -6,7 +6,7 @@ This page defines the roles and actors that appear across the Flare protocol spe
 
 A *data provider* (also referred to as a *voter*, *validator*, *infrastructure provider*, or *entity*) is an off-chain participant registered as an [entity](../FSP/Voters.md#entity-definition) on Flare.
 Data providers accrue vote power from the Flare community via delegations of wrapped FLR tokens (WFLR) or stakes.
-They participate in all Flare protocols: operating a Flare validator node, submitting and finalizing voting round data in the [Flare Systems Protocol](../FSP/Introduction.md), providing price feeds in [FTSO](../FTSO/Introduction.md), confirming attestations in [FDC](../FDC/Introduction.md), and running [relay clients](../FCC/Operations/RelayClient.md) to relay instructions to TEE machines in [FCC](../FCC/Introduction.md).
+They participate in all Flare protocols: operating a Flare validator node, submitting and finalizing voting round data in the [Flare Systems Protocol](../FSP/Introduction.md), providing price feeds in [FTSO](../FTSO/Introduction.md), confirming attestations in [FDC](../FDC/Introduction.md), and running [relay clients](../FCC/Components/RelayClient.md) to relay instructions to TEE machines in [FCC](../FCC/README.md).
 Data providers must complete [voter registration](../FSP/Voters.md#voter-registration) every reward epoch.
 
 Each protocol rewards data providers for correct participation and penalizes non-compliance:
@@ -22,27 +22,27 @@ Delegators share in the [rewards](../FSP/Rewarding.md) earned by the data provid
 
 ## TEE Operator
 
-A *TEE operator* is the party that deploys and maintains one or more TEE machines and their associated [TEE proxies](../FCC/TeeManagement/TeeProxy.md).
+A *TEE operator* is the party that deploys and maintains one or more TEE machines and their associated [TEE proxies](../FCC/Components/TeeProxy.md).
 A TEE operator need not be a data provider.
 TEE operators register their machines on-chain through the [registration](../FCC/TeeManagement/Registration.md) process; registration requires being on the extension's [owner allowlist](../FCC/TeeManagement/Registration.md#owner-allowlist).
 
 ## Project Owner
 
-A *project owner* is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/Operations/ProjectsAndConfiguration.md).
+A *project owner* is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/TeeManagement/Wallets.md).
 The project owner controls wallet creation, key management, and configuration for the project's wallets.
 
 ## Key Admin
 
-A *key admin* is one of a set of addresses associated with a wallet whose public keys are used for encrypting [Shamir secret shares](../FCC/TeeManagement/KeyManagement.md#backup-procedure) during key backup.
-Key admins participate in [key restoration](../FCC/TeeManagement/KeyManagement.md#key-restoration-procedure) by decrypting and re-submitting their shares.
+A *key admin* is one of a set of addresses associated with a wallet whose public keys are used for encrypting [Shamir secret shares](../FCC/TeeManagement/Keys.md#backup-procedure) during key backup.
+Key admins participate in [key restoration](../FCC/TeeManagement/Keys.md#key-restoration-procedure) by decrypting and re-submitting their shares.
 Operations requiring admin approval use a $k$-of-$n$ threshold over the admin public keys.
 
-## Cosigner
+## Governance
 
-A *cosigner* is a Flare address assigned to an [instruction](../FCC/Operations/Instructions.md#cosigners) to provide additional multisig confirmation.
-When cosigners are configured for a wallet, each instruction must be independently relayed by a threshold of cosigners before the TEE executes it.
-Cosigners run their relay clients in [cosigner mode](../FCC/Operations/RelayClient.md).
-Unlike data providers, cosigners need not participate in other Flare protocols.
+*Governance* is the single Flare address authorized to perform privileged operations on Flare's smart contracts — for example, registering [system instructions senders](../FCC/Operations/Instructions.md#sending-instructions), setting the [signing policy threshold](../FSP/SigningPolicy.md), and adding [system-supported key types](../FCC/Extensions/Concepts.md#system-administration-functions-governance-only).
+The address is backed by a multisig (or a single key on test networks) and can only be changed by a validator fork.
+
+It is distinct from the per-extension [governance signers](#governance-signer) that approve TEE upgrades.
 
 ## Governance Signer
 

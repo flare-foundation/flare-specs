@@ -41,4 +41,4 @@ Entities are expected to submit data to this function from their registered `sub
 The first submission in a voting round to a method from the `submitSignaturesAddress` of an entity included in the active signing policy is subsidized (all gas cost is refunded).
 Transactions from addresses not recognised by the active signing policy are not subsidized and should be ignored by protocols.
 
-Each submitted [PayloadMessage](/src/FSP/Encoding.md#payloadmessage) is expected to contain either a [SignatureType0](/src/FSP/Encoding.md#signaturetype0) or a [SignatureType1](/src/FSP/Encoding.md#signaturetype1) message, which [signs](../Utilities/Signing.md) the protocol voting round result [ProtocolMerkleRoot](/src/FSP/Encoding.md#protocolmerkleroot).
+Each submitted [PayloadMessage](/src/FSP/Encoding.md#payloadmessage) is expected to contain either a [SignatureType0](/src/FSP/Encoding.md#signaturetype0) or a [SignatureType1](/src/FSP/Encoding.md#signaturetype1) message, which [signs](../Utilities/Signing.md) the keccak256 hash of the protocol voting round result [ProtocolMerkleRoot](/src/FSP/Encoding.md#protocolmerkleroot).

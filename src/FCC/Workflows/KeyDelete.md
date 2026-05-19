@@ -32,7 +32,7 @@ Deletion removes private key material from the specified TEE but retains the key
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
-1. The contract sends a [`KEY_DELETE`](../Commands/F_WALLET--KEY_DELETE.md) instruction to the specified TEE machine.
+1. The contract sends a [`KEY_DELETE`](../Operations/Commands/F_WALLET/KeyDelete.md) instruction to the specified TEE machine.
 2. The TEE machine verifies the `nonce` in the instruction is strictly greater than the current nonce stored for that key.
 3. The TEE machine removes the private key material from its memory.
 4. If the `teeId` is in the key's TEE list, it is removed. If the `teeId` is not found, the contract still proceeds — the instruction is sent as a retry mechanism.

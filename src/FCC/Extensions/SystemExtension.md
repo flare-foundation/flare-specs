@@ -1,5 +1,5 @@
 # System Extension
-Each [extension](Overview.md) within Flare Confidential Compute is identified by a unique extension ID.
+Each [extension](README.md) within Flare Confidential Compute is identified by a unique extension ID.
 The *system extension* is the extension with extension ID $0$. This initial extension is implemented by Flare.
 The system extension takes advantage of Flare's [data providers](../../Terminology/Roles.md#data-provider) to source additional compute and data provision resources.
 The system extension hosts two system applications, each with a variety of instructions: the Flare TEE Data Connector v2 (FDC2) and the Protocol Managed Wallet (PMW) infrastructure.
@@ -29,7 +29,7 @@ The system operation types are:
 The FDC2 is a TEE-based variant of the Flare Data Connector (FDC), Flare's enshrined oracle for validating and importing external data to Flare's EVM state. 
 The FDC uses consensus among Flare's data providers to attest to external data.
 In the FDC2, this attestation is performed by data providers then validated by TEEs in response to instruction by the providers.
-More information on the FDC2 can be found in its own [specification](FDC2.md).
+More information on the FDC2 can be found in its own [specification](FDC2/README.md).
 
 In the context of Flare Confidential Compute, the FDC2 serves two purposes: firstly, it is the system by which the state of a TEE machine is validated, ensuring that TEEs participating in operations on Flare are running the correctly specified code and state. 
 Secondly, it offers latency advantages over the FDC, and thus may be preferable for some users who would otherwise want to use the FDC.
@@ -38,4 +38,4 @@ Secondly, it offers latency advantages over the FDC, and thus may be preferable 
 Protocol managed wallets are a system application on Flare facilitating the programmable assembly, signing, and execution of transactions on external blockchains via user calls made to smart contracts on Flare.
 Essentially, the PMW infrastructure allows Flare's users to manage wallets on external blockchains by sending instructions on Flare.
 It is enabled by a combination of the TEE network, which stores keys for wallets on other chains and is responsible for signing transactions, and Flare's data providers, who monitor transactions instructions on Flare and relay information between Flare, the TEEs, and external chains.
-The PMW infrastructure is described in detail in its [own section](PMW/PMW.md).
+The PMW infrastructure is described in detail in its [own section](PMW/README.md).

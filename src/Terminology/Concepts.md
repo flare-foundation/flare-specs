@@ -5,7 +5,7 @@ This page defines foundational concepts used across the Flare protocol specifica
 ## Addresses, Accounts, and Keys
 
 An *address* is a 20-byte identifier derived from a public key.
-On EVM-compatible chains, an address is computed as the last 20 bytes of the Keccak-256 hash of the uncompressed public key.
+On EVM-compatible chains, an address is computed as the last 20 bytes of the keccak256 hash of the uncompressed public key.
 
 An *account* is the on-chain state associated with an address — its balance, nonce, and (for contract accounts) code and storage.
 In this documentation, "address" refers to the identifier itself, while "account" refers to the on-chain state behind it.
@@ -37,11 +37,3 @@ It is derived from WFLR delegations and validator stakes, then normalized into a
 The weighting formula applies a diversity factor to encourage decentralization.
 See [Weighting](../FSP/Weighting.md) for the full specification.
 
-## Threshold
-
-A *threshold* is the minimum proportion of weight or number of participants required for a collective action to proceed.
-Examples include:
-- The [signing policy threshold](../FSP/SigningPolicy.md) for finalizing a voting round.
-- The [instruction threshold](../FCC/Operations/Instructions.md#thresholds) for accepting an instruction at a TEE proxy.
-- The admin threshold ($k$-of-$n$) for [key management](../FCC/TeeManagement/KeyManagement.md) operations.
-- The cosigner threshold for [cosigned instructions](../FCC/Operations/Instructions.md#cosigners).

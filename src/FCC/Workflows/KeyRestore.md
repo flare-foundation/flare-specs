@@ -5,7 +5,7 @@
 This workflow covers restoring a signing key from backup onto a new TEE machine.
 Key restoration is necessary when a TEE machine becomes unavailable, is decommissioned, or when migrating keys between machines.
 The process requires cooperation from both [data providers](../../Terminology/Roles.md#data-provider) and [key admins](../../Terminology/Roles.md#key-admin).
-For the backup scheme (Shamir secret sharing, packaging, and distribution), see [Key Management](../TeeManagement/KeyManagement.md).
+For the backup scheme (Shamir secret sharing, packaging, and distribution), see [Key Management](../TeeManagement/Keys.md).
 
 ## Prerequisites
 
@@ -45,7 +45,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
-1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../Commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) instruction to the target TEE machine.
+1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md) instruction to the target TEE machine.
 2. This signals the TEE network (data providers and key admins) to begin the share collection process.
 
 **Events emitted:** [`BackupRestoreTriggered`](../Types/Abi/Events/TeeWalletBackupManager.md#backuprestoretriggered), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
@@ -64,7 +64,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 1. Each data provider and key admin retrieves their holder backup package from the backup URL.
 2. They decrypt their key share(s) using their private key.
 3. They re-encrypt their share(s) under the public key of the target TEE machine (the `teeId` specified in Step 1).
-4. They submit a TEE instruction containing the encrypted share:
+4. They submit an instruction containing the encrypted share:
    - `additionalFixedMessage`: the backup metadata.
    - `additionalVariableMessage`: the encrypted share.
 5. The TEE proxy collects incoming shares with the `submissionTag` set to `end`, keeping voting open for the maximum duration to gather as many shares as possible.
@@ -112,7 +112,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 ## Notes
 
 - **Key migration between TEEs:** Key migration moves a key from one TEE machine to another. This is a composite workflow: (1) restore the key on the new TEE using Steps 1-4 above, (2) confirm the restored key with `confirmKey()`, and (3) optionally [delete the key](KeyDelete.md) from the decommissioned machine. During migration, the key exists on both TEEs simultaneously until explicitly deleted from the old one, ensuring zero downtime for signing operations.
-- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via [`TeeAvailabilityCheck`](../AttestationTypes/TeeAvailabilityCheck.md), its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
+- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md), its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
 - **Share submission verification:** Data providers and key admins should verify on-chain events and block confirmations before submitting shares, ensuring:
   - The [`BackupRestoreTriggered`](../Types/Abi/Events/TeeWalletBackupManager.md#backuprestoretriggered) and [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) events were emitted with sufficient confirmations.
   - The backup from the provided URL is consistent with the backup ID.

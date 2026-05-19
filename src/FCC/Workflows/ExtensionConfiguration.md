@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow covers registering and configuring a custom TEE extension, from deploying the instruction sender contract through to configuring the TEE node.
-For background on the extension framework, see [Extensions](../Extensions/Overview.md).
+For background on the extension framework, see [Extensions](../Extensions/README.md).
 
 ## Prerequisites
 
@@ -142,8 +142,8 @@ This step configures which addresses are permitted to register TEE machines and 
 **Parameters:**
 - `_extensionId` (`uint256`): The extension ID
 - `_keyTypes` (`bytes32[]`): Array of key type identifiers to support. Common values include:
-  - `"EVM"` -- for Keccak256-Secp256k1 ECDSA signing (used with EVM transactions)
-  - `"XRP"` -- for SHA512Half-Secp256k1 ECDSA signing (used with XRP transactions)
+  - `"EVM"` -- for keccak256-secp256k1 ECDSA signing (used with EVM transactions)
+  - `"XRP"` -- for SHA512Half-secp256k1 ECDSA signing (used with XRP transactions)
 
 **Requirements:**
 - Caller must be the extension owner
@@ -168,7 +168,7 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 **Endpoints:**
 - `POST /proxy` -- set the TEE proxy URL (e.g., `http://<TEE_PROXY_INTERNAL_IP>:6661`)
 - `POST /initial-owner` -- set the initial owner address (immutable once set)
-- `POST /extension-id` -- set the extension ID (fixed after [`TeeAvailabilityCheck`](../AttestationTypes/TeeAvailabilityCheck.md) verification)
+- `POST /extension-id` -- set the extension ID (fixed after [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) verification)
 
 **Events emitted:** None (off-chain configuration)
 

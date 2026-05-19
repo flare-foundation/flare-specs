@@ -6,7 +6,7 @@ This page describes the parts of a deployment that change when a wallet or appli
 It does not repeat the full single-TEE procedures.
 Use [MachineRegistration.md](MachineRegistration.md), [WalletSetup.md](WalletSetup.md), [XrplMultisigConfiguration.md](XrplMultisigConfiguration.md), and [XrpPayment.md](XrpPayment.md) as the base workflows, and apply the deltas below.
 
-For canonical ownership, state, and key semantics, see [Registration](../TeeManagement/Registration.md), [State and Attestation](../TeeManagement/StateAndAttestation.md), and [Key Management](../TeeManagement/KeyManagement.md).
+For canonical ownership, state, and key semantics, see [Registration](../TeeManagement/Registration.md), [State](../TeeManagement/State.md) and [Attestation](../TeeManagement/Attestation.md), and [Key Management](../TeeManagement/Keys.md).
 
 ## When Multi-TEE Operation Changes the Flow
 

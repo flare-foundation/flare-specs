@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow covers adding a new signing key to a TEE machine for an existing wallet.
-For canonical key semantics and data structures, see [Key Management](../TeeManagement/KeyManagement.md) and [Projects and Configuration](../Operations/ProjectsAndConfiguration.md).
+For canonical key semantics and data structures, see [Key Management](../TeeManagement/Keys.md) and [Wallets](../TeeManagement/Wallets.md).
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 
 **What happens:**
 1. The contract generates a new `keyId` by incrementing the wallet's key counter.
-2. A [`KEY_GENERATE`](../Commands/F_WALLET--KEY_GENERATE.md) instruction is sent to the specified TEE machine.
+2. A [`KEY_GENERATE`](../Operations/Commands/F_WALLET/KeyGenerate.md) instruction is sent to the specified TEE machine.
 3. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 4. The TEE machine automatically triggers a key backup for the newly generated key.
 
@@ -69,4 +69,4 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 ## Notes
 
 - To remove keys from TEE machines, see the [key delete workflow](KeyDelete.md). To restore keys from backup onto a new TEE, see the [key restore workflow](KeyRestore.md).
-- For key definitions and project configuration details, see [Projects and Configuration](../Operations/ProjectsAndConfiguration.md).
+- For key definitions and project configuration details, see [Wallets](../TeeManagement/Wallets.md).
