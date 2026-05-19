@@ -3,7 +3,7 @@
 ## Description
 
 Restores a previously backed-up key onto a target TEE machine.
-[Data providers](../../Terminology/Roles.md#data-provider) and [key admins](../../Terminology/Roles.md#key-admin) fetch the backup package, verify its consistency, and re-encrypt their shares with the target TEE's public key (see [Augmentation procedure](#augmentation-procedure) for the relay-client steps).
+[Data providers](../../../../Terminology/Roles.md#data-provider) and [key admins](../../../../Terminology/Roles.md#key-admin) fetch the backup package, verify its consistency, and re-encrypt their shares with the target TEE's public key (see [Augmentation procedure](#augmentation-procedure) for the relay-client steps).
 The TEE machine reconstructs the private key from these shares and returns a signed `KeyExistence` proof.
 
 ## Event message
@@ -43,24 +43,24 @@ struct PublicKey {
 
 ## Augmentation procedure
 
-During the [backup procedure](../TeeManagement/KeyManagement.md#backup-procedure), each data provider and key admin receives a _holder backup package_ — their [Shamir secret share](../TeeManagement/KeyManagement.md#backup-procedure) of the backed-up private key, encrypted under the holder's public key using ECIES.
+During the [backup procedure](../../../TeeManagement/Keys.md#backup-procedure), each data provider and key admin receives a _holder backup package_ — their [Shamir secret share](../../../TeeManagement/Keys.md#backup-procedure) of the backed-up private key, encrypted under the holder's public key using ECIES.
 
-Before signing the TEE instruction, the [relay client](../Operations/RelayClient.md) re-encrypts its share for the target TEE machine:
+Before signing the instruction, the [relay client](../../../Components/RelayClient.md) re-encrypts its share for the target TEE machine:
 
 1. Fetch the backup package from `backupUrl` in the instruction.
    The package is subject to a size limit; if the response exceeds it or the server returns an error, the instruction is dropped.
-2. Validate that the package metadata matches all [`BackupId`](../Types/Abi/Key.md#backupid) fields. If any field does not match, the instruction is dropped.
+2. Validate that the package metadata matches all [`BackupId`](../../../Types/Abi/Key.md#backupid) fields. If any field does not match, the instruction is dropped.
 3. Verify that the target TEE machine (identified by `teeId`) is registered and currently attested, and that its code version is not banned.
 4. Extract the holder backup package(s) corresponding to the relay client's public key.
    The key may be registered in the data provider pool, the key admin pool, or both; if it is in both, both packages are extracted.
    If it is in neither, the instruction is dropped.
 5. Decrypt each extracted share using the relay client's private key.
-6. Re-encrypt the share(s) under the target TEE machine's public key ([`TeePublicKey`](../Types/Abi/Common.md#publickey) in the instruction) using ECIES.
+6. Re-encrypt the share(s) under the target TEE machine's public key ([`TeePublicKey`](../../../Types/Abi/Common.md#publickey) in the instruction) using ECIES.
    If step 4 produced two shares (the both-pools case), they are bundled into a single ciphertext.
-7. Place the [backup metadata](../TeeManagement/KeyManagement.md#backup-data-and-metadata) into `additionalFixedMessage`.
+7. Place the [backup metadata](../../../TeeManagement/Keys.md#backup-data-and-metadata) into `additionalFixedMessage`.
 8. Place the ECIES ciphertext into `additionalVariableMessage`.
 
-See [key restoration procedure](../TeeManagement/KeyManagement.md#key-restoration-procedure) for the full process including TEE-side recovery.
+See [key restoration procedure](../../../TeeManagement/Keys.md#key-restoration-procedure) for the full process including TEE-side recovery.
 
 ## Additional action data
 
@@ -68,5 +68,5 @@ See [key restoration procedure](../TeeManagement/KeyManagement.md#key-restoratio
 
 ## Action result
 
-- `keyExistence` -- ABI encoded `KeyExistence` (see [KEY_GENERATE](F_WALLET--KEY_GENERATE.md) for struct definition)
-- `signature` -- ECDSA signature of the `keyExistence` hash by the TEE machine's identity key (see [KEY_GENERATE](F_WALLET--KEY_GENERATE.md) for `Signature` struct)
+- `keyExistence` -- ABI encoded `KeyExistence` (see [KEY_GENERATE](KeyGenerate.md) for struct definition)
+- `signature` -- ECDSA signature of the `keyExistence` hash by the TEE machine's identity key (see [KEY_GENERATE](KeyGenerate.md) for `Signature` struct)

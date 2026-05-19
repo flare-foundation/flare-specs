@@ -6,7 +6,7 @@ Triggers generation of a key on a TEE machine. Smart contracts ensure that an in
 
 ## Event message
 
-The event message is formatted as the [`KeyGenerate`](../Types/Abi/Key.md#keygenerate) struct, which references [`KeyConfigConstants`](../Types/Abi/Key.md#keyconfigconstants) and [`PublicKey`](../Types/Abi/Common.md#publickey).
+The event message is formatted as the [`KeyGenerate`](../../../Types/Abi/Key.md#keygenerate) struct, which references [`KeyConfigConstants`](../../../Types/Abi/Key.md#keyconfigconstants) and [`PublicKey`](../../../Types/Abi/Common.md#publickey).
 
 ## Fixed message
 
@@ -22,9 +22,9 @@ The event message is formatted as the [`KeyGenerate`](../Types/Abi/Key.md#keygen
 
 ## Action result
 
-- `keyExistence` — ABI encoded [`KeyExistence`](../Types/Abi/Key.md#keyexistence).
+- `keyExistence` — ABI encoded [`KeyExistence`](../../../Types/Abi/Key.md#keyexistence).
 
-- `signature` — ECDSA [`Signature`](../Types/Abi/Common.md#signature) of the `keyExistence` hash by the TEE machine's identity key.
+- `signature` — ECDSA [`Signature`](../../../Types/Abi/Common.md#signature) of the `keyExistence` hash by the TEE machine's identity key.
 
 ## Notes
 

@@ -12,12 +12,12 @@ The `sourceId` should be `XRP` or `testXRP`.
 
 ## Event message
 
-The event message is formatted as the [`PaymentInstructionMessage`](../Types/Abi/Payment.md#paymentinstructionmessage) struct, which references [`TeeIdKeyIdPair`](../Types/Abi/Common.md#teeidkeyidpair).
+The event message is formatted as the [`PaymentInstructionMessage`](../../../Types/Abi/Payment.md#paymentinstructionmessage) struct, which references [`TeeIdKeyIdPair`](../../../Types/Abi/Common.md#teeidkeyidpair).
 
 ### Fee Schedule
 
 The `feeSchedule` field encodes a list of fee entries for progressive fee escalation.
-For the binary encoding format, fee calculation formula, and nullification behavior, see [Fee Scheduling](../Extensions/PMW/Transactions.md#fee-scheduling).
+For the binary encoding format, fee calculation formula, and nullification behavior, see [Fee Scheduling](../Transactions.md#fee-scheduling).
 
 The `feeSchedule` must not be empty; an empty fee schedule causes an error.
 

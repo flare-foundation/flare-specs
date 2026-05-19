@@ -2,11 +2,11 @@
 
 ## Description
 
-Re-signs a previously issued XRP payment transaction for resubmission, typically after the original transaction failed to confirm on the XRP Ledger. The message and the process are the same as with the [PAY](F_XRP--PAY.md) command.
+Re-signs a previously issued XRP payment transaction for resubmission, typically after the original transaction failed to confirm on the XRP Ledger. The message and the process are the same as with the [PAY](Pay.md) command.
 
 ## Event message
 
-Same as [PAY](F_XRP--PAY.md).
+Same as [PAY](Pay.md).
 
 ```solidity
 struct PaymentInstructionMessage {
@@ -40,4 +40,4 @@ struct PaymentInstructionMessage {
 
 ## Action result
 
-Same as [PAY](F_XRP--PAY.md) — JSON of the XRP Ledger transaction with filled `Signers` field.
+Same as [PAY](Pay.md) — JSON of the XRP Ledger transaction with filled `Signers` field.

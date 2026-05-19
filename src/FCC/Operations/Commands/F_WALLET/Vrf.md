@@ -8,7 +8,7 @@ The final random value is derived as `keccak256(gamma_x || gamma_y)`, where `gam
 
 ## Event message
 
-The event message is formatted as the [`VrfInstructionMessage`](../Types/Abi/Key.md#vrfinstructionmessage) struct.
+The event message is formatted as the [`VrfInstructionMessage`](../../../Types/Abi/Key.md#vrfinstructionmessage) struct.
 
 ## Fixed message
 

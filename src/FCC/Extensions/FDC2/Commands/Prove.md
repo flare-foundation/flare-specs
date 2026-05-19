@@ -6,7 +6,7 @@ Processes an FDC2 attestation request end-to-end: data providers independently v
 
 ## Event message
 
-The event message is formatted as the [`Fdc2AttestationRequest`](../Types/Abi/Fdc2.md#fdc2attestationrequest) struct, containing a [`Fdc2RequestHeader`](../Types/Abi/Fdc2.md#fdc2requestheader).
+The event message is formatted as the [`Fdc2AttestationRequest`](../../../Types/Abi/Fdc2.md#fdc2attestationrequest) struct, containing a [`Fdc2RequestHeader`](../../../Types/Abi/Fdc2.md#fdc2requestheader).
 
 Additionally, the instruction event includes:
 
@@ -24,11 +24,11 @@ Additionally, the instruction event includes:
 
 ## Augmentation procedure
 
-Before signing the TEE instruction, the [relay client](../Operations/RelayClient.md) populates `additionalFixedMessage` and `additionalVariableMessage` as follows:
+Before signing the instruction, the [relay client](../../../Components/RelayClient.md) populates `additionalFixedMessage` and `additionalVariableMessage` as follows:
 
-1. Send the attestation request to an [FDC2 verifier server](../Extensions/Fdc2VerifierServer.md) and obtain the response body.
+1. Send the attestation request to an [FDC2 verifier server](../Verifier.md) and obtain the response body.
 2. Place the response body into `additionalFixedMessage`.
-3. Compute the [attestation response hash](../Extensions/FDC2.md#signature-computation) and sign it with the relay client's private key.
+3. Compute the [attestation response hash](../README.md#signature-computation) and sign it with the relay client's private key.
 4. Place the signature into `additionalVariableMessage`.
 
 If the verifier rejects the request, the instruction is dropped; transient errors are retried.
@@ -39,7 +39,7 @@ If the verifier rejects the request, the instruction is dropped; transient error
 
 ## Action result
 
-The action result is formatted as the [`ProveResponse`](../Types/Wire/Fdc2.md#proveresponse) struct, which contains a [`Fdc2ResponseHeader`](../Types/Abi/Fdc2.md#fdc2responseheader).
+The action result is formatted as the [`ProveResponse`](../../../Types/Wire/Fdc2.md#proveresponse) struct, which contains a [`Fdc2ResponseHeader`](../../../Types/Abi/Fdc2.md#fdc2responseheader).
 
 ## Notes
 

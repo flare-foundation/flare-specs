@@ -10,7 +10,7 @@ Note that on the TEE machine the nonce related to `(walletId, keyId)` is kept an
 
 ## Event message
 
-The event message is formatted as the [`KeyDelete`](../Types/Abi/Key.md#keydelete) struct.
+The event message is formatted as the [`KeyDelete`](../../../Types/Abi/Key.md#keydelete) struct.
 
 ## Fixed message
 
@@ -26,7 +26,7 @@ The event message is formatted as the [`KeyDelete`](../Types/Abi/Key.md#keydelet
 
 ## Action result
 
-Marshalled [`KeyIDPair`](../Types/Wire/Key.md#keyidpair).
+Marshalled [`KeyIDPair`](../../../Types/Wire/Key.md#keyidpair).
 
 The result contains the `walletId` and `keyId` of the deleted key.
 

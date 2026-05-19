@@ -2,7 +2,7 @@
 
 ## Description
 
-Returns the latest backup package for a specific key. This is a direct instruction triggered by the proxy and does not need to provide any signatures. It is triggered as soon as [KEY_INFO](F_GET--KEY_INFO.md) results are available, for every key obtained by KEY_INFO.
+Returns the latest backup package for a specific key. This is a direct action triggered by the proxy and does not need to provide any signatures. It is triggered as soon as [KEY_INFO](KeyInfo.md) results are available, for every key obtained by KEY_INFO.
 
 ## Action message
 
@@ -36,7 +36,7 @@ type TEEBackupResponse struct {
 
 The TEE signature over the backup hash is embedded inside the `WalletBackup` bytes, not as a top-level field.
 
-See [KEY_DATA_PROVIDER_RESTORE](F_WALLET--KEY_DATA_PROVIDER_RESTORE.md) for the `BackupId` struct definition.
+See [KEY_DATA_PROVIDER_RESTORE](../F_WALLET/KeyDataProviderRestore.md) for the `BackupId` struct definition.
 
 ## Notes
 

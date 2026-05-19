@@ -2,7 +2,7 @@
 
 ## Description
 
-A direct instruction used to update the policy on the TEE machine. This instruction is triggered by the TEE proxy, which obtains signed policies and signatures from the blockchain using the C-chain indexer.
+A direct action used to update the policy on the TEE machine. It is triggered by the TEE proxy, which obtains signed policies and signatures from the blockchain using the C-chain indexer.
 
 ## Action message
 
