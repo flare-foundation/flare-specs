@@ -3,7 +3,7 @@ In order to ensure consistent availability of the keys stored inside TEE machine
 Firstly, TEEs provide *key existence* proofs to verify the existence of private keys.
 Secondly, in case of any unexpected issues with the TEE machines, a key backup process is in place to restore lost keys.
 This page describes these processes.
-Related content on the data structures surrounding keys can be found [here](../Operations/ProjectsAndConfiguration.md).
+Related content on the data structures surrounding keys can be found in [Wallets](Wallets.md).
 
 ## Wallet Private Key Data Structure
 Each private key on a TEE machine is described by the following data structure:
@@ -59,7 +59,7 @@ To this end, fresh proofs are periodically requested by the TEE proxy to ensure 
 ### Key Existence Proof Data Structure
 The format of the proof is a signed [`KeyExistence`](../Types/Abi/Key.md#keyexistence) struct signed by the TEE's public identity.
 The `nonce` field is a fresh nonce, `restored` is set to true if the key was restored onto the TEE machine, and `configConstants` describes the configuration of the private key.
-The remaining fields are defined by the [project](../Operations/ProjectsAndConfiguration.md) on which the key is active.
+The remaining fields are defined by the [project](Wallets.md#projects) on which the key is active.
 
 ## VRF Keys
 In addition to standard ECDSA signing keys, a TEE machine can hold *VRF keys*, used for verifiable random number generation.
@@ -161,7 +161,7 @@ To backup a key $K$, the TEE machine performs the following  procedure:
 7. The backup package is distributed to the TEE proxy, from which it can be retrieved by the recipients.
 
 ### Key Restoration Procedure
-The key restoration process is triggered when any Flare user calls the `backupRestore` function on the `TeeWalletBackupManager`, whose parameters are:
+The key restoration process is triggered when an authorized address calls `backupRestore` on the [`FlareTeeManager`](FlareTeeManager.md) contract, with parameters:
 
 - `backupID`: The ID of backup of the key to be restored.
 - `backupURL`: The URL on which the backup package is hosted. If no such URL exists, the restoring user fetches the backup package from the TEE proxy and uploads it to the URL.
@@ -174,7 +174,7 @@ The restore function then works as follows:
 2. They each decrypt their key share found in their backup package $\mathrm{Backup}_i$ to recover their key share(s). For example, the $j$th key admin recovers the share ${S_\mathrm{ka}}^j$.
 3. Next, the key share is encrypted under the public key corresponding to TEE ID of the TEE machine on which the key is being restored, e.g. computing $\mathrm{Enc}_{\mathrm{TEE}_\mathrm{id}}({S_\mathrm{ka}}^j)$.
 4. Once their encryption is prepared, they send an [instruction](../Operations/Instructions.md) to the relevant TEE proxy containing the backup metadata as the `additionalFixedMessage` and the encrypted share as the `additionalVariableMessage`.
-   Data providers perform this step through their [relay client](../Operations/RelayClient.md), following the [`KEY_DATA_PROVIDER_RESTORE` augmentation procedure](../Commands/F_WALLET--KEY_DATA_PROVIDER_RESTORE.md#augmentation-procedure).
+   Data providers perform this step through their [relay client](../Components/RelayClient.md), following the [`KEY_DATA_PROVIDER_RESTORE` augmentation procedure](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md#augmentation-procedure).
    Key admins who do not run a relay client use an equivalent off-chain tool to construct and submit the instruction.
 5. The TEE proxy sets the `submissionTag` field in the action structure to `end`, keeping voting open for the maximal possible duration. At the end of voting, assuming it received enough shares from both data providers and key admins such that key recovery is possible, it prepares the recovery action and submits the encrypted shares to the TEE machine.
 6. The TEE machine completes the action, decrypting all key shares, recovering shares of the initial split $S_\mathrm{dp}$ and $S_\mathrm{ka}$, from which it recovers $K$.
@@ -186,31 +186,4 @@ If too many key shares were invalid, key recovery will fail, which is also inclu
 
 > **Note:** The [wallet key variables](#wallet-key-variables) (`nonce`, `pauseNonce`, `status`, `expiry`) are not included in the backup and are not restored. These values are managed independently on each TEE machine.
 
-## Key and Backup Manager Contracts
-Keys and backups are managed by users through two contracts: the `TeeWalletKeyManager` contract and the `TeeWalletBackupManager` contract.
-This section lists the available contract calls.
-
-### TeeWalletKeyManager Contract Calls
-Unless otherwise specified, calls to the wallet key manager contract are only valid if made by the owner of the wallet. The calls include:
-
-- `addKey(teeId, walletId, claimBackAddress)`:  Creates a [key definition](../Operations/ProjectsAndConfiguration.md) structure with the next sequential key ID for the wallet ID and issues the [`KEY_GENERATE`](../Commands/F_WALLET--KEY_GENERATE.md) instruction.
-- `confirmKey(proof)`: Confirms the existence of a key on a given TEE based on an input `TeeKeyExistence` proof and signature.
--  `deleteKey(teeId, walletId, keyId)`: Deletes the specified key from the specified TEE machine by triggering the [`KEY_DELETE`](../Commands/F_WALLET--KEY_DELETE.md) instruction.
-- `setMultisigThreshold(walletId, multisigThreshold)`: Sets the multisig threshold for the wallet. Wallet must be in `INITIALIZED` status.
-- `cleanUpTeeIds(walletId, keyId)`: Removes old TEE IDs (those not in `PRODUCTION` status) from the key definition. Can be called by owner or backup manager.
-- `receivingTeesAndKeys(walletId)`: Returns a list of TEE machine IDs and URLs to which wallet instructions should be sent and also pairs of TEE IDs and key IDs that will be used in signing. If there are less than the usual $n$ signatures available from TEEs (due to a machine being down), a [`WalletKeysNotAvailable`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeysnotavailable) event is emitted. Similarly, if the required $k$ value for the multisig of the wallet cannot be achieved, the transaction reverts. 
-
-Triggered instructions are sent by the wallet manager contract to the instruction contract.
-They are parameterized by:
-
--   `KEY_GENERATE(teeId, walletId, keyId, opType, opTypeConstants, adminsPublicKeys, adminsThreshold, cosigners, cosignersThreshold)`   
--   `KEY_DELETE(teeId, walletId, keyId)`.
-
-### TeeWalletBackupManager Contract Calls
-Since backups are triggered automatically, the `TeeWalletBackupManager` contract only has a single call:
-
-- `backupRestore(teeId, backupId, backupUrl)`: Triggers the KEY_DATA_PROVIDER_RESTORE instruction, restoring the key backed up by backup ID on the TEE with the specified machine ID.
-
-With the corresponding instruction sent as:
-
-- `KEY_DATA_PROVIDER_RESTORE(teeId, backupId, backupUrl, nonce)`.
+The wallet-level entry points that drive these procedures (`addKey`, `confirmKey`, `deleteKey`, `cleanUpTeeIds`, `backupRestore`) live on the [`FlareTeeManager`](FlareTeeManager.md) contract; see [Wallets](Wallets.md#wallet-keys) for how they fit into the wallet lifecycle.
