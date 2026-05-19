@@ -21,10 +21,13 @@ When introducing a function call in Solidity on a new line, a colon is required 
 - The FTSO feeds are called anchor and block-latency feeds (note these are typically uncapitalized).
 - Names of phases within protocols are also typically uncapitalized as they are intended to be descriptive.
 - abi-encoded is all lower case and contains a dash.
+- Data provider is two words without a hyphen, even as a compound modifier (e.g. "data provider weight", not "data-provider weight").
 - uint should be formatted in $\mathrm{uint}$.
 - Oxford commas should be used (e.g. "a, b, and c" not "a, b and c").
 - Protocols should be introduced with a "the" e.g. "participation in the FSP" rather than "participation in FSP".
 - Docker is always capitalized.
+- keccak256 is lowercase, no hyphen, no backticks in prose; written $\mathrm{keccak256}$ in equations.
+- secp256k1 is lowercase, no backticks.
 
 ## Indexing
 
@@ -46,6 +49,14 @@ Try to stick to the following convention where possible:
 - Bullet point lists of things that are not sentences should not be ended with a full stop, except the final bullet point.
 - Bullet points where each point has a name should be formatted so that the name is in bold, followed by a colon, and the list should be numbered, e.g. "1. **Name**:" with the next word capitalized.
 - An exception is made for lists where the names are formatted in backticks or math mode (e.g. they are addresses, functions, variables etc.), in which case the required formatting does not need to be augmented with bold script so that it should be e.g. "1. `Address`:" or "1. $object$:".
+
+## Line Breaks
+
+Write one sentence per line.
+Inside a bullet point, continue subsequent sentences on indented lines under the same bullet, e.g.:
+
+- First sentence of the bullet.
+  Second sentence of the same bullet.
 
 ## Emphasis
 

@@ -53,9 +53,9 @@
   <path d="M425 340 H160 V245" class="connector" marker-end="url(#crimsonArrow)" />
   <text x="290" y="333" text-anchor="middle" class="label">Contract calls</text>
 
-  <!-- Users → TEE machines (Direct instructions): right then up -->
+  <!-- Users → TEE machines (Direct action requests): right then up -->
   <path d="M605 330 H870 V245" class="connector" marker-end="url(#crimsonArrow)" />
-  <text x="730" y="323" text-anchor="middle" class="label">Direct instructions</text>
+  <text x="730" y="323" text-anchor="middle" class="label">Direct action requests</text>
 
   <!-- TEE machines → Users (Action results): down then left -->
   <path d="M890 245 V350 H600" class="connector" marker-end="url(#crimsonArrow)" />

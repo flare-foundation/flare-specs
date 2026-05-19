@@ -45,34 +45,7 @@ This repository contains the technical specifications for Flare's core protocols
 - [Rewarding](src/FTSO/Rewarding.md)
 - [Encoding Reference](src/FTSO/Encoding.md)
 
-### Flare Confidential Compute (FCC)
-
-- [Introduction](src/FCC/Introduction.md)
-- [Architecture](src/FCC/Architecture.md)
-- Operations
-  - [Instructions](src/FCC/Operations/Instructions.md)
-  - [Actions](src/FCC/Operations/Actions.md)
-  - [Voting](src/FCC/Operations/Voting.md)
-  - [Relay Client](src/FCC/Operations/RelayClient.md)
-  - [Projects and Configuration](src/FCC/Operations/ProjectsAndConfiguration.md)
-- Extensions
-  - [Overview](src/FCC/Extensions/Overview.md)
-  - [System Extension](src/FCC/Extensions/SystemExtension.md)
-  - [FDC2](src/FCC/Extensions/FDC2.md)
-  - [FDC2 Verifier Server](src/FCC/Extensions/Fdc2VerifierServer.md)
-  - [PMW](src/FCC/Extensions/PMW/PMW.md)
-  - [PMW Transactions](src/FCC/Extensions/PMW/Transactions.md)
-- TEE Management
-  - [Registration](src/FCC/TeeManagement/Registration.md)
-  - [State and Attestation](src/FCC/TeeManagement/StateAndAttestation.md)
-  - [Key Management](src/FCC/TeeManagement/KeyManagement.md)
-  - [TEE Proxy](src/FCC/TeeManagement/TeeProxy.md)
-- [Events](src/FCC/Types/Abi/Events/index.md)
-- References
-  - [Commands](src/FCC/Commands/index.md)
-  - [Workflows](src/FCC/Workflows/index.md)
-  - [Attestation Types](src/FCC/AttestationTypes/index.md)
-  - [Type Reference](src/FCC/Types/index.md)
+### [Flare Confidential Compute (FCC)](src/FCC/README.md)
 
 ## Terminology
 
