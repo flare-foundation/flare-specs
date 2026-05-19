@@ -51,7 +51,7 @@ $$\mathrm{instructionId} = \mathrm{keccak256}(\mathrm{abi.encode}(\mathrm{opType
 
 If the wallet allows batch transactions, multiple `TeeInstructionsSent` events with the same nonce will be emitted. Decode the `message` field for each event and filter by the required `subNonce`.
 
-The `message` field in `TeeInstructionsSent` contains a [`PaymentInstructionMessage`](../Types/Abi/Payment.md#paymentinstructionmessage).
+The `message` field in `TeeInstructionsSent` contains a [`PaymentInstructionMessage`](../../../Types/Abi/Payment.md#paymentinstructionmessage).
 
 ### 2. Find Transaction on External Chain
 

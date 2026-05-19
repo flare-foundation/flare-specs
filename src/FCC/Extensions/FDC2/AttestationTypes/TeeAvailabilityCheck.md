@@ -12,7 +12,7 @@ Attestation request body:
 - `challenge` — Random challenge for the attestation request.
 - `instructionId` — Instruction ID for the attestation request.
 
-The request body is formatted as the [`TeeAvailabilityCheck.RequestBody`](../Types/Abi/AttestationType.md#requestbody) struct.
+The request body is formatted as the [`TeeAvailabilityCheck.RequestBody`](../../../Types/Abi/AttestationType.md#requestbody) struct.
 
 ## Response
 
@@ -29,7 +29,7 @@ Attestation response body:
 - `lastSigningPolicyId` — From the TEE proxy attestation result.
 - `state` — From the TEE proxy attestation result.
 
-The response body is formatted as the [`TeeAvailabilityCheck.ResponseBody`](../Types/Abi/AttestationType.md#responsebody) struct, using the [`AvailabilityCheckStatus`](../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../Types/Abi/TeeMachine.md#teestate).
+The response body is formatted as the [`TeeAvailabilityCheck.ResponseBody`](../../../Types/Abi/AttestationType.md#responsebody) struct, using the [`AvailabilityCheckStatus`](../../../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../../../Types/Abi/TeeMachine.md#teestate).
 
 ## Chain Support
 

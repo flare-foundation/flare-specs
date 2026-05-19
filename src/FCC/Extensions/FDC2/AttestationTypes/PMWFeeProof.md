@@ -6,7 +6,7 @@ The `PMWFeeProof` attestation type provides accurate fee accounting for Protocol
 
 Attestation request body:
 
-The request body is formatted as the [`PMWFeeProof.RequestBody`](../Types/Abi/AttestationType.md#requestbody-2) struct.
+The request body is formatted as the [`PMWFeeProof.RequestBody`](../../../Types/Abi/AttestationType.md#requestbody-2) struct.
 
 - `opType` — the wallet operation type, used to compute deterministic instruction IDs for event lookup.
 - `senderAddress` — the sender address on the external chain (e.g., an XRP address).
@@ -18,7 +18,7 @@ The request body is formatted as the [`PMWFeeProof.RequestBody`](../Types/Abi/At
 
 Attestation response body:
 
-The response body is formatted as the [`PMWFeeProof.ResponseBody`](../Types/Abi/AttestationType.md#responsebody-2) struct.
+The response body is formatted as the [`PMWFeeProof.ResponseBody`](../../../Types/Abi/AttestationType.md#responsebody-2) struct.
 
 - `actualFee` — the total fees actually spent on the external chain for all transactions in the nonce range, summed in minimal units (drops for XRP).
 - `estimatedFee` — the total estimated fees based on the `maxFee` values from the on-chain pay and reissue instruction events, summed in minimal units.
