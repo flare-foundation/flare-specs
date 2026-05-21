@@ -33,8 +33,8 @@ The proxy maintains one vote-hash chain per [vote box](Voting.md#vote-boxes); ea
 The TEE machine builds [`RewardingData`](../Types/Wire/Action.md#rewardingdata) on every `end` instruction action, JSON-encodes it, and places it in [`ActionResult.data`](Actions.md#action-results).
 Fields:
 
-- `voteSequence`: a [`VoteSequence`](../Types/Wire/Action.md#votesequence) holding the per-vote signatures, variable-message hashes, timestamps, and the final `voteHash`.
-  The TEE machine recomputes the chain locally from the action's signatures, variable messages, signers, and timestamps.
+- `voteSequence`: a [`VoteSequence`](../Types/Wire/Action.md#votesequence) holding the final `voteHash`, the carrying instruction's `instructionId`, `instructionHash`, `rewardEpochId`, `teeId`, and the per-vote `signatures`, `additionalVariableMessageHashes`, and `timestamps`.
+  The TEE machine recomputes the chain locally from the action's signatures, variable messages, and timestamps.
 - `signature`: the TEE machine's signature over `voteHash`, produced with its $\mathrm{TEE}_{\mathrm{ID}}$ key.
 - `additionalData`: a copy of `ActionResult.additionalResultStatus`.
 - `version`: the TEE machine's encoding version.

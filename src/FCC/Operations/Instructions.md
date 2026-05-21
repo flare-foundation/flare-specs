@@ -12,19 +12,18 @@ The signature covers `teeId`, so a compromised proxy cannot replay an instructio
 ## Signers
 
 A _signer_ is a [data provider](../../Terminology/Roles.md#data-provider) or [cosigner](#cosigners) that signs an instruction over [`hashForSigning`](#hashes) and submits it to a [TEE proxy](../Components/TeeProxy.md).
-Data providers come from the [signing policy](../../FSP/SigningPolicy.md) for the instruction's reward epoch; cosigners are attached per-instruction.
-The two sets may overlap: a data provider listed in `cosigners` has its signature counted toward both [voting](Voting.md) tallies.
+
+- Data providers come from the [signing policy](../../FSP/SigningPolicy.md) for the instruction's reward epoch.
+- Cosigners are attached per-instruction.
+- A data provider also listed in `cosigners` counts toward both [voting](Voting.md) tallies.
 
 ### Cosigners
 
 A _cosigner_ is any Flare [address](../../Terminology/Concepts.md#addresses-accounts-and-keys) attached to an instruction to enforce a multisig requirement on top of data provider voting.
-
-Cosigners run their [relay client](../Components/RelayClient.md) in cosigner mode.
-Unlike data providers, they need not participate in other Flare protocols.
+Cosigners run their [relay client](../Components/RelayClient.md) in cosigner mode and, unlike data providers, need not participate in other Flare protocols.
 
 The event's `cosigners` field lists the eligible addresses; `cosignersThreshold` is the minimum number of cosigner signatures required to pass.
-A weighted majority of malicious data providers could strip these fields and bypass proxy-side enforcement.
-Extensions that rely on cosigners must re-enforce them at the TEE-machine layer (see [Cosigner Enforcement](../Components/TeeMachine.md#cosigner-enforcement)).
+A weighted majority of malicious data providers could strip these fields and bypass proxy-side enforcement, so extensions that rely on cosigners must re-enforce them at the TEE-machine layer (see [Cosigner Enforcement](../Components/TeeMachine.md#cosigner-enforcement)).
 
 ## Sending Instructions
 

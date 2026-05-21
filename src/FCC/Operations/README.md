@@ -1,10 +1,9 @@
 # Operations
 
-An _operation_ is a piece of work a [TEE machine](../Components/TeeMachine.md) performs.
-Each operation is identified by an `(opType, opCommand)` pair (e.g. `F_WALLET KEY_GENERATE`); the type groups related commands, the command names the specific action.
+An _operation_ is a piece of work a [TEE machine](../Components/TeeMachine.md) performs, identified by an `(opType, opCommand)` pair (e.g. `F_WALLET KEY_GENERATE`).
 System operations carry the `F_` op-type prefix and are handled by every TEE machine regardless of [FCE](../Extensions/README.md); custom operations are defined by individual FCEs.
 
-This directory documents both the lifecycle of an operation and the catalog of system operations:
+This directory documents the operation lifecycle and the system catalog:
 
 | Page | Contents |
 |---|---|

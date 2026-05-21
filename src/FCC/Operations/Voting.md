@@ -8,7 +8,9 @@ For each instruction submitted via [`POST /instruction`](../Components/TeeProxy.
 
 1. Recovers the [signer](Instructions.md#signers)'s address from the signature over [`hashForSigning`](Instructions.md#hashes).
 2. Routes the submission to the [vote box](#vote-boxes) keyed by the instruction.
-3. Counts the vote toward the [data provider](../../Terminology/Roles.md#data-provider) tally if the address is in the [signing policy](../../FSP/SigningPolicy.md) for the instruction's reward epoch, the [cosigner](Instructions.md#cosigners) tally if it appears in the instruction's `cosigners` list, or both.
+3. Counts the vote toward whichever tallies apply:
+   - the [data provider](../../Terminology/Roles.md#data-provider) tally, if the address is in the [signing policy](../../FSP/SigningPolicy.md) for the instruction's reward epoch;
+   - the [cosigner](Instructions.md#cosigners) tally, if the address appears in the instruction's `cosigners` list.
 
 Once the box reaches its [pass conditions](#pass-conditions), the proxy produces [actions](Actions.md) for the destination [TEE machine](../Components/TeeMachine.md); see [Outcomes](#outcomes).
 

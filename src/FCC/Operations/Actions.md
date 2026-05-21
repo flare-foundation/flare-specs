@@ -11,7 +11,7 @@ The TEE machine [executes the action](../Components/TeeMachine.md#action-process
 ## Instruction Actions
 
 An instruction action is built by the proxy when a [vote box](Voting.md#vote-boxes) [passes](Voting.md#pass-conditions) or closes.
-It carries the instruction's authored content (the same [`TeeInstruction`](../Types/Abi/Instruction.md#teeinstruction) every signer signed) once, plus three parallel per-signer lists collected during voting — each signer's [signature](../../Utilities/Signing.md), the optional [`additionalVariableMessage`](Instructions.md#augmentation) they attached, and the timestamp at which their submission arrived at the proxy.
+It carries one [`TeeInstruction`](../Types/Abi/Instruction.md#teeinstruction) (identical for every [signer](Instructions.md#signers)) plus three parallel per-signer lists collected during voting.
 
 The proxy populates each [`Action`](../Types/Wire/Action.md#action) field as follows:
 
@@ -19,8 +19,8 @@ The proxy populates each [`Action`](../Types/Wire/Action.md#action) field as fol
 2. `data.type`: `"instruction"`.
 3. `data.submissionTag`: `"threshold"` or `"end"` per [voting outcomes](Voting.md#outcomes).
 4. `data.message`: JSON-encoded `TeeInstruction`.
-5. `signatures`: Per-signer signatures, ordered by arrival at the proxy.
-6. `additionalVariableMessages`: Each signer's `additionalVariableMessage`, ordered to match `signatures`.
+5. `signatures`: Per-signer [signatures](../../Utilities/Signing.md), ordered by arrival at the proxy.
+6. `additionalVariableMessages`: Each signer's [`additionalVariableMessage`](Instructions.md#augmentation), ordered to match `signatures`.
 7. `timestamps`: Per-signer arrival timestamps, ordered to match `signatures`.
 8. `additionalActionData`: Empty.
 
