@@ -64,7 +64,7 @@ Commit hashes captured on 2026-05-21 (refresh by re-fetching each remote and re-
 1. `Extensions/` — `README.md`, `Concepts.md`, `FDC2/README.md`, `FDC2/Verifier.md`, `SystemExtension.md`, then `PMW/`.
 2. `TeeManagement/` — `Registration.md`, `State.md`, `Attestation.md`, `Keys.md`, `FlareTeeManager.md`.
 3. `Components/` — `TeeProxy.md` (`TeeMachine.md` and `RelayClient.md` are already cleaned).
-4. `Operations/Commands/F_*` subdirs, `Workflows/`, `Extensions/FDC2/AttestationTypes/`, `Extensions/PMW/Commands/`, `Extensions/FDC2/Commands/` — leaf docs; pass last so they can defer to the now-canonical pages.
+4. `Workflows/`, `Extensions/FDC2/AttestationTypes/`, `Extensions/PMW/Commands/`, `Extensions/FDC2/Commands/` — leaf docs; pass last so they can defer to the now-canonical pages.
 
 ## Deferred FCC/ Restructure
 
@@ -246,12 +246,6 @@ When each file is cleaned, evaluate whether a Mermaid diagram (or, where renderi
 
 Single-file fixes to apply when the listed FCC/ file is cleaned, or as one-off updates to already-cleaned files.
 
-#### Add a `Operations/Commands/F_GET/KeyProof.md` doc
-
-`KEY_PROOF` is a proxy-initiated direct action (`op.Get`, `op.KeyProof`) registered in `tee-node/internal/router/routers.go:28` and fetched in batches by the proxy (`tee-proxy/internal/service/wallets/wallets.go:337-359`) for keys whose stored `KeyExistence` proof is missing or stale.
-Every other proxy-initiated direct action listed in `Operations/Actions.md` has its own command doc and an entry in `Operations/Commands/README.md`; `KEY_PROOF` has neither.
-Create `Operations/Commands/F_GET/KeyProof.md` (mirroring the structure of `Operations/Commands/F_GET/KeyInfo.md`), add it to `Operations/Commands/README.md`, and link it from `Operations/Actions.md`'s proxy-initiated direct-action list.
-
 #### Document rate-limiting cap in `TeeProxy.md`
 
 `TeeProxy.md:101-114` mentions the `429 Too Many Requests` response for `POST /instruction` but describes it as an API response, not as a security cap.
@@ -261,11 +255,6 @@ When `TeeProxy.md` is cleaned, surface the per-data-provider open-vote-box cap (
 
 `Extensions/FDC2/Commands/Prove.md` does not currently mention that the request may override the data-provider voting threshold. The proxy reads `thresholdBIPS` from the FDC2 request header (`tee-proxy/pkg/instruction/meta/meta.go:179-194`); a value of $0$ falls back to the signing policy default.
 `Operations/Voting.md` refers to this override without naming the field; the command doc should document it (location, units, fallback behaviour).
-
-#### Document `KEY_GENERATE` and `KEY_DATA_PROVIDER_RESTORE` duplicate-admin rejection
-
-The tee-node audit fix (`pkg/wallets/wallets.go` `CheckKeyGenerate`, `internal/processors/instructions/walletutils/walletutil.go` `keyRestoreDataCheck`) rejects requests with duplicate admin public keys (`KEY_GENERATE`) or duplicate admin addresses (`KEY_DATA_PROVIDER_RESTORE`).
-Surface this as an input constraint when `Operations/Commands/F_WALLET/KeyGenerate.md` and `Operations/Commands/F_WALLET/KeyDataProviderRestore.md` are cleaned.
 
 #### Consider specs or references for `C-chain indexer`, `Redis`, and the relay client's external signer
 
