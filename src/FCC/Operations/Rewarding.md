@@ -10,7 +10,7 @@ Each accepted vote is acknowledged in the [`POST /instruction`](../Components/Te
 
 The proxy populates each receipt field as follows:
 
-- `instructionHash`: the carrying instruction's [`instructionHash`](Instructions.md#hashes).
+- `instructionHash`: the instruction's [`instructionHash`](Instructions.md#hashes).
 - `sequence`: this vote's index in the [vote box](Voting.md#vote-boxes) (0, 1, 2, …).
 - `signature`: the voter's signature (as submitted).
 - `additionalVariableMessageHash`: keccak256 of this vote's `additionalVariableMessage`.
@@ -22,7 +22,7 @@ The proxy populates each receipt field as follows:
 The proxy maintains one vote-hash chain per [vote box](Voting.md#vote-boxes); each accepted vote extends it.
 
 - **Initial hash** (set when the box opens): keccak256 of the ABI-encoded [`VoteSequenceInit`](../Types/Abi/Voting.md#votesequenceinit):
-  - `instructionId`, `instructionHash`, `rewardEpochId`: from the carrying instruction.
+  - `instructionId`, `instructionHash`, `rewardEpochId`: from the instruction.
   - `teeId`: the proxy's TEE machine.
 - **Next hash** (computed on each accepted vote): keccak256 of the ABI-encoded [`VoteSequenceNext`](../Types/Abi/Voting.md#votesequencenext):
   - `voteHash`: previous chain value (the initial hash for the first vote).
@@ -33,7 +33,7 @@ The proxy maintains one vote-hash chain per [vote box](Voting.md#vote-boxes); ea
 The TEE machine builds [`RewardingData`](../Types/Wire/Action.md#rewardingdata) on every `end` instruction action, JSON-encodes it, and places it in [`ActionResult.data`](Actions.md#action-results).
 Fields:
 
-- `voteSequence`: a [`VoteSequence`](../Types/Wire/Action.md#votesequence) holding the final `voteHash`, the carrying instruction's `instructionId`, `instructionHash`, `rewardEpochId`, `teeId`, and the per-vote `signatures`, `additionalVariableMessageHashes`, and `timestamps`.
+- `voteSequence`: a [`VoteSequence`](../Types/Wire/Action.md#votesequence) holding the final `voteHash`, the instruction's `instructionId`, `instructionHash`, `rewardEpochId`, `teeId`, and the per-vote `signatures`, `additionalVariableMessageHashes`, and `timestamps`.
   The TEE machine recomputes the chain locally from the action's signatures, variable messages, and timestamps.
 - `signature`: the TEE machine's signature over `voteHash`, produced with its $\mathrm{TEE}_{\mathrm{ID}}$ key.
 - `additionalData`: a copy of `ActionResult.additionalResultStatus`.
@@ -41,9 +41,9 @@ Fields:
 
 ## Reconstructing the Vote Ordering
 
-A verifier with the carrying instruction, all $N$ per-vote receipts, and the final `RewardingData` can replay the chain and confirm the ordering:
+A verifier with the instruction, all $N$ per-vote receipts, and the final `RewardingData` can replay the chain and confirm the ordering:
 
-1. Compute the initial hash $h_0$ from the carrying instruction's `VoteSequenceInit` fields (see [Vote-Hash Chain](#vote-hash-chain)).
+1. Compute the initial hash $h_0$ from the instruction's `VoteSequenceInit` fields (see [Vote-Hash Chain](#vote-hash-chain)).
 2. Order receipts by `sequence` ($0, 1, \ldots, N{-}1$).
    For each $i$, compute $h_{i+1}$ from $h_i$ and `receipt[i]`'s fields via `VoteSequenceNext`, and check it matches `receipt[i].voteHash`.
 3. Check $h_N$ equals `RewardingData.voteSequence.voteHash`.

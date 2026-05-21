@@ -97,7 +97,7 @@ Used to attribute fees as rewards to data providers.
 
 ## VoteSequence
 
-The reward-attribution state for the carrying instruction.
+The reward-attribution state for the instruction.
 `voteHash` is the final hash of the proxy's [vote-hash chain](../../Operations/Rewarding.md#vote-receipts); together with the per-vote [`VoteReceipt`](../Abi/Voting.md#votereceipt)s it reconstructs the full vote ordering.
 
 ```json
@@ -106,9 +106,9 @@ The reward-attribution state for the carrying instruction.
   "type": "object",
   "properties": {
     "voteHash": { "type": "string", "format": "bytes32", "description": "Final vote hash from the proxy's vote-hash chain." },
-    "instructionId": { "type": "string", "format": "bytes32", "description": "Unique ID of the carrying instruction." },
+    "instructionId": { "type": "string", "format": "bytes32", "description": "Unique ID of the instruction." },
     "instructionHash": { "type": "string", "format": "bytes32", "description": "keccak256 of the abi-encoded [`TeeInstruction`](../Abi/Instruction.md#teeinstruction)." },
-    "rewardEpochId": { "type": "integer", "format": "uint32", "description": "Reward epoch of the carrying instruction." },
+    "rewardEpochId": { "type": "integer", "format": "uint32", "description": "Reward epoch of the instruction." },
     "teeId": { "type": "string", "format": "address", "description": "Destination TEE machine identity." },
     "signatures": { "type": "array", "items": { "type": "string", "format": "bytes" }, "description": "Per-signer signatures, ordered as they arrived at the proxy." },
     "additionalVariableMessageHashes": { "type": "array", "items": { "type": "string", "format": "bytes32" }, "description": "keccak256 of each signer's `additionalVariableMessage`, ordered to match `signatures`." },

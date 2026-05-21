@@ -18,7 +18,7 @@ Once the box reaches its [pass conditions](#pass-conditions), the proxy produces
 
 Each voting process runs in a _vote box_:
 
-- Keyed by the carrying instruction's [`instructionId` and `instructionHash`](Instructions.md#hashes).
+- Keyed by the instruction's [`instructionId` and `instructionHash`](Instructions.md#hashes).
 - Opened by the first valid signature from a data provider on a previously unseen pair, then closed after a deployment-configured expiration window.
   Cosigner-only signers cannot open a box; submissions that would do so are rejected and should be retried until a data provider has opened a matching box.
 - Each signer may contribute at most one vote per box.
@@ -32,7 +32,7 @@ $$
 $$
 
 where $V$ is the set of voting data providers, $W_i$ their weights under that signing policy, $t$ the data provider threshold, $C$ the count of cosigner signatures, and $c$ the cosigner threshold.
-The cosigner term is vacuous when the carrying instruction lists no cosigners.
+The cosigner term is vacuous when the instruction lists no cosigners.
 
 $t$ is the [signing policy's threshold](../../FSP/SigningPolicy.md#normalized-weights) for every command (including all user-defined commands) except [`F_FDC2 PROVE`](../Extensions/FDC2/Commands/Prove.md), which may carry a per-instruction override.
 

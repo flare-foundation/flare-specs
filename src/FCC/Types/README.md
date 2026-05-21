@@ -92,7 +92,7 @@ Smart contract events, organized by contract: [Events index](Abi/Events/README.m
 - [ActionResponse](Wire/Action.md#actionresponse) — TEE machine's response posted to the proxy.
 - [ActionResult](Wire/Action.md#actionresult) — Sub-struct of `ActionResponse`.
 - [RewardingData](Wire/Action.md#rewardingdata) — Marshalled into `ActionResult.data` for `end` results.
-- [VoteSequence](Wire/Action.md#votesequence) — Reward-attribution state for the carrying instruction.
+- [VoteSequence](Wire/Action.md#votesequence) — Reward-attribution state for the instruction.
 
 ### TEE Machine
 
