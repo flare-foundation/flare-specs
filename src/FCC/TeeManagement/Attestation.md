@@ -1,19 +1,20 @@
 # Attestation
 
-On registration, and periodically during their operation, TEE platform operators are required to attest to certain aspects of the machine's [state](State.md).
-The ability to securely perform this attestation is a crucial property of a TEE machine.
-The exact response format depends on the TEE platform, as the signed attestation is performed by the operator (e.g. Google for Intel TDX and AMD-SEV).
+A TEE machine attests to elements of its [state](State.md) — identity key, signing policies, FCE state, timestamp — when challenged.
+The attestation chain ends in a signature produced by the TEE platform operator (Google for Intel TDX and AMD SEV), so the response format is platform-specific.
 
 ## Challenge and Response
 
-A TEE machine operator provides an attestation response to a *challenge*, a $32$-byte string provided by a challenger.
-The challenger can be any entity who wants to confirm the state of the TEE machine.
-Upon receiving the challenge, the TEE machine generates a challenge hash specific to the machine.
-To generate the challenge hash, the [`Attestation`](../Types/Abi/TeeMachine.md#attestation) struct is ABI encoded and then hashed.
-The `publicKey` is the key that corresponds to $\mathrm{TEE}_\mathrm{ID}$.
-The initial and last signing policies refer to the first and most recent signing policy available to the TEE respectively.
-The `state` field is encoded as the [`TeeState`](../Types/Abi/TeeMachine.md#teestate) struct.
-The `teeTimestamp` refers to the local timestamp at the TEE machine at time of attestation.
-Thus, the TEE-specific challenge is $\mathrm{hash}(\mathrm{Attestation})$.
+A _challenger_ — any entity that wants to verify a machine's state — provides a $32$-byte challenge.
+The machine builds an [`Attestation`](../Types/Abi/TeeMachine.md#attestation) struct from the challenge and its own state:
 
-Once the TEE specific challenge is created, the platform provider signs the challenge and returns the response.
+- `publicKey`: TEE identity public key.
+- `initialSigningPolicyId`, `lastSigningPolicyId`: first and most recent signing policies known to the machine.
+- `state`: ABI-encoded [`TeeState`](../Types/Abi/TeeMachine.md#teestate) at the moment of attestation.
+- `teeTimestamp`: local machine timestamp at attestation time.
+- `challenge`: the challenger's $32$-byte input.
+
+The machine ABI-encodes the struct, hashes it ($\mathrm{hash}(\mathrm{Attestation})$), and passes the digest to the platform operator's attestation service.
+The platform's signed response binds the digest to the hardware-attested boot state and is returned to the challenger.
+
+For the FDC2 attestation type that wraps this procedure into an on-chain proof, see [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md).

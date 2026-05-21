@@ -1,107 +1,102 @@
-# TEE Machine Registration and Management
-TEE ownership on Flare is decentralized: permitted operators of TEE machines can register their devices on the network to participate in Flare Confidential Compute's protocols. 
-Owners are incentivized to participate in Flare Confidential Compute via a [rewarding mechanism](../../FSP/Rewarding.md).
-This page documents the responsibilities of TEE owners on Flare, including registration, management, and upgrading.
+# Registration and Lifecycle
+
+A TEE machine joins FCC by registering against an [extension](../Extensions/README.md) on the [`FlareTeeManager`](FlareTeeManager.md) contract, then completing an [availability proof](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) before it can serve production traffic.
+This page covers the registration call, the [TEE ID](#tee-id-derivation) derivation, the [status lifecycle](#statuses), and the [management calls](#management-calls) available to TEE operators.
 
 ## Owner Allowlist
-Machine ownership and [wallet project ownership](Wallets.md) are gated by the `TeeOwnerAllowlist` contract.
-Each extension maintains its own allowlist, defining permitted machine owners and permitted wallet project owners on the extension.
-The allowlist is checked as part of several functions:
 
-- `TeeMachineRegistry.register()`: The registering owner must be allowlisted as a machine owner for the extension.
-- `TeeMachineRegistry.proposeNewOwner()`: The proposed new owner must be allowlisted (or `address(0)` to cancel).
-- `TeeMachineRegistry.confirmOwnership()`: The confirming owner must still be allowlisted at confirmation time.
-- `TeeWalletProjectManager.createProject()`: The caller must be allowlisted as a wallet project owner for the extension.
+Per-extension allowlists gate two roles:
 
-The extension owner adds and removes entries from the allowlist via `addAllowedTeeMachineOwners`, `removeAllowedTeeMachineOwners`, `addAllowedTeeWalletProjectOwners`, and `removeAllowedTeeWalletProjectOwners`.
-An extension can also enable open access (allow any address) by calling `allowAllTeeMachineOwners` or `allowAllTeeWalletProjectOwners`.
+- _machine owner_: the Flare address that registers and owns a TEE machine on the extension.
+- _wallet [project owner](../../Terminology/Roles.md#project-owner)_: the Flare address that creates wallet projects under the extension.
+
+The allowlist is checked by:
+
+- `register`: caller must be an allowed machine owner for the target extension.
+- `proposeNewOwner` / `confirmOwnership` on the machine: the proposed (and confirming) owner must still be allowlisted (or `address(0)` to cancel).
+- `createProject` on a wallet project: caller must be an allowed wallet project owner.
+
+The extension owner manages each list via `addAllowedTeeMachineOwners` / `removeAllowedTeeMachineOwners` and `addAllowedTeeWalletProjectOwners` / `removeAllowedTeeWalletProjectOwners`, or opens it up entirely with `allowAllTeeMachineOwners` / `allowAllTeeWalletProjectOwners`.
 
 ## Registration
-Registration is the process by which a TEE owner deploys their TEE machine for operation within Flare Confidential Compute.
-When a TEE is registered, it is registered to a specific TEE [extension](../Extensions/README.md), and not the network as a whole.
-To register a TEE, its owner submits a transaction:
+
+The TEE operator submits:
 
 ```solidity
-register(machineData, signature, teeProxyId, teeUrl)
+register(teeMachineData, signature, teeProxyId, url, claimBackAddress)
 ```
-to the `teeMachineRegistry` smart contract.
-Here, `signature` is the signature over the `machineData` performed by the TEE's identity key pair and the `teeProxyId` the identity of the TEE's [proxy](../Components/TeeProxy.md).
-The `machineData` field is in the following format:
 
-1. **extensionId**: The ID of the extension to which the TEE is registered.
-2. **initialOwner**: The address of the initial owner of the TEE machine.
-3. **codeHash**: The hash of the code deployed on the machine, identifying its code version.
-4. **platform**: The attestation platform for the TEE (e.g. `GOOGLE_INTEL`, `GOOGLE_AMD`), which determines how an attestation of its state is encoded.
-5. **publicKey**: The public key of the TEE, corresponding to its identity.
+on `FlareTeeManager`.
+The call is payable; `msg.value` covers the TEE attestation request enqueued automatically as part of registration, and `claimBackAddress` may reclaim the fee if attestation fails.
 
-The registration transaction places the machine in an `INITIALIZED` status.
-To complete registration and enter production, an [FDC2](../Extensions/FDC2/README.md) `teeAvailabilityCheck` attestation proof must be obtained and submitted via `toProduction(proof)`, confirming that the machine's state is correct.
-Once the attestation proof is accepted, the status changes to `PRODUCTION`, indicating that the machine is active on its extension.
+`teeMachineData` carries:
 
-### TEE ID derivation
+| Field | Description |
+|---|---|
+| `extensionId` | Extension the machine joins. |
+| `initialOwner` | Caller (`msg.sender == initialOwner` is enforced). |
+| `codeHash` | Hash of the code deployed inside the machine. Must be a [supported `(codeHash, platform)` combination](../Extensions/Concepts.md#management-calls). |
+| `platform` | Attestation platform (e.g. `GOOGLE_INTEL_TDX`, `GOOGLE_AMD_SEV`). |
+| `publicKey` | TEE identity public key. |
 
-A TEE machine's identity is a public/private key pair generated inside the enclave at deployment.
-The corresponding `teeId` is the Ethereum-style address of that public key — the last $20$ bytes of $\mathrm{keccak256}(\mathrm{publicKey})$, the same derivation Flare uses for ordinary addresses.
+`signature` is a proof-of-possession over $\mathrm{keccak256}(\mathrm{abi.encode}(\mathrm{teeMachineData}))$ produced inside the enclave following the [Ethereum Signed Message](../../Utilities/Signing.md) convention.
+The contract recovers the signer and requires it to equal `address(publicKey)`, which it then stores as the machine's `teeId`.
 
-`teeId` is therefore _not_ the address of the caller of `register`.
-The caller (constrained by `msg.sender == machineData.initialOwner`) is the [TEE operator](../../Terminology/Roles.md#tee-operator), recorded separately as the machine's owner.
-The `signature` argument is a proof-of-possession of the TEE's identity private key over $\mathrm{keccak256}(\mathrm{ABI.encode}(\mathrm{machineData}))$, produced following the [Ethereum Signed Message](../../Utilities/Signing.md) procedure.
-The contract recovers the signer address from this signature and requires it to equal `address(publicKey)`, then stores that address as `teeId`.
-This binds `teeId` to a specific TEE without trusting the caller, and prevents anyone from registering a `teeId` whose private key they do not control.
+The machine enters [`INITIALIZED`](#statuses).
+To reach `PRODUCTION` it must then present a valid [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof via `toProduction(proof)`.
 
-### Machine Registry Contract
-The `teeMachineRegistry` smart contract keeps a record of each registered TEE machine, consisting of:
+### TEE ID Derivation
 
-1. **teeId**: The TEE's public identity.
-2. **url**: The URL of the TEE machine.
-3. **owner**: The Flare address of the TEE owner.
-4. **codeHash**: The hash of the deployed code.
-5. **platform**: The attestation platform.
-6. **status**: The current machine status.
-7. **lastStatusChangeTs**: The timestamp of the last status change.
+`teeId` is the Ethereum-style address of the TEE's identity public key — the last $20$ bytes of $\mathrm{keccak256}(\mathrm{publicKey})$.
+It is _not_ the address of the caller of `register`: the caller (the [TEE operator](../../Terminology/Roles.md#tee-operator)) is recorded separately as the machine's owner.
+
+This binding is what makes the signature in `register` necessary: without it, a caller could register a `teeId` whose private key they do not control.
+
+### Machine Record
+
+`FlareTeeManager` stores per-machine state in a `TeeMachineState` record:
+
+- `extensionId`, `owner`, `teeProxyId`, `url`.
+- `teePublicKey`, `initialTeeId` (used during [replication](../TeeManagement/State.md#tee-state)), `initialSigningPolicyId`.
+- `codeHash`, `platform`.
+- `status`, `lastStatusChangeTs`.
+
+Inspect machines via `getTeeMachine(teeId)` and the active-set queries `getAllActiveTeeMachines`, `getActiveTeeMachines(extensionId)`.
 
 ## Statuses
-A registered TEE machine can have one of the following statuses:
 
-1. `INITIALIZED`: Initial status after registration, indicating that the machine is not yet verified and operational. Allows transitioning to `PRODUCTION` via `toProduction()`.
-2. `PRODUCTION`: The machine is fully operational and accepts all instructions. Allows pausing and suspending.
-3. `SUSPENDED`: The machine has been suspended, either by a non-availability proof submitted via `pauseWithProof()` (using the [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) attestation) or by anyone calling `pause()` after the [availability deadline](#availability-deadline) expired. Can transition to `PAUSED` via owner-initiated `pause()`, back to `PRODUCTION` via `toProduction()` with a fresh availability proof, or be banned.
-4. `PAUSED`: The machine has been paused by the owner, an unsupported code version, a settings update, or an unban. Prevents receiving any instructions. Can be reverted to `PRODUCTION` by providing a new availability proof.
-5. `BANNED`: The machine has been banned and cannot operate. This status can only be reversed by `unban()`, which moves the status to `PAUSED`.
+A registered machine moves through five statuses:
+
+1. **`INITIALIZED`** — set by `register`. The machine has no rights yet; transition to `PRODUCTION` via `toProduction(proof)`.
+2. **`PRODUCTION`** — fully operational; receives any instruction. Owner may pause; anyone may suspend after the [availability deadline](#availability-deadline) expires.
+3. **`SUSPENDED`** — set by `pauseWithProof(proof)` against a non-`OK` [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof, or by `pause(teeId)` after the availability deadline. Can return to `PRODUCTION` via `toProduction(proof)` with a fresh availability proof, be paused by the owner, or be banned.
+4. **`PAUSED`** — owner-initiated stop, or automatic on settings update / unsupported code. No instructions are accepted. Return to `PRODUCTION` with a fresh availability proof.
+5. **`BANNED`** — set by `ban(teeId)`; only reversible via `unban(teeId)` (which lands the machine in `PAUSED`).
+
+`lastStatusChangeTs` is bumped to `block.timestamp` on every transition.
+Each transition emits `TeeMachineStatusChanged`.
 
 ### Availability Deadline
-When a machine enters `PRODUCTION` status via `toProduction(proof)`, it is considered in production only up to a certain timestamp (`availabilityCheckValidityEndTs`).
-Before this deadline, anyone may submit a fresh availability proof via `confirmAvailability(proof)` on the `teeVerification` contract to extend the deadline.
 
-If the deadline passes without confirmation, the machine remains in `PRODUCTION` but:
+Each [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's deadline `availabilityCheckValidityEndTs`.
+Before the deadline anyone may submit a fresh proof via `confirmAvailability(proof)`; after it the machine stays in `PRODUCTION` but:
 
-- its actions no longer entitle its owner to rewards;
-- anyone may call `pause(teeId)`, transitioning the machine to `SUSPENDED` and removing it from its extension's active set.
-  To return it to `PRODUCTION`, anyone may then call `toProduction(proof)` with a fresh availability proof.
+- its actions stop entitling its owner to [rewards](../../FSP/Rewarding.md).
+- anyone may call `pause(teeId)` to send it to `SUSPENDED`; a fresh availability proof through `toProduction(proof)` brings it back.
 
-Operators must therefore monitor the deadline and refresh it before expiry, or be prepared to recover promptly.
+Operators must refresh availability before expiry to avoid downtime.
 
-## Management
-The Flare address of the TEE owner is responsible for managing the TEE's activities on the network.
-Management functions are spread across two contracts: `teeMachineRegistry` and `teeVerification`.
-The following set of management functions are available to the TEE owner:
+## Management Calls
 
-### teeMachineRegistry Functions
-1. `register(machineData, signature, teeProxyId, teeUrl)`: Registers the TEE machine as described above.
-2. `toProduction(proof)`: Changes the status to `PRODUCTION` if the proof matches the TEE ID data, the status permits it, and the code version is still supported.  Can be called by the owner when the machine status is `INITIALIZED` or `PAUSED`; can be called by anyone when `SUSPENDED`.
-3. `pause(teeId)`: Changes the status of a machine in `PRODUCTION` or `SUSPENDED` status. The owner can call it (or anyone if the current code version is disabled), transitioning the status to `PAUSED`. Anyone else can call it on a `PRODUCTION` machine after its [availability deadline](#availability-deadline) expires, transitioning the status to `SUSPENDED`.
-4. `pauseWithProof(proof)`: Suspends the TEE machine (sets status to `SUSPENDED`) based on a non-availability proof using the [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) attestation type. The timestamp of the proof must not be older than $10$ minutes. Can be called by anyone.
-5. `proposeNewOwner(teeId, newOwner)`: Proposes a new owner for the TEE machine. Can only be called by the current owner.
-6. `confirmOwnership(teeId)`: Called by the proposed new owner of the machine. When called after `proposeNewOwner(teeId, newOwner)`, the ownership of the TEE machine on Flare is changed to `newOwner`.
-7. `updateTeeMachineSettings(teeId, teeProxyId, url)`: Updates the proxy ID and URL of the TEE machine. Available when the machine is in `PRODUCTION` or `SUSPENDED` status. Any change sets the status to `PAUSED`, and a new proof is needed to return it to `PRODUCTION`.
-8. `ban(teeId)`: Bans a TEE machine, setting its status to `BANNED`. Can only be called by the extension owner.
-9. `unban(teeId)`: Unbans a previously banned TEE machine, setting its status to `PAUSED`. Can only be called by the extension owner.
+All calls live on the `FlareTeeManager` diamond:
 
-### teeVerification Functions
+- `register(teeMachineData, signature, teeProxyId, url, claimBackAddress)`: see [Registration](#registration).
+- `toProduction(proof)`: moves a machine to `PRODUCTION` given a valid availability proof. Owner-callable from `INITIALIZED` or `PAUSED`; anyone-callable from `SUSPENDED`.
+- `pause(teeId)`: see [Statuses](#statuses) for the per-caller transition rules.
+- `pauseWithProof(proof)`: suspends a `PRODUCTION` machine on a non-`OK` availability proof whose `timestamp` is no older than $10$ minutes. Callable by anyone.
+- `proposeNewOwner(teeId, newOwner)` / `confirmOwnership(teeId)`: two-step ownership transfer (proposed owner must be allowlisted).
+- `updateTeeMachineSettings(teeId, teeProxyId, url)`: updates the proxy ID or URL. Requires `PRODUCTION` or `SUSPENDED` status; the machine automatically transitions to `PAUSED` and needs a fresh availability proof to return.
+- `ban(teeId)` / `unban(teeId)`: extension-owner only; `unban` lands the machine in `PAUSED`.
+- `confirmAvailability(proof)`: extends the availability deadline (no status change). Callable by anyone.
 
-1. `confirmAvailability(proof)`: Given a valid [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof, extends the availability deadline. Can be called by anyone.
-
-When any function changes the machine status, the `lastStatusChangeTs` is updated to the current `block.timestamp`.
-Note that once an owner registers a TEE ID and the proof has been provided, the machine belongs to that owner.
-This prevents re-registration of the machine under other owners if it is temporarily unregistered.
-A TEE ID can only be transferred to a new owner through the ownership change process while registered.
+Once registered, a `teeId` belongs to its owner permanently; ownership changes only through `proposeNewOwner` / `confirmOwnership`, which prevents re-registration under a different owner.
