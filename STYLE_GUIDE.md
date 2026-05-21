@@ -25,6 +25,7 @@ When introducing a function call in Solidity on a new line, a colon is required 
 - uint should be formatted in $\mathrm{uint}$.
 - Oxford commas should be used (e.g. "a, b, and c" not "a, b and c").
 - Protocols should be introduced with a "the" e.g. "participation in the FSP" rather than "participation in FSP".
+- Avoid filler modifiers ("underlying", "relevant", "appropriate", "respective", "carrying X") that add no information: prefer a specific noun (e.g. "destination TEE proxy" rather than "relevant TEE proxy") or drop the modifier when context already establishes the referent.
 - Docker is always capitalized.
 - keccak256 is lowercase, no hyphen, no backticks in prose; written $\mathrm{keccak256}$ in equations.
 - secp256k1 is lowercase, no backticks.
