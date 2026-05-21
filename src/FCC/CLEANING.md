@@ -31,15 +31,17 @@ Verify factual claims against the latest code in:
 
 Reads can hit the working tree directly, or `git show origin/<ref>:<path>` for an origin-pinned read.
 
-| Repo | Read ref |
-|------|----------|
-| `tee/tee-node` | `origin/main` |
-| `tee/tee-proxy` | `origin/main` |
-| `tee/tee-relay-client` | `origin/tee-diamond-cut` |
-| `tee/go-verifier-api` | `origin/main` |
-| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` |
-| `libs/go-flare-common` | `origin/tee-diamond-cut` |
-| `fdc/verifier-xrp-indexer` | `origin/main` |
+Commit hashes captured on 2026-05-21 (refresh by re-fetching each remote and re-running the head log):
+
+| Repo | Read ref | HEAD commit | Date |
+|------|----------|-------------|------|
+| `tee/tee-node` | `origin/main` | `4ba38512` | 2026-05-14 |
+| `tee/tee-proxy` | `origin/main` | `31bfb8e0` | 2026-05-14 |
+| `tee/tee-relay-client` | `origin/tee-diamond-cut` | `52eee370` | 2026-04-24 |
+| `tee/go-verifier-api` | `origin/main` | `027fbbf0` | 2026-05-21 |
+| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` | `ff7f3cc4` | 2026-05-18 |
+| `libs/go-flare-common` | `origin/tee-diamond-cut` | `876c09e6` | 2026-04-24 |
+| `fdc/verifier-xrp-indexer` | `origin/main` | `fbf952c9` | 2026-04-17 |
 
 `tee-node` is the base TEE machine implementation; deployments may extend it by composing user-provided FCE repos on top.
 
@@ -275,6 +277,10 @@ The external signer used by the relay client is currently only mentioned by name
 
 `internal/api/types/pmw_multisig_account_configured.go` caps `publicKeys` at $32$ (XRPL `SignerList` maximum) and rejects empty entries, enforced on both the JSON and ABI-decoded request paths (`ValidatePublicKeys`).
 Add this as a request-validation rule when `Extensions/FDC2/AttestationTypes/PMWMultisigAccountConfigured.md` is cleaned.
+
+#### Fix inverted `ALLOW_TEE_DEBUG` description in `TeeAvailabilityCheck.md`
+
+`Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md:61` describes the pre-`027fbbf0` semantics, where `ALLOW_TEE_DEBUG=true` accepted only debug TEEs and rejected production ones. As of `go-verifier-api@027fbbf0` (2026-05-21), the flag is permissive: `false` (default) accepts only production TEEs (STABLE attribute checked, downgrades to OBSOLETE otherwise); `true` accepts both production AND debug TEEs (the debug path skips the STABLE check and logs a warning). Rewrite the note when the file is cleaned, and confirm against `internal/attestation/teeavailabilitycheck/verifier/claims.go` `ValidateClaims`.
 
 #### Document async-result behavior in `F_XRP PAY` / `F_XRP REISSUE`
 
