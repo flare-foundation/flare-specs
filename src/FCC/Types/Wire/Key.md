@@ -3,9 +3,26 @@
 JSON types returned by TEE proxy APIs for key management operations.
 For the corresponding ABI types used for on-chain encoding, see [Key (ABI)](../Abi/Key.md).
 
+## KeyInfo
+
+Single element of the [`KEY_INFO`](../../Operations/Commands/F_GET/KeyInfo.md) action result list.
+
+```json
+{
+  "$id": "KeyInfo",
+  "type": "object",
+  "properties": {
+    "walletId": { "type": "string", "format": "bytes32", "description": "Wallet ID." },
+    "keyId": { "type": "integer", "format": "uint64", "description": "Key ID." },
+    "nonce": { "type": "integer", "format": "uint64", "description": "Current replay-protection nonce for the (walletId, keyId) pair." }
+  },
+  "required": ["walletId", "keyId", "nonce"]
+}
+```
+
 ## SignedKeyExistenceProof
 
-Returned by `GET /wallet/<walletId>/<keyId>` and the [`KEY_INFO`](../../Operations/Commands/F_GET/KeyInfo.md) action.
+Returned by `GET /wallet/<walletId>/<keyId>`, by the [`KEY_PROOF`](../../Operations/Commands/F_GET/KeyProof.md) action (as a list), and by the [`KEY_GENERATE`](../../Operations/Commands/F_WALLET/KeyGenerate.md) and [`KEY_DATA_PROVIDER_RESTORE`](../../Operations/Commands/F_WALLET/KeyDataProviderRestore.md) instruction action results.
 Wraps an ABI-encoded [`KeyExistence`](../Abi/Key.md#keyexistence) struct with a TEE identity signature.
 
 
@@ -69,6 +86,39 @@ Returned in the action result of a [`KEY_DELETE`](../../Operations/Commands/F_WA
     "keyId": { "type": "integer", "format": "uint64", "description": "Key ID." }
   },
   "required": ["walletId", "keyId"]
+}
+```
+
+## TeeBackupRequest
+
+Direct action message for the [`TEE_BACKUP`](../../Operations/Commands/F_GET/TeeBackup.md) command.
+Same shape as [`KeyIDPair`](#keyidpair).
+
+```json
+{
+  "$id": "TeeBackupRequest",
+  "type": "object",
+  "properties": {
+    "walletId": { "type": "string", "format": "bytes32", "description": "Wallet ID of the key to back up." },
+    "keyId": { "type": "integer", "format": "uint64", "description": "Key ID of the key to back up." }
+  },
+  "required": ["walletId", "keyId"]
+}
+```
+
+## TeeBackupResponse
+
+Action result for the [`TEE_BACKUP`](../../Operations/Commands/F_GET/TeeBackup.md) command.
+
+```json
+{
+  "$id": "TeeBackupResponse",
+  "type": "object",
+  "properties": {
+    "BackupID": { "$ref": "#walletbackupid", "description": "Identifier of the produced backup." },
+    "WalletBackup": { "type": "string", "format": "bytes", "description": "JSON-encoded backup package, with the TEE signature over the backup hash embedded inside (not exposed as a top-level field)." }
+  },
+  "required": ["BackupID", "WalletBackup"]
 }
 ```
 

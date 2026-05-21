@@ -33,6 +33,7 @@ Where a type appears in both contexts, the ABI page defines the canonical struct
 - [KeyExistence](Abi/Key.md#keyexistence) — Proof of key existence (ABI-encoded; see [wire form](Wire/Key.md#signedkeyexistenceproof)).
 - [KeyDelete](Abi/Key.md#keydelete) — Key deletion instruction message.
 - [BackupId](Abi/Key.md#backupid) — Key backup identifier.
+- [KeyDataProviderRestore](Abi/Key.md#keydataproviderrestore) — Key restoration instruction message.
 - [VrfInstructionMessage](Abi/Key.md#vrfinstructionmessage) — VRF proof generation instruction.
 
 ### FDC2
@@ -94,6 +95,12 @@ Smart contract events, organized by contract: [Events index](Abi/Events/README.m
 - [RewardingData](Wire/Action.md#rewardingdata) — Marshalled into `ActionResult.data` for `end` results.
 - [VoteSequence](Wire/Action.md#votesequence) — Reward-attribution state for the instruction.
 
+### Policy
+
+- [InitializePolicyRequest](Wire/Policy.md#initializepolicyrequest) — `INITIALIZE_POLICY` direct action message.
+- [UpdatePolicyRequest](Wire/Policy.md#updatepolicyrequest) — `UPDATE_POLICY` direct action message.
+- [MultiSignedPolicy](Wire/Policy.md#multisignedpolicy) — Signed signing policy used inside `UpdatePolicyRequest`.
+
 ### TEE Machine
 
 - [TeeInfoRequest](Wire/TeeMachine.md#teeinforequest) — Direct action requesting TEE info.
@@ -104,8 +111,11 @@ Smart contract events, organized by contract: [Events index](Abi/Events/README.m
 
 ### Key Management
 
+- [KeyInfo](Wire/Key.md#keyinfo) — `(walletId, keyId, nonce)` triple returned by `KEY_INFO`.
 - [SignedKeyExistenceProof](Wire/Key.md#signedkeyexistenceproof) — ABI-encoded `KeyExistence` wrapped with TEE signature.
 - [KeyIDPair](Wire/Key.md#keyidpair) — Wallet and key ID pair.
+- [TeeBackupRequest](Wire/Key.md#teebackuprequest) — `TEE_BACKUP` direct action message.
+- [TeeBackupResponse](Wire/Key.md#teebackupresponse) — `TEE_BACKUP` action result.
 - [WalletBackupID](Wire/Key.md#walletbackupid) — Key backup identifier (wire form).
 
 ### FDC2

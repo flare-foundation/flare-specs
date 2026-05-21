@@ -113,6 +113,24 @@ The backup hash is defined as $\mathrm{hash}(\mathrm{ABI.encode}(\mathrm{BackupI
 }
 ```
 
+## KeyDataProviderRestore
+
+Instruction message for restoring a previously backed-up key onto a target TEE machine.
+
+```json
+{
+  "$id": "KeyDataProviderRestore",
+  "type": "object",
+  "properties": {
+    "teePublicKey": { "$ref": "Common.md#publickey", "description": "Public key of the target TEE machine." },
+    "backupId": { "$ref": "#backupid", "description": "Identifier of the backup to restore." },
+    "backupUrl": { "type": "string", "description": "URL of the backup package." },
+    "nonce": { "type": "string", "format": "uint256", "description": "Replay-protection nonce; must exceed any prior nonce stored for the (walletId, keyId) pair on the target machine." }
+  },
+  "required": ["teePublicKey", "backupId", "backupUrl", "nonce"]
+}
+```
+
 ## VrfInstructionMessage
 
 Instruction message for generating a VRF proof.
