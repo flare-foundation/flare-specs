@@ -2,42 +2,27 @@
 
 ## Description
 
-Re-signs a previously issued XRP payment transaction for resubmission, typically after the original transaction failed to confirm on the XRP Ledger. The message and the process are the same as with the [PAY](Pay.md) command.
+Re-signs a previously issued XRP payment for resubmission, typically after the original transaction failed to confirm on the XRP Ledger.
+The message format and processing flow match [`F_XRP PAY`](Pay.md); the only difference is the on-chain entry point ([`TeePayments.reissue`](../Transactions.md#reissuing-a-payment)) and the `opCommand`.
 
-## Event message
+## Event Message
 
-Same as [PAY](Pay.md).
+Same as [`F_XRP PAY`](Pay.md#event-message): [`PaymentInstructionMessage`](../../../Types/Abi/Payment.md#paymentinstructionmessage).
 
-```solidity
-struct PaymentInstructionMessage {
-    bytes32 walletId;
-    TeeIdKeyIdPair[] teeIdKeyIdPairs;
-    bytes32 sourceId;
-    string senderAddress;
-    string recipientAddress;
-    bytes tokenId;
-    uint256 amount;
-    uint256 maxFee;
-    bytes feeSchedule;
-    bytes32 paymentReference;
-    uint64 nonce;
-    uint64 subNonce;
-    uint64 batchEndTs;
-}
-```
+## Fixed Message
 
-## Fixed message
+None.
 
-/
+## Variable Message
 
-## Variable message
+None.
 
-/
+## Additional Action Data
 
-## Additional action data
+None.
 
-/
+## Action Result
 
-## Action result
+Same async lifecycle as [`F_XRP PAY`](Pay.md#action-result): the TEE posts intermediate signed transactions per [fee schedule](../Transactions.md#fee-schedules) entry, with status climbing through $3, 4, 5, \dots$ and the final entry returning `status = 1` under `submissionTag = end`.
 
-Same as [PAY](Pay.md) — JSON of the XRP Ledger transaction with filled `Signers` field.
+Each non-empty result's `data` is the JSON of an XRP Ledger transaction with a populated `Signers` field.

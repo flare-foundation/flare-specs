@@ -1,42 +1,36 @@
 # PMW Concepts
 
-A Protocol Managed Wallet (PMW) is an application running on Flare that manages a wallet address on an external blockchain.
-PMWs allow Flare users to submit transactions from the wallet on the external chain by issuing an instruction on Flare Confidential Compute.
-They are hosted on the [system extension](../SystemExtension.md) of Confidential Compute, making use of the TEE network to secure the wallet and its underlying keys.
-Additional support is given by Flare's [data providers](../../../Terminology/Roles.md#data-provider), who are responsible for bridging information between Flare, the TEE network, and the external chain.
+A Protocol Managed Wallet (PMW) is an application on the [system extension](../SystemExtension.md) that manages a wallet address on an external blockchain.
+Wallet keys live inside [TEE machines](../../Components/TeeMachine.md) registered to the system extension; [data providers](../../../Terminology/Roles.md#data-provider) bridge data between Flare, the TEE network, and the external chain.
 
 ## Wallet Ownership and Management
 
-A PMW wallet corresponds to an address $W_C$ on an external blockchain $C$; its keys are held in TEE machines registered to the system extension, and the [project owner](../../../Terminology/Roles.md#project-owner) can order transactions on $C$ by issuing instructions on Flare.
-For the on-chain data model behind PMW wallets — projects, wallets, admins, cosigners, multisig thresholds, and the wallet lifecycle — see [Wallets](../../TeeManagement/Wallets.md).
+A PMW wallet corresponds to an address $W_C$ on an external blockchain $C$.
+Its keys are held in TEE machines registered to the system extension, and the [project owner](../../../Terminology/Roles.md#project-owner) submits transactions on $C$ by issuing instructions on Flare.
+For the on-chain data model — projects, wallets, admins, cosigners, multisig thresholds, and the wallet lifecycle — see [Wallets](../../TeeManagement/Wallets.md).
 
 ## Submitting Transactions
 
-A transaction on a PMW is an example of an [instruction](../../Operations/Instructions.md), and thus follows a similar flow: a user who owns a PMW issues a transaction instruction on Flare, which is picked up by Flare's data providers.
-The data providers prepare the transaction, which is sent to the TEE machine to be signed.
-Once signed, the transaction can be fetched from the TEE proxy and submitted on the external chain.
-A transaction proceeds as follows:
+A PMW transaction is an [instruction](../../Operations/Instructions.md) on the system extension:
 
-1. A Flare user owns a PMW managing an account $W_C$ on blockchain $C$. They submit an instruction on Flare instructing a transaction $T$ be issued on blockchain $C$ from account $W_C$. The instruction includes all information necessary for the data providers to assemble $T$, including a list of TEEs on which the appropriate keys are stored.
-2. Upon picking up the payment instruction, Flare's data providers each independently assemble an instruction corresponding to the transaction $T_{\mathrm{TEE}}$. The data providers then sign the instruction and submit it to the appropriate TEE(s).
-3. Once a TEE has received a sufficient weight of signatures, the TEE signs the transaction $T$ using key(s) stored in its memory and returns the signed transaction to the TEE proxy.
-4. The transaction $T$, signed by address $W_C$, is now available at the TEE proxy to be fetched and submitted on chain $C$.
+1. The project owner submits a payment instruction on Flare, naming the TEE machines that hold the wallet's keys.
+2. Each data provider builds and signs the corresponding instruction off-chain through its [relay client](../../Components/RelayClient.md), then submits it to the targeted [TEE proxies](../../Components/TeeProxy.md).
+3. Once a TEE machine collects a sufficient weight of provider signatures, it signs the external-chain transaction with the wallet's key(s) and returns the result.
+4. The signed transaction is served by the TEE proxy and may be submitted on $C$ by any party.
+
+See [Payments](Transactions.md) for the on-chain `pay` and `reissue` calls, [batching](Transactions.md#batching), and [fee schedules](Transactions.md#fee-schedules).
 
 ## Key Management and Backups
 
-Since transactions are sent to the TEEs to be signed, keys stored on TEEs participating in the PMW protocol do not leave the TEEs' secure memory.
-Thus, PMW transactions issued as instructions on Flare are secured by the combination of the TEE machines and the voting process on the system extension.
-In order to ensure keys are not inaccessible or lost in instances where TEEs are either temporarily or permanently disabled, keys are securely [backed up](../../TeeManagement/Keys.md) using a secret sharing scheme.
-The key shares are distributed to other participating TEEs and cosigners in a manner that ensures that secrets can only be recovered in appropriate circumstances.
-Additionally, TEEs provide `TEEKeyExistence` proofs to confirm the existence of keys corresponding to appropriate wallets.
+Wallet private keys never leave the TEEs' secure memory: transactions are sent to the TEEs to be signed, and PMW security follows from the combination of the TEE machines and the system-extension [voting process](../../Operations/Voting.md).
+To prevent keys from being lost when a TEE is paused, banned, or permanently disabled, keys are [backed up](../../TeeManagement/Keys.md#key-backup) using a two-layer secret-sharing scheme, with shares distributed to data providers and [key admins](../../../Terminology/Roles.md#key-admin) so that secrets are recoverable only under the configured threshold.
+TEE machines additionally serve [`SignedKeyExistenceProof`](../../Types/Wire/Key.md#signedkeyexistenceproof) values that confirm the corresponding private keys still exist on the machine.
 
 ## Functionality
 
-PMW handles these functions by implementing the following specific functionalities:
+1. **Multisig account operations**: A wallet's key set across TEE machines can act as the signers of a native multisig account on the external chain (e.g. XRPL `SignerList`), giving $k$-of-$n$ control.
+2. **Nonce management**: each payment instruction is bound to a specific transaction sequence number on $C$, so retries and reissues never double-spend.
+3. **Reissue and nullification**: a stuck transaction can be re-signed with a higher fee, or its nonce consumed by a trivial `AccountSet` transaction (see [Nullification](Transactions.md#nullification)).
+4. **Transaction-status proofs**: once a nonce is consumed, an FDC2 [`PMWPaymentStatus`](../FDC2/AttestationTypes/PMWPaymentStatus.md) attestation reports the outcome on-chain, letting protocols branch on success or revert.
 
-1. **Multisig account operations**: The PMW infrastructure leverages native multisig capabilities of external blockchains (XRPL). A wallet represents a set of multiple keys on different TEE machines, which are signers on $k$-of-$n$ native multisig accounts on external blockchains.
-2. **Nonce (transaction sequence) management**: Careful management guarantees that each payment instruction can be issued with a particular nonce only.
-3. **Reissuance or nullification**: A stuck transaction with a specific nonce can be reissued with the same data on a different (higher) fee, or nullified by a trivial transaction that consumes the nonce at minimal cost.
-4. **Proving transaction execution status**: A proof of execution status through an FDC attestation can be obtained once the nonce is consumed, allowing protocols to verify payment outcomes and handle errors automatically.
-
-> **Note:** BTC support is planned but not yet implemented.
+> **Note:** BTC and EVM support is planned but not yet implemented.

@@ -1,34 +1,30 @@
 # FDC2 Verifier Server
 
 The FDC2 verifier server validates attestation requests on behalf of [data providers](../../../Terminology/Roles.md#data-provider) as part of the [FDC2](README.md) protocol.
-Each data provider runs a verifier instance for each attestation type it supports.
-One attestation type module is loaded at startup per process.
+Each data provider runs one verifier instance per supported attestation type — a single process loads one attestation-type module at startup.
 
 ## HTTP Endpoints
 
-Each loaded attestation type exposes three endpoints:
+Each loaded module exposes three verification endpoints, namespaced by `sourceId` and `attestationType`:
 
 | Endpoint | Purpose |
 |---|---|
 | `POST /verifier/<sourceId>/<attestationType>/prepareRequestBody` | ABI-encode a raw request body. |
-| `POST /verifier/<sourceId>/<attestationType>/prepareResponseBody` | Decode request, run verification, return ABI-encoded response. |
-| `POST /verifier/<sourceId>/<attestationType>/verify` | Full verification pipeline, return encoded response body. |
+| `POST /verifier/<sourceId>/<attestationType>/prepareResponseBody` | Decode the request, run verification, and return an ABI-encoded response body. |
+| `POST /verifier/<sourceId>/<attestationType>/verify` | Full verification pipeline; returns the encoded response body. |
 
-All endpoints (except `/api/health`) require API key authentication via the `X-API-KEY` header.
+All endpoints except `GET /api/health` require API-key authentication via the `X-API-KEY` header.
 
-### Error Classification
+### Response Codes
 
 | HTTP Status | Meaning | Examples |
 |---|---|---|
 | $400$ | Bad request | Nonce range exceeds maximum size, malformed input. |
-| $422$ | Data/validation error | Record not found, TEE validation failure, invalid input. |
-| $503$ | Infrastructure error (retryable) | DB connection failure, insufficient samples, network error. |
+| $422$ | Validation error | Record not found, TEE validation failure, invalid input. |
 | $500$ | Unexpected error | Encoding failure, unknown error. |
+| $503$ | Retryable infrastructure error | DB connection failure, insufficient samples, network error. |
 
-## Module Loading
-
-Each module instantiates its own service, verifier, external data connections, and HTTP handlers.
-The supported attestation types are:
+## Supported Attestation Types
 
 - [TeeAvailabilityCheck](AttestationTypes/TeeAvailabilityCheck.md)
 - [PMWPaymentStatus](AttestationTypes/PMWPaymentStatus.md)
@@ -37,7 +33,7 @@ The supported attestation types are:
 
 ## Security
 
-- **API key authentication** — all verification endpoints require a valid API key header.
+- **API-key authentication** — required on every verification endpoint.
 - **Security headers** — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
-- **URL/SSRF validation** — blocks private IPs, metadata endpoints, and dangerous address ranges before connecting to TEE proxies.
-- **CRL checking** — certificate revocation lists are fetched and cached (LRU, $4$-hour TTL, max $100$ entries) to detect revoked attestation certificates.
+- **SSRF guards** — proxy URLs are validated before being contacted; private IP ranges, link-local and multicast addresses, cloud metadata endpoints, and Teredo tunnels are blocked.
+- **CRL checking** — certificate revocation lists are fetched and cached (LRU, $4$-hour TTL, max $100$ entries) so revoked attestation certificates are rejected.

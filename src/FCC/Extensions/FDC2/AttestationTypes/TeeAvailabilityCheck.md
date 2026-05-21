@@ -1,123 +1,79 @@
 # TeeAvailabilityCheck
 
-The `TeeAvailabilityCheck` attestation type verifies that a registered TEE machine is available, running valid code, and has a fresh attestation from the platform.
+The `TeeAvailabilityCheck` attestation type verifies that a registered TEE machine is available, running valid code, and has a fresh platform attestation.
 
 ## Request
 
-Attestation request body:
+Request body: [`TeeAvailabilityCheck.RequestBody`](../../../Types/Abi/AttestationType.md#requestbody).
 
-- `teeId` — TEE identity address of the machine to be checked.
-- `teeProxyId` — Identity address of the TEE proxy.
-- `url` — URL of the TEE proxy.
-- `challenge` — Random challenge for the attestation request.
-- `instructionId` — Instruction ID for the attestation request.
-
-The request body is formatted as the [`TeeAvailabilityCheck.RequestBody`](../../../Types/Abi/AttestationType.md#requestbody) struct.
+- `teeId`: TEE identity address of the machine to be checked.
+- `teeProxyId`: identity address of the paired [TEE proxy](../../../Components/TeeProxy.md).
+- `url`: HTTP URL of the TEE proxy.
+- `challenge`: random challenge for the attestation request.
+- `instructionId`: instruction ID of the attestation request.
 
 ## Response
 
-Attestation response body:
+Response body: [`TeeAvailabilityCheck.ResponseBody`](../../../Types/Abi/AttestationType.md#responsebody), using the [`AvailabilityCheckStatus`](../../../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../../../Types/Abi/TeeMachine.md#teestate).
 
-- `status` — Availability status:
+- `status`:
   - `OK` — TEE machine is available and valid.
-  - `OBSOLETE` — The platform state is outdated (the `submods.confidential_space.support_attributes` claim does not contain `STABLE`).
+  - `OBSOLETE` — platform state is outdated (`submods.confidential_space.support_attributes` lacks `STABLE`).
   - `DOWN` — TEE machine is unavailable.
-- `teeTimestamp` — Timestamp obtained from the TEE machine during attestation (from the TEE proxy attestation result).
-- `codeHash` — Value of the `submods.container.image_digest` claim.
-- `platform` — Value of the `hwmodel` claim, representing the underlying technology (e.g. `INTEL_TDX`, `GCP_AMD_SEV`).
-- `initialSigningPolicyId` — From the TEE proxy attestation result.
-- `lastSigningPolicyId` — From the TEE proxy attestation result.
-- `state` — From the TEE proxy attestation result.
-
-The response body is formatted as the [`TeeAvailabilityCheck.ResponseBody`](../../../Types/Abi/AttestationType.md#responsebody) struct, using the [`AvailabilityCheckStatus`](../../../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../../../Types/Abi/TeeMachine.md#teestate).
+- `teeTimestamp`: TEE timestamp from the proxy attestation result.
+- `codeHash`: from the `submods.container.image_digest` JWT claim.
+- `platform`: from the `hwmodel` JWT claim (e.g. `INTEL_TDX`, `GCP_AMD_SEV`).
+- `initialSigningPolicyId`, `lastSigningPolicyId`, `state`: from the proxy attestation result.
 
 ## Chain Support
 
-Currently only Google attestations in JWT token format are supported.
+Currently only Google attestations in JWT-token format are supported.
 
 ## Verification
 
-The attestation result is obtained from the TEE proxy on the route `/action/result/<instructionId>` (the response is available as `bytes result.message`).
+The attestation result is fetched from `GET /action/result/<instructionId>` on the [TEE proxy](../../../Components/TeeProxy.md); the response body is the `bytes result.message` field.
 
-### Challenge Check
+### Challenge and Identity Checks
 
-The `challenge` from the request body is matched against the challenge from the TEE proxy info response.
-
-### Proxy Signature Check
-
-The `teeProxyId` from the request body is matched against the address recovered from the `proxySignature` of the TEE proxy info response.
+- The `challenge` from the request must match the challenge in the proxy info response.
+- The `teeProxyId` must match the address recovered from the proxy info response's `proxySignature`.
+- The `teeId` must match the address derived from the proxy info response's `publicKey`.
 
 ### URL Validation
 
-Before contacting the TEE proxy, the verifier validates the proxy URL against SSRF attacks, blocking private IP ranges, link-local addresses, multicast addresses, cloud metadata endpoints, and Teredo tunnels.
+Before contacting the TEE proxy, the verifier blocks private IPs, link-local and multicast addresses, cloud metadata endpoints, and Teredo tunnels (SSRF guard).
 
-### JWT Token and Claims Validation
+### JWT and Claims Validation
 
-The JWT token is verified using Google Cloud Confidential Computing PKI attestation. The verification includes:
+The JWT is verified against Google Cloud Confidential Computing PKI; certificate revocation lists are checked for the leaf and intermediate certificates.
+Required claims:
 
-1. **Certificate revocation** — The verifier fetches and checks Certificate Revocation Lists (CRLs) for both leaf and intermediate certificates before validating the JWT token.
-2. **Hash verification** — Create a hash from the returned TEE proxy data and compare it with the `eat_nonce` claim.
-3. **Production mode** — Verify that `dbgstat` equals `disabled-since-boot`.
-   - Note: The `ALLOW_TEE_DEBUG` configuration must be `false` in production. When `true`, only debug TEE images are accepted (production TEEs are rejected), intended solely for development environments.
-4. **Running software** — Verify that `swname` equals `CONFIDENTIAL_SPACE`.
-5. **Security version** — Verify that `submods.confidential_space.support_attributes` contains `STABLE`. If this check fails but all other checks pass, the status is `OBSOLETE`.
-
-### TEE Identity Check
-
-The `teeId` from the response body is matched against the address derived from the `publicKey` in the TEE proxy info response.
+1. Hash of the proxy data matches `eat_nonce`.
+2. `swname` equals `CONFIDENTIAL_SPACE`.
+3. **Production mode** (gated by the verifier's `ALLOW_TEE_DEBUG` config flag):
+   - `ALLOW_TEE_DEBUG = false` (production default): accept only TEEs with `dbgstat = disabled-since-boot`. Reject anything else.
+   - `ALLOW_TEE_DEBUG = true` (staging/E2E only): accept both production and debug TEEs. The debug path skips the security-version check below and emits a warning log; debug TEEs MUST NOT be admitted in production deployments (debugger attachable, secrets extractable).
+4. **Security version** (production TEEs only): `submods.confidential_space.support_attributes` must contain `STABLE`; if not, status downgrades to `OBSOLETE`.
 
 ### Signing Policy Check
 
-- **Last signing policy hash** — Verify that `data.lastSigningPolicyHash` equals the current signing policy on chain (via RPC, read from `Relay` → `toSigningPolicyHash(uint256 _rewardEpochId)`).
-- **Initial signing policy hash** — Verify that `data.initialSigningPolicyHash` equals the initial signing policy on chain (same contract call).
+- `data.lastSigningPolicyHash` must equal the current signing policy on-chain (`Relay.toSigningPolicyHash(rewardEpochId)`).
+- `data.initialSigningPolicyHash` must equal the initial signing policy on-chain (same contract call).
 
-Signing policy fetching uses aggressive retry parameters (single attempt, 400 ms delay) to keep overall verification within the 5-second timeout enforced by the relayer connection.
+## Verifier-Side Availability Polling
 
-### Response Construction
+The verifier server also acts as an availability poller, exposing `GET /poller/tees` for external monitoring.
+It enumerates active machines via `FlareTeeManager.getAllActiveTeeMachines` and queries `<proxyUrl>/info` for each.
+Per machine, the most recent samples are retained in a circular buffer; each sample is classified `VALID` (all checks pass), `INDETERMINATE` (verifier fault, e.g. RPC unreachable), or `INVALID` (data-side failure).
 
-Populate the response fields:
+Availability statuses:
 
-- `codeHash` = `submods.container.image_digest`
-- `platform` = `hwmodel`
+- `DOWN`: requires sufficient `INVALID` samples in a row (insufficient samples → `INDETERMINATE`).
+- `OBSOLETE`: production TEE missing `STABLE` attribute.
+- `OK`: all checks pass.
 
-### Verifier Server Behavior
-
-The verifier server also acts as a TEE machine availability poller.
-
-### TEE Poller
-
-The poller periodically (every minute) queries the `<proxyUrl>/info` API for each active TEE machine using a pool of $10$ concurrent workers.
-The list of active machines is obtained by calling `getAllActiveTeeMachines` on the `TeeMachineRegistry` smart contract.
-For each machine, the poller retains only the latest $5$ samples in a circular buffer.
-A monitoring endpoint `GET /poller/tees` returns all TEE samples for external monitoring.
-
-On each poll:
-
-1. **Challenge freshness** — The challenge is generated by the proxy using a block hash. The verifier checks the block's timestamp via RPC and determines sample validity based on a configured threshold ($\mathrm{BlockFreshnessInSeconds} = 150$, i.e. 2.5 minutes).
-2. **Verification checks** — Same as the [verification procedure](#verification) above: JWT token and claims, TEE identity, signing policies.
-3. **Sample classification:**
-   - All checks pass → sample state = `VALID`.
-   - Failure due to verifier fault (e.g. cannot connect to RPC) → sample state = `INDETERMINATE`.
-   - Failure due to provided data → sample state = `INVALID`.
-
-### Status Determination
-
-To reliably detect a `DOWN` status, the poller must have collected at least $5$ samples (at $1$-minute intervals) and all of them must be `INVALID`.
-
-- If there are fewer than $5$ samples → status is `INDETERMINATE` (insufficient data).
-- If all $5$ entries hold sample state `INVALID` → status is set to `DOWN`.
-- Otherwise → status is `INDETERMINATE`.
-
-### Evaluating Availability with Attestation
-
-- **No attestation result available** on `/action/result/<instructionId>`:
-  - Fall back to availability checks using recent samples.
-  - If all samples in the last 5 minutes are `INVALID` → status = `DOWN`, all other response fields set to 0.
-  - Otherwise (at least one `VALID` or `INDETERMINATE` sample) → return `UNDETERMINED` (HTTP 503).
-- **Attestation result available:**
-  - If the platform is obsolete (`submods.confidential_space.support_attributes` lacks `STABLE`) → status = `OBSOLETE`.
-  - Otherwise, if the JWT signature is valid, `eat_nonce` can be reproduced, the system runs in production mode with safe software, has a stable version, and both signing policy hashes match → status = `OK`.
+When no attestation result is available on `/action/result/<instructionId>`, the verifier falls back to the most recent samples — `DOWN` if every recent sample is `INVALID`, otherwise `UNDETERMINED` (HTTP $503$).
 
 ## Notes
 
-- Block freshness is not a concern on Flare due to its fast and deterministic finality.
+- Block freshness is not a concern on Flare due to its fast deterministic finality.

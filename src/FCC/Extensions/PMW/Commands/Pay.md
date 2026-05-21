@@ -2,52 +2,46 @@
 
 ## Description
 
-Signs an XRP Ledger multisig payment transaction using the specified TEE-managed private key(s).
+Signs an XRP Ledger multisig payment from a PMW wallet using one or more TEE-managed private keys.
 
-If the amount is $0$ and the source address equals the recipient address, a nullification transaction (empty `AccountSet` transaction) is signed. The payment reference is still included in the transaction.
+- If `amount = 0` and the recipient address equals the sender, the TEE signs an empty `AccountSet` (nullification) transaction; the payment reference is still attached. See [Nullification](../Transactions.md#nullification).
+- If `tokenId` is zero-valued, the transaction is a direct XRP payment. Other token IDs are reserved for future use.
+- `sourceId` is `XRP` or `testXRP`.
 
-If the `tokenId` is zero-valued, the transaction is a direct XRP payment. Other cases: TBD.
+## Event Message
 
-The `sourceId` should be `XRP` or `testXRP`.
+[`PaymentInstructionMessage`](../../../Types/Abi/Payment.md#paymentinstructionmessage), referencing [`TeeIdKeyIdPair`](../../../Types/Abi/Common.md#teeidkeyidpair).
 
-## Event message
+`feeSchedule` carries the [encoded fee-schedule entries](../Transactions.md#encoded-format); it must be non-empty.
 
-The event message is formatted as the [`PaymentInstructionMessage`](../../../Types/Abi/Payment.md#paymentinstructionmessage) struct, which references [`TeeIdKeyIdPair`](../../../Types/Abi/Common.md#teeidkeyidpair).
+## Fixed Message
 
-### Fee Schedule
+None.
 
-The `feeSchedule` field encodes a list of fee entries for progressive fee escalation.
-For the binary encoding format, fee calculation formula, and nullification behavior, see [Fee Scheduling](../Transactions.md#fee-scheduling).
+## Variable Message
 
-The `feeSchedule` must not be empty; an empty fee schedule causes an error.
+None.
 
-## Fixed message
+## Additional Action Data
 
-/
+None.
 
-## Variable message
+## Action Result
 
-/
+`F_XRP PAY` is asynchronous: the TEE machine returns an empty placeholder on the `threshold` submission tag, then posts one signed transaction per [fee schedule](../Transactions.md#fee-schedules) entry on its delay schedule.
 
-## Additional action data
+- `submissionTag = threshold`: empty data, [`ActionResult.status`](../../../Operations/Actions.md#action-results) = $2$ (in-progress).
+- Intermediate signed transactions: `status` = $3$, $4$, $5$, … (one per fee entry, monotonically increasing).
+- Final signed transaction (last fee entry): `submissionTag = end`, `status` = $1$.
 
-/
-
-## Action result
-
-The `SignXRPLPayment` processor returns empty data on the `Threshold` submission tag.
-Signed transactions are posted asynchronously to the proxy via a background goroutine — one result per fee schedule entry, each delayed according to the entry's time offset.
-Intermediate results use status $3$, $4$, $5$, etc. (one per fee entry).
-The final result uses status $1$.
-
-Each result contains JSON of an XRP Ledger transaction with filled `Signers` field.
+Each non-empty result's `data` is the JSON of an XRP Ledger transaction with a populated `Signers` field.
 
 ## Notes
 
-- **Validation:** The TEE machine performs the following validations before signing:
-  - The fee schedule must not be empty.
-  - The TEE ID must appear in the `teeIdKeyIdPairs` list.
-  - The key type must be `XRP`.
-  - The signing algorithm for the key must be `sha512half-secp256k1-ecdsa`.
-  - Cosigner signatures are verified per key (when cosigners are configured on the wallet).
-  - The key must exist on the machine and be in active status.
+The TEE machine validates the instruction before signing:
+
+- `feeSchedule` is non-empty.
+- The machine's own TEE ID appears in `teeIdKeyIdPairs`.
+- The key type is `XRP` and the signing algorithm is `sha512half-secp256k1-ecdsa`.
+- The key exists on the machine and is in active status.
+- [Cosigner](../../../Operations/Instructions.md#cosigners) signatures are verified per key when the wallet has cosigners configured.

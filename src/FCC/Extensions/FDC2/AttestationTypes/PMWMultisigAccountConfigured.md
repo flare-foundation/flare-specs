@@ -4,20 +4,21 @@ The `PMWMultisigAccountConfigured` attestation type proves that a multisig accou
 
 ## Request
 
-Attestation request body:
+Request body: [`PMWMultisigAccountConfigured.RequestBody`](../../../Types/Abi/AttestationType.md#requestbody-3).
 
-- `accountAddress` — Address of the multisig account.
-- `publicKeys` — Public keys of the multisig account owners (keys are in concatenated format: `pubkey.X | pubkey.Y`).
-- `threshold` — Threshold for the multisig account.
+- `accountAddress`: address of the multisig account.
+- `publicKeys`: public keys of the multisig account owners (concatenated `pubkey.X | pubkey.Y`).
+  At most $32$ entries (XRPL `SignerList` maximum); empty entries are rejected.
+- `threshold`: threshold for the multisig account.
 
 ## Response
 
-Attestation response body:
+Response body: [`PMWMultisigAccountConfigured.ResponseBody`](../../../Types/Abi/AttestationType.md#responsebody-3), using the [`PMWMultisigAccountStatus`](../../../Types/Abi/AttestationType.md#pmwmultisigaccountstatus) enum.
 
-- `status` (`PMWMultisigAccountStatus` enum):
-  - `OK` ($0$) — Account is correctly configured.
-  - `ERROR` ($1$) — Account is incorrectly configured or the RPC query to the external chain failed validation checks.
-- `sequence` (`uint64`) — Sequence number of the account. Set to $0$ when status is `ERROR`.
+- `status`:
+  - `OK` ($0$) — account is correctly configured.
+  - `ERROR` ($1$) — account is misconfigured or an RPC validation check failed.
+- `sequence` (`uint64`): account sequence number. Set to $0$ when `status = ERROR`.
 
 ## Chain Support
 

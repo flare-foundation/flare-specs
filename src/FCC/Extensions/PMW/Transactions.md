@@ -1,151 +1,137 @@
 # Payments
-Payments in the PMW infrastructure are handled via a dedicated `TeePayments` smart contract.
-This contract receives user payment requests, parsing and submitting them as an [instruction](../../Operations/Instructions.md) to the `TeeInstructions` smart contract.
-This page details the features and options of the payments system for PMWs.
 
-## Payment Instructions
-[diagram: life of payment instruction]
-### User Experience
-Payment instructions are sent by Flare users to the `TeePayments` contract using the `pay(account, paymentInstruction)` function.
-The `account` argument describes the account on the external blockchain as:
+PMW payments are submitted on Flare and executed on an external chain by the [TEE machines](../../Components/TeeMachine.md) holding the wallet's keys.
+The `TeePayments` contract receives requests, expands them into [`PaymentInstructionMessage`](../../Types/Abi/Payment.md#paymentinstructionmessage) payloads, and submits them as [`F_XRP PAY`](Commands/Pay.md) (or [`F_XRP REISSUE`](Commands/Reissue.md)) [instructions](../../Operations/Instructions.md) via [`FlareTeeManager.sendInstructions`](../../TeeManagement/FlareTeeManager.md).
+This page covers the payment surface (`pay`, `reissue`) and the [fee schedule](#fee-schedules) and [batching](#batching) mechanisms that drive them.
 
-- `sourceId`: Identifier of the external chain.
-- `accountAddress`: String denoting the account address from which the transaction is made.
+## Submitting a Payment
 
-The `paymentInstruction` argument describes the payment itself:
+A user with an authorization on a PMW account calls:
 
-- `recipientAddress`: The address on chain $C$ to which the payment will be made.
-- `tokenId`: Token identifier (`bytes32`). Currently unused, reserved for future token support.
-- `amount`: The amount of units to be transferred.
-- `fee`: The transaction fee offered on chain $C$.
-- `paymentReference`: The $32$-byte payment reference.
+```solidity
+TeePayments.pay(PMWMultisigAccount account, PaymentInstruction paymentInstruction, address claimBackAddress)
+```
 
-From a user perspective, this contract call is all that is required to send a transaction from their wallet.
-The payments contract and Flare's [data providers](../../../Terminology/Roles.md#data-provider) handle the required interaction with the Flare Confidential Compute infrastructure.
-Note that if batching is enabled (see below), the user experience allows for multiple payments to be issued in a single transaction on $C$, with the user sending the payment instructions in quick succession on Flare.
+`account` identifies the external account:
 
-### Underlying Machinery
-Upon receiving a payment instruction `pay(account, paymentInstruction)`, the `TeePayments` contract and data providers perform the following tasks:
+- `sourceId`: external chain identifier (e.g. XRPL).
+- `accountAddress`: account address on that chain (string).
 
-1. The payments contract calls the `receivingTeesAndKeys(walletId)` function on the `TeeWalletManager` contract for the default project's wallet from which the payment is to be sent. This returns a list of TEE machines to which instructions should be sent.
-2. The payments contract then forms and submits the instruction `paymentInstruction` that sends the payment to the `TeeInstructions` contract. The format of this instruction is listed below.
-3. The data providers and TEEs follow the usual process from an instruction to an [action](../../Operations/Actions.md), with the action result containing the data necessary to submit the signed payment transaction on chain $C$ made available at the relevant TEE proxies.
-4. The signed payment instruction can now be submitted on $C$ by any entity.
+`paymentInstruction` carries the payment data:
 
-In step 2, the `paymentInstruction` is a binary encoded message.
-The message is an encoding containing the following information, which can be read from the payment instruction and wallet settings:
+- `recipientAddress`: destination address on the external chain.
+- `tokenId`: token identifier (`bytes`); currently unused, reserved for future token support.
+- `amount`: amount to transfer.
+- `maxFee`: maximum fee the user is willing to pay; the per-entry fee schedule scales this down.
+- `paymentReference`: $32$-byte payment reference attached to the transaction.
 
-- `walletId`: The ID of the wallet from which the transaction originates.
-- `teeIdKeyIdPairs`: The ID of the keys used to sign the transaction and the ID of the TEEs that hold the keys.
-- `senderAddress`: The address on $C$ from which the transaction will be sent.
-- `recipientAddress`: The recipient address for the transaction on $C$.
-- `amount`: The amount of funds to be sent.
-- `fee`: The fee offered on chain $C$.
-- `paymentReference`: The payment reference on $C$.
-- `nonce`: The batch nonce, maintained per wallet.
-- `subNonce`: The global sequence number of payments.
-- `batchEndTs`: The batch end time, used if batch size is not reached.
+`claimBackAddress` may reclaim the prepaid TEE fee if the instructions are not executed.
+The call is payable; the message value funds the TEE-side execution.
 
-##  Batching and Transaction Settings
-Certain blockchains support issuing multiple payments in a single transaction.
-For PMWs issuing transactions on these blockchains, this is supported by the `TeePayments` contract.
-The process is known as *batching*.
-Batching is configured on a per-wallet basis by the wallet owner, alongside other relevant transaction settings.
-The following settings can be set:
+`pay` returns the assigned `(nonce, subNonce)`: `nonce` indexes the wallet's batches, `subNonce` the sequence of payments within (and across) batches.
 
-- `batchSize`: Sets the maximum amount of payments that can be issued in a single batched transaction.
-- `batchDurationSeconds`: Sets the maximum length of time, measured in seconds, for which transactions can be added to an open batch until no more transactions are included and the batched transactions are submitted.
--  `minFee`: Sets the minimal transaction fee required for payments from the wallet.
-- `senderAddress`: Sets the address from which payments will be made on the external chain.
-- `initialNonce`: Sets the starting nonce for wallet transactions.
+## Reissuing a Payment
 
-When batching is enabled, each time a user submits a payment and there is no batch open, a new batch is opened.
-All successive payment transactions are placed in the current batch until the batch size is reached or until the maximum batch duration has passed since the first transaction, whichever happens first.
-At this point, the batch is closed and the batched payments are issued by the `TeePayments` contract as an instruction and the process proceeds as usual.
+A stuck batch can be reissued with the same payment data but a different fee schedule:
 
-> **Note on Batches and Reward Epochs:** To prevent ambiguity in the use of signing policies, a batch started in one reward epoch that would otherwise extend into the next reward epoch is prematurely closed at the end of the current reward epoch.
-### Batching Example
-- A transaction $T_0$ arrives at time $t$ seconds while there is no open batch. The wallet settings are such that the maximum batch size is $S$ and batches are open for a maximum of $d$ seconds.
-- A batch $B = (\mathrm{T}_\mathrm{list}, t)$ is initialized, with the initial set of transactions set to $\mathrm{T}_\mathrm{list} = (T_0)$.
-- Until time $t + d$, each time a transaction $T_i$ arrives the set of transactions in $B$ is updated to $\mathrm{T}_\mathrm{list} = (T_0, \dots, T_i)$. Then, if the amount of transactions has reached the maximum batch size, $\vert \mathrm{T}_\mathrm{list} \vert =S$, the batch is closed and the batch of payment instructions is issued as an action instruction.
-- This process continues until time $t +d$, at which point the transactions $(T_0, \dots, T_i)$ in the batch are issued even if 
-$\vert \mathrm{T}_\mathrm{list} \vert  < S$.
+```solidity
+TeePayments.reissue(PMWMultisigAccount account, uint64 nonce, uint64 firstSubNonce,
+                    PaymentInstruction[] paymentInstructions,
+                    ReissueFeeParams reissueFeeParams,
+                    address claimBackAddress)
+```
 
-## Fee Scheduling
+The caller passes the original batch's `(nonce, firstSubNonce)` and the same set of payment instructions; `reissueFeeParams` provides a fresh fee schedule:
 
-The PMW payment structure supports progressive fee escalation.
-When a payment instruction is sent to a TEE machine, it includes a *fee schedule*.
-This schedule comprises a list of *fee entries*, with each entry specifying a fee factor and a time delay.
-The TEE machine signs transactions for all fee entries upfront, posting the results to the proxy progressively according to the delay schedule.
-Thus, if the first transaction is not confirmed on the external chain the higher-fee versions become available automatically.
+- `maxFeePerPayment`: replacement `maxFee` for each payment.
+- `factorsBIPSPerPayment`: per-payment fee-factor list in BIPS.
+- `delaysSeconds`: shared delay schedule (strictly ascending, in seconds from start).
 
-### Fee Schedule Format
+If `factorsBIPSPerPayment` is empty, the account's stored [fee schedule](#fee-schedules) (or the default) is used.
 
-The fee schedule is a binary-encoded byte array.
-Each entry $F = (f, t)$ consists of $4$ bytes, the first two of which describe the fee $f$ and the second the delay $t$:
+A negative factor value triggers [nullification](#nullification).
+
+## How Payment Instructions Reach TEE Machines
+
+For each `pay` (or `reissue`) call, `TeePayments`:
+
+1. Resolves the `walletId` from `(sourceId, accountAddress)`, calls `FlareTeeManager.receivingTeesAndKeys(walletId)` to obtain the `(teeId, keyId)` pairs that should sign the transaction, and resolves the effective fee schedule via the `TeePaymentsFeeScheduleManager`.
+2. Builds a [`PaymentInstructionMessage`](../../Types/Abi/Payment.md#paymentinstructionmessage), which encodes:
+   - `walletId`, `teeIdKeyIdPairs`.
+   - `sourceId`, `senderAddress`, `recipientAddress`, `tokenId`, `amount`, `maxFee`, `paymentReference`.
+   - `feeSchedule` (encoded; see [Fee Schedules](#fee-schedules)).
+   - `nonce`, `subNonce`, `batchEndTs`.
+3. Submits it as an [`F_XRP PAY`](Commands/Pay.md) (or [`F_XRP REISSUE`](Commands/Reissue.md)) instruction.
+4. Once the instruction is voted through, each target TEE machine signs the corresponding transaction(s) with its share of the wallet's key set; the signed transactions are then available from the [TEE proxy](../../Components/TeeProxy.md).
+
+## Batching
+
+Some chains (e.g. XRPL) allow several payments inside a single transaction.
+For these chains, `TeePayments` opens a batch on the first payment to a previously inactive wallet and accumulates further payments until either:
+
+- the batch reaches `batchSize` payments, or
+- `batchDurationSeconds` have elapsed since the first payment in the batch.
+
+Whichever happens first closes the batch and submits it as a single instruction.
+
+Batch settings are per `(walletId, account)`:
+
+```solidity
+TeePayments.setBatchSettings(PMWMultisigAccount account, uint64 batchSize, uint64 batchDurationSeconds)
+```
+
+emitting [`BatchSettingsSet`](../../Types/Abi/Events/TeePayments.md#batchsettingsset).
+
+> **Reward epochs:** a batch that would otherwise extend past the current reward epoch is closed at the epoch boundary to keep all payments under a single [signing policy](../../../FSP/SigningPolicy.md).
+
+### Example
+
+A wallet has `batchSize = S`, `batchDurationSeconds = d`, and no open batch.
+
+1. Payment $T_0$ arrives at time $t$. A batch is opened with $\mathrm{T}_\mathrm{list} = (T_0)$, `batchEndTs = t + d`.
+2. Each subsequent payment $T_i$ arriving before $t + d$ appends to $\mathrm{T}_\mathrm{list}$; once $|\mathrm{T}_\mathrm{list}| = S$, the batch closes and is submitted.
+3. If $|\mathrm{T}_\mathrm{list}| < S$ at $t + d$, the batch closes with whatever payments it has.
+
+## Fee Schedules
+
+When a payment instruction reaches a TEE machine it carries a _fee schedule_ — an ordered list of `(factor, delay)` entries.
+The TEE machine signs one transaction per entry up front and posts them to the [TEE proxy](../../Components/TeeProxy.md) on the delay schedule, so higher-fee versions become available automatically if earlier ones do not confirm.
+
+### Encoded Format
+
+The on-chain fee schedule is a `bytes` array with $4$ bytes per entry:
 
 | Bytes | Type | Description |
 |---|---|---|
 | $0$–$1$ | `int16` (big-endian) | Fee factor in BIPS ($-10000$ to $+10000$, non-zero). |
-| $2$–$3$ | `uint16` (big-endian) | Delay time in seconds. |
+| $2$–$3$ | `uint16` (big-endian) | Delay in seconds from the start of processing. |
 
-Note that the delay time is measured in seconds from the start of processing, and entries must have strictly ascending delays.
+Entries must have strictly ascending `delaySeconds`.
 
 ### Fee Calculation
 
-For each entry, the corresponding transaction fee ($\mathrm{fee}$) is computed as:
+For each entry the effective fee is:
 
-$$\mathrm{fee} = \dfrac{|f| \times \mathrm{maxFee}}{10000}$$
+$$\mathrm{fee} = \dfrac{|f| * \mathrm{maxFee}}{10000}$$
 
-where `maxFee` is the maximum fee specified in the payment instruction.
+where `maxFee` is the maximum fee from the payment instruction.
 
 ### Nullification
 
-A negative $f$ value triggers a nullification: the TEE signs an `AccountSet` transaction instead of a `Payment` transaction.
-This consumes the blockchain nonce without transferring funds.
-Nullification is used to cancel a stuck payment.
+A negative `factor` flips the entry to a nullification: the TEE signs an `AccountSet` transaction (consuming the chain nonce without transferring funds) instead of a `Payment`.
+Used to cancel a stuck payment.
 
-### Default Fee Schedule
+### Default Schedule
 
-If no custom fee schedule is set for an account, the default schedule is used:
-
-```
-0x27100000
-```
-
-This decodes to a single entry: $10000$ BIPS ($100\%$ of `maxFee`) at $0$ seconds delay.
+If no project- or account-level schedule is configured, the default is a single $10000$ BIPS ($100\%$ of `maxFee`) entry at $0$ s delay, encoded as `0x27100000`.
 
 ### Configuration
 
-The wallet owner can set a persistent fee schedule per project or per account by calling `TeePaymentsFeeScheduleManager.setProjectFeeSchedule()` or `TeePaymentsFeeScheduleManager.setAccountFeeSchedule()`, which take as input:
+Schedules are managed on the `TeePaymentsFeeScheduleManager` contract, with precedence `account override > project default > built-in default`:
 
-- The project ID (and account address, for the per-account variant).
-- `sourceId`: The source chain identifier.
-- `schedule`: An array of `FeeSchedule` entries specifying fee factors and delays.
+- `setProjectFeeSchedule(projectId, sourceId, schedule)` / `clearProjectFeeSchedule(projectId, sourceId)`: project-wide default for a source. Callable by the [project owner](../../../Terminology/Roles.md#project-owner). Emits [`ProjectFeeScheduleSet`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#projectfeescheduleset) / [`ProjectFeeScheduleCleared`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#projectfeeschedulecleared).
+- `setAccountFeeSchedule(account, schedule)` / `clearAccountFeeSchedule(account)`: per-account override. Callable by the account owner; the contract resolves the project from the account. Emits [`AccountFeeScheduleSet`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#accountfeescheduleset) / [`AccountFeeScheduleCleared`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#accountfeeschedulecleared).
 
-The schedule is stored on-chain and applied to all subsequent payment batches.
+Per-source limits (max schedule length, max delay) are configured by governance via `setFeeScheduleConfigs`; sources with no configuration accept only the trivial single-entry schedule.
 
-These functions emit [`ProjectFeeScheduleSet`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#projectfeescheduleset) or [`AccountFeeScheduleSet`](../../Types/Abi/Events/TeePaymentsFeeScheduleManager.md#accountfeescheduleset) respectively.
-
-### Reissue Override
-
-When reissuing a failed payment via `TeePayments.reissue()`, the caller can override the fee schedule using `ReissueFeeParams` in the form:
-
-- `maxFees`: New maximum fees, with one listed per instruction.
-- `feeFactorScheduleBIPS`: A new fee factor schedule, again listed per instruction.
-- `feeDelayScheduleSeconds`: A shared delay schedule across all instructions in the batch.
-
-If `feeFactorScheduleBIPS` is empty, the account's stored fee schedule (or the default) is used.
-
-## Reissuance and Nullification
-Although unlikely, payments issued by PMW addresses can fail.
-For example, payments may fail when the offered fee is too low or due to issues on the external chain.
-*Reissuance* and *nullification* processes are in place to handle these situations.
-
-A reissue transaction is issued by calling the function `reissue(data)` at the `teePayments` contract.
-The input parameters for this function can be found in the relevant [workflow](../../Workflows/XrpPayment.md)
-A nullification transaction be acheived with the same function by setting a negative fee as explained [above](#fee-scheduling).
-
-### Checking Transaction Status
-To help determine the possibility of unsuccessful payments, the [`PMWPaymentStatus`](../../Extensions/FDC2/AttestationTypes/PMWPaymentStatus.md) FDC2 attestation type verifies the status of a payment on an external chain.
-The response includes the transaction status (success or reverted), the received amount, the transaction fee, and the revert reason if applicable.
+`reissue` overrides the stored schedule via `ReissueFeeParams`; see [Reissuing a Payment](#reissuing-a-payment).
