@@ -15,7 +15,7 @@ Deletion removes private key material from the specified TEE but retains the key
 
 ## Steps
 
-### Step 1: Delete Key — `TeeWalletKeyManager.deleteKey()`
+### Step 1: Delete Key — `FlareTeeManager.deleteKey()`
 
 **Who can call:** [Project owner](../../Terminology/Roles.md#project-owner) only.
 
@@ -45,7 +45,7 @@ Deletion removes private key material from the specified TEE but retains the key
 
 ---
 
-### Step 2: Clean Up Stale TEE IDs — `TeeWalletKeyManager.cleanUpTeeIds()`
+### Step 2: Clean Up Stale TEE IDs — `FlareTeeManager.cleanUpTeeIds()`
 
 After deleting keys or decommissioning TEE machines, stale TEE IDs may remain in a key's TEE list.
 This step removes them.

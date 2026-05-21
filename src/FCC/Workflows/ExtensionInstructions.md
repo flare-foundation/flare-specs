@@ -17,7 +17,7 @@ This page focuses on the procedural flow rather than the internal implementation
 
 ### Step 1: Build and Submit the Extension Instruction
 
-The caller invokes the extension's instruction sender logic, which ultimately calls `TeeExtensionRegistry.sendInstructions()`.
+The caller invokes the extension's instruction sender logic, which ultimately calls `FlareTeeManager.sendInstructions()`.
 The instruction must define:
 
 - the target `teeIds`,

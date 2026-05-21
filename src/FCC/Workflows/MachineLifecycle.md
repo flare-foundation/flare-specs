@@ -51,7 +51,7 @@ For full status definitions, see the [Registration specification](../TeeManageme
 
 ## Prerequisites
 
-- The TEE machine must be registered on the `TeeMachineRegistry` smart contract.
+- The TEE machine must be registered on the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) contract.
 - For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [MachineRegistration.md](MachineRegistration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof and a supported code version.
 - The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
 - For proof-based operations, a valid [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) FDC2 proof is required (see [Fdc2Attestation.md](Fdc2Attestation.md)).
@@ -60,7 +60,7 @@ For full status definitions, see the [Registration specification](../TeeManageme
 
 ## Steps
 
-### Step 1: Pause with Proof -- `TeeMachineRegistry.pauseWithProof()`
+### Step 1: Pause with Proof -- `FlareTeeManager.pauseWithProof()`
 
 **Who can call:** Anyone.
 
@@ -87,10 +87,10 @@ For full status definitions, see the [Registration specification](../TeeManageme
 
 To obtain a non-availability proof and pause a machine:
 
-1. Call `TeeVerification.requestTeeAttestation(teeId, claimBackAddress)` to trigger a TEE attestation on the target machine.
+1. Call `FlareTeeManager.requestTeeAttestation(teeId, claimBackAddress)` to trigger a TEE attestation on the target machine.
 2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, instructionId, testOnTeeId, proofOwner, claimBackAddress)` to request an FDC2 availability check. Parse the [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event to obtain the `instructionId`.
 3. Poll `<proxyUrl>/action/result/<instructionId>` until the proof is available.
-4. Call `TeeMachineRegistry.pauseWithProof(proof)` with the retrieved proof.
+4. Call `FlareTeeManager.pauseWithProof(proof)` with the retrieved proof.
 
 **What happens automatically:**
 
@@ -98,7 +98,7 @@ The FDC2 verifier TEE challenges the target machine and determines its availabil
 
 ---
 
-### Step 2: Pause -- `TeeMachineRegistry.pause()`
+### Step 2: Pause -- `FlareTeeManager.pause()`
 
 The `pause()` function handles two distinct paths depending on the caller and conditions:
 
@@ -147,7 +147,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 
 ---
 
-### Step 4: Machine Settings Update -- `TeeMachineRegistry.updateTeeMachineSettings()`
+### Step 4: Machine Settings Update -- `FlareTeeManager.updateTeeMachineSettings()`
 
 **Who can call:** The machine owner.
 
@@ -173,7 +173,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 
 ---
 
-### Step 5: Machine Ownership Transfer -- `TeeMachineRegistry.proposeNewOwner()` and `TeeMachineRegistry.confirmOwnership()`
+### Step 5: Machine Ownership Transfer -- `FlareTeeManager.proposeNewOwner()` and `FlareTeeManager.confirmOwnership()`
 
 This is a two-step process to prevent accidental transfers.
 
@@ -189,7 +189,7 @@ This is a two-step process to prevent accidental transfers.
 **Requirements:**
 
 - The caller must be the current owner.
-- The `newOwner` must be allowlisted for the extension via the `TeeOwnerAllowlist` contract, or `address(0)` to cancel a pending proposal.
+- The `newOwner` must be allowlisted for the extension via the [owner allowlist](../TeeManagement/Registration.md#owner-allowlist), or `address(0)` to cancel a pending proposal.
 
 **What happens:**
 
@@ -224,11 +224,11 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 ---
 
-### Step 6: Periodic Availability Confirmation -- `TeeVerification.confirmAvailability()`
+### Step 6: Periodic Availability Confirmation -- `FlareTeeManager.confirmAvailability()`
 
 **Who can call:** Anyone.
 
-**Contract:** `TeeVerification` (not `TeeMachineRegistry`).
+**Contract:** [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) (the `confirmAvailability` entry point on the verification facet).
 
 **Parameters:**
 
@@ -243,7 +243,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **What happens:**
 
-1. The caller submits a [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine to the `TeeVerification` contract.
+1. The caller submits a [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine to [`FlareTeeManager.confirmAvailability`](../TeeManagement/Registration.md#management-calls).
 2. The contract validates the proof.
 3. The `availabilityCheckValidityEndTs` deadline is extended.
 4. The contract updates `lastSigningPolicyId` from the proof's response body.
@@ -251,11 +251,11 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **Events emitted:** [`AvailabilityCheckValidityExtended`](../Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended) (only if the deadline was extended).
 
-Note: When a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. The `confirmAvailability()` function on the `TeeVerification` contract must be called periodically before this deadline to maintain eligibility.
+Note: when a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. `confirmAvailability()` must be called periodically before that deadline to maintain eligibility — see [Availability Deadline](../TeeManagement/Registration.md#availability-deadline).
 
 ---
 
-### Step 7: Ban and Unban -- `TeeMachineRegistry.ban()` and `TeeMachineRegistry.unban()`
+### Step 7: Ban and Unban -- `FlareTeeManager.ban()` and `FlareTeeManager.unban()`
 
 ### Step 7a: Ban -- `ban()`
 

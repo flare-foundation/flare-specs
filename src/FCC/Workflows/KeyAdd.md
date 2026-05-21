@@ -15,7 +15,7 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 
 ## Steps
 
-### Step 1: Add Key — `TeeWalletKeyManager.addKey()`
+### Step 1: Add Key — `FlareTeeManager.addKey()`
 
 **Who can call:** [Project owner](../../Terminology/Roles.md#project-owner) only.
 
@@ -42,7 +42,7 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 
 ---
 
-### Step 2: Confirm Key — `TeeWalletKeyManager.confirmKey()`
+### Step 2: Confirm Key — `FlareTeeManager.confirmKey()`
 
 **Who can call:** Project owner only (for new keys).
 

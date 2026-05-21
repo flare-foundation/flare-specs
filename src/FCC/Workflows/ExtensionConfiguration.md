@@ -7,7 +7,7 @@ For background on the extension framework, see [Extensions](../Extensions/README
 
 ## Prerequisites
 
-- Deployed Flare TEE system contracts (`TeeExtensionRegistry`, `TeeOwnerAllowlist`, `TeeMachineRegistry`, `TeeWalletProjectManager`, `TeeWalletManager`, `TeeWalletKeyManager`)
+- Deployed Flare TEE system contracts: the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) diamond and the `TeePayments` family for PMW
 - A funded Ethereum account to submit transactions
 - A TEE node running inside a Confidential VM (or in local dev mode with `MODE=1`)
 - Access to the TEE node's Configuration API on port $5500$
@@ -22,11 +22,11 @@ For background on the extension framework, see [Extensions](../Extensions/README
 
 **What happens:**
 1. A new instruction sender contract is deployed on-chain.
-This contract is responsible for encoding and sending instructions to the TEE extension via `TeeExtensionRegistry.sendInstructions()`.
+This contract is responsible for encoding and sending instructions to the TEE extension via `FlareTeeManager.sendInstructions()`.
 2. The deployed contract address will be used as the `_teeExtensionInstructionsSender` parameter when registering the extension in the next step.
 
 The instruction sender contract does not need to implement any specific interface.
-It only needs to be the address registered for the extension and call `TeeExtensionRegistry.sendInstructions()` with the correct parameters.
+It only needs to be the address registered for the extension and call `FlareTeeManager.sendInstructions()` with the correct parameters.
 The contract's constructor and methods are entirely defined by the extension developer.
 
 **Events emitted:** None (contract deployment).
@@ -35,7 +35,7 @@ The contract's constructor and methods are entirely defined by the extension dev
 
 ---
 
-### Step 2: Register Extension -- `TeeExtensionRegistry.register()`
+### Step 2: Register Extension -- `FlareTeeManager.register()`
 
 **Who can call:** Any address (the caller becomes the extension owner)
 
@@ -61,7 +61,7 @@ The contract's constructor and methods are entirely defined by the extension dev
 
 ---
 
-### Step 3: Add TEE Code Version -- `TeeExtensionRegistry.addTeeVersion()`
+### Step 3: Add TEE Code Version -- `FlareTeeManager.addTeeVersion()`
 
 **Who can call:** Extension owner only
 
@@ -91,7 +91,7 @@ The contract's constructor and methods are entirely defined by the extension dev
 
 ---
 
-### Step 4: Configure Owner Allowlists -- `TeeOwnerAllowlist`
+### Step 4: Configure Owner Allowlists
 
 This step configures which addresses are permitted to register TEE machines and create wallet projects for this extension. Two separate allowlists must be configured.
 
@@ -109,7 +109,7 @@ This step configures which addresses are permitted to register TEE machines and 
 **What happens:**
 1. The specified addresses are added to the machine owner allowlist for this extension.
 2. Alternatively, `allowAllTeeMachineOwners()` opens registration to any address.
-3. Only allowlisted addresses can register TEE machines for this extension via `TeeMachineRegistry.register()`.
+3. Only allowlisted addresses can register TEE machines for this extension via `FlareTeeManager.register()`.
 
 **Events emitted:**
 - [`AllowedTeeMachineOwnersAdded`](../Types/Abi/Events/TeeOwnerAllowlist.md#allowedteemachineownersadded) -- when specific owners are added
@@ -128,14 +128,14 @@ This step configures which addresses are permitted to register TEE machines and 
 **What happens:**
 1. The specified addresses are added to the wallet project owner allowlist for this extension.
 2. Alternatively, `allowAllTeeWalletProjectOwners()` opens project creation to any address.
-3. Only allowlisted addresses can create wallet projects for this extension via `TeeWalletProjectManager.createProject()`.
+3. Only allowlisted addresses can create wallet projects for this extension via `FlareTeeManager.createProject()`.
 
 **Events emitted:**
 - [`AllowedTeeWalletProjectOwnersAdded`](../Types/Abi/Events/TeeOwnerAllowlist.md#allowedteewalletprojectownersadded) -- when specific owners are added
 
 ---
 
-### Step 5: Add Supported Key Types -- `TeeExtensionRegistry.addSupportedKeyTypes()`
+### Step 5: Add Supported Key Types -- `FlareTeeManager.addSupportedKeyTypes()`
 
 **Who can call:** Extension owner only
 

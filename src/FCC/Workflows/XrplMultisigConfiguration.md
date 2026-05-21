@@ -98,8 +98,8 @@ Submit an FDC2 attestation request to verify that the XRPL multisig account is c
 
 **What happens:**
 
-1. `TeeVerification.requestPMWMultisigAccountConfiguredAttestation()` is called on the Flare C-chain.
-2. The contract collects the wallet's public keys and multisig threshold from the `TeeWalletKeyManager`.
+1. `FlareTeeManager.requestPMWMultisigAccountConfiguredAttestation()` is called on the Flare C-chain.
+2. The contract collects the wallet's public keys and multisig threshold from `FlareTeeManager`.
 3. An FDC2 attestation request is formed and sent to TEE machines as an instruction.
 4. A [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event is emitted containing the `instructionId`.
 5. Off-chain, each TEE machine independently queries its own XRP node and verifies the account configuration (see [PMWMultisigAccountConfigured](../Extensions/FDC2/AttestationTypes/PMWMultisigAccountConfigured.md) for the full verification procedure).
@@ -131,7 +131,7 @@ Fetch the attestation proof from the TEE proxy and verify it on-chain.
    - `RequestBody` -- The original request (`accountAddress`, `publicKeys`, `threshold`).
    - `ResponseBody` -- The attestation result (`status`, `sequence`).
    - `Signatures` -- Signing policy signatures, TEE signatures, and cosigner signatures.
-3. The proof is verified on-chain via `TeeVerification.verifyPMWMultisigAccountConfiguredProof(walletId, proof)`.
+3. The proof is verified on-chain via `FlareTeeManager.verifyPMWMultisigAccountConfiguredProof(walletId, proof)`.
 4. If verification succeeds, the `sequence` number (XRPL account sequence) is extracted from the response body for use as the initial nonce.
 
 **Events emitted:** None (read-only verification call).

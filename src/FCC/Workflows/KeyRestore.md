@@ -22,7 +22,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 
 ## Steps
 
-### Step 1: Initiate Key Restoration — `TeeWalletBackupManager.backupRestore()`
+### Step 1: Initiate Key Restoration — `FlareTeeManager.backupRestore()`
 
 **Who can call:** Project owner or backup manager (`onlyOwnerOrBackupManager`).
 
@@ -84,7 +84,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 
 ---
 
-### Step 4: Confirm Restored Key — `TeeWalletKeyManager.confirmKey()`
+### Step 4: Confirm Restored Key — `FlareTeeManager.confirmKey()`
 
 **Who can call:** Project owner or backup manager.
 

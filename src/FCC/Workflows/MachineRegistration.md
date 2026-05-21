@@ -10,7 +10,7 @@ For canonical registration semantics, machine state, and ownership rules, see [R
 - **Extension registered** on-chain with a valid extension ID (see [ExtensionConfiguration.md](ExtensionConfiguration.md))
 - **TEE node running** inside a Google Cloud Confidential VM (MODE=0 for production, MODE=1 for local development)
 - **TEE proxy running** and reachable by the TEE node (requires `PRIVATE_KEY` env var)
-- **Smart contracts deployed** — `TeeMachineRegistry`, `TeeExtensionRegistry`, `TeeVerification`, and `Fdc2Hub` must be available on the target network
+- **Smart contracts deployed** — the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) diamond and `Fdc2Hub` must be available on the target network
 - **Funded owner account** — the Flare address that will own the TEE machine must have sufficient funds for transaction fees
 
 ---
@@ -156,7 +156,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 *Phase 3: On-Chain Registration*
 
-### Step 6: Register TEE Code Version (if new) — `TeeExtensionRegistry.addTeeVersion()`
+### Step 6: Register TEE Code Version (if new) — `FlareTeeManager.addTeeVersion()`
 
 **Who can call:** Extension owner only.
 
@@ -177,7 +177,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 **What happens:**
 
-1. The governance address calls `TeeExtensionRegistry.addTeeVersion()` with the code hash, platforms, governance hash, and version string.
+1. The governance address calls `FlareTeeManager.addTeeVersion()` with the code hash, platforms, governance hash, and version string.
 2. The registry stores the code version, making it a recognized version for the extension.
 3. TEE machines running this code version can now be registered.
 
@@ -185,7 +185,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 ---
 
-### Step 7: Register TEE Machine — `TeeMachineRegistry.register()`
+### Step 7: Register TEE Machine — `FlareTeeManager.register()`
 
 **Who can call:** Machine owner (the `initialOwner` address configured in Step 3)
 
@@ -210,7 +210,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 **What happens:**
 
 1. The contract verifies the signature proves the TEE machine consents to registration.
-2. A machine record is created in the `TeeMachineRegistry` with the provided data.
+2. A machine record is created on `FlareTeeManager` with the provided data.
 3. The machine status is set to `INITIALIZED`.
 4. `lastStatusChangeTs` is set to `block.timestamp`.
 5. A TEE attestation request is automatically triggered as part of registration.
@@ -221,7 +221,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 ---
 
-### Step 8: Request TEE Attestation — `TeeVerification.requestTeeAttestation()`
+### Step 8: Request TEE Attestation — `FlareTeeManager.requestTeeAttestation()`
 
 **Who can call:** Anyone.
 
@@ -247,7 +247,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 ---
 
-### Step 9: FDC2 Availability Check — `TeeVerification.requestAvailabilityCheckAttestation()`
+### Step 9: FDC2 Availability Check — `FlareTeeManager.requestAvailabilityCheckAttestation()`
 
 **Who can call:** Anyone.
 
@@ -280,7 +280,7 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2A
 
 ---
 
-### Step 10: Move to Production — `TeeMachineRegistry.toProduction()`
+### Step 10: Move to Production — `FlareTeeManager.toProduction()`
 
 **Who can call:** Machine owner (when `INITIALIZED` or `PAUSED`). Anyone (when `SUSPENDED`).
 
@@ -309,7 +309,7 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2A
 
 *Phase 4: Ongoing Operations*
 
-### Step 11: Periodic Availability Confirmation — `TeeVerification.confirmAvailability()`
+### Step 11: Periodic Availability Confirmation — `FlareTeeManager.confirmAvailability()`
 
 **Who can call:** Anyone
 

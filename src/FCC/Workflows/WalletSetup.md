@@ -17,7 +17,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ## Steps
 
-### Step 1: Create Project — `TeeWalletProjectManager.createProject()`
+### Step 1: Create Project — `FlareTeeManager.createProject()`
 
 **Who can call:** Must be allowlisted as a wallet [project owner](../../Terminology/Roles.md#project-owner) for the extension.
 
@@ -43,7 +43,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 2: Create Wallet — `TeeWalletManager.createWallet()`
+### Step 2: Create Wallet — `FlareTeeManager.createWallet()`
 
 **Who can call:** Project owner only
 
@@ -65,7 +65,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 3: Set Admins — `TeeWalletManager.setAdmins()`
+### Step 3: Set Admins — `FlareTeeManager.setAdmins()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -93,7 +93,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 4: Confirm Admins — `TeeWalletManager.confirmAdmin()`
+### Step 4: Confirm Admins — `FlareTeeManager.confirmAdmin()`
 
 **Who can call:** Each admin (must match one of the admin public keys set in Step 3)
 
@@ -115,7 +115,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 5: Set Cosigners (Optional) — `TeeWalletManager.setCosigners()`
+### Step 5: Set Cosigners (Optional) — `FlareTeeManager.setCosigners()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -142,7 +142,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 6: Confirm Cosigners — `TeeWalletManager.confirmCosigner()`
+### Step 6: Confirm Cosigners — `FlareTeeManager.confirmCosigner()`
 
 **Who can call:** Each cosigner (must match one of the cosigner addresses set in Step 5)
 
@@ -164,7 +164,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 7: Close Initialization — `TeeWalletManager.closeWalletInitialization()`
+### Step 7: Close Initialization — `FlareTeeManager.closeWalletInitialization()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -189,7 +189,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 8: Set Multisig Threshold — `TeeWalletKeyManager.setMultisigThreshold()`
+### Step 8: Set Multisig Threshold — `FlareTeeManager.setMultisigThreshold()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -212,7 +212,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 9: Add Key(s) — `TeeWalletKeyManager.addKey()`
+### Step 9: Add Key(s) — `FlareTeeManager.addKey()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -239,7 +239,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 10: Confirm Key — `TeeWalletKeyManager.confirmKey()`
+### Step 10: Confirm Key — `FlareTeeManager.confirmKey()`
 
 **Who can call:** Project owner only (for new keys). Project owner or backup manager (for restored keys).
 
@@ -269,7 +269,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ---
 
-### Step 11: Enable Wallet — `TeeWalletManager.enableWallet()`
+### Step 11: Enable Wallet — `FlareTeeManager.enableWallet()`
 
 **Who can call:** Project owner (wallet owner)
 
@@ -299,7 +299,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
   - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits [`NewOwnerProposed`](../Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed).
   - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits [`OwnershipConfirmed`](../Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).
 - **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits [`WalletPaused`](../Types/Abi/Events/TeeWalletManager.md#walletpaused). To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
-- **Setting default wallet — `TeeWalletProjectManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
-- **Setting backup manager — `TeeWalletProjectManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
+- **Setting default wallet — `FlareTeeManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
+- **Setting backup manager — `FlareTeeManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
 - **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../Operations/Commands/F_WALLET/KeyDelete.md) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted).
-- **Setting pausing addresses — `TeeWalletManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.
+- **Setting pausing addresses — `FlareTeeManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.

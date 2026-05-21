@@ -19,7 +19,7 @@ The same flow applies to [`TeeAvailabilityCheck`](../Extensions/FDC2/Attestation
 ### Step 1: Submit the Attestation Request
 
 Submit an attestation request as an [instruction](../Operations/Instructions.md) on the system extension.
-Depending on the attestation type, this is done either through a convenience contract such as `TeeVerification` or through `Fdc2Hub.requestAttestation()`.
+Depending on the attestation type, this is done either through a convenience contract such as the verification entry points on [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md), or directly through `Fdc2Hub.requestAttestation()`.
 The request body, source ID, threshold, proof owner, and target TEE list are defined by the owning FDC2 specification.
 
 ### Step 2: Providers Verify and Relay the Request
@@ -30,7 +30,7 @@ Each signer then prepares the instruction for the selected machines using the st
 - `additionalFixedMessage`: the ABI-encoded attestation response body.
 - `additionalVariableMessage`: the signer's signature over the attestation response hash.
 
-The signed instructions are relayed to the relevant TEE proxies.
+The signed instructions are relayed to the target TEE proxies.
 
 ### Step 3: TEEs Vote and Produce the Signed Response
 
