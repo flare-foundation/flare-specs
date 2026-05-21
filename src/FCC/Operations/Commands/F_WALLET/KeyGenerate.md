@@ -1,39 +1,27 @@
 # F_WALLET KEY_GENERATE
 
-## Description
-
-Triggers generation of a key on a TEE machine. Smart contracts ensure that an instruction for the combination of `(walletId, keyId)` appears in one instruction only.
+[Instruction action](../../Actions.md#instruction-actions) that generates a key on a TEE machine.
+The diamond ensures at most one `KEY_GENERATE` instruction is emitted per `(walletId, keyId)` pair.
 
 ## Event message
 
-The event message is formatted as the [`KeyGenerate`](../../../Types/Abi/Key.md#keygenerate) struct, which references [`KeyConfigConstants`](../../../Types/Abi/Key.md#keyconfigconstants) and [`PublicKey`](../../../Types/Abi/Common.md#publickey).
-
-## Fixed message
-
-/
-
-## Variable message
-
-/
-
-## Additional action data
-
-/
+[`KeyGenerate`](../../../Types/Abi/Key.md#keygenerate), referencing [`KeyConfigConstants`](../../../Types/Abi/Key.md#keyconfigconstants) and [`PublicKey`](../../../Types/Abi/Common.md#publickey).
 
 ## Action result
 
-- `keyExistence` — ABI encoded [`KeyExistence`](../../../Types/Abi/Key.md#keyexistence).
+[`SignedKeyExistenceProof`](../../../Types/Wire/Key.md#signedkeyexistenceproof) wrapping a [`KeyExistence`](../../../Types/Abi/Key.md#keyexistence) record.
 
-- `signature` — ECDSA [`Signature`](../../../Types/Abi/Common.md#signature) of the `keyExistence` hash by the TEE machine's identity key.
+## Validation
+
+The TEE machine rejects the instruction unless all of the following hold:
+
+- `teeId` matches the machine's own identity.
+- `adminsPublicKeys` is non-empty and contains no duplicate keys.
+- $0 < \mathrm{adminsThreshold} \leq \lvert \mathrm{adminsPublicKeys} \rvert$.
+- `cosigners` contains no duplicate addresses, and $\mathrm{cosignersThreshold} \leq \lvert \mathrm{cosigners} \rvert$.
+- `signingAlgo` is one of `keccak256-secp256k1-ecdsa`, `sha512half-secp256k1-ecdsa`, or `keccak256-secp256k1-vrf`.
+- No permanent record already exists for `(walletId, keyId)` on the machine.
 
 ## Notes
 
-- **Validation:** The TEE machine performs the following checks before generating a key:
-  - The `teeId` in the instruction must match the machine's own identity.
-  - The `adminsPublicKeys` list must be non-empty.
-  - The `adminsThreshold` must be non-zero and not exceed the number of admins.
-  - The `cosignersThreshold` must not exceed the number of cosigners.
-  - The `signingAlgo` must be a supported algorithm (`keccak256-secp256k1-ecdsa`, `sha512half-secp256k1-ecdsa`, or `keccak256-secp256k1-vrf`).
-  - The `(walletId, keyId)` pair must not already have a permanent record on the machine (prevents duplicate generation).
-- **Signature format:** The `signature` field in the action result is the raw ECDSA signature bytes. Smart contracts decompose this into the `(v, r, s)` components of the `Signature` struct for on-chain verification.
-- **Security considerations:** If data providers are malicious (50%+ attack), they can sign anything and send to any machine multiple times, which would result in generating different keys. From the smart contracts point of view, the first public key that gets confirmed (TeeKeyExistence attestation) on a key definition defines the validity of a key. Once a public key is set on a key definition, it cannot be changed.
+- On chain the first confirmed `KeyExistence` attestation fixes the key's public key; later attestations from other machines for the same `(walletId, keyId)` cannot change it. A malicious data provider majority that signs the same instruction to multiple machines can therefore cause different generated keys to attest, but only one survives on chain.

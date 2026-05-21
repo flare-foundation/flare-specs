@@ -1,45 +1,19 @@
 # F_POLICY UPDATE_POLICY
 
-## Description
-
-A direct action used to update the policy on the TEE machine. It is triggered by the TEE proxy, which obtains signed policies and signatures from the blockchain using the C-chain indexer.
+[Direct action](../../Actions.md#direct-actions) issued by the [TEE proxy](../../../Components/TeeProxy.md) when a new [signing policy](../../../../FSP/SigningPolicy.md) becomes active on the Flare C-chain.
+The proxy supplies the new policy together with enough signatures from the active policy's signers to authorize the rotation.
 
 ## Action message
 
-```go
-type UpdatePolicyRequest struct {
-    NewPolicy  MultiSignedPolicy // new policy with signatures
-    PublicKeys []PublicKey        // public keys corresponding to the signing policy
-                                 // addresses of data providers; order must match
-                                 // the order of signers
-}
-
-type MultiSignedPolicy struct {
-    PolicyBytes []byte   // bytes encoded signing policy as emitted in the
-                         // SigningPolicyInitialized event
-    Signatures  [][]byte // signatures of hash of signing policy; each formatted
-                         // as [R | S | V] where V is 0 or 1; accumulated weight
-                         // must reach threshold according to previous signing policy
-}
-
-type PublicKey struct {
-    X common.Hash `json:"x"`
-    Y common.Hash `json:"y"`
-}
-```
-
-## Fixed message
-
-/
-
-## Variable message
-
-/
-
-## Additional action data
-
-/
+[`UpdatePolicyRequest`](../../../Types/Wire/Policy.md#updatepolicyrequest).
 
 ## Action result
 
-/
+Empty.
+
+## Notes
+
+- The machine accepts the request only if `newPolicy.rewardEpochId == active.rewardEpochId + 1`.
+- The accumulated [signing](../../../../Utilities/Signing.md) weight of valid signatures on `keccak256(policyBytes)` must exceed the active policy's threshold; signers outside the active policy are ignored.
+- The supplied `publicKeys` must match the new policy's signer addresses one-for-one and in order.
+- A successful update triggers [`TEE_BACKUP`](../F_GET/TeeBackup.md) for every stored key, binding fresh backups to the new policy.

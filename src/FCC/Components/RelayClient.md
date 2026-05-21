@@ -12,7 +12,7 @@ It runs as either a _[data provider](../../Terminology/Roles.md#data-provider)_ 
    - _Cosigner_: accept only instructions whose [`cosigners` list](../Operations/Instructions.md#cosigners) includes the operator's address.
 3. For [augmented](../Operations/Instructions.md#augmentation) commands, run the per-command procedure:
    - [`F_FDC2 PROVE`](../Extensions/FDC2/Commands/Prove.md#augmentation-procedure)
-   - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md#augmentation-procedure)
+   - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md#augmentation)
 4. De-duplicate the event's `teeMachines` list and, for each remaining [`TeeMachine`](../Types/Abi/TeeMachine.md#teemachine) record, build one [`Instruction`](../Types/Wire/Instruction.md#instruction):
    - Copy from the event: `instructionId`, `rewardEpochId`, `opType`, `opCommand`, `cosigners`, `cosignersThreshold`, and the event's `message` (as `originalMessage`).
    - Set `timestamp` to the timestamp of the block that emitted the event.

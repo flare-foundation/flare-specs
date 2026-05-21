@@ -99,12 +99,10 @@ The last available attestation is updated through the [`TEE_INFO`](../Operations
 This is updated by the TEE proxy every $10$ seconds, which derives a challenge from the latest C-chain block hash and calls the action.
 
 ### Key Data Store
-The key data store stores the list of keys stored on the TEE for participation in the PMW protocol.
-This store is updated by calling the [`KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) action, which returns a list of `teeKeyExistenceProofs` from the TEE machine, proving the existence of each key.
-Each proof is packaged into a pair (`timestamp`, `proof`) containing the timestamp at the proxy for the most recent update and the proof of existence.
-The [`KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) action is called with a refresh period of approximately $60$ minutes.
-Key data is stored in-memory and refreshed on each sync cycle.
-Entries for deleted keys are cleared when absent from the TEE response.
+The key data store holds the list of keys stored on the TEE for participation in the PMW protocol.
+The proxy refreshes it on a $60$-minute cycle: it calls [`KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) to obtain each `(walletId, keyId, nonce)` triple on the TEE, then calls [`KEY_PROOF`](../Operations/Commands/F_GET/KeyProof.md) in batches to fetch signed existence proofs for any pair whose nonce is new or has changed since the last sync.
+Each entry is kept in-memory as a (`timestamp`, `proof`) pair containing the most recent proxy timestamp and the corresponding [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof).
+Entries for keys no longer present on the TEE are cleared on each sync.
 
 ## TEE Proxy APIs
 Each TEE proxy supports internal and external REST APIs. In a production deployment, the TEE machine and internal TEE proxy APIs are behind a firewall, while the external TEE proxy APIs are public.

@@ -1,30 +1,16 @@
 # F_REG TEE_ATTESTATION
 
-## Description
-
-Calculates TEE attestation for a given challenge and returns the attestation result. In terms of TEE machine processing it behaves exactly the same as the [TEE_INFO](../F_GET/TeeInfo.md) direct action.
+[Instruction action](../../Actions.md#instruction-actions) used during [registration](../../../TeeManagement/Registration.md): a [signer](../../Instructions.md#signers) submits a challenge through the [TEE proxy](../../../Components/TeeProxy.md) and the TEE machine returns the same attestation payload as a self-initiated [`TEE_INFO`](../F_GET/TeeInfo.md).
 
 ## Event message
 
-The instruction event is decoded into a [`TeeAttestation`](../../../Types/Abi/TeeMachine.md#teeattestation) struct wrapping the [`TeeMachineWithAttestationData`](../../../Types/Abi/TeeMachine.md#teemachinewithattestationdata) and challenge.
-
-## Fixed message
-
-/
-
-## Variable message
-
-/
-
-## Additional action data
-
-/
+The instruction's `originalMessage` decodes to [`TeeAttestation`](../../../Types/Abi/TeeMachine.md#teeattestation) (wrapping [`TeeMachineWithAttestationData`](../../../Types/Abi/TeeMachine.md#teemachinewithattestationdata) and a challenge).
 
 ## Action result
 
-TEE attestation response formatted as [`TeeInfoResponse`](../../../Types/Wire/TeeMachine.md#teeinforesponse).
-See [TEE_INFO](../F_GET/TeeInfo.md) for full field descriptions.
+[`TeeInfoResponse`](../../../Types/Wire/TeeMachine.md#teeinforesponse), constructed identically to [`TEE_INFO`](../F_GET/TeeInfo.md).
 
 ## Notes
 
-- **Submission tags:** The command only produces a result on the `Threshold` submission tag. On the `End` submission tag, no result is returned.
+- The machine rejects the request if `teeMachine.teeId` does not match its own identity, or if `challenge` is the zero hash.
+- A result is produced only on the `threshold` submission tag; the `end` action returns no payload.

@@ -1,58 +1,31 @@
 # F_WALLET VRF
 
-## Description
+[Instruction action](../../Actions.md#instruction-actions) that produces a verifiable randomness proof using a stored VRF key.
+The TEE machine loads the private key identified by `(walletId, keyId)` and computes an ECVRF proof over the supplied `nonce`.
 
-Generates a verifiable randomness proof using a VRF key. The TEE loads the private key identified by `(walletId, keyId)`, verifies that its signing algorithm is `keccak256-secp256k1-vrf`, and computes an ECVRF proof over the provided nonce. The witness points (`u`, `cGamma`, `v`, `zInv`) are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications in the EVM. The on-chain `VrfVerifier` contract verifies the proof using `ecrecover`.
-
-The final random value is derived as `keccak256(gamma_x || gamma_y)`, where `gamma_x` and `gamma_y` are 32-byte big-endian encodings of the gamma point coordinates.
+The on-chain `VrfVerifier` contract verifies the proof using `ecrecover`; the four witness points (`u`, `cGamma`, `v`, `zInv`) in the response are pre-computed off-chain to avoid expensive secp256k1 scalar multiplications inside the EVM.
+The final random value is $\mathrm{keccak256}(\gamma_x \,\|\, \gamma_y)$, where $\gamma_x, \gamma_y$ are 32-byte big-endian encodings of the `gamma` point coordinates.
 
 ## Event message
 
-The event message is formatted as the [`VrfInstructionMessage`](../../../Types/Abi/Key.md#vrfinstructionmessage) struct.
-
-## Fixed message
-
-/
-
-## Variable message
-
-/
-
-## Additional action data
-
-/
+[`VrfInstructionMessage`](../../../Types/Abi/Key.md#vrfinstructionmessage).
 
 ## Action result
 
-JSON-encoded response containing the wallet metadata, nonce, and VRF proof:
+JSON object:
 
-```json
-{
-    "walletId": "bytes32",
-    "keyId": "uint64",
-    "nonce": "bytes",
-    "proof": {
-        "gamma": { "x": "uint256", "y": "uint256" },
-        "c": "uint256",
-        "s": "uint256",
-        "u": { "x": "uint256", "y": "uint256" },
-        "cGamma": { "x": "uint256", "y": "uint256" },
-        "v": { "x": "uint256", "y": "uint256" },
-        "zInv": "uint256"
-    }
-}
-```
+- `walletId`, `keyId`, `nonce`: copied from the request.
+- `proof`: an object with the following fields ($G$ is the secp256k1 generator, $\mathrm{sk}$ the private key, $\mathrm{pk}$ the public key, $H = \mathrm{HashToCurve}(\mathrm{nonce})$, $N$ the curve order, $P$ the field prime):
+  - `gamma`: a curve point $\gamma = \mathrm{sk} * H$ (the VRF output).
+  - `c`: the challenge scalar.
+  - `s`: the response scalar, $s = k - \mathrm{sk} * c \mod N$.
+  - `u`: witness point $c * \mathrm{pk} + s * G$.
+  - `cGamma`: witness point $c * \gamma$.
+  - `v`: witness point $c * \gamma + s * H$.
+  - `zInv`: field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
 
-Where:
+## Validation
 
-- `gamma` -- A curve point $(\gamma_x, \gamma_y)$, the VRF output: $\gamma = \mathrm{sk} \cdot \mathrm{HashToCurve}(\mathrm{nonce})$.
-- `c` -- The challenge scalar.
-- `s` -- The response scalar: $s = k - \mathrm{sk} \cdot c \mod N$.
-- `u` -- Witness point $c \cdot \mathrm{pk} + s \cdot G$.
-- `cGamma` -- Witness point $c \cdot \gamma$.
-- `v` -- Witness point $c \cdot \gamma + s \cdot H$.
-- `zInv` -- Field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
-
-## Notes
-
-- **Validation:** The nonce must be non-empty; the processor rejects requests with an empty nonce. The key's signing algorithm must be `keccak256-secp256k1-vrf`; any other algorithm is rejected. If the specified `(walletId, keyId)` pair does not exist on the TEE machine, the request fails.
+- The `(walletId, keyId)` must identify a key stored on the machine.
+- That key's `signingAlgo` must be `keccak256-secp256k1-vrf`.
+- `nonce` must be non-empty.

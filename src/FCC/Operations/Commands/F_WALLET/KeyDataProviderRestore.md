@@ -1,72 +1,49 @@
 # F_WALLET KEY_DATA_PROVIDER_RESTORE
 
-## Description
+[Instruction action](../../Actions.md#instruction-actions) that restores a previously backed-up key onto a target TEE machine.
+Each [signer](../../Instructions.md#signers) ([data provider](../../../../Terminology/Roles.md#data-provider) and/or [key admin](../../../../Terminology/Roles.md#key-admin)) fetches the backup package, verifies it, and re-encrypts its [Shamir secret share](../../../TeeManagement/Keys.md#backup-procedure) under the target TEE's public key (see [Augmentation](#augmentation)).
+The TEE machine recovers the private key from these shares and returns a signed `KeyExistence` proof.
 
-Restores a previously backed-up key onto a target TEE machine.
-[Data providers](../../../../Terminology/Roles.md#data-provider) and [key admins](../../../../Terminology/Roles.md#key-admin) fetch the backup package, verify its consistency, and re-encrypt their shares with the target TEE's public key (see [Augmentation procedure](#augmentation-procedure) for the relay-client steps).
-The TEE machine reconstructs the private key from these shares and returns a signed `KeyExistence` proof.
+This is the proxy-level exception for [voting outcomes](../../Voting.md#outcomes): both the `threshold` and `end` actions are produced when the vote box closes, so the machine receives every share that arrived before close.
 
 ## Event message
 
-```solidity
-struct KeyDataProviderRestore {
-    PublicKey teePublicKey; // public key of the target TEE machine
-    BackupId backupId;      // backup identification data
-    string backupUrl;       // URL of the backup package
-    uint256 nonce;          // nonce for key operation
-}
+[`KeyDataProviderRestore`](../../../Types/Abi/Key.md#keydataproviderrestore), referencing [`BackupId`](../../../Types/Abi/Key.md#backupid) and [`PublicKey`](../../../Types/Abi/Common.md#publickey).
 
-struct BackupId {
-    address teeId;        // TEE machine id of the original key holder
-    bytes32 walletId;     // wallet id
-    uint64 keyId;         // key id
-    bytes32 keyType;      // key type of the wallet
-    bytes32 signingAlgo;  // hashing and signing algorithm of the key
-    bytes publicKey;      // public key of the private key being backed up
-    uint32 rewardEpochId; // signing policy used in the backup
-    bytes32 randomNonce;  // random nonce for uniqueness
-}
+## Augmentation
 
-struct PublicKey {
-    bytes32 x; // x coordinate of the public key
-    bytes32 y; // y coordinate of the public key
-}
-```
+During [backup](../../../TeeManagement/Keys.md#backup-procedure), each holder (data provider or admin) receives a _holder backup package_: its Shamir share of the original private key, ECIES-encrypted under its own public key.
+Before signing the instruction, the [relay client](../../../Components/RelayClient.md) re-encrypts that share for the target TEE:
 
-## Fixed message
+1. Fetch the backup package from `backupUrl`. The package is subject to a deployment-configured size limit; oversized responses or HTTP errors drop the instruction.
+2. Verify that the package's metadata matches every field of the instruction's [`BackupId`](../../../Types/Abi/Key.md#backupid); any mismatch drops the instruction.
+3. Verify that the target TEE machine (identified by the `BackupId.teeId` recipient address) is registered, currently attested, and not running banned code.
+4. Extract the holder backup package(s) addressed to the relay client's public key. The key may appear in the data-provider pool, the admin pool, or both; if in both, both packages are extracted. If in neither, the instruction is dropped.
+5. Decrypt each extracted share with the relay client's private key.
+6. Re-encrypt the share(s) under the target TEE's `teePublicKey` (from the instruction) using ECIES. When step 4 produced two shares, both are bundled into a single ciphertext.
+7. Place the [backup metadata](../../../TeeManagement/Keys.md#backup-data-and-metadata) into `additionalFixedMessage` and the ECIES ciphertext into `additionalVariableMessage`.
 
-- `backupMetadata` -- metadata obtained from backup package, if it matches `backupId`
-
-## Variable message
-
-- `encryptedShare` -- encrypted share with metadata
-
-## Augmentation procedure
-
-During the [backup procedure](../../../TeeManagement/Keys.md#backup-procedure), each data provider and key admin receives a _holder backup package_ — their [Shamir secret share](../../../TeeManagement/Keys.md#backup-procedure) of the backed-up private key, encrypted under the holder's public key using ECIES.
-
-Before signing the instruction, the [relay client](../../../Components/RelayClient.md) re-encrypts its share for the target TEE machine:
-
-1. Fetch the backup package from `backupUrl` in the instruction.
-   The package is subject to a size limit; if the response exceeds it or the server returns an error, the instruction is dropped.
-2. Validate that the package metadata matches all [`BackupId`](../../../Types/Abi/Key.md#backupid) fields. If any field does not match, the instruction is dropped.
-3. Verify that the target TEE machine (identified by `teeId`) is registered and currently attested, and that its code version is not banned.
-4. Extract the holder backup package(s) corresponding to the relay client's public key.
-   The key may be registered in the data provider pool, the key admin pool, or both; if it is in both, both packages are extracted.
-   If it is in neither, the instruction is dropped.
-5. Decrypt each extracted share using the relay client's private key.
-6. Re-encrypt the share(s) under the target TEE machine's public key ([`TeePublicKey`](../../../Types/Abi/Common.md#publickey) in the instruction) using ECIES.
-   If step 4 produced two shares (the both-pools case), they are bundled into a single ciphertext.
-7. Place the [backup metadata](../../../TeeManagement/Keys.md#backup-data-and-metadata) into `additionalFixedMessage`.
-8. Place the ECIES ciphertext into `additionalVariableMessage`.
-
-See [key restoration procedure](../../../TeeManagement/Keys.md#key-restoration-procedure) for the full process including TEE-side recovery.
-
-## Additional action data
-
-/
+For the full TEE-side recovery procedure, see [key restoration](../../../TeeManagement/Keys.md#key-restoration-procedure).
 
 ## Action result
 
-- `keyExistence` -- ABI encoded `KeyExistence` (see [KEY_GENERATE](KeyGenerate.md) for struct definition)
-- `signature` -- ECDSA signature of the `keyExistence` hash by the TEE machine's identity key (see [KEY_GENERATE](KeyGenerate.md) for `Signature` struct)
+[`SignedKeyExistenceProof`](../../../Types/Wire/Key.md#signedkeyexistenceproof) over a [`KeyExistence`](../../../Types/Abi/Key.md#keyexistence) record whose `restored` field is set.
+
+`additionalResultStatus` reports per-share processing errors (decryption, signature, duplicate-share, or backup-ID mismatch).
+
+## Validation
+
+The TEE machine rejects the instruction unless all of the following hold:
+
+- `teePublicKey` derives to the machine's own `teeId`.
+- The `BackupId`'s `signingAlgo` is one of `keccak256-secp256k1-ecdsa`, `sha512half-secp256k1-ecdsa`, or `keccak256-secp256k1-vrf`.
+- The `additionalFixedMessage` metadata's `WalletBackupID` matches the instruction's `BackupId`.
+- The metadata's admin public keys derive to distinct admin addresses (no duplicates).
+- The instruction's `cosigners` and `cosignersThreshold` agree with the admins and admin threshold recorded in the backup metadata.
+- Every [signer](../../Instructions.md#signers) is in either the data-provider pool of the signing policy at backup time or the admin pool from the metadata; the admin threshold is reached.
+- No active key for `(walletId, keyId)` is currently stored on the machine. If a nonce record from a previous lifecycle exists, the instruction's `nonce` must be strictly greater than the stored nonce.
+
+## Notes
+
+- The result is signed with the same `KeyExistence` format as [`KEY_GENERATE`](KeyGenerate.md), so on-chain `KeyExistence` attestations are interchangeable between fresh keys and restored ones.
+- On the `end` submission tag the machine re-checks that the wallet now exists and that its nonce matches the one consumed at `threshold`.

@@ -1,43 +1,16 @@
 # F_GET TEE_BACKUP
 
-## Description
+[Direct action](../../Actions.md#direct-actions) issued by the [TEE proxy](../../../Components/TeeProxy.md) to obtain a fresh backup of one stored key.
+The TEE machine constructs the backup from current state and the active [signing policy](../../../../FSP/SigningPolicy.md), signs it with its identity key, and returns it.
 
-Returns the latest backup package for a specific key. This is a direct action triggered by the proxy and does not need to provide any signatures. It is triggered as soon as [KEY_INFO](KeyInfo.md) results are available, for every key obtained by KEY_INFO.
+The proxy issues `TEE_BACKUP` when it first observes a key on the machine, and again for every stored key after a successful [`UPDATE_POLICY`](../F_POLICY/UpdatePolicy.md), to bind backups to the active signing policy's signer set and weights.
 
 ## Action message
 
-```json
-{
-    "walletId": "bytes32 -- wallet id",
-    "keyId": "uint64 -- key id"
-}
-```
-
-## Fixed message
-
-/
-
-## Variable message
-
-/
-
-## Additional action data
-
-/
+[`TeeBackupRequest`](../../../Types/Wire/Key.md#teebackuprequest).
 
 ## Action result
 
-```go
-type TEEBackupResponse struct {
-    BackupID     WalletBackupID // backup id structure
-    WalletBackup []byte         // JSON-encoded backup package containing the TEE signature
-}
-```
+[`TeeBackupResponse`](../../../Types/Wire/Key.md#teebackupresponse).
 
-The TEE signature over the backup hash is embedded inside the `WalletBackup` bytes, not as a top-level field.
-
-See [KEY_DATA_PROVIDER_RESTORE](../F_WALLET/KeyDataProviderRestore.md) for the `BackupId` struct definition.
-
-## Notes
-
-- **Proxy result hook:** Proxy stores backups per hash of backup ID and also stores a mapping from `(walletId, keyId)` to the latest backup ID hash.
+See [Key backup](../../../TeeManagement/Keys.md#backup-procedure) for the cryptographic construction of the backup package.

@@ -1,35 +1,26 @@
 # F_WALLET KEY_DELETE
 
-## Description
+[Instruction action](../../Actions.md#instruction-actions) that deletes a key from the TEE machine's wallet store, if present.
 
-Deletes the key from the machine state, if present.
+Every key that was ever stored on the machine retains a nonce record that survives deletion.
+A delete is valid if the nonce record exists and is strictly lower than the instruction's `nonce`; on success the key is removed (if present) and the nonce record is bumped to the instruction's `nonce`.
+If the key is no longer present but the nonce check passes, the action result carries an `additionalResultStatus` of `"key not stored"`.
 
-Any key that was ever in the machine state holds a nonce record. An action is valid if the nonce record for the key is present and is strictly lower than the action's nonce. A valid action deletes the key from the state, if present, and updates the nonce record. If the key is not present, only the nonce record is updated and the action result includes an `additionalResultStatus` of `"key not stored"`.
-
-Note that on the TEE machine the nonce related to `(walletId, keyId)` is kept and reused if later the same key gets restored to the TEE machine (or its upgrade).
+The retained nonce is reused if the same `(walletId, keyId)` is later restored via [`KEY_DATA_PROVIDER_RESTORE`](KeyDataProviderRestore.md).
 
 ## Event message
 
-The event message is formatted as the [`KeyDelete`](../../../Types/Abi/Key.md#keydelete) struct.
-
-## Fixed message
-
-/
-
-## Variable message
-
-/
-
-## Additional action data
-
-/
+[`KeyDelete`](../../../Types/Abi/Key.md#keydelete).
 
 ## Action result
 
-Marshalled [`KeyIDPair`](../../../Types/Wire/Key.md#keyidpair).
+JSON-encoded [`KeyIDPair`](../../../Types/Wire/Key.md#keyidpair) with the `(walletId, keyId)` of the deleted key.
 
-The result contains the `walletId` and `keyId` of the deleted key.
+## Validation
+
+- A nonce record must already exist for `(walletId, keyId)` (the key must have been previously generated or restored on this machine).
+- `nonce` must be strictly greater than the stored nonce.
 
 ## Notes
 
-- **End-of-voting verification:** On the `End` submission tag, the TEE verifies that the deletion was processed and the nonce was consumed, ensuring consistency between the threshold and end-of-voting results.
+- On the `end` submission tag the machine re-checks that the key is gone and that its nonce record has been consumed, ensuring the `threshold` and `end` views agree.
