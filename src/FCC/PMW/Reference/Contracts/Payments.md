@@ -1,10 +1,13 @@
-# TeePayments
+# Payments
 
-The `TeePayments` contract is the PMW-side on-chain hub.
-It receives payment requests from users on behalf of external-chain wallets managed by the [system extension](../../../FCE/System.md), routes them to the TEE machines that hold the wallet's keys via [`FlareTeeManager.sendInstructions`](../../../Reference/Contracts/FlareTeeManager.md#sending-instructions), and bundles them as [`F_XRP PAY`](../Operations/Pay.md) / [`F_XRP REISSUE`](../Operations/Reissue.md) instructions.
-Alongside the payment surface it manages multisig-account bookkeeping, fee schedules, payment limits, and the set of supported external chains.
+The PMW on-chain surface is a family of contracts on Flare:
 
-For the user-facing semantics — payment submission, batching, fee scheduling, reissue/nullification — see [PMW Transactions](../../Transactions.md). The PMW concepts (wallets, key set, multisig) live in [PMW Concepts](../../Concepts.md) and [Concepts/Wallets](../../../Concepts/Wallets.md).
+- `TeePayments` — the user-facing hub: receives payment requests and routes them to the TEE machines holding the wallet's keys via [`FlareTeeManager.sendInstructions`](../../../Reference/Contracts/FlareTeeManager.md#sending-instructions) as [`F_XRP PAY`](../Operations/Pay.md) / [`F_XRP REISSUE`](../Operations/Reissue.md) instructions. Owns multisig-account bookkeeping and batching.
+- `TeePaymentsFeeScheduleManager` — fee-schedule configuration at three precedence layers.
+- `TeePaymentsLimitsManager` — per-account transaction and daily volume caps.
+- `TeePaymentsRegistry` — registers the external chains the system supports.
+
+This page documents all four together, grouped by concern. For the user-facing semantics — payment submission, batching, fee scheduling, reissue/nullification — see [PMW Transactions](../../Transactions.md). The PMW concepts (wallets, key set, multisig) live in [PMW Concepts](../../Concepts.md) and [Concepts/Wallets](../../../Concepts/Wallets.md).
 
 ## Multisig Accounts
 
