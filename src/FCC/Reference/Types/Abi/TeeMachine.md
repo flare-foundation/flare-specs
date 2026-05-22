@@ -6,7 +6,7 @@ For the JSON wire types returned by TEE proxy APIs, see [TEE Machine (wire)](../
 ## TeeMachine
 
 Identifies a TEE machine and the location of its [TEE proxy](../../Components/Proxy.md).
-Carried in the [`TeeInstructionsSent`](Events/TeeExtensionRegistry.md#teeinstructionssent) event's `teeMachines` field; one record per destination machine.
+Carried in the [`TeeInstructionsSent`](../../Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event's `teeMachines` field; one record per destination machine.
 
 
 ```json

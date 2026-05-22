@@ -45,7 +45,7 @@ This workflow describes sending XRP payments from a TEE-managed Protocol Managed
 1. The `TeePayments` contract calls `receivingTeesAndKeys(walletId)` on [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) to retrieve the list of TEE machines and key IDs.
 2. The contract forms a [`PAY`](../Reference/Operations/Pay.md) instruction and submits it via `FlareTeeManager.sendInstructions()`.
 
-**Events emitted:** [`TeeInstructionsSent`](../../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
 
 ---
 

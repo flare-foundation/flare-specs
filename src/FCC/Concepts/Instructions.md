@@ -28,7 +28,7 @@ A weighted majority of malicious data providers could strip these fields and byp
 ## Sending Instructions
 
 1. A [user](../../Terminology/Roles.md#user) issues an instruction by calling an [_instructions sender_](../FCE/Concepts.md#extension-data-structure) contract.
-2. The instructions sender calls the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md#sending-instructions), which emits a [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event listing one or more destination TEE machines.
+2. The instructions sender calls the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md#sending-instructions), which emits a [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event listing one or more destination TEE machines.
 3. Signers observe the event; each runs a relay client that submits a separately signed instruction to every destination machine's TEE proxy.
 4. Once [voting](Voting.md#pass-conditions) collects enough signed copies, the proxy bundles the instruction with its signatures into an [action](Actions.md) for the destination TEE machine.
 

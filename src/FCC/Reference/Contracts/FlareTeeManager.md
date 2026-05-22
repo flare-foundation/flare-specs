@@ -19,11 +19,11 @@ Each concern is implemented as an independent facet:
 - `VrfFacet`, `SystemStateVerifierFacet`, `ReplicationFacet`: VRF, state verification, and replication.
 - `DiamondGovernanceFacet`, `OwnerAllowlistFacet`, `ExternalAddressesFacet`: governance and external-address plumbing.
 
-Event signatures are listed under [`Types/Abi/Events/`](../Types/Abi/Events).
+Event signatures are listed in [Events](FlareTeeManagerEvents.md).
 
 ## Sending Instructions
 
-`InstructionsFacet` exposes two entry points that emit a [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event after caller validation, payload validation, and fee collection:
+`InstructionsFacet` exposes two entry points that emit a [`TeeInstructionsSent`](FlareTeeManagerEvents.md#teeinstructionssent) event after caller validation, payload validation, and fee collection:
 
 - `sendInstructions(teeIds, instructionParams)`.
 - `sendSystemInstructions(instructionId, teeMachines | teeIds, instructionParams)`: lets a system instructions sender supply an explicit `instructionId`.
@@ -57,7 +57,7 @@ The library further enforces:
 
 ### Event Field Origins
 
-Fields of the emitted [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event:
+Fields of the emitted [`TeeInstructionsSent`](FlareTeeManagerEvents.md#teeinstructionssent) event:
 
 | Field | Origin |
 |---|---|
@@ -138,7 +138,7 @@ All calls live on the diamond:
 
 Once registered, a `teeId` belongs to its owner permanently; ownership changes only through `proposeNewOwner` / `confirmOwnership`, which prevents re-registration under a different owner.
 
-Status transitions emit `TeeMachineStatusChanged` ([events doc](../Types/Abi/Events/TeeMachineRegistry.md)).
+Status transitions emit `TeeMachineStatusChanged` ([events doc](FlareTeeManagerEvents.md)).
 
 ## Project Management
 
@@ -161,7 +161,7 @@ Project record:
 
 Both owner roles are gated against the FCE's [owner allowlist](#owner-allowlist) at every state-changing call.
 
-Events: [`ProjectCreated`](../Types/Abi/Events/TeeWalletProjectManager.md#projectcreated), [`BackupManagerSet`](../Types/Abi/Events/TeeWalletProjectManager.md#backupmanagerset), [`NewOwnerProposed`](../Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed), [`OwnershipConfirmed`](../Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).
+Events: [`ProjectCreated`](FlareTeeManagerEvents.md#projectcreated), [`BackupManagerSet`](FlareTeeManagerEvents.md#backupmanagerset), [`NewOwnerProposed`](FlareTeeManagerEvents.md#newownerproposed), [`OwnershipConfirmed`](FlareTeeManagerEvents.md#ownershipconfirmed).
 
 ## Wallet Management
 
@@ -192,7 +192,7 @@ Status transitions and the call that triggers each (project owner only):
 3. `PRODUCTION → PAUSED` — `pauseWallet`.
 4. `PAUSED → PRODUCTION` — `enableWallet` (no multisig recheck).
 
-Events: [`WalletCreated`](../Types/Abi/Events/TeeWalletManager.md#walletcreated), [`WalletAdminsSet`](../Types/Abi/Events/TeeWalletManager.md#walletadminsset), [`WalletAdminConfirmed`](../Types/Abi/Events/TeeWalletManager.md#walletadminconfirmed), [`WalletCosignersSet`](../Types/Abi/Events/TeeWalletManager.md#walletcosignersset), [`WalletCosignerConfirmed`](../Types/Abi/Events/TeeWalletManager.md#walletcosignerconfirmed), [`WalletInitialized`](../Types/Abi/Events/TeeWalletManager.md#walletinitialized), [`WalletEnabled`](../Types/Abi/Events/TeeWalletManager.md#walletenabled), [`WalletPaused`](../Types/Abi/Events/TeeWalletManager.md#walletpaused).
+Events: [`WalletCreated`](FlareTeeManagerEvents.md#walletcreated), [`WalletAdminsSet`](FlareTeeManagerEvents.md#walletadminsset), [`WalletAdminConfirmed`](FlareTeeManagerEvents.md#walletadminconfirmed), [`WalletCosignersSet`](FlareTeeManagerEvents.md#walletcosignersset), [`WalletCosignerConfirmed`](FlareTeeManagerEvents.md#walletcosignerconfirmed), [`WalletInitialized`](FlareTeeManagerEvents.md#walletinitialized), [`WalletEnabled`](FlareTeeManagerEvents.md#walletenabled), [`WalletPaused`](FlareTeeManagerEvents.md#walletpaused).
 
 ### Pausing Keys at the TEE
 

@@ -80,7 +80,7 @@ Batch settings are per `(walletId, account)`:
 TeePayments.setBatchSettings(PMWMultisigAccount account, uint64 batchSize, uint64 batchDurationSeconds)
 ```
 
-emitting [`BatchSettingsSet`](../Reference/Types/Abi/Events/TeePayments.md#batchsettingsset).
+emitting [`BatchSettingsSet`](Reference/Contracts/Payments.md#batchsettingsset).
 
 > **Reward epochs:** a batch that would otherwise extend past the current reward epoch is closed at the epoch boundary to keep all payments under a single [signing policy](../../FSP/SigningPolicy.md).
 
@@ -129,8 +129,8 @@ If no project- or account-level schedule is configured, the default is a single 
 
 Schedules are managed on the `TeePaymentsFeeScheduleManager` contract, with precedence `account override > project default > built-in default`:
 
-- `setProjectFeeSchedule(projectId, sourceId, schedule)` / `clearProjectFeeSchedule(projectId, sourceId)`: project-wide default for a source. Callable by the [project owner](../../Terminology/Roles.md#project-owner). Emits [`ProjectFeeScheduleSet`](../Reference/Types/Abi/Events/TeePaymentsFeeScheduleManager.md#projectfeescheduleset) / [`ProjectFeeScheduleCleared`](../Reference/Types/Abi/Events/TeePaymentsFeeScheduleManager.md#projectfeeschedulecleared).
-- `setAccountFeeSchedule(account, schedule)` / `clearAccountFeeSchedule(account)`: per-account override. Callable by the account owner; the contract resolves the project from the account. Emits [`AccountFeeScheduleSet`](../Reference/Types/Abi/Events/TeePaymentsFeeScheduleManager.md#accountfeescheduleset) / [`AccountFeeScheduleCleared`](../Reference/Types/Abi/Events/TeePaymentsFeeScheduleManager.md#accountfeeschedulecleared).
+- `setProjectFeeSchedule(projectId, sourceId, schedule)` / `clearProjectFeeSchedule(projectId, sourceId)`: project-wide default for a source. Callable by the [project owner](../../Terminology/Roles.md#project-owner). Emits [`ProjectFeeScheduleSet`](Reference/Contracts/Payments.md#projectfeescheduleset) / [`ProjectFeeScheduleCleared`](Reference/Contracts/Payments.md#projectfeeschedulecleared).
+- `setAccountFeeSchedule(account, schedule)` / `clearAccountFeeSchedule(account)`: per-account override. Callable by the account owner; the contract resolves the project from the account. Emits [`AccountFeeScheduleSet`](Reference/Contracts/Payments.md#accountfeescheduleset) / [`AccountFeeScheduleCleared`](Reference/Contracts/Payments.md#accountfeeschedulecleared).
 
 Per-source limits (max schedule length, max delay) are configured by governance via `setFeeScheduleConfigs`; sources with no configuration accept only the trivial single-entry schedule.
 

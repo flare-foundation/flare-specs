@@ -37,7 +37,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 2. The caller (`msg.sender`) is set as the project owner.
 3. The `extensionId`, `keyType`, and `signingAlgo` are stored and are *immutable* after creation.
 
-**Events emitted:** [`ProjectCreated`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#projectcreated)
+**Events emitted:** [`ProjectCreated`](../Reference/Contracts/FlareTeeManagerEvents.md#projectcreated)
 
 > **Optional:** After creation, the project owner can set a backup manager via `setBackupManager(projectId, address)`.
 
@@ -61,7 +61,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 `Status: --> CREATED`
 
-**Events emitted:** [`WalletCreated`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcreated)
+**Events emitted:** [`WalletCreated`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcreated)
 
 ---
 
@@ -89,7 +89,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 > **Note:** Can be called multiple times while in `CREATED` status. Each call replaces the previous admin set.
 
-**Events emitted:** [`WalletAdminsSet`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletadminsset)
+**Events emitted:** [`WalletAdminsSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletadminsset)
 
 ---
 
@@ -111,7 +111,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 > **Note:** All admins must confirm before wallet initialization can be closed (Step 7).
 
-**Events emitted:** [`WalletAdminConfirmed`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletadminconfirmed)
+**Events emitted:** [`WalletAdminConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletadminconfirmed)
 
 ---
 
@@ -138,7 +138,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 > **Note:** Can be updated while in `CREATED` status, but once initialization is closed (Step 7), cosigners become **immutable**. The TEE machines store cosigner information as metadata alongside wallet keys to enforce cosigning requirements.
 
-**Events emitted:** [`WalletCosignersSet`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcosignersset)
+**Events emitted:** [`WalletCosignersSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcosignersset)
 
 ---
 
@@ -160,7 +160,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 > **Note:** All cosigners must confirm before wallet initialization can be closed (Step 7).
 
-**Events emitted:** [`WalletCosignerConfirmed`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcosignerconfirmed)
+**Events emitted:** [`WalletCosignerConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcosignerconfirmed)
 
 ---
 
@@ -185,7 +185,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 `Status: CREATED --> INITIALIZED`
 
-**Events emitted:** [`WalletInitialized`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletinitialized)
+**Events emitted:** [`WalletInitialized`](../Reference/Contracts/FlareTeeManagerEvents.md#walletinitialized)
 
 ---
 
@@ -208,7 +208,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 > **Note:** Can be updated while in `INITIALIZED` status (before enabling the wallet).
 
-**Events emitted:** [`WalletMultisigThresholdSet`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletmultisigthresholdset)
+**Events emitted:** [`WalletMultisigThresholdSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletmultisigthresholdset)
 
 ---
 
@@ -235,7 +235,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 5. This step can be repeated multiple times to add keys on different TEE machines (each gets a unique `keyId`).
 
-**Events emitted:** [`WalletKeyAdded`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeyadded), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`WalletKeyAdded`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyadded), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
 
 ---
 
@@ -265,7 +265,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
    - Verifies the public key matches the previously stored value.
    - Adds the `teeId` to the existing key's TEE list.
 
-**Events emitted:** [`WalletKeyConfirmed`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeyconfirmed)
+**Events emitted:** [`WalletKeyConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyconfirmed)
 
 ---
 
@@ -288,7 +288,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 `Status: INITIALIZED --> PRODUCTION` (or `PAUSED --> PRODUCTION`)
 
-**Events emitted:** [`WalletEnabled`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletenabled)
+**Events emitted:** [`WalletEnabled`](../Reference/Contracts/FlareTeeManagerEvents.md#walletenabled)
 
 ---
 
@@ -296,10 +296,10 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wa
 
 - **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Wallets specification](../Concepts/Wallets.md).
 - **Project ownership transfer — `proposeNewOwner()` + `confirmOwnership()`:** Project ownership transfer is a two-step process to ensure security and proper authorization.
-  - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits [`NewOwnerProposed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed).
-  - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits [`OwnershipConfirmed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).
-- **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits [`WalletPaused`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletpaused). To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
+  - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits [`NewOwnerProposed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed).
+  - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits [`OwnershipConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#ownershipconfirmed).
+- **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits [`WalletPaused`](../Reference/Contracts/FlareTeeManagerEvents.md#walletpaused). To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
 - **Setting default wallet — `FlareTeeManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
 - **Setting backup manager — `FlareTeeManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
-- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../Reference/Operations/F_WALLET.md#key_delete) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted).
+- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../Reference/Operations/F_WALLET.md#key_delete) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeydeleted).
 - **Setting pausing addresses — `FlareTeeManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.

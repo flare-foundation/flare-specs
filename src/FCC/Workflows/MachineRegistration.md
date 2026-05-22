@@ -181,7 +181,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 2. The registry stores the code version, making it a recognized version for the extension.
 3. TEE machines running this code version can now be registered.
 
-**Events emitted:** [`TeeVersionAdded`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeversionadded)
+**Events emitted:** [`TeeVersionAdded`](../Reference/Contracts/FlareTeeManagerEvents.md#teeversionadded)
 
 ---
 
@@ -217,7 +217,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 `Status: --> INITIALIZED`
 
-**Events emitted:** [`TeeMachineRegistered`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachineregistered), [`TeeAttestationRequested`](../Reference/Types/Abi/Events/TeeVerification.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`TeeMachineRegistered`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachineregistered), [`TeeAttestationRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
 
 ---
 
@@ -243,7 +243,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 > **Note:** In practice, this step is typically combined with registration (Step 7) — calling `register()` automatically triggers the attestation request. The standalone `requestTeeAttestation()` is available for cases where attestation must be re-requested separately.
 
-**Events emitted:** [`TeeAttestationRequested`](../Reference/Types/Abi/Events/TeeVerification.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`TeeAttestationRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
 
 ---
 
@@ -276,7 +276,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 For more details on the FDC2 attestation process, see [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md).
 
-**Events emitted:** [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) (FDC2 instruction)
+**Events emitted:** [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) (FDC2 instruction)
 
 ---
 
@@ -303,7 +303,7 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](../FD
 
 `Status: INITIALIZED/PAUSED/SUSPENDED --> PRODUCTION`
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged), [`AvailabilityCheckValidityExtended`](../Reference/Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended)
+**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged), [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended)
 
 ---
 
@@ -331,4 +331,4 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](../FD
 
 For more details on the machine lifecycle after production, see [MachineLifecycle.md](MachineLifecycle.md).
 
-**Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended)
+**Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended)

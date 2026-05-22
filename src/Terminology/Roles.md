@@ -47,8 +47,8 @@ It is distinct from the per-extension [governance signers](#governance-signer) t
 ## Governance Signer
 
 A *governance signer* is an address registered on-chain as part of a per-extension governance set.
-The extension owner configures the set of signers and a threshold by calling [`setNewTeeGovernance`](../FCC/Reference/Types/Abi/Events/TeeGovernance.md#newgovernanceset).
-Governance signers approve TEE upgrades by calling `signTeeUpgrade`; the contract validates each signature against the governance set and threshold before marking the [upgrade as signed](../FCC/Reference/Types/Abi/Events/TeeUpgradeManager.md#teeupgradesigned).
+The extension owner configures the set of signers and a threshold by calling [`setNewTeeGovernance`](../FCC/Reference/Contracts/FlareTeeManagerEvents.md#newgovernanceset).
+Governance signers approve TEE upgrades by calling `signTeeUpgrade`; the contract validates each signature against the governance set and threshold before marking the [upgrade as signed](../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeupgradesigned).
 
 ## User
 

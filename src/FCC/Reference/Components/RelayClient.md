@@ -5,7 +5,7 @@ It runs as either a _[data provider](../../../Terminology/Roles.md#data-provider
 
 ## Relay Flow
 
-1. Observe [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) events from the [`FlareTeeManager`](../Contracts/FlareTeeManager.md) contract by polling an operator-run C-chain indexer database.
+1. Observe [`TeeInstructionsSent`](../Contracts/FlareTeeManagerEvents.md#teeinstructionssent) events from the [`FlareTeeManager`](../Contracts/FlareTeeManager.md) contract by polling an operator-run C-chain indexer database.
    Identically-named events from other contracts are ignored.
 2. Filter by mode:
    - _Data provider_: accept all instructions.

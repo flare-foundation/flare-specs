@@ -81,14 +81,14 @@ For full status definitions, see the [Registration specification](../Concepts/Ma
 3. The machine status changes to `SUSPENDED`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged)
+**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)
 
 **Procedure:**
 
 To obtain a non-availability proof and pause a machine:
 
 1. Call `FlareTeeManager.requestTeeAttestation(teeId, claimBackAddress)` to trigger a TEE attestation on the target machine.
-2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, instructionId, testOnTeeId, proofOwner, claimBackAddress)` to request an FDC2 availability check. Parse the [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event to obtain the `instructionId`.
+2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, instructionId, testOnTeeId, proofOwner, claimBackAddress)` to request an FDC2 availability check. Parse the [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event to obtain the `instructionId`.
 3. Poll `<proxyUrl>/action/result/<instructionId>` until the proof is available.
 4. Call `FlareTeeManager.pauseWithProof(proof)` with the retrieved proof.
 
@@ -131,7 +131,7 @@ The `pause()` function handles two distinct paths depending on the caller and co
 2. The machine is removed from the active pools.
 3. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged)
+**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)
 
 ---
 
@@ -169,7 +169,7 @@ Additionally, `pauseWithProof()` can be called by anyone with a valid non-availa
 2. If the machine is in `PRODUCTION` or `SUSPENDED` status, the status changes to `PAUSED`, the machine is removed from the active pools, and a new [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof is required to return to `PRODUCTION`.
 3. If the machine is in any other status (`INITIALIZED`, `PAUSED`), only the settings are updated — no status change occurs.
 
-**Events emitted:** [`TeeMachineSettingsUpdated`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinesettingsupdated), and [`TeeMachineStatusChanged`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged) if the machine was in `PRODUCTION` or `SUSPENDED` status.
+**Events emitted:** [`TeeMachineSettingsUpdated`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinesettingsupdated), and [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged) if the machine was in `PRODUCTION` or `SUSPENDED` status.
 
 ---
 
@@ -197,7 +197,7 @@ This is a two-step process to prevent accidental transfers.
 2. The proposed owner address is recorded on the contract.
 3. No status change occurs.
 
-**Events emitted:** [`NewOwnerProposed`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#newownerproposed)
+**Events emitted:** [`NewOwnerProposed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed)
 
 ### Step 5b: Confirm Ownership -- `confirmOwnership()`
 
@@ -218,7 +218,7 @@ This is a two-step process to prevent accidental transfers.
 2. The machine's `owner` field is updated to the new address.
 3. The previous owner loses all management rights.
 
-**Events emitted:** [`NewOwnerConfirmed`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#newownerconfirmed)
+**Events emitted:** [`NewOwnerConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerconfirmed)
 
 Note: A TEE id can only be transferred to a new owner through this ownership change process while registered. This prevents re-registration of the machine under other owners if it is temporarily unregistered.
 
@@ -249,7 +249,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 4. The contract updates `lastSigningPolicyId` from the proof's response body.
 5. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
 
-**Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended) (only if the deadline was extended).
+**Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended) (only if the deadline was extended).
 
 Note: when a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. `confirmAvailability()` must be called periodically before that deadline to maintain eligibility — see [Availability Deadline](../Concepts/Machines.md#availability-deadline).
 
@@ -277,7 +277,7 @@ Note: when a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 3. The machine is removed from the active pools, preventing it from being selected for any tasks.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged)
+**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)
 
 ### Step 7b: Unban -- `unban()`
 
@@ -299,4 +299,4 @@ Note: when a machine enters `PRODUCTION` via `toProduction(proof)`, it is consid
 3. A new [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof is required to return the machine to `PRODUCTION` via `toProduction(proof)`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged)
+**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)

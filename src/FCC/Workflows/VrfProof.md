@@ -37,7 +37,7 @@ A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, 
 - The key's signing algorithm must be `keccak256-secp256k1-vrf`.
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
-**Events emitted:** [`VrfRequested`](../Reference/Types/Abi/Events/TeeVrf.md#vrfrequested), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`VrfRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#vrfrequested), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
 
 ---
 

@@ -54,8 +54,8 @@ The contract's constructor and methods are entirely defined by the extension dev
 4. The extension is now registered but has no TEE machines, code versions, or key types associated with it yet.
 
 **Events emitted:**
-- [`TeeExtensionRegistered`](../../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeextensionregistered) -- confirms the extension was created with its assigned ID
-- [`TeeExtensionContractsSet`](../../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeextensioncontractsset) -- records the contract addresses
+- [`TeeExtensionRegistered`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensionregistered) -- confirms the extension was created with its assigned ID
+- [`TeeExtensionContractsSet`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensioncontractsset) -- records the contract addresses
 
 > **Note:** After registration, call `setExtensionId()` on the instruction sender contract so it can discover its extension ID from the registry.
 
@@ -87,7 +87,7 @@ The contract's constructor and methods are entirely defined by the extension dev
 3. TEE machines can now register with this code hash and platform combination.
 
 **Events emitted:**
-- [`TeeVersionAdded`](../../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeversionadded)
+- [`TeeVersionAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeversionadded)
 
 ---
 
@@ -112,7 +112,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. Only allowlisted addresses can register TEE machines for this extension via `FlareTeeManager.register()`.
 
 **Events emitted:**
-- [`AllowedTeeMachineOwnersAdded`](../../Reference/Types/Abi/Events/TeeOwnerAllowlist.md#allowedteemachineownersadded) -- when specific owners are added
+- [`AllowedTeeMachineOwnersAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#allowedteemachineownersadded) -- when specific owners are added
 
 ### Step 4b: [Project Owner](../../../Terminology/Roles.md#project-owner) Allowlist -- `addAllowedTeeWalletProjectOwners()` or `allowAllTeeWalletProjectOwners()`
 
@@ -131,7 +131,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. Only allowlisted addresses can create wallet projects for this extension via `FlareTeeManager.createProject()`.
 
 **Events emitted:**
-- [`AllowedTeeWalletProjectOwnersAdded`](../../Reference/Types/Abi/Events/TeeOwnerAllowlist.md#allowedteewalletprojectownersadded) -- when specific owners are added
+- [`AllowedTeeWalletProjectOwnersAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#allowedteewalletprojectownersadded) -- when specific owners are added
 
 ---
 
@@ -155,7 +155,7 @@ This step configures which addresses are permitted to register TEE machines and 
 3. The associated signing algorithms are determined by the system-level key type registration.
 
 **Events emitted:**
-- [`SupportedKeyTypesAdded`](../../Reference/Types/Abi/Events/TeeExtensionRegistry.md#supportedkeytypesadded)
+- [`SupportedKeyTypesAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#supportedkeytypesadded)
 
 ---
 
@@ -197,7 +197,7 @@ Before the TEE machine can be registered on-chain, it must be configured with th
 3. Ownership of the extension is transferred to the new address.
 4. The extension owner is typically a multisig governance account for production deployments.
 
-**Events emitted:** [`NewOwnerProposed`](../../Reference/Types/Abi/Events/TeeExtensionRegistry.md#newownerproposed) and [`NewOwnerConfirmed`](../../Reference/Types/Abi/Events/TeeExtensionRegistry.md#newownerconfirmed)
+**Events emitted:** [`NewOwnerProposed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed) and [`NewOwnerConfirmed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerconfirmed)
 
 ---
 

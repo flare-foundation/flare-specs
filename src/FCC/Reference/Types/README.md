@@ -71,7 +71,7 @@ Where a type appears in both contexts, the ABI page defines the canonical struct
 
 ### Events
 
-Smart contract events, organized by contract: [Events index](Abi/Events/README.md).
+Smart contract events, organized by contract: [Events index](../Contracts/FlareTeeManagerEvents.md).
 
 ## Wire Types
 

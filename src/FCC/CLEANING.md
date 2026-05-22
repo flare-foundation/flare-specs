@@ -77,32 +77,27 @@ Done:
 - [x] Relocate `Operations/{Instructions,Actions,Voting,Rewarding}.md` → `Concepts/`; delete the `Operations/` directory.
 - [x] Relocate `TeeManagement/FlareTeeManager.md` → `Reference/Contracts/FlareTeeManager.md`.
 - [x] Merge `TeeManagement/{State,Attestation,Registration}.md` → `Concepts/Machines.md`; relocate `Keys.md` → `Concepts/Keys.md`, `Wallets.md` → `Concepts/Wallets.md`; delete the `TeeManagement/` directory.
+- [x] Extract function signatures and reference content from `Concepts/{Machines,Wallets,Keys}.md` into `Reference/Contracts/FlareTeeManager.md`.
+- [x] Fold `Reference/Types/Abi/Events/Tee*.md` (13 files) → `Reference/Contracts/FlareTeeManagerEvents.md`; PMW payments events (4 files) → `PMW/Reference/Contracts/Payments.md`; delete the `Events/` directory.
 
 Remaining:
 
-1. Fold `Reference/Types/Abi/Events/Tee*.md` into the contract page that emits each event (mostly `Reference/Contracts/FlareTeeManager.md`; `Reference/Types/Abi/Events/TeePayments*.md` → `PMW/Reference/Contracts/Payments.md` (create); `TeeFdc2*` → `FDC2/Reference/Contracts/Fdc2Hub.md` (create)).
-2. Extract the management-call function signatures, status-enum tables, and wallet/key contract calls out of `Concepts/{Machines,Keys,Wallets}.md` into `Reference/Contracts/FlareTeeManager.md` (post-events-merge, since the events live there too).
-3. `FCE/` — populate `Reference/Api.md` for the TEE machine ↔ FCE HTTP contract.
-4. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
-5. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
+1. `FCE/` — populate `Reference/Api.md` for the TEE machine ↔ FCE HTTP contract.
+2. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
+3. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
+4. Create a proper contract spec for `PMW/Reference/Contracts/Payments.md` (currently events-only with a stub intro) and `FDC2/Reference/Contracts/Fdc2Hub.md`.
+5. `Reference/Contracts/VrfVerifier.md` — full content (currently a stub).
 
 ## Cross-cutting renames and fixes
 
 Apply as a batch once the prose passes are settled, since they touch many inbound links.
 
-#### Rename `TeeExtensionRegistry.md` → `FlareTeeManagerEvents.md`
+#### Done — events consolidated into `FlareTeeManagerEvents.md` and `PMW/Reference/Contracts/Payments.md`
 
-The contract emitting `TeeInstructionsSent`, `TeeExtensionRegistered`, `TeeExtensionContractsSet`, `NewOwnerProposed`, etc. is the `FlareTeeManager` diamond (`contracts/tee/diamond/FlareTeeManager.sol`); no contract named `TeeExtensionRegistry` exists in code.
-Relevant facets:
+The legacy event docs under `Reference/Types/Abi/Events/Tee*.md` (split per-facet/per-manager) all came from the `FlareTeeManager` diamond or from `TeePayments`. They've been folded into:
 
-- `InstructionsFacet` emits `TeeInstructionsSent` (`library/Instructions.sol:154`).
-- `ExtensionManagerFacet` handles extension registration.
-
-Rename `Reference/Types/Abi/Events/TeeExtensionRegistry.md` and update every inbound link across `Operations/`, `FCE/`, `PMW/`, `FDC2/`, `TeeManagement/`, `Workflows/`.
-Sweep other event-doc filenames in `Reference/Types/Abi/Events/` for similar contract-name mismatches.
-
-The contract spec lives at `TeeManagement/FlareTeeManager.md`.
-To avoid filename collision with that component spec, rename the events doc to `Reference/Types/Abi/Events/FlareTeeManagerEvents.md` (or similar disambiguating name) rather than plain `FlareTeeManager.md`.
+- `Reference/Contracts/FlareTeeManagerEvents.md` (13 source files; one H2 per concern).
+- `PMW/Reference/Contracts/Payments.md` (4 source files; needs a proper contract-spec intro on top).
 
 #### Replace wallet/project/key-manager contract names with `FlareTeeManager`
 

@@ -45,7 +45,7 @@ Key fields:
 - `thresholdBIPS`: data-provider voting threshold for this request, in basis points; must be at least $4000$ ($40\%$). The [TEE proxy](../Reference/Components/Proxy.md#signing-threshold-resolution) treats `0` as "use the signing policy default".
 - $\mathrm{TEE}_\mathrm{list} = (\text{numberOfTees}, \text{teeIds})$: target TEE machines (carried on the instruction event, not in the request body). `numberOfTees = 0` instructs `Fdc2Hub` to select a fixed number of machines at random from the registered set.
 
-`cosigners` and `cosignersThreshold` are passed at the `sendInstructions` call rather than in `Fdc2RequestHeader`, and the proxy extracts them from the [`TeeInstructionsSent` event](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) for the voting process.
+`cosigners` and `cosignersThreshold` are passed at the `sendInstructions` call rather than in `Fdc2RequestHeader`, and the proxy extracts them from the [`TeeInstructionsSent` event](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) for the voting process.
 
 ## Response Format
 
