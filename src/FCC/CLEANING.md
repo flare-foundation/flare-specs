@@ -79,14 +79,15 @@ Done:
 - [x] Merge `TeeManagement/{State,Attestation,Registration}.md` → `Concepts/Machines.md`; relocate `Keys.md` → `Concepts/Keys.md`, `Wallets.md` → `Concepts/Wallets.md`; delete the `TeeManagement/` directory.
 - [x] Extract function signatures and reference content from `Concepts/{Machines,Wallets,Keys}.md` into `Reference/Contracts/FlareTeeManager.md`.
 - [x] Fold `Reference/Types/Abi/Events/Tee*.md` (13 files) → `Reference/Contracts/FlareTeeManagerEvents.md`; PMW payments events (4 files) → `PMW/Reference/Contracts/Payments.md`; delete the `Events/` directory.
+- [x] Write `PMW/Reference/Contracts/Payments.md` (TeePayments contract surface + events, organised by area).
+- [x] Write `FCE/Reference/Api.md` (TEE machine ↔ FCE HTTP contract).
 
 Remaining:
 
-1. `FCE/` — populate `Reference/Api.md` for the TEE machine ↔ FCE HTTP contract.
-2. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
-3. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
-4. Create `FDC2/Reference/Contracts/Fdc2Hub.md` (the `Fdc2Hub` contract has no spec page yet).
-5. `Reference/Contracts/VrfVerifier.md` — full content (currently a stub).
+1. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
+2. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
+3. Create `FDC2/Reference/Contracts/Fdc2Hub.md` (the `Fdc2Hub` contract has no spec page yet).
+4. `Reference/Contracts/VrfVerifier.md` — full content (currently a stub).
 
 ## Cross-cutting renames and fixes
 
