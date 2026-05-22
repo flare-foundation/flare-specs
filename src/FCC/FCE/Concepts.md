@@ -1,6 +1,6 @@
 # Extension Concepts
 
-A _Flare Compute Extension_ (FCE) packages an application on [Flare Confidential Compute](../README.md): a set of supported code versions, a set of TEE machines registered to run them, and (for extensions whose machines custody long-lived signing keys) a pool of [projects, wallets, and keys](../TeeManagement/Wallets.md).
+A _Flare Compute Extension_ (FCE) packages an application on [Flare Confidential Compute](../README.md): a set of supported code versions, a set of TEE machines registered to run them, and (for extensions whose machines custody long-lived signing keys) a pool of [projects, wallets, and keys](../Concepts/Wallets.md).
 Each extension has a unique `extensionId`.
 Extension ID $0$ is reserved for the [system extension](System.md), which hosts FCC's PMW and FDC2 applications; custom extensions use IDs greater than $0$.
 
@@ -14,7 +14,7 @@ Each extension is identified by:
 - `stateVerifier`: The `ITeeExtensionStateVerifier` contract used for on-chain state verification.
 - `instructionsSender`: The contract permissioned to call `sendInstructions` on this extension. See [Instructions Senders](#instructions-senders).
 - `supportedCodeHashes`: The set of code hashes (Docker images) that registered [TEE machines](../Reference/Components/Machine.md) may run.
-- `supportedKeyTypes`: The set of [wallet key types](../TeeManagement/Keys.md#key-types) the extension permits (e.g. `EVM`, `XRP`).
+- `supportedKeyTypes`: The set of [wallet key types](../Concepts/Keys.md#key-types) the extension permits (e.g. `EVM`, `XRP`).
 
 The `(extensionId, instructionsSender, stateVerifier, supportedCodeHashes, supportedKeyTypes)` tuple is sufficient to operate an extension: registered TEE machines run one of the supported code versions and process [instructions](../Concepts/Instructions.md) routed through `sendInstructions`.
 
@@ -42,7 +42,7 @@ register(teeExtensionStateVerifier, teeExtensionInstructionsSender)
 
 on `FlareTeeManager`.
 The caller becomes the extension's `owner` (typically distinct from the instructions sender) and is assigned a fresh `extensionId`.
-[TEE machines are registered separately](../TeeManagement/Registration.md).
+[TEE machines are registered separately](../Concepts/Machines.md).
 
 Extensions may evolve over time, adding and disabling code versions through the [management calls](#management-calls).
 Each machine runs the extension's code against its own state — for the system extension's PMW, every machine holds different wallet keys.
@@ -69,5 +69,5 @@ Functions exposed by `FlareTeeManager` for managing extensions:
 ### Governance (system extension only)
 
 - `addSystemSupportedPlatforms(platforms)`: Adds TEE hardware platforms.
-- `addSystemSupportedKeyTypesAndSigningAlgos(keyTypes, signingAlgosByKeyType)`: Registers key types and matching [signing algorithms](../TeeManagement/Keys.md#signing-algorithms) for the system extension.
+- `addSystemSupportedKeyTypesAndSigningAlgos(keyTypes, signingAlgosByKeyType)`: Registers key types and matching [signing algorithms](../Concepts/Keys.md#signing-algorithms) for the system extension.
 - `registerSystemInstructionsSenders(instructionsSenders)`, `unregisterSystemInstructionsSenders(instructionsSenders)`: Manage the system-instructions-sender whitelist.

@@ -14,7 +14,7 @@ All state lives on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManage
 The data model is three nested levels:
 
 1. **Project** — the top-level grouping. Bound at creation to a single FCE (the `extensionId` is immutable and a project never spans extensions) and to one `(keyType, signingAlgo)` pair, so a project targets one external-chain family (e.g. XRPL keys, EVM keys). Owned by a single Flare address — the [project owner](../../Terminology/Roles.md#project-owner) — which is the only address allowed to add or configure wallets under it.
-2. **Wallet** — sits inside a project. Defines _who can authorize operations against the wallet's keys_: a set of admin public keys with a $k$-of-$n$ threshold for [backup operations](Keys.md#backup-procedure), and optionally a set of [cosigner](../Concepts/Instructions.md#cosigners) addresses with a threshold for transaction-level multisig. A wallet progresses through statuses (`CREATED` → `INITIALIZED` → `PRODUCTION`, with a `PAUSED` side state) before its keys can be used.
+2. **Wallet** — sits inside a project. Defines _who can authorize operations against the wallet's keys_: a set of admin public keys with a $k$-of-$n$ threshold for [backup operations](Keys.md#backup-procedure), and optionally a set of [cosigner](Instructions.md#cosigners) addresses with a threshold for transaction-level multisig. A wallet progresses through statuses (`CREATED` → `INITIALIZED` → `PRODUCTION`, with a `PAUSED` side state) before its keys can be used.
 3. **Wallet key** — a single private key, generated inside one or more TEE machines, confirmed on-chain via a [key existence proof](Keys.md#tee-key-existence-proof). A wallet's `multisigThreshold` sets how many distinct keys must sign for the wallet to authorize a transaction; combined with the per-chain native multisig (e.g. XRPL `SignerList`), this gives a $k$-of-$n$ split across TEE machines.
 
 The rest of this file describes each level in detail.
@@ -31,7 +31,7 @@ Project state:
 3. `keyType` and `signingAlgo`: The [key type and algorithm](Keys.md#signing-algorithms) shared by every wallet in the project; immutable, and constrained to the pairs the FCE supports.
 4. `backupManager`: An optional second address authorized to trigger [key restoration](Keys.md#key-restoration-procedure); set with `setBackupManager`.
 
-Both owner roles are gated against the FCE's [owner allowlist](Registration.md#owner-allowlist) at every state-changing call.
+Both owner roles are gated against the FCE's [owner allowlist](Machines.md#owner-allowlist) at every state-changing call.
 
 Lifecycle events: [`ProjectCreated`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#projectcreated), [`BackupManagerSet`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#backupmanagerset), [`NewOwnerProposed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed), [`OwnershipConfirmed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).
 
@@ -44,7 +44,7 @@ Wallet state:
 
 1. `projectId`: The parent project.
 2. `adminsPublicKeys` and `adminsThreshold`: The [key admin](../../Terminology/Roles.md#key-admin) public keys and the $k$-of-$n$ threshold over them; set with `setAdmins`, finalized at close.
-3. `cosigners` and `cosignersThreshold`: An optional [cosigner](../Concepts/Instructions.md#cosigners) address set and its threshold; set with `setCosigners`, finalized at close.
+3. `cosigners` and `cosignersThreshold`: An optional [cosigner](Instructions.md#cosigners) address set and its threshold; set with `setCosigners`, finalized at close.
 4. `multisigThreshold`: The minimum number of confirmed keys required to sign with the wallet; set with `setMultisigThreshold`.
 5. `status`: One of `CREATED`, `INITIALIZED`, `PRODUCTION`, `PAUSED`.
 

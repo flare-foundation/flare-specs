@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow describes creating a project, configuring a wallet, generating keys on TEE machines, and enabling the wallet for production use.
-For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManagement/Wallets.md) and [Key Management](../TeeManagement/Keys.md).
+For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wallets.md) and [Key Management](../Concepts/Keys.md).
 
 ## Prerequisites
 
@@ -294,7 +294,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 
 ## Notes
 
-- **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Wallets specification](../TeeManagement/Wallets.md).
+- **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Wallets specification](../Concepts/Wallets.md).
 - **Project ownership transfer — `proposeNewOwner()` + `confirmOwnership()`:** Project ownership transfer is a two-step process to ensure security and proper authorization.
   - *Step A — Propose new owner via `TeeWalletProjectManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits [`NewOwnerProposed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed).
   - *Step B — Confirm ownership via `TeeWalletProjectManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits [`OwnershipConfirmed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).

@@ -4,7 +4,7 @@
 
 This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
 The result can be verified on-chain by the `VrfVerifier` contract.
-For canonical VRF key semantics, see [Key Management](../TeeManagement/Keys.md) and the [`F_WALLET--VRF`](../Reference/Operations/F_WALLET.md#vrf) command reference.
+For canonical VRF key semantics, see [Key Management](../Concepts/Keys.md) and the [`F_WALLET--VRF`](../Reference/Operations/F_WALLET.md#vrf) command reference.
 
 ## Prerequisites
 

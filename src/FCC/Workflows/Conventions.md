@@ -72,7 +72,7 @@ Status transitions are denoted with arrows:
 
 ### Machine Statuses
 
-See the [Registration specification](../TeeManagement/Registration.md#statuses) for full status definitions (`INITIALIZED`, `PRODUCTION`, `SUSPENDED`, `PAUSED`, `BANNED`).
+See the [Registration specification](../Concepts/Machines.md#statuses) for full status definitions (`INITIALIZED`, `PRODUCTION`, `SUSPENDED`, `PAUSED`, `BANNED`).
 
 ### Wallet Statuses
 

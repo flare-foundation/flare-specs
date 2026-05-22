@@ -1,6 +1,6 @@
 # Key Types
 
-Types related to [key management](../../../TeeManagement/Keys.md) on TEE machines.
+Types related to [key management](../../../Concepts/Keys.md) on TEE machines.
 
 ## KeyGenerate
 

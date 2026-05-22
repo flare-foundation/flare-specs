@@ -1,6 +1,6 @@
 # FlareTeeManager
 
-The `FlareTeeManager` contract is the Flare-side hub of FCC: a [diamond](https://eips.ethereum.org/EIPS/eip-2535) contract whose facets manage [extensions](../../FCE/README.md), [TEE machines](../../TeeManagement/Registration.md), [instructions](../../Concepts/Instructions.md), wallets and keys, attestation verification, and governance.
+The `FlareTeeManager` contract is the Flare-side hub of FCC: a [diamond](https://eips.ethereum.org/EIPS/eip-2535) contract whose facets manage [extensions](../../FCE/README.md), [TEE machines](../../Concepts/Machines.md#registration), [instructions](../../Concepts/Instructions.md), wallets and keys, attestation verification, and governance.
 
 ## Facets
 

@@ -13,13 +13,13 @@ App-specific workflows live with their app:
 
 | Workflow | Description | Spec |
 |---|---|---|
-| [MachineRegistration](MachineRegistration.md) | Deploy a TEE machine from VM boot to `PRODUCTION`. | [Registration](../TeeManagement/Registration.md), [State](../TeeManagement/State.md), [Attestation](../TeeManagement/Attestation.md) |
-| [MachineLifecycle](MachineLifecycle.md) | Post-registration operations: pause, resume, upgrade, ownership transfer. | [Registration](../TeeManagement/Registration.md) |
-| [WalletSetup](WalletSetup.md) | Create a project and configure a wallet through `PRODUCTION`. | [Wallets](../TeeManagement/Wallets.md), [Keys](../TeeManagement/Keys.md) |
-| [KeyAdd](KeyAdd.md) | Add a new signing key to a TEE machine. | [Keys](../TeeManagement/Keys.md), [Wallets](../TeeManagement/Wallets.md) |
-| [KeyDelete](KeyDelete.md) | Delete a key from a TEE machine and clean up stale TEE IDs. | [Keys](../TeeManagement/Keys.md) |
-| [KeyRestore](KeyRestore.md) | Restore a key from backup onto a new TEE machine. | [Keys](../TeeManagement/Keys.md) |
-| [VrfProof](VrfProof.md) | Generate and verify a VRF proof from a TEE-managed VRF key. | [Keys](../TeeManagement/Keys.md), [`F_WALLET VRF`](../Reference/Operations/F_WALLET.md#vrf) |
+| [MachineRegistration](MachineRegistration.md) | Deploy a TEE machine from VM boot to `PRODUCTION`. | [Registration](../Concepts/Machines.md), [State](../Concepts/Machines.md), [Attestation](../Concepts/Machines.md) |
+| [MachineLifecycle](MachineLifecycle.md) | Post-registration operations: pause, resume, upgrade, ownership transfer. | [Registration](../Concepts/Machines.md) |
+| [WalletSetup](WalletSetup.md) | Create a project and configure a wallet through `PRODUCTION`. | [Wallets](../Concepts/Wallets.md), [Keys](../Concepts/Keys.md) |
+| [KeyAdd](KeyAdd.md) | Add a new signing key to a TEE machine. | [Keys](../Concepts/Keys.md), [Wallets](../Concepts/Wallets.md) |
+| [KeyDelete](KeyDelete.md) | Delete a key from a TEE machine and clean up stale TEE IDs. | [Keys](../Concepts/Keys.md) |
+| [KeyRestore](KeyRestore.md) | Restore a key from backup onto a new TEE machine. | [Keys](../Concepts/Keys.md) |
+| [VrfProof](VrfProof.md) | Generate and verify a VRF proof from a TEE-managed VRF key. | [Keys](../Concepts/Keys.md), [`F_WALLET VRF`](../Reference/Operations/F_WALLET.md#vrf) |
 | [MultiTeeOperations](MultiTeeOperations.md) | Deltas for running a wallet or application across multiple TEE machines. | All of the above |
 
 On-chain calls go through the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond or one of the PMW contracts (`TeePayments`, `TeePaymentsFeeScheduleManager`); only the [`Fdc2Hub`](../FDC2/README.md) and the off-chain TEE proxy sit outside the diamond.

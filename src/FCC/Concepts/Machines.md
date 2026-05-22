@@ -1,7 +1,68 @@
-# Registration and Lifecycle
+# Machines
 
-A TEE machine joins FCC by registering against an [extension](../FCE/README.md) on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract, then completing an [availability proof](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) before it can serve production traffic.
-This page covers the registration call, the [TEE ID](#tee-id-derivation) derivation, the [status lifecycle](#statuses), and the [management calls](#management-calls) available to TEE operators.
+A _TEE machine_ is one TEE-running node registered with FCC.
+Each machine is identified by a unique $\mathrm{TEE}_\mathrm{ID}$ — the address derived from its identity public key, generated inside the enclave at boot.
+Around that identity, the machine carries state that a fresh replica running the same code would not share by default: keys, signing policies, status, and any extension-defined state.
+
+This page covers identity, the state model, the attestation procedure, registration, the status lifecycle, and the management calls available to TEE operators.
+
+## Identity Key and Initial Identity
+
+The boot-time key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$ never leaves the enclave; $\mathrm{TEE}_\mathrm{ID}$ is the public key's Ethereum-style address.
+On Flare, $\mathrm{TEE}_\mathrm{pk}$ is represented as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
+
+Each machine also has an _initial identity_ $\mathrm{TEE}_\mathrm{ID}^*$.
+For a fresh registration $\mathrm{TEE}_\mathrm{ID}^* = \mathrm{TEE}_\mathrm{ID}$; for a [replica](#tee-state) taking over from a TEE with identity $\mathrm{TEE}_\mathrm{ID}^{\prime}$, $\mathrm{TEE}_\mathrm{ID}^* = \mathrm{TEE}_\mathrm{ID}^{\prime}$.
+Owners are recorded separately and updated via the [ownership transfer flow](#management-calls).
+
+## Signing Policy
+
+A TEE machine cannot accept signed instructions unless it knows the current [signing policy](../../FSP/SigningPolicy.md).
+The first signing policy is installed at registration time as part of the initial [attestation](#attestation); subsequent policies are pushed by the [TEE proxy](../Reference/Components/Proxy.md) via [`UPDATE_POLICY`](../Reference/Operations/F_POLICY.md#update_policy) at every reward-epoch boundary.
+
+## TEE State
+
+The TEE's state is the part of its content that a fresh replica running the same code would not share by default:
+
+- The identity key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$.
+- All [wallet keys](Keys.md) and key backups held for [PMW](../PMW/README.md) (or any other key-custody [FCE](../FCE/README.md)).
+- System state variables: initial and current signing policies, the machine's status, the configuration nonce, the pausing nonce.
+- Any [extension-defined state](../FCE/Concepts.md) added by the FCE the machine is registered to.
+
+On a [replication](../Reference/Operations/F_REG.md) upgrade, the essential state — the identity key pair, and all wallet keys and backups — is transferred to the new machine that takes over the identity.
+Machine-local nonces are not carried over.
+
+### Encoding
+
+State is serialized into the [`TeeState`](../Reference/Types/Abi/TeeMachine.md#teestate) struct used inside attestations.
+It has two parts:
+
+- **System state**: defined by Flare; covers FCC-framework state variables. Version-specific.
+- **Extension state**: defined by the FCE the machine is registered to; surfaced through the FCE's `/state` endpoint. Version-specific.
+
+Each version of `systemState` and `state` is keyed by a `bytes32` version hash (`systemStateVersion`, `stateVersion`).
+Version `0` (32-byte zero) encodes both bodies as empty `bytes`.
+
+## Attestation
+
+A TEE machine attests to elements of its [state](#tee-state) — identity key, signing policies, FCE state, timestamp — when challenged.
+The attestation chain ends in a signature produced by the TEE platform operator (Google for Intel TDX and AMD SEV), so the response format is platform-specific.
+
+### Challenge and Response
+
+A _challenger_ — any entity that wants to verify a machine's state — provides a $32$-byte challenge.
+The machine builds an [`Attestation`](../Reference/Types/Abi/TeeMachine.md#attestation) struct from the challenge and its own state:
+
+- `publicKey`: TEE identity public key.
+- `initialSigningPolicyId`, `lastSigningPolicyId`: first and most recent signing policies known to the machine.
+- `state`: ABI-encoded [`TeeState`](../Reference/Types/Abi/TeeMachine.md#teestate) at the moment of attestation.
+- `teeTimestamp`: local machine timestamp at attestation time.
+- `challenge`: the challenger's $32$-byte input.
+
+The machine ABI-encodes the struct, hashes it ($\mathrm{hash}(\mathrm{Attestation})$), and passes the digest to the platform operator's attestation service.
+The platform's signed response binds the digest to the hardware-attested boot state and is returned to the challenger.
+
+For the FDC2 attestation type that wraps this procedure into an on-chain proof, see [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
 
 ## Owner Allowlist
 
@@ -26,7 +87,7 @@ The TEE operator submits:
 register(teeMachineData, signature, teeProxyId, url, claimBackAddress)
 ```
 
-on `FlareTeeManager`.
+on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md).
 The call is payable; `msg.value` covers the TEE attestation request enqueued automatically as part of registration, and `claimBackAddress` may reclaim the fee if attestation fails.
 
 `teeMachineData` carries:
@@ -57,7 +118,7 @@ This binding is what makes the signature in `register` necessary: without it, a 
 `FlareTeeManager` stores per-machine state in a `TeeMachineState` record:
 
 - `extensionId`, `owner`, `teeProxyId`, `url`.
-- `teePublicKey`, `initialTeeId` (used during [replication](State.md#tee-state)), `initialSigningPolicyId`.
+- `teePublicKey`, `initialTeeId` (used during [replication](#tee-state)), `initialSigningPolicyId`.
 - `codeHash`, `platform`.
 - `status`, `lastStatusChangeTs`.
 
@@ -88,7 +149,7 @@ Operators must refresh availability before expiry to avoid downtime.
 
 ## Management Calls
 
-All calls live on the `FlareTeeManager` diamond:
+All calls live on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond:
 
 - `register(teeMachineData, signature, teeProxyId, url, claimBackAddress)`: see [Registration](#registration).
 - `toProduction(proof)`: moves a machine to `PRODUCTION` given a valid availability proof. Owner-callable from `INITIALIZED` or `PAUSED`; anyone-callable from `SUSPENDED`.

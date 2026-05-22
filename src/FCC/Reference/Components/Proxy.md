@@ -7,7 +7,7 @@ Each TEE machine has exactly one TEE proxy; together they form a registered FCC 
 ## Proxy Identity
 
 Each proxy holds an identity key pair generated at deployment.
-The public part — $\mathrm{Proxy}_\mathrm{ID}$ — is registered on Flare against the machine's `teeId` at [registration](../../TeeManagement/Registration.md), and the proxy uses the private part to sign its receipts and action responses.
+The public part — $\mathrm{Proxy}_\mathrm{ID}$ — is registered on Flare against the machine's `teeId` at [registration](../../Concepts/Machines.md), and the proxy uses the private part to sign its receipts and action responses.
 
 Both proxy and machine are owned by the same operator.
 To prevent the operator from silently dropping requests at the proxy layer, every external-write API returns a receipt signed by the TEE machine itself.
@@ -18,7 +18,7 @@ Until a caller holds that receipt, it has no guarantee that the proxy forwarded 
 The proxy keeps its paired TEE machine in sync with the current [signing policy](../../../FSP/SigningPolicy.md):
 
 - On initialization, it installs the current policy on the machine via [`INITIALIZE_POLICY`](../Operations/F_POLICY.md#initialize_policy).
-   The initial [attestation](../../TeeManagement/Attestation.md) lets data providers verify that the correct policy was installed.
+   The initial [attestation](../../Concepts/Machines.md) lets data providers verify that the correct policy was installed.
 - During operation, the proxy reads new policies from a C-chain indexer and pushes them via [`UPDATE_POLICY`](../Operations/F_POLICY.md#update_policy) as a [direct action](../../Concepts/Actions.md#direct-actions).
 
 ## Proxy-Issued Direct Actions

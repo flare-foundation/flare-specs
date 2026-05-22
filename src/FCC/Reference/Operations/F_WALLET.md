@@ -51,7 +51,7 @@ The retained nonce is reused if the same `(walletId, keyId)` is later restored v
 ## KEY_DATA_PROVIDER_RESTORE
 
 Restores a previously backed-up key onto a target TEE machine.
-Each [signer](../../Concepts/Instructions.md#signers) ([data provider](../../../Terminology/Roles.md#data-provider) and/or [key admin](../../../Terminology/Roles.md#key-admin)) fetches the backup package, verifies it, and re-encrypts its [Shamir secret share](../../TeeManagement/Keys.md#backup-procedure) under the target TEE's public key (see [Augmentation](#augmentation)).
+Each [signer](../../Concepts/Instructions.md#signers) ([data provider](../../../Terminology/Roles.md#data-provider) and/or [key admin](../../../Terminology/Roles.md#key-admin)) fetches the backup package, verifies it, and re-encrypts its [Shamir secret share](../../Concepts/Keys.md#backup-procedure) under the target TEE's public key (see [Augmentation](#augmentation)).
 The TEE machine recovers the private key from these shares and returns a signed `KeyExistence` proof.
 
 This is the proxy-level exception for [voting outcomes](../../Concepts/Voting.md#outcomes): both the `threshold` and `end` actions are produced when the vote box closes, so the machine receives every share that arrived before close.
@@ -60,7 +60,7 @@ This is the proxy-level exception for [voting outcomes](../../Concepts/Voting.md
 
 ### Augmentation
 
-During [backup](../../TeeManagement/Keys.md#backup-procedure), each holder (data provider or admin) receives a _holder backup package_: its Shamir share of the original private key, ECIES-encrypted under its own public key.
+During [backup](../../Concepts/Keys.md#backup-procedure), each holder (data provider or admin) receives a _holder backup package_: its Shamir share of the original private key, ECIES-encrypted under its own public key.
 Before signing the instruction, the [relay client](../Components/RelayClient.md) re-encrypts that share for the target TEE:
 
 1. Fetch the backup package from `backupUrl`. The instruction is dropped if the fetch fails.
@@ -69,9 +69,9 @@ Before signing the instruction, the [relay client](../Components/RelayClient.md)
 4. Extract the holder backup package(s) addressed to the relay client's public key. The key may appear in the data-provider pool, the admin pool, or both; if in both, both packages are extracted. If in neither, the instruction is dropped.
 5. Decrypt each extracted share with the relay client's private key.
 6. Re-encrypt the share(s) under the target TEE's `teePublicKey` (from the instruction) using ECIES. When step 4 produced two shares, both are bundled into a single ciphertext.
-7. Place the [backup metadata](../../TeeManagement/Keys.md#backup-data-and-metadata) into `additionalFixedMessage` and the ECIES ciphertext into `additionalVariableMessage`.
+7. Place the [backup metadata](../../Concepts/Keys.md#backup-data-and-metadata) into `additionalFixedMessage` and the ECIES ciphertext into `additionalVariableMessage`.
 
-For the full TEE-side recovery procedure, see [key restoration](../../TeeManagement/Keys.md#key-restoration-procedure).
+For the full TEE-side recovery procedure, see [key restoration](../../Concepts/Keys.md#key-restoration-procedure).
 
 ### Action result
 

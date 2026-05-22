@@ -24,17 +24,17 @@ Delegators share in the [rewards](../FSP/Rewarding.md) earned by the data provid
 
 A *TEE operator* is the party that deploys and maintains one or more TEE machines and their associated [TEE proxies](../FCC/Reference/Components/Proxy.md).
 A TEE operator need not be a data provider.
-TEE operators register their machines on-chain through the [registration](../FCC/TeeManagement/Registration.md) process; registration requires being on the extension's [owner allowlist](../FCC/TeeManagement/Registration.md#owner-allowlist).
+TEE operators register their machines on-chain through the [registration](../FCC/Concepts/Machines.md) process; registration requires being on the extension's [owner allowlist](../FCC/Concepts/Machines.md#owner-allowlist).
 
 ## Project Owner
 
-A *project owner* is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/TeeManagement/Wallets.md).
+A *project owner* is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/Concepts/Wallets.md).
 The project owner controls wallet creation, key management, and configuration for the project's wallets.
 
 ## Key Admin
 
-A *key admin* is one of a set of addresses associated with a wallet whose public keys are used for encrypting [Shamir secret shares](../FCC/TeeManagement/Keys.md#backup-procedure) during key backup.
-Key admins participate in [key restoration](../FCC/TeeManagement/Keys.md#key-restoration-procedure) by decrypting and re-submitting their shares.
+A *key admin* is one of a set of addresses associated with a wallet whose public keys are used for encrypting [Shamir secret shares](../FCC/Concepts/Keys.md#backup-procedure) during key backup.
+Key admins participate in [key restoration](../FCC/Concepts/Keys.md#key-restoration-procedure) by decrypting and re-submitting their shares.
 Operations requiring admin approval use a $k$-of-$n$ threshold over the admin public keys.
 
 ## Governance

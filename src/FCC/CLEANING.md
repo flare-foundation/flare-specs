@@ -76,11 +76,12 @@ Done:
 
 - [x] Relocate `Operations/{Instructions,Actions,Voting,Rewarding}.md` → `Concepts/`; delete the `Operations/` directory.
 - [x] Relocate `TeeManagement/FlareTeeManager.md` → `Reference/Contracts/FlareTeeManager.md`.
+- [x] Merge `TeeManagement/{State,Attestation,Registration}.md` → `Concepts/Machines.md`; relocate `Keys.md` → `Concepts/Keys.md`, `Wallets.md` → `Concepts/Wallets.md`; delete the `TeeManagement/` directory.
 
 Remaining:
 
-1. Dissolve `TeeManagement/{Attestation,Registration,State,Wallets,Keys}.md`: concept content → `Concepts/{Machines,Keys,Wallets}.md`; reference content (functions, statuses, validation) into `Reference/Contracts/FlareTeeManager.md`.
-2. Fold `Reference/Types/Abi/Events/Tee*.md` into the contract page that emits each event (mostly `Reference/Contracts/FlareTeeManager.md`; `Reference/Types/Abi/Events/TeePayments*.md` → `PMW/Reference/Contracts/Payments.md` (create); `TeeFdc2*` → `FDC2/Reference/Contracts/Fdc2Hub.md` (create)).
+1. Fold `Reference/Types/Abi/Events/Tee*.md` into the contract page that emits each event (mostly `Reference/Contracts/FlareTeeManager.md`; `Reference/Types/Abi/Events/TeePayments*.md` → `PMW/Reference/Contracts/Payments.md` (create); `TeeFdc2*` → `FDC2/Reference/Contracts/Fdc2Hub.md` (create)).
+2. Extract the management-call function signatures, status-enum tables, and wallet/key contract calls out of `Concepts/{Machines,Keys,Wallets}.md` into `Reference/Contracts/FlareTeeManager.md` (post-events-merge, since the events live there too).
 3. `FCE/` — populate `Reference/Api.md` for the TEE machine ↔ FCE HTTP contract.
 4. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
 5. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.

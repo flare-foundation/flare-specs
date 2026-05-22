@@ -14,8 +14,8 @@ The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only b
 
 | Operation Type | Description |
 |---|---|
-| `F_REG`    | TEE machine [registration and attestation](../TeeManagement/Registration.md). |
-| `F_WALLET` | Wallet [key management](../TeeManagement/Keys.md) (generate, delete, restore, VRF). |
+| `F_REG`    | TEE machine [registration and attestation](../Concepts/Machines.md). |
+| `F_WALLET` | Wallet [key management](../Concepts/Keys.md) (generate, delete, restore, VRF). |
 | `F_GET`    | TEE proxy queries (key info, key proof, TEE info, backup). |
 | `F_POLICY` | [Signing policy](../../FSP/SigningPolicy.md) initialization and updates. |
 | `F_XRP`    | XRP payment and reissue operations. |

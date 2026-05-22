@@ -7,7 +7,7 @@ Wallet keys live inside [TEE machines](../Reference/Components/Machine.md) regis
 
 A PMW wallet corresponds to an address $W_C$ on an external blockchain $C$.
 Its keys are held in TEE machines registered to the system extension, and the [project owner](../../Terminology/Roles.md#project-owner) submits transactions on $C$ by issuing instructions on Flare.
-For the on-chain data model — projects, wallets, admins, cosigners, multisig thresholds, and the wallet lifecycle — see [Wallets](../TeeManagement/Wallets.md).
+For the on-chain data model — projects, wallets, admins, cosigners, multisig thresholds, and the wallet lifecycle — see [Wallets](../Concepts/Wallets.md).
 
 ## Submitting Transactions
 
@@ -23,7 +23,7 @@ See [Payments](Transactions.md) for the on-chain `pay` and `reissue` calls, [bat
 ## Key Management and Backups
 
 Wallet private keys never leave the TEEs' secure memory: transactions are sent to the TEEs to be signed, and PMW security follows from the combination of the TEE machines and the system-extension [voting process](../Concepts/Voting.md).
-To prevent keys from being lost when a TEE is paused, banned, or permanently disabled, keys are [backed up](../TeeManagement/Keys.md#key-backup) using a two-layer secret-sharing scheme, with shares distributed to data providers and [key admins](../../Terminology/Roles.md#key-admin) so that secrets are recoverable only under the configured threshold.
+To prevent keys from being lost when a TEE is paused, banned, or permanently disabled, keys are [backed up](../Concepts/Keys.md#key-backup) using a two-layer secret-sharing scheme, with shares distributed to data providers and [key admins](../../Terminology/Roles.md#key-admin) so that secrets are recoverable only under the configured threshold.
 TEE machines additionally serve [`SignedKeyExistenceProof`](../Reference/Types/Wire/Key.md#signedkeyexistenceproof) values that confirm the corresponding private keys still exist on the machine.
 
 ## Functionality

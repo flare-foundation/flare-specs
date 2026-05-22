@@ -4,7 +4,7 @@ A _TEE machine_ is a confidential-compute environment that runs an [FCE](../../F
 Each machine has a unique identity key pair generated inside the enclave at boot; the public part — its $\mathrm{TEE}_{\mathrm{ID}}$ — is the machine's on-chain address.
 Every machine is paired one-to-one with a [TEE proxy](Proxy.md) that owns its public-facing endpoint, queues work for it, and stores its results.
 
-A TEE machine is admitted to an FCE through [registration](../../TeeManagement/Registration.md), which binds its $\mathrm{TEE}_{\mathrm{ID}}$ to an extension and to a supported code version.
+A TEE machine is admitted to an FCE through [registration](../../Concepts/Machines.md), which binds its $\mathrm{TEE}_{\mathrm{ID}}$ to an extension and to a supported code version.
 Once in `PRODUCTION` status, the machine repeatedly processes [actions](../../Concepts/Actions.md) until it is paused, replaced, or banned.
 
 ## Action Processing
@@ -31,7 +31,7 @@ Before executing an instruction action, the TEE machine verifies:
 
 To mitigate the [`cosigners`/`cosignersThreshold` strip threat](../../Concepts/Instructions.md#cosigners):
 
-- **System actions that consume a [wallet key](../../TeeManagement/Keys.md#wallet-private-key-data-structure)** compare the instruction's `cosigners`/`cosignersThreshold` against the values stored with that key (set at [key generation](../Operations/F_WALLET.md#key_generate), not modifiable after); a mismatch rejects the action.
+- **System actions that consume a [wallet key](../../Concepts/Keys.md#wallet-private-key-data-structure)** compare the instruction's `cosigners`/`cosignersThreshold` against the values stored with that key (set at [key generation](../Operations/F_WALLET.md#key_generate), not modifiable after); a mismatch rejects the action.
 - **System actions that sign only with the $\mathrm{TEE}_{\mathrm{ID}}$ key** (e.g. [`F_FDC2 PROVE`](../../FDC2/Reference/Operations/Prove.md)) commit `cosigners` and `cosignersThreshold` into the signed result, so a downstream verifier can check them.
 - **Custom FCE actions** must implement their own enforcement.
 

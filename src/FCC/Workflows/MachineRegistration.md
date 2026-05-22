@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow describes deploying a TEE machine onto the Flare network, from Confidential VM boot through to `PRODUCTION` status.
-For canonical registration semantics, machine state, and ownership rules, see [Registration](../TeeManagement/Registration.md) and [State](../TeeManagement/State.md) and [Attestation](../TeeManagement/Attestation.md).
+For canonical registration semantics, machine state, and ownership rules, see [Registration](../Concepts/Machines.md) and [State](../Concepts/Machines.md) and [Attestation](../Concepts/Machines.md).
 
 ## Prerequisites
 
@@ -190,7 +190,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 **Who can call:** Machine owner (the `initialOwner` address configured in Step 3)
 
 **Parameters:**
-- `machineData` (struct `TeeMachineData`) — contains `extensionId`, `initialOwner`, `codeHash`, `platform`, and `publicKey`. These values come from the `/info` endpoint (Step 5). For the full struct definition, see the [Registration specification](../TeeManagement/Registration.md#registration).
+- `machineData` (struct `TeeMachineData`) — contains `extensionId`, `initialOwner`, `codeHash`, `platform`, and `publicKey`. These values come from the `/info` endpoint (Step 5). For the full struct definition, see the [Registration specification](../Concepts/Machines.md#registration).
 - `signature` (Signature: `{v: uint8, r: bytes32, s: bytes32}`) — signature over `machineData` by the TEE machine's private key, proving consent to registration
 - `teeProxyId` (address) — identity of the proxy server relaying information to/from the TEE
 - `url` (string) — URL at which the TEE machine is reachable via the proxy

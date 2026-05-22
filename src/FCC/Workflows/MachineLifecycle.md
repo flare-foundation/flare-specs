@@ -3,7 +3,7 @@
 ## Overview
 
 After a TEE machine reaches `PRODUCTION` status (see [MachineRegistration.md](MachineRegistration.md)), the machine owner can perform management operations including pausing, updating settings, transferring ownership, confirming availability, and governance-level banning.
-For canonical lifecycle semantics, see [Registration](../TeeManagement/Registration.md) and [State](../TeeManagement/State.md) and [Attestation](../TeeManagement/Attestation.md).
+For canonical lifecycle semantics, see [Registration](../Concepts/Machines.md) and [State](../Concepts/Machines.md) and [Attestation](../Concepts/Machines.md).
 
 ### Status Transition Diagram
 
@@ -47,7 +47,7 @@ The following diagram shows the implemented machine statuses and the transitions
                      PAUSED
 ```
 
-For full status definitions, see the [Registration specification](../TeeManagement/Registration.md#statuses).
+For full status definitions, see the [Registration specification](../Concepts/Machines.md#statuses).
 
 ## Prerequisites
 
@@ -189,7 +189,7 @@ This is a two-step process to prevent accidental transfers.
 **Requirements:**
 
 - The caller must be the current owner.
-- The `newOwner` must be allowlisted for the extension via the [owner allowlist](../TeeManagement/Registration.md#owner-allowlist), or `address(0)` to cancel a pending proposal.
+- The `newOwner` must be allowlisted for the extension via the [owner allowlist](../Concepts/Machines.md#owner-allowlist), or `address(0)` to cancel a pending proposal.
 
 **What happens:**
 
@@ -243,7 +243,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **What happens:**
 
-1. The caller submits a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine to [`FlareTeeManager.confirmAvailability`](../TeeManagement/Registration.md#management-calls).
+1. The caller submits a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine to [`FlareTeeManager.confirmAvailability`](../Concepts/Machines.md#management-calls).
 2. The contract validates the proof.
 3. The `availabilityCheckValidityEndTs` deadline is extended.
 4. The contract updates `lastSigningPolicyId` from the proof's response body.
@@ -251,7 +251,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended) (only if the deadline was extended).
 
-Note: when a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. `confirmAvailability()` must be called periodically before that deadline to maintain eligibility — see [Availability Deadline](../TeeManagement/Registration.md#availability-deadline).
+Note: when a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. `confirmAvailability()` must be called periodically before that deadline to maintain eligibility — see [Availability Deadline](../Concepts/Machines.md#availability-deadline).
 
 ---
 

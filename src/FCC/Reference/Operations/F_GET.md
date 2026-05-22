@@ -48,4 +48,4 @@ The proxy schedules `TEE_BACKUP` via its [result hooks](../Components/Proxy.md#r
 - the `(walletId, keyId)` is currently stored on the machine; and
 - the machine has an active [signing policy](../../../FSP/SigningPolicy.md) (it determines the data-provider weights the backup shares are split against).
 
-See [Key backup](../../TeeManagement/Keys.md#backup-procedure) for the cryptographic construction of the backup package.
+See [Key backup](../../Concepts/Keys.md#backup-procedure) for the cryptographic construction of the backup package.

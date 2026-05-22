@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow covers adding a new signing key to a TEE machine for an existing wallet.
-For canonical key semantics and data structures, see [Key Management](../TeeManagement/Keys.md) and [Wallets](../TeeManagement/Wallets.md).
+For canonical key semantics and data structures, see [Key Management](../Concepts/Keys.md) and [Wallets](../Concepts/Wallets.md).
 
 ## Prerequisites
 
@@ -69,4 +69,4 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 ## Notes
 
 - To remove keys from TEE machines, see the [key delete workflow](KeyDelete.md). To restore keys from backup onto a new TEE, see the [key restore workflow](KeyRestore.md).
-- For key definitions and project configuration details, see [Wallets](../TeeManagement/Wallets.md).
+- For key definitions and project configuration details, see [Wallets](../Concepts/Wallets.md).

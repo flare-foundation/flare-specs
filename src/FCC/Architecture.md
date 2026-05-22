@@ -14,7 +14,7 @@
 3. **TEE machines**: Receive [actions](Concepts/Actions.md) derived from relayed instructions or [direct actions](Concepts/Actions.md#direct-actions).
    For relayed instructions, the TEE proxy aggregates signatures from data providers until the [voting](Concepts/Voting.md) threshold defined by the current signing policy is met, then queues the resulting action for execution.
    If the instruction specifies cosigners, a separate cosigner threshold must also be reached.
-   Upon processing an action, the TEE machine signs the result with either its identity key or a key held on the machine (see [Key Management](TeeManagement/Keys.md)) and returns it to the [TEE proxy](Reference/Components/Proxy.md).
+   Upon processing an action, the TEE machine signs the result with either its identity key or a key held on the machine (see [Key Management](Concepts/Keys.md)) and returns it to the [TEE proxy](Reference/Components/Proxy.md).
    Results may include signed transactions for external blockchains, signed attestations, or other operation-specific outputs.
    See [Actions](Concepts/Actions.md) for the action structure.
 
