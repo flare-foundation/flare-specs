@@ -110,16 +110,7 @@ Recipients fetch their package from the TEE proxy's [backup API](../Reference/Co
 
 ### Key Restoration
 
-Restoration is initiated by an authorized address (the wallet's [project owner](../../Terminology/Roles.md#project-owner) or its `backupManager`) calling `backupRestore` on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md):
-
-```solidity
-backupRestore(backupId, backupURL, teeId, randomNonce)
-```
-
-- `backupId`: identifies the backup to restore.
-- `backupURL`: where the backup package can be fetched. If the URL does not already exist, the caller uploads the package fetched from the source TEE proxy.
-- `teeId`: destination TEE machine (must differ from the original TEE).
-- `randomNonce`: nonce used at backup time.
+Restoration is initiated by an authorized address (the wallet's [project owner](../../Terminology/Roles.md#project-owner) or its `backupManager`) calling [`backupRestore`](../Reference/Contracts/FlareTeeManager.md#key-custody) on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) with the backup identifier, the URL to fetch it from, the destination TEE machine (must differ from the original), and the nonce used at backup time.
 
 The flow:
 

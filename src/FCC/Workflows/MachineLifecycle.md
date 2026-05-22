@@ -243,7 +243,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **What happens:**
 
-1. The caller submits a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine to [`FlareTeeManager.confirmAvailability`](../Concepts/Machines.md#management-calls).
+1. The caller submits a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine to [`FlareTeeManager.confirmAvailability`](../Reference/Contracts/FlareTeeManager.md#management-calls).
 2. The contract validates the proof.
 3. The `availabilityCheckValidityEndTs` deadline is extended.
 4. The contract updates `lastSigningPolicyId` from the proof's response body.

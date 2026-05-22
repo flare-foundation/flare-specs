@@ -7,7 +7,7 @@ They are scoped per [FCE](../FCE/README.md): each FCE has its own pool of projec
 The pattern is the foundation of the [Protocol Managed Wallet (PMW)](../PMW/README.md) infrastructure on the system extension, and is available to any FCE whose [TEE machines](../Reference/Components/Machine.md) need the same custody.
 FCEs that only sign with the TEE's identity key (pure compute, [FDC2 proofs](../FDC2/README.md), registration attestation) do not need them.
 
-All state lives on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
+The on-chain state and the entry points that drive it live on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md); see [Project Management](../Reference/Contracts/FlareTeeManager.md#project-management) and [Wallet Management](../Reference/Contracts/FlareTeeManager.md#wallet-management) for the function catalog.
 
 ## Overview
 
@@ -17,72 +17,55 @@ The data model is three nested levels:
 2. **Wallet** — sits inside a project. Defines _who can authorize operations against the wallet's keys_: a set of admin public keys with a $k$-of-$n$ threshold for [backup operations](Keys.md#backup-procedure), and optionally a set of [cosigner](Instructions.md#cosigners) addresses with a threshold for transaction-level multisig. A wallet progresses through statuses (`CREATED` → `INITIALIZED` → `PRODUCTION`, with a `PAUSED` side state) before its keys can be used.
 3. **Wallet key** — a single private key, generated inside one or more TEE machines, confirmed on-chain via a [key existence proof](Keys.md#tee-key-existence-proof). A wallet's `multisigThreshold` sets how many distinct keys must sign for the wallet to authorize a transaction; combined with the per-chain native multisig (e.g. XRPL `SignerList`), this gives a $k$-of-$n$ split across TEE machines.
 
-The rest of this file describes each level in detail.
-
 ## Projects
 
-A project is created when an address allowlisted as a [project owner](../../Terminology/Roles.md#project-owner) for an [FCE](../FCE/README.md) calls `createProject(extensionId, keyType, signingAlgo)`.
-The new `projectId` is `keccak256(abi.encode("PROJECT", msg.sender, counter))` and the caller becomes the project owner.
+A project is created by an allowlisted [project owner](../../Terminology/Roles.md#project-owner). The owner picks the FCE the project lives under and a single `(keyType, signingAlgo)` pair shared by every wallet in the project. Both are fixed at creation: a project never spans FCEs and never mixes key types.
 
-Project state:
+Project state captured on-chain:
 
-1. `owner`: The current project owner address; changes only through a two-step transfer (`proposeNewOwner` / `confirmOwnership`).
-2. `extensionId`: The FCE the project lives under; immutable.
-3. `keyType` and `signingAlgo`: The [key type and algorithm](Keys.md#signing-algorithms) shared by every wallet in the project; immutable, and constrained to the pairs the FCE supports.
-4. `backupManager`: An optional second address authorized to trigger [key restoration](Keys.md#key-restoration-procedure); set with `setBackupManager`.
+- `owner`: project-owner address; changes only through a two-step transfer.
+- `extensionId`: the FCE the project lives under; immutable.
+- `keyType` and `signingAlgo`: shared by every wallet in the project; immutable, constrained to the [pairs the FCE supports](Keys.md#signing-algorithms).
+- `backupManager`: optional second address authorized to trigger [key restoration](Keys.md#key-restoration).
 
-Both owner roles are gated against the FCE's [owner allowlist](Machines.md#owner-allowlist) at every state-changing call.
-
-Lifecycle events: [`ProjectCreated`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#projectcreated), [`BackupManagerSet`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#backupmanagerset), [`NewOwnerProposed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed), [`OwnershipConfirmed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).
+Both owner roles are checked against the FCE's [owner allowlist](Machines.md#owner-allowlist) at every state-changing call.
 
 ## Wallets
 
-A wallet is created when the project owner calls `createWallet(projectId)`.
-The new `walletId` is `keccak256(abi.encode("WALLET", owner, counter))` and the wallet enters the `CREATED` status.
+A wallet lives inside a project. Wallet state captured on-chain:
 
-Wallet state:
-
-1. `projectId`: The parent project.
-2. `adminsPublicKeys` and `adminsThreshold`: The [key admin](../../Terminology/Roles.md#key-admin) public keys and the $k$-of-$n$ threshold over them; set with `setAdmins`, finalized at close.
-3. `cosigners` and `cosignersThreshold`: An optional [cosigner](Instructions.md#cosigners) address set and its threshold; set with `setCosigners`, finalized at close.
-4. `multisigThreshold`: The minimum number of confirmed keys required to sign with the wallet; set with `setMultisigThreshold`.
-5. `status`: One of `CREATED`, `INITIALIZED`, `PRODUCTION`, `PAUSED`.
+- `projectId`: the parent project.
+- `adminsPublicKeys` and `adminsThreshold`: the [key admin](../../Terminology/Roles.md#key-admin) public keys and the $k$-of-$n$ threshold over them; set during initialization, finalized at close.
+- `cosigners` and `cosignersThreshold`: optional [cosigner](Instructions.md#cosigners) address set and its threshold; set during initialization, finalized at close.
+- `multisigThreshold`: minimum number of confirmed keys required to sign with the wallet.
+- `status`: one of `CREATED`, `INITIALIZED`, `PRODUCTION`, `PAUSED`.
 
 Once a wallet leaves `CREATED`, its admins, cosigners, and their thresholds are immutable.
 A copy of these is also written into every TEE-side [`configConstants`](Keys.md#wallet-private-key-data-structure) record at key generation, for [cosigner enforcement](../Reference/Components/Machine.md#cosigner-enforcement) by the TEE machine.
 
 ### Lifecycle
 
-Status transitions, with the call that triggers each:
+A wallet moves through four statuses, gated by the project owner:
 
-1. `CREATED → INITIALIZED` — `closeWalletInitialization`, after every admin and every cosigner has called `confirmAdmin` / `confirmCosigner` from its own address.
-2. `INITIALIZED → PRODUCTION` — `enableWallet`, once `multisigThreshold` is set and at least that many keys have been [confirmed](Keys.md#tee-key-existence-proof).
-3. `PRODUCTION → PAUSED` — `pauseWallet`.
-4. `PAUSED → PRODUCTION` — `enableWallet` (no multisig recheck).
-
-The project owner is the sole caller for every transition.
-
-Lifecycle events: [`WalletCreated`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcreated), [`WalletAdminsSet`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletadminsset), [`WalletAdminConfirmed`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletadminconfirmed), [`WalletCosignersSet`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcosignersset), [`WalletCosignerConfirmed`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcosignerconfirmed), [`WalletInitialized`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletinitialized), [`WalletEnabled`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletenabled), [`WalletPaused`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletpaused).
+1. `CREATED → INITIALIZED` — once every admin and every cosigner has confirmed from its own address.
+2. `INITIALIZED → PRODUCTION` — once `multisigThreshold` is set and at least that many keys have been [confirmed](Keys.md#tee-key-existence-proof).
+3. `PRODUCTION → PAUSED` — owner-initiated stop.
+4. `PAUSED → PRODUCTION` — resume; the multisig check is not re-run.
 
 ### Pausing Keys at the TEE
 
-`pauseWallet` only changes on-chain status; it does not reach the TEE machines that hold the wallet's keys.
-To pause individual keys at their machines, the project owner additionally calls:
-
-1. `setPausingAddresses(walletId, pausingAddresses, claimBackAddress)` — issues an `F_WALLET SET_PAUSING_ADDRESSES` instruction to every TEE machine listed in the wallet's key set, installing addresses authorized to pause those keys.
-2. `resume(walletId, keysData, claimBackAddress)` — issues an `F_WALLET RESUME` instruction for the listed `(teeId, keyId, nonce)` triples.
-
-Both calls are payable; the fee covers TEE-side execution and can be claimed back by `claimBackAddress` if the instructions do not execute.
+Pausing a wallet only changes its on-chain status; it does not reach the TEE machines that hold the wallet's keys.
+To pause individual keys at their machines, the project owner additionally installs _pausing addresses_ (authorized to pause those keys) and later resumes specific `(teeId, keyId, nonce)` triples. Both calls are payable; the fee covers TEE-side execution.
 
 ## Wallet Keys
 
 A wallet holds zero or more [private keys](Keys.md#wallet-private-key-data-structure), each replicated across one or more TEE machines.
-A key is identified within its wallet by a sequential `keyId`, assigned at `addKey` time.
+A key is identified within its wallet by a sequential `keyId`, assigned at the moment a key generation is requested.
 
 For each `(walletId, keyId)` the contract tracks:
 
-1. `publicKey`: Set when the first TEE machine [confirms](Keys.md#tee-key-existence-proof) the generated key.
-2. `teeIds`: The set of TEE machines that hold a copy; further TEE machines join by submitting a key existence proof, and machines drop off via `deleteKey` or `cleanUpTeeIds`.
-3. `nonces`: A per-TEE-machine replay counter used by state-changing commands (`KEY_DELETE`, `RESUME`).
+1. `publicKey`: set when the first TEE machine [confirms](Keys.md#tee-key-existence-proof) the generated key.
+2. `teeIds`: the set of TEE machines that hold a copy.
+3. `nonces`: per-machine replay counters used by state-changing commands (`KEY_DELETE`, `RESUME`).
 
-See [Key Management](Keys.md) for the off-chain key generation, existence proof, and backup procedures, and for the contract calls that drive them.
+See [Keys](Keys.md) for off-chain key generation, the existence-proof construction, and the backup/restoration procedures.
