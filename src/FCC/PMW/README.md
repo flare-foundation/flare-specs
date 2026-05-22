@@ -7,4 +7,7 @@ Users submit transactions from that wallet by issuing an instruction on Flare Co
 |---|---|
 | [Concepts](Concepts.md) | Wallet ownership, transaction flow, key management and backups, multisig and nonce semantics. |
 | [Transactions](Transactions.md) | Per-chain transaction encoding, fee scheduling, and reissue/nullification mechanics. |
-| [Commands](Reference/Operations/README.md) | `F_XRP PAY` and `F_XRP REISSUE` command references. |
+| [Reference/Contracts/Payments](Reference/Contracts/Payments.md) | The `TeePayments` contract surface and events. |
+| [Reference/Operations](Reference/Operations/README.md) | `F_XRP PAY` and `F_XRP REISSUE` operation references. |
+| [Reference/Types/Payment](Reference/Types/Payment.md) | ABI payment types. |
+| [Workflows](../Workflows/README.md#cross-cutting-workflows) | PMW workflows: [XrpPayment](Workflows/XrpPayment.md), [XrplMultisigConfiguration](Workflows/XrplMultisigConfiguration.md). |
