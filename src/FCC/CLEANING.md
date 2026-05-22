@@ -5,7 +5,7 @@
 Phase 2 [cleaning](#cleaning-plan) status:
 
 - [x] `Images/`
-- [x] `Operations/*.md` (still at old path; Phase B will dissolve into `Concepts/`)
+- [x] `Concepts/{Actions,Instructions,Voting,Rewarding,README}.md` (formerly `Operations/`)
 - [x] `Reference/Components/RelayClient.md`
 - [x] `Reference/Operations/*.md` (system operations consolidation)
 - [x] `Architecture.md`
@@ -69,51 +69,13 @@ Refresh this table at the start of any new Phase 1 verification round if the sna
 8. Replace inline ABI and wire schemas with links into the canonical type docs (e.g. `Types/Abi/...` and `Types/Wire/...`); do not duplicate type definitions in prose.
 9. Repair any broken inbound anchor links in other files when section anchors change.
 
-### Order
+## Remaining
 
-Phase B — concept/reference split — is in progress.
-
-Done:
-
-- [x] Relocate `Operations/{Instructions,Actions,Voting,Rewarding}.md` → `Concepts/`; delete the `Operations/` directory.
-- [x] Relocate `TeeManagement/FlareTeeManager.md` → `Reference/Contracts/FlareTeeManager.md`.
-- [x] Merge `TeeManagement/{State,Attestation,Registration}.md` → `Concepts/Machines.md`; relocate `Keys.md` → `Concepts/Keys.md`, `Wallets.md` → `Concepts/Wallets.md`; delete the `TeeManagement/` directory.
-- [x] Extract function signatures and reference content from `Concepts/{Machines,Wallets,Keys}.md` into `Reference/Contracts/FlareTeeManager.md`.
-- [x] Fold `Reference/Types/Abi/Events/Tee*.md` (13 files) → `Reference/Contracts/FlareTeeManagerEvents.md`; PMW payments events (4 files) → `PMW/Reference/Contracts/Payments.md`; delete the `Events/` directory.
-- [x] Write `PMW/Reference/Contracts/Payments.md` (TeePayments contract surface + events, organised by area).
-- [x] Write `FCE/Reference/Api.md` (TEE machine ↔ FCE HTTP contract).
-- [x] Write `Reference/Contracts/VrfVerifier.md` (the standalone VRF-verification contract: functions, Proof struct, errors).
-- [x] Write `FDC2/Reference/Contracts/Fdc2Hub.md` (request submission, verification, fees, governance, events, errors).
-- [x] Rewrite `Workflows/Conventions.md` to prescribe a state-machine shape (preconditions, states, initial state, transitions with action/caller/guards/effects, invariants, terminal states).
-- [x] Reshape `Workflows/{KeyAdd,KeyDelete,KeyRestore}.md` to the state-machine format as worked examples.
-- [x] Reshape the remaining workflows to the state-machine format: `MachineRegistration.md`, `MachineLifecycle.md`, `WalletSetup.md`, `VrfProof.md`, `MultiTeeOperations.md`, `PMW/Workflows/{XrpPayment,XrplMultisigConfiguration}.md`, `FDC2/Workflows/Fdc2Attestation.md`, `FCE/Workflows/{Configuration,Instructions}.md`. MultiTeeOperations is shaped as a composition page (CP-1..CP-7 synchronisation barriers across parallel single-TEE workflows).
-
-Remaining:
-
-1. Per-page leaf cleaning of `Reference/Components/{Machine,Proxy}.md`, `Reference/Operations/F_*.md`, `PMW/Concepts.md`, `PMW/Transactions.md`, `FDC2/Concepts.md`, `FDC2/Verifier.md`, `FCE/Concepts.md`, `FCE/System.md`.
+Per-page leaf cleaning of `Reference/Components/{Machine,Proxy}.md`, `Reference/Operations/F_*.md`, `PMW/Concepts.md`, `PMW/Transactions.md`, `FDC2/Concepts.md`, `FDC2/Verifier.md`, `FCE/Concepts.md`, `FCE/System.md`.
 
 ## Cross-cutting renames and fixes
 
 Apply as a batch once the prose passes are settled, since they touch many inbound links.
-
-#### Done — events consolidated into `FlareTeeManagerEvents.md` and `PMW/Reference/Contracts/Payments.md`
-
-The legacy event docs under `Reference/Types/Abi/Events/Tee*.md` (split per-facet/per-manager) all came from the `FlareTeeManager` diamond or from `TeePayments`. They've been folded into:
-
-- `Reference/Contracts/FlareTeeManagerEvents.md` (13 source files; one H2 per concern).
-- `PMW/Reference/Contracts/Payments.md` (4 source files; now with a proper contract-spec intro covering multisig accounts, payments, fee schedules, payment limits, and source registry).
-
-#### Replace wallet/project/key-manager contract names with `FlareTeeManager`
-
-The legacy contract names `TeeWalletProjectManager`, `TeeWalletManager`, `TeeWalletKeyManager`, and `TeeWalletBackupManager` no longer exist as standalone contracts: every entry point is now a function on the `FlareTeeManager` diamond.
-The diamond's facet decomposition is internal organization and should not appear in specs.
-Several function signatures are also out of date — e.g. `createProject(extensionId, keyType, signingAlgo)` (no `authorizationAddress`); `setMultisigThreshold` is its own call; `setPausingAddresses` / `resume` are payable and take a `claimBackAddress`.
-
-Inbound users of the old names still to update:
-
-- `Workflows/WalletSetup.md`, `Workflows/KeyAdd.md`, `Workflows/KeyDelete.md`, `Workflows/KeyRestore.md`, `Workflows/VrfProof.md`, `PMW/Workflows/XrpPayment.md`, `Workflows/README.md`.
-- `PMW/Transactions.md`.
-- Event-doc filenames in `Reference/Types/Abi/Events/`: `TeeWalletProjectManager.md`, `TeeWalletManager.md`, `TeeWalletKeyManager.md`, `TeeWalletBackupManager.md` should follow the same convention as the `TeeExtensionRegistry.md` → `FlareTeeManagerEvents.md` rename (consolidated `FlareTeeManagerEvents.md`).
 
 #### Standardize "instructions sender" terminology
 
@@ -272,16 +234,6 @@ When each file is cleaned, evaluate whether a Mermaid diagram (or, where renderi
 
 Single-file fixes to apply when the listed FCC/ file is cleaned, or as one-off updates to already-cleaned files.
 
-#### Document rate-limiting cap in `TeeProxy.md`
-
-`TeeProxy.md:101-114` mentions the `429 Too Many Requests` response for `POST /instruction` but describes it as an API response, not as a security cap.
-When `TeeProxy.md` is cleaned, surface the per-data-provider open-vote-box cap (`tee-proxy/internal/service/instruction/voting/limiter/limiter.go`) as a deliberate DoS protection: it prevents a single compromised data provider from exhausting the proxy's in-memory vote-box state.
-
-#### Document `F_FDC2 PROVE` per-instruction threshold override
-
-`FDC2/Reference/Operations/Prove.md` does not currently mention that the request may override the data-provider voting threshold. The proxy reads `thresholdBIPS` from the FDC2 request header (`tee-proxy/pkg/instruction/meta/meta.go:179-194`); a value of $0$ falls back to the signing policy default.
-`Operations/Voting.md` refers to this override without naming the field; the command doc should document it (location, units, fallback behaviour).
-
 #### Consider specs or references for `C-chain indexer`, `Redis`, and the relay client's external signer
 
 The C-chain indexer (mentioned in `Architecture.md`'s deployment topology and `Reference/Components/RelayClient.md`'s relay flow) and Redis (proxy state store) are operator-run dependencies with no dedicated spec.
@@ -301,33 +253,11 @@ Add this as a request-validation rule when `FDC2/Reference/AttestationTypes/PMWM
 
 These two PMW commands are registered with `immediateResult=false` (`tee-node/internal/router/routers.go:49-50`), so their `ActionResult.status` flows `2` (in-progress) on `threshold` → `1` (success) on `end`. All other system commands return `status=1` directly on `threshold`. `Operations/Actions.md` keeps the `status=2` description generic; surface this command-specific behavior in `PMW/Reference/Operations/Pay.md` and `Reissue.md` as part of the `Action result` section when those files are cleaned.
 
-#### Document that extensions only handle `threshold` and `submit` actions
-
-When the extension API spec is cleaned (`FCE/README.md` or `FCE/Concepts.md`), surface that a custom extension's `/action` endpoint only ever receives actions with `submissionTag` of `threshold` (instruction actions) or `submit` (direct actions). `end` instruction actions are built locally by the TEE machine without consulting the extension (`tee-node/internal/processors/instructions/default.go:57-72`; see also [`Operations/Actions.md#custom-extension-commands`](Concepts/Actions.md#custom-extension-commands)).
-
-#### Document the two extension → TEE machine result-delivery paths
-
-The extension API spec should describe both ways an extension can deliver an [`ActionResult`](Concepts/Actions.md#action-results) to the TEE machine:
-
-1. **Synchronous** — always: the result returned as the HTTP response body to the TEE machine's `POST /action` call (`tee-node/internal/extension/extension.go:14-44`).
-2. **Asynchronous** — for time-consuming actions: a further update posted later to the TEE machine's own `POST /result` endpoint (`tee-node/internal/extension/server/server.go:228-273`), which signs and forwards it to the proxy. This drives the `status=2` (in-progress) → final-status transition for async commands.
-
-Surface this in `FCE/README.md` or `FCE/Concepts.md` when those are cleaned.
-
 #### Create `Concepts/Policy.md`
 
 `Concepts/Policy.md` is listed as a planned page in `Concepts/README.md` but does not exist yet. The signing-policy lifecycle from the FCC side currently lives scattered across `Concepts/Machines.md § Signing Policy`, `Reference/Components/Proxy.md § Signing Policy`, and `Reference/Operations/F_POLICY.md`.
 A dedicated `Concepts/Policy.md` should pull the FCC view together: how a policy is installed at first connection, how it is rotated each reward epoch, how it gates voting, how machine attestations carry the active policy, and how backups bind to it.
 The canonical signing-policy spec stays at [`FSP/SigningPolicy.md`](../FSP/SigningPolicy.md); the new page defers to it for derivation rules and only documents what is FCC-specific.
-
-#### Document proxy result-storage override semantics in `TeeProxy.md`
-
-`tee-proxy/internal/service/result/storage.go:54-63` enforces the following rule for the [action result store](Reference/Components/Proxy.md#redis-backed-stores), keyed by `(actionId, submissionTag)`:
-
-- A stored final result (`status` `0` or `1`) is immutable: any subsequent write is rejected.
-- A stored transient result (`status` `≥ 2`) can be overwritten only by a final result, or by a transient result with a strictly greater `status`. A write with a smaller-or-equal transient status is rejected.
-
-Effectively, transient statuses are monotonically increasing (e.g. `2` → `3` is allowed; `3` → `2` is not) and final statuses are write-once. Document this in `Reference/Components/Proxy.md` "Action Result Handling" when that file is cleaned.
 
 ## Forward-looking
 
