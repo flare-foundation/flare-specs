@@ -59,16 +59,7 @@ The [TEE proxy](../Components/TeeProxy.md#key-data-store) refreshes its cached p
 
 A TEE machine can also hold VRF keys, used for verifiable randomness.
 VRF keys use the `keccak256-secp256k1-vrf` [signing algorithm](#signing-algorithms) and are managed by the same [`KEY_GENERATE`](../Operations/Commands/F_WALLET/KeyGenerate.md) and [`KEY_DELETE`](../Operations/Commands/F_WALLET/KeyDelete.md) instructions as other wallet keys.
-
-The [`VRF`](../Operations/Commands/F_WALLET/Vrf.md) command produces a [`VrfProof`](../Types/Abi/Key.md#vrfproof) against a caller-supplied nonce, computed with the [ECVRF scheme](https://eprint.iacr.org/2017/099):
-
-- `gamma = (gamma_x, gamma_y)`: VRF output curve point.
-- `c`: challenge scalar.
-- `s`: response scalar.
-- `u`, `cGamma`, `v`, `zInv`: witness values pre-computed off-chain to avoid expensive secp256k1 multiplications on the EVM.
-
-The on-chain `VrfFacet` verifies proofs with `ecrecover`.
-The final randomness is $\mathrm{keccak256}(\gamma_x \mathbin\| \gamma_y)$, with the gamma coordinates as $32$-byte big-endian encodings.
+See [`F_WALLET VRF`](../Operations/Commands/F_WALLET/Vrf.md) for the proof structure, on-chain verification, and randomness extraction.
 
 ## Key Backup
 

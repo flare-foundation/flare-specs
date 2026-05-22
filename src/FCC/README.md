@@ -28,10 +28,9 @@ Each extension is identified by a unique extension ID, and its TEE machines are 
 | Section | Description |
 |---------|-------------|
 | [Architecture](Architecture.md) | System components, deployment topology, and trust model. |
-| [Operations](Operations/Instructions.md) | How instructions, actions, voting, and relay clients work. |
+| [Operations](Operations/README.md) | How instructions, actions, voting, rewarding, and the system command catalog fit together. |
 | [Extensions](Extensions/README.md) | The extension framework and built-in extensions (PMW, FDC2, System Extension). |
 | [TEE Management](TeeManagement/Registration.md) | Machine registration, key management, state attestation, and the TEE proxy. |
-| [Commands](Operations/Commands/README.md) | Reference for all TEE command types. |
 | [Workflows](Workflows/README.md) | Step-by-step operational procedures. |
 | [Attestation Types](Extensions/FDC2/AttestationTypes/README.md) | FDC2 attestation request and response schemas. |
 | [Types](Types/README.md) | ABI and wire data structures used across the specification. |
