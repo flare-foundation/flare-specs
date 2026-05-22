@@ -1,72 +1,73 @@
-# Add Key to TEE Machine
+# KeyAdd
 
-## Overview
+State machine for adding one wallet key on one TEE machine.
+The workflow takes a wallet that is being configured and lands the key in the on-chain `Confirmed` state so a wallet can later be `enabled` ([WalletSetup](WalletSetup.md)).
 
-This workflow covers adding a new signing key to a TEE machine for an existing wallet.
-For canonical key semantics and data structures, see [Key Management](../Concepts/Keys.md) and [Wallets](../Concepts/Wallets.md).
+## Preconditions
 
-## Prerequisites
+- The wallet's project exists; the [project owner](../../Terminology/Roles.md#project-owner) holds the project's `owner` address.
+- `wallet.status = INITIALIZED`.
+- The target TEE machine is in `PRODUCTION` and is registered to the wallet's project's `extensionId`.
 
-- Wallet must be in `INITIALIZED` status.
-- The target TEE machine must be in `PRODUCTION` status.
-- The TEE machine's extension ID must match the wallet's project extension ID.
+For the underlying [key custody concepts](../Concepts/Keys.md) and the [wallet bookkeeping](../Concepts/Wallets.md#wallet-keys), see the linked pages.
 
----
+## States
 
-## Steps
+- `NotExists` — no on-chain record for the prospective `(walletId, keyId)`.
+- `Generated` — `addKey` has emitted `KEY_GENERATE`; the TEE machine has not yet returned a confirmed [`KeyExistence`](../Reference/Types/Abi/Key.md#keyexistence) proof.
+- `Confirmed` — the public key is recorded on chain; `teeId` appears in the key's `teeIds` list.
 
-### Step 1: Add Key — `FlareTeeManager.addKey()`
+## Initial State
 
-**Who can call:** [Project owner](../../Terminology/Roles.md#project-owner) only.
+`NotExists` for the next sequential `keyId` of the wallet.
 
-**Parameters:**
-- `teeId` (`address`) — the TEE machine on which to generate the key.
-- `walletId` (`bytes32`) — the wallet ID.
-- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
+## Transitions
 
-**Requirements:**
-- Wallet must be in `INITIALIZED` status.
-- The TEE machine must be in `PRODUCTION` status.
-- The TEE machine's extension ID must match the wallet's project extension ID.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
+### addKey: NotExists → Generated
 
-**What happens:**
-1. The contract generates a new `keyId` by incrementing the wallet's key counter.
-2. A [`KEY_GENERATE`](../Reference/Operations/F_WALLET.md#key_generate) instruction is sent to the specified TEE machine.
-3. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
-4. The TEE machine automatically triggers a key backup for the newly generated key.
+- **Action**: [`FlareTeeManager.addKey(walletId, teeId, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — payable.
+- **Caller**: project owner.
+- **Guards**:
+  - `wallet.status = INITIALIZED`
+  - `teeMachine.status = PRODUCTION`
+  - `teeMachine.extensionId = project.extensionId`
+  - `msg.value ≥ fee(F_WALLET, KEY_GENERATE)`
+- **Effects**:
+  - Assigns the next sequential `keyId` for the wallet.
+  - Sends a [`F_WALLET KEY_GENERATE`](../Reference/Operations/F_WALLET.md#key_generate) instruction to `teeId`.
+  - Emits [`WalletKeyAdded`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyadded) and [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
+  - Off-chain: the TEE machine generates a key pair inside the enclave, associates it with the wallet, and queues an automatic [key backup](../Concepts/Keys.md#key-backup).
 
-**Events emitted:** [`WalletKeyAdded`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyadded), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
+### confirmKey: Generated → Confirmed
 
-> **Note:** This step can be repeated to add keys on different TEE machines. Each invocation generates a unique `keyId`.
+- **Action**: [`FlareTeeManager.confirmKey(proof, teeSignature)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — non-payable.
+- **Caller**: project owner.
+- **Guards**:
+  - `wallet.status = INITIALIZED`
+  - `teeMachine.status = PRODUCTION`
+  - `proof` references the previously-assigned `(walletId, keyId)`
+  - `proof` is consistent with the wallet's on-chain admins/cosigners ([cosigner enforcement](../Reference/Components/Machine.md#cosigner-enforcement))
+  - `teeSignature` recovers to `teeMachine.publicKey`
+- **Effects**:
+  - On the first valid confirmation, stores `proof.publicKey` as the key's canonical `publicKey`.
+  - Adds `teeId` to the key's `teeIds` list.
+  - Emits [`WalletKeyConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyconfirmed).
 
----
+## Invariants
 
-### Step 2: Confirm Key — `FlareTeeManager.confirmKey()`
+- A key reaches `Confirmed` only after both transitions have succeeded; no transition skips `Generated`.
+- A key's `publicKey` is fixed at first confirmation; later confirmations from other TEE machines for the same `(walletId, keyId)` cannot change it.
+- The TEE machines listed in the key's `teeIds` are a subset of `PRODUCTION` machines of the wallet's project's extension.
 
-**Who can call:** Project owner only (for new keys).
+## Terminal States
 
-**Parameters:**
-- `proof` (`KeyExistence`) — a key existence proof from the TEE machine.
-- `teeSignature` (`Signature`) — signature from the TEE machine over the proof.
+`Confirmed`. From here:
 
-**Requirements:**
-- Wallet must be in `INITIALIZED` status.
-- The TEE machine must be in `PRODUCTION` status.
-- The key ID must exist (created by `addKey` in Step 1).
-- The proof must be consistent with the on-chain wallet and project configuration.
-- The TEE signature must be valid.
-
-**What happens:**
-1. The contract verifies the proof and TEE signature.
-2. Stores the public key on-chain.
-3. Adds the `teeId` to the key's TEE list, indicating the key exists on this machine.
-
-**Events emitted:** [`WalletKeyConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyconfirmed)
-
----
+- [WalletSetup](WalletSetup.md) can `enableWallet` once `multisigThreshold` confirmed keys exist.
+- [KeyDelete](KeyDelete.md) and [KeyRestore](KeyRestore.md) take this workflow's output as their starting state.
+- The key is usable by [`F_WALLET`](../Reference/Operations/F_WALLET.md) operations (e.g. PMW signing, VRF).
 
 ## Notes
 
-- To remove keys from TEE machines, see the [key delete workflow](KeyDelete.md). To restore keys from backup onto a new TEE, see the [key restore workflow](KeyRestore.md).
-- For key definitions and project configuration details, see [Wallets](../Concepts/Wallets.md).
+- `addKey` can be repeated on different TEE machines for the same wallet; each invocation assigns its own `keyId`, and the keys are independent state machines.
+- The TEE-machine-side execution of `KEY_GENERATE` is asynchronous from the chain's view: between `Generated` and `Confirmed` the chain has no observable change. A project owner who never collects a `KeyExistence` proof will leave the workflow stuck in `Generated` indefinitely.

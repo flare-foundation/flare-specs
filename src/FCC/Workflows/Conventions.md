@@ -1,20 +1,60 @@
 # Workflow Conventions
 
-This page collects the cross-workflow conventions that the individual procedure documents in this directory share, along with the workflow dependency graph and the typical end-to-end sequence.
+This page prescribes the state-machine shape that every workflow in this directory follows, plus the cross-workflow dependency graph and the typical end-to-end sequence.
+
+The repo will eventually be translated into a formal modelling language (Quint / TLA+); the shape below is chosen so the translation is mechanical.
 
 ## Document Format
 
-Each workflow document follows a consistent format:
+Every workflow page is structured as a state machine.
+The reader is also a stakeholder in the protocol — typically a [TEE operator](../../Terminology/Roles.md#tee-operator), a [project owner](../../Terminology/Roles.md#project-owner), a [data provider](../../Terminology/Roles.md#data-provider), or [governance](../../Terminology/Roles.md#governance) — so each transition spells out who can take it.
 
-- *Overview* and *Prerequisites* sections.
-- Numbered steps with contract function names.
-- For each step: *Who can call*, *Parameters*, *Requirements*, *What happens*, and *Events emitted*.
-- Status transitions where applicable.
-- Cross-references to canonical specification pages and related workflows.
+Each page has the following sections, in order:
+
+1. **Header**: one-paragraph summary of what the workflow accomplishes.
+2. **Preconditions**: facts that must hold in the system before the workflow can start (other workflows already completed, on-chain state present, etc.). Phrased as predicates, not as numbered prerequisites.
+3. **States**: every distinct value the workflow tracks. Names are PascalCase.
+4. **Initial state**: which state(s) the workflow can start in, and what observable predicates pin them down.
+5. **Transitions**: each transition is an H3 (`### action: From → To`) with:
+   - **Action** — the contract function or off-chain operation that drives the transition.
+   - **Caller** — who can invoke it.
+   - **Payable** — when relevant.
+   - **Guards** — predicates that must hold for the transition to fire. If any guard fails, the transition is rejected and the state is unchanged.
+   - **Effects** — observable changes (state updates, instructions emitted, events).
+6. **Invariants**: predicates that hold across every reachable state. Useful for the Quint translation.
+7. **Terminal states**: which state(s) end the workflow, and what subsequent workflows may continue from them.
+
+Auxiliary explanations (rationale, edge cases, FAQ) live in a final **Notes** section.
+
+### Notation
+
+- Contract calls: `ContractName.functionName()`. Most FCC entry points sit on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond.
+- Events: `EventName(field1, field2)`.
+- Statuses: backticks. Transitions: `OLD → NEW`.
+- Guards are written as predicates: `wallet.status = INITIALIZED`, `teeMachine.extensionId = wallet.extensionId`, etc.
+
+### Machine and Wallet Statuses
+
+| Machine | Meaning |
+|---|---|
+| `INITIALIZED` | Registered, awaiting first availability proof. |
+| `PRODUCTION` | Operational. |
+| `SUSPENDED` | Auto-suspended on stale availability or non-`OK` proof. |
+| `PAUSED` | Owner-initiated or settings-update stop. |
+| `BANNED` | Extension-owner stop. |
+
+See [Concepts/Machines § Statuses](../Concepts/Machines.md#statuses) for the on-chain definitions.
+
+| Wallet | Meaning |
+|---|---|
+| `CREATED` | Admins/cosigners being configured. |
+| `INITIALIZED` | Configuration closed, keys being added. |
+| `PRODUCTION` | Fully operational. |
+| `PAUSED` | Owner-paused. |
+
+See [Concepts/Wallets § Wallet Lifecycle](../Concepts/Wallets.md#wallet-lifecycle).
 
 ## Dependency Graph
-
-The workflows build on each other. Complete earlier workflows before attempting later ones.
 
 ```
    extension-configuration
@@ -51,59 +91,20 @@ The workflows build on each other. Complete earlier workflows before attempting 
      multi-tee-operations
 ```
 
-> **FDC2 Attestation** is a shared sub-workflow invoked from within other workflows, not a standalone prerequisite. The following workflows use FDC2 attestation:
-> - **TeeAvailabilityCheck** — used in [MachineRegistration.md](MachineRegistration.md) (Steps 9-10), [MachineLifecycle.md](MachineLifecycle.md) (Steps 1, 6), and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 1)
-> - **PMWMultisigAccountConfigured** — used in [XrplMultisigConfiguration.md](../PMW/Workflows/XrplMultisigConfiguration.md) (Steps 3-5) and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 3)
-> - **PMWPaymentStatus** — used in [XrpPayment.md](../PMW/Workflows/XrpPayment.md) (Step 4) and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 4)
-
-## Notation
-
-### Contract Notation
-
-- Function calls are written as `ContractName.functionName()` (e.g., `FlareTeeManager.register()`). Most FCC entry points sit on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond.
-- Events are written as `EventName(field1, field2)` (e.g., `TeeMachineRegistered(teeId, extensionId)`).
-
-### Status Transitions
-
-Status transitions are denoted with arrows:
-
-- `→ STATUS` for initial status assignment (e.g., `→ INITIALIZED`).
-- `OLD_STATUS → NEW_STATUS` for transitions (e.g., `INITIALIZED → PRODUCTION`).
-
-### Machine Statuses
-
-See the [Registration specification](../Concepts/Machines.md#statuses) for full status definitions (`INITIALIZED`, `PRODUCTION`, `SUSPENDED`, `PAUSED`, `BANNED`).
-
-### Wallet Statuses
-
-| Status | Meaning |
-|--------|---------|
-| `CREATED` | Wallet created, admins/cosigners being configured |
-| `INITIALIZED` | Configuration closed, keys being added |
-| `PRODUCTION` | Fully operational, can process payments |
-
-### Network Targets
-
-| Name | Description |
-|------|-------------|
-| `hardhat` / `localhost` | Local development |
-| `coston` | Flare testnet |
-| `coston2` | Flare testnet (alternate) |
-| `songbird` | Canary network |
-| `flare` | Production mainnet |
+The FDC2 attestation flow is a shared sub-workflow invoked from `machine-registration`, `machine-lifecycle`, `xrpl-multisig-configuration`, `xrp-payment`, and `multi-tee-operations`, not a standalone prerequisite.
 
 ## Typical End-to-End Sequence
 
 For a complete single-TEE XRP payment setup from scratch:
 
-1. **[Extension Configuration](../FCE/Workflows/Configuration.md)** — Register extension, add code version, configure allowlists.
-2. **[Machine Registration](MachineRegistration.md)** — Boot VM, configure, register on-chain, move to PRODUCTION.
-3. **[Wallet Setup](WalletSetup.md)** — Create project, create wallet, add keys, enable.
-4. **[XRPL Multisig Configuration](../PMW/Workflows/XrplMultisigConfiguration.md)** — Create XRPL account, verify, link to wallet.
-5. **[XRP Payment](../PMW/Workflows/XrpPayment.md)** — Send payment, retrieve signed tx, submit, verify.
+1. **[Extension Configuration](../FCE/Workflows/Configuration.md)** — register extension, add code version, configure allowlists.
+2. **[Machine Registration](MachineRegistration.md)** — boot VM, configure, register on-chain, move to `PRODUCTION`.
+3. **[Wallet Setup](WalletSetup.md)** — create project, create wallet, add keys, enable.
+4. **[XRPL Multisig Configuration](../PMW/Workflows/XrplMultisigConfiguration.md)** — create XRPL account, verify, link to wallet.
+5. **[XRP Payment](../PMW/Workflows/XrpPayment.md)** — send payment, retrieve signed tx, submit, verify.
 
-For multi-TEE deployments, see [Multi-TEE Operations](MultiTeeOperations.md) which adapts each of these steps for distributed operation.
+For multi-TEE deployments, see [Multi-TEE Operations](MultiTeeOperations.md), which adapts each of these steps for distributed operation.
 
 ## Source References
 
-These workflows are derived from the specifications in [`flare-specs/src/FCC/`](..) — see each workflow's **Spec References** column in the [index](README.md#workflow-index) for the relevant specification files.
+These workflows are derived from the specs in [`flare-specs/src/FCC/`](..). Each transition's Action and Effects should be traceable to a contract function ([`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md), [`Payments`](../PMW/Reference/Contracts/Payments.md), [`Fdc2Hub`](../FDC2/Reference/Contracts/Fdc2Hub.md), [`VrfVerifier`](../Reference/Contracts/VrfVerifier.md)) or a TEE-machine action ([`Reference/Operations/`](../Reference/Operations/README.md)).

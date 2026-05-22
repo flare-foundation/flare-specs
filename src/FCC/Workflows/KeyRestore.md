@@ -1,120 +1,95 @@
-# Restore Key from Backup
+# KeyRestore
 
-## Overview
+State machine for restoring a previously [confirmed](KeyAdd.md#terminal-states) wallet key from backup onto a new TEE machine.
+Restoration is the recovery path when a TEE is paused, banned, decommissioned, or being migrated; it requires cooperation from a threshold of [data providers](../../Terminology/Roles.md#data-provider) and a threshold of [key admins](../../Terminology/Roles.md#key-admin), each holding a share from the original [backup](../Concepts/Keys.md#key-backup).
 
-This workflow covers restoring a signing key from backup onto a new TEE machine.
-Key restoration is necessary when a TEE machine becomes unavailable, is decommissioned, or when migrating keys between machines.
-The process requires cooperation from both [data providers](../../Terminology/Roles.md#data-provider) and [key admins](../../Terminology/Roles.md#key-admin).
-For the backup scheme (Shamir secret sharing, packaging, and distribution), see [Key Management](../Concepts/Keys.md).
+## Preconditions
 
-## Prerequisites
+- The `(walletId, keyId)` exists on chain with `publicKey ≠ 0` (it was previously generated and confirmed; see [KeyAdd](KeyAdd.md)).
+- The backup is reachable: either it is already published at a known URL, or the caller has uploaded a copy fetched from the source TEE's [TEE proxy](../Reference/Components/Proxy.md).
+- The target TEE machine is in `PRODUCTION` and registered to the same `extensionId` as the source machine and the project.
+- The target machine does not already hold the key.
+- The source machine (`backupId.teeId`) is not in `INITIALIZED` (cannot restore from a never-attested machine).
 
-- The key must have been previously generated and confirmed (public key must exist on-chain).
-- The target TEE machine must be in `PRODUCTION` status.
-- The source machine (identified in the backup ID) must not be in `INITIALIZED` status.
-- The key must not already be available on the target TEE machine.
-- The extension IDs of the project, source TEE, and target TEE must all match.
-- The backup's `keyType` and `signingAlgo` must match the project configuration.
-- The backup's `rewardEpochId` must be within valid bounds.
-- A backup package must be available (either from the TEE proxy or uploaded to a URL).
+## States
 
----
+- `Triggered` — the on-chain `BackupRestoreTriggered` has fired; data providers and key admins have begun share collection but no `(walletId, keyId)` material exists on the target TEE.
+- `Reconstructing` — the [TEE proxy](../Reference/Components/Proxy.md) has gathered enough shares (both `providersThreshold` weight and `adminsThreshold` count) and has dispatched them to the target machine; the machine is decrypting and combining.
+- `Restored` — the target TEE has reconstructed `K = S_dp + S_ka` and produced a fresh [`KeyExistence`](../Reference/Types/Abi/Key.md#keyexistence) proof.
+- `Confirmed` — `confirmKey` has stored the new `teeId` in `key.teeIds`; the key is now usable on the target machine.
 
-## Steps
+## Initial State
 
-### Step 1: Initiate Key Restoration — `FlareTeeManager.backupRestore()`
+`Triggered`.
 
-**Who can call:** Project owner or backup manager (`onlyOwnerOrBackupManager`).
+## Transitions
 
-**Parameters:**
-- `teeId` (`address`) — the identity address of the target TEE machine on which to restore the key.
-- `backupId` (`BackupId`) — the identifier of the backup to restore.
-- `backupUrl` (`string`) — URL where the backup package is hosted. If no URL exists, the caller fetches the backup package from the TEE proxy and uploads it first.
-- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
+### backupRestore: NotTriggered → Triggered
 
-**Requirements:**
-- The target TEE machine must be in `PRODUCTION` status.
-- The source machine (identified in `backupId.teeId`) must not be in `INITIALIZED` status.
-- The key must not already be available on the target TEE machine.
-- The key must have been confirmed (public key must exist on-chain).
-- The `publicKey` in the backup ID must match the on-chain key.
-- The target TEE's `initialSigningPolicyId` must be $\leq$ the backup's `rewardEpochId`.
-- The backup's `rewardEpochId` must be $\leq$ the current reward epoch ID $+ 1$.
-- The backup's `keyType` and `signingAlgo` must match the project configuration.
-- The extension IDs of the project, source TEE, and target TEE must all match.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
+- **Action**: [`FlareTeeManager.backupRestore(backupId, backupUrl, teeId, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — payable.
+- **Caller**: project owner or `project.backupManager`.
+- **Guards**:
+  - `key.publicKey ≠ 0` and `backupId.publicKey = key.publicKey`
+  - `teeMachine(target).status = PRODUCTION`
+  - `teeMachine(backupId.teeId).status ≠ INITIALIZED`
+  - `target ∉ key.teeIds`
+  - `project.extensionId = teeMachine(target).extensionId = teeMachine(backupId.teeId).extensionId`
+  - `project.keyType = backupId.keyType` and `project.signingAlgo = backupId.signingAlgo`
+  - `teeMachine(target).initialSigningPolicyId ≤ backupId.rewardEpochId ≤ currentRewardEpochId + 1`
+  - `msg.value ≥ fee(F_WALLET, KEY_DATA_PROVIDER_RESTORE)`
+- **Effects**:
+  - Emits [`BackupRestoreTriggered`](../Reference/Contracts/FlareTeeManagerEvents.md#backuprestoretriggered) and [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
+  - Sends a [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#key_data_provider_restore) instruction to the target TEE machine, with `submissionTag = end` so voting stays open for the full window.
 
-**What happens:**
-1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#key_data_provider_restore) instruction to the target TEE machine.
-2. This signals the TEE network (data providers and key admins) to begin the share collection process.
+### submitShares: Triggered → Reconstructing
 
-**Events emitted:** [`BackupRestoreTriggered`](../Reference/Contracts/FlareTeeManagerEvents.md#backuprestoretriggered), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
+- **Action**: each data provider and key admin runs the [augmentation procedure](../Reference/Operations/F_WALLET.md#augmentation) and submits a signed share via its [relay client](../Reference/Components/RelayClient.md). Off-chain, no contract call.
+- **Caller**: data providers (via [signing policy](../../FSP/SigningPolicy.md) at `backupId.rewardEpochId`) and the wallet's key admins.
+- **Guards** (per submission):
+  - The submitter's `BackupRestoreTriggered` and `TeeInstructionsSent` events have enough block confirmations to be considered final.
+  - The fetched backup is consistent with `backupId` (metadata, signatures, TEE signature all validate).
+  - The submitter holds a share addressed to itself.
+- **Effects**:
+  - Each share is encrypted under the target TEE's public key and forwarded to its proxy.
+  - The proxy aggregates shares until both thresholds (`providersThreshold` weight and `adminsThreshold` count) are reached.
 
----
+### reconstruct: Reconstructing → Restored
 
-### Step 2: Share Collection — Data Providers and Key Admins Submit Shares
+- **Action**: the target TEE machine decrypts the shares, reconstructs `S_dp` and `S_ka`, and computes `K = S_dp + S_ka mod N`. Returns an [`ActionResponse`](../Concepts/Actions.md#action-responses) carrying a fresh [`SignedKeyExistenceProof`](../Reference/Types/Wire/Key.md#signedkeyexistenceproof) (with `restored = true`).
+- **Caller**: the target TEE machine itself (action processing).
+- **Guards** (failures route the state machine back to `Triggered`):
+  - Enough decrypted shares from each pool to meet the thresholds; invalid shares are listed in `additionalResultStatus`.
+- **Effects**:
+  - If recovery succeeds, the TEE produces a key-existence proof and posts it through the proxy.
+  - If recovery fails, the action response reports it; the workflow remains in `Triggered` and a fresh `backupRestore` (with corrected inputs or more honest holders) is required.
 
-**Who participates:** Data providers and key admins who hold backup shares.
+### confirmKey: Restored → Confirmed
 
-**Requirements:**
-- The `KEY_DATA_PROVIDER_RESTORE` event must have been emitted from the blockchain with sufficient block confirmations (e.g., $3$ confirmations).
-- The backup obtained from the provided URL must be consistent and match the backup ID (metadata, signatures, and TEE signature must all validate).
+- **Action**: [`FlareTeeManager.confirmKey(proof, teeSignature)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — non-payable.
+- **Caller**: project owner or `project.backupManager`.
+- **Guards**:
+  - `proof.publicKey = key.publicKey` (matches existing definition).
+  - `teeId ∉ key.teeIds` (no duplicate insertion).
+  - `teeSignature` recovers to `teeMachine(target).publicKey`.
+- **Effects**:
+  - Adds the target `teeId` to `key.teeIds`.
+  - Stores the target machine's per-key nonce on chain for replay protection.
+  - Emits [`WalletKeyConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyconfirmed).
 
-**What happens:**
-1. Each data provider and key admin retrieves their holder backup package from the backup URL.
-2. They decrypt their key share(s) using their private key.
-3. They re-encrypt their share(s) under the public key of the target TEE machine (the `teeId` specified in Step 1).
-4. They submit an instruction containing the encrypted share:
-   - `additionalFixedMessage`: the backup metadata.
-   - `additionalVariableMessage`: the encrypted share.
-5. The TEE proxy collects incoming shares with the `submissionTag` set to `end`, keeping voting open for the maximum duration to gather as many shares as possible.
+## Invariants
 
----
+- A key's `publicKey` is never overwritten by restoration; a successful confirmation only adds a new entry to `teeIds`.
+- A restored key keeps the wallet's `configConstants` (admins, cosigners, thresholds) bit-identical to the original; the TEE rejects any backup whose metadata diverges.
+- The source TEE's per-key nonce records survive on the source machine even if the key is deleted there, preventing a stale nonce from accepting a restore later (see [KeyDelete invariants](KeyDelete.md#invariants)).
 
-### Step 3: TEE Reconstruction — Target TEE Decrypts and Recovers the Key
+## Terminal States
 
-**What happens:**
-1. Once the TEE proxy has received sufficient shares from both data providers (meeting the `providersThreshold` weight) and key admins (meeting the `adminsThreshold` count), it prepares the recovery action.
-2. The proxy submits all collected encrypted shares to the target TEE machine.
-3. The TEE machine decrypts all shares using its private key.
-4. It recovers the data provider share $S_\mathrm{dp}$ and key admin share $S_\mathrm{ka}$ from the Shamir shares.
-5. It reconstructs the original key $K = S_\mathrm{dp} + S_\mathrm{ka}$.
-6. The TEE returns an action response indicating success or failure. If any share holders submitted invalid shares, the response includes a list of those entities.
-7. If too many shares were invalid, key recovery fails, and this is indicated in the action response.
+`Confirmed`. From here the key is usable on the target TEE — same observable behaviour as a freshly-generated key.
 
----
-
-### Step 4: Confirm Restored Key — `FlareTeeManager.confirmKey()`
-
-**Who can call:** Project owner or backup manager.
-
-**Parameters:**
-- `proof` (`KeyExistence`) — a key existence proof from the target TEE machine.
-- `teeSignature` (`Signature`) — signature from the TEE machine over the proof.
-
-**Requirements:**
-- The target TEE machine must be in `PRODUCTION` status.
-- The key ID must already exist on the wallet (from the original `addKey` call).
-- The `teeId` must not already be in the key's TEE list.
-- The proof must be consistent with the on-chain wallet and project configuration.
-- The TEE signature must be valid.
-
-**What happens:**
-1. The contract verifies the proof and TEE signature.
-2. It confirms that the public key matches the existing key definition.
-3. The target `teeId` is added to the key's TEE list, indicating the key now exists on an additional machine.
-4. The nonce for this `teeId` is recorded on-chain for future replay protection.
-
-**Events emitted:** [`WalletKeyConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyconfirmed)
-
----
+For key migration between TEEs, follow `KeyRestore` to add the new machine, then [KeyDelete](KeyDelete.md) to remove the key from the old one; during the overlap the key signs on both machines.
 
 ## Notes
 
-- **Key migration between TEEs:** Key migration moves a key from one TEE machine to another. This is a composite workflow: (1) restore the key on the new TEE using Steps 1-4 above, (2) confirm the restored key with `confirmKey()`, and (3) optionally [delete the key](KeyDelete.md) from the decommissioned machine. During migration, the key exists on both TEEs simultaneously until explicitly deleted from the old one, ensuring zero downtime for signing operations.
-- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md), its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
-- **Share submission verification:** Data providers and key admins should verify on-chain events and block confirmations before submitting shares, ensuring:
-  - The [`BackupRestoreTriggered`](../Reference/Contracts/FlareTeeManagerEvents.md#backuprestoretriggered) and [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) events were emitted with sufficient confirmations.
-  - The backup from the provided URL is consistent with the backup ID.
-  - The `signature` and `teeSignature` fields in the backup package match the backup ID and metadata.
-- For related workflows, see [KeyAdd.md](KeyAdd.md) for adding new keys, [KeyDelete.md](KeyDelete.md) for deleting keys, [WalletSetup.md](WalletSetup.md) for initial key creation, and [MachineLifecycle.md](MachineLifecycle.md) for TEE machine status management.
+- The voting model is the proxy-level exception described in [Concepts/Voting § Outcomes](../Concepts/Voting.md#outcomes): both `threshold` and `end` actions fire at vote-box close, so the machine receives every share submitted before close.
+- The TEE proxy cannot validate share authenticity until decryption; if too many submitted shares are corrupt, the action response surfaces the bad-share list and reconstruction fails.
+- For end-to-end backup mechanics (Shamir construction, ECIES envelopes, share distribution), see [Concepts/Keys § Key Backup](../Concepts/Keys.md#key-backup).

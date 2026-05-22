@@ -1,74 +1,66 @@
-# Delete Key from TEE Machine
+# KeyDelete
 
-## Overview
+State machine for removing one wallet key from one TEE machine.
+The on-chain key definition (admins, multisig threshold) survives; only the binding to the specified TEE machine is severed, and the key material inside that machine is wiped.
 
-This workflow covers deleting a signing key from a TEE machine.
-Deletion removes private key material from the specified TEE but retains the key definition on the wallet.
+## Preconditions
 
-## Prerequisites
+- The `(walletId, keyId)` is in [`Confirmed`](KeyAdd.md#terminal-states) state — i.e. has a `publicKey` on chain and the target `teeId` appears in the key's `teeIds` list.
+- The target TEE machine is in `PRODUCTION` and is registered to the wallet's project's `extensionId`.
+- The [project owner](../../Terminology/Roles.md#project-owner) (or, for the cleanup transition, the project's `backupManager`) holds the caller address.
 
-- The TEE machine holding the key must be in `PRODUCTION` status.
-- The key must have been confirmed (public key must exist on-chain).
-- The TEE machine's extension ID must match the wallet's project extension ID.
+## States
 
----
+- `OnTee` — the key material is present on `teeId`; `teeId ∈ key.teeIds` on chain.
+- `Deleted` — the TEE has been instructed to wipe the material; `teeId` no longer appears in `key.teeIds`.
+- `Stale` — a transient on-chain state where the key's `teeIds` list still contains TEE machines that are no longer in `PRODUCTION`. Cleaning is optional.
 
-## Steps
+## Initial State
 
-### Step 1: Delete Key — `FlareTeeManager.deleteKey()`
+`OnTee`.
 
-**Who can call:** [Project owner](../../Terminology/Roles.md#project-owner) only.
+## Transitions
 
-**Parameters:**
-- `teeId` (`address`) — the identity address of the TEE machine from which the key should be deleted.
-- `walletId` (`bytes32`) — the wallet ID containing the key.
-- `keyId` (`uint64`) — the key ID to delete from the specified TEE.
-- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
+### deleteKey: OnTee → Deleted
 
-**Requirements:**
-- The TEE machine must be in `PRODUCTION` status.
-- The key must have been confirmed (public key must exist on-chain).
-- The TEE machine's extension ID must match the wallet's project extension ID.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
+- **Action**: [`FlareTeeManager.deleteKey(walletId, keyId, teeId, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — payable.
+- **Caller**: project owner.
+- **Guards**:
+  - `key.publicKey ≠ 0` (the key has been confirmed)
+  - `teeMachine.status = PRODUCTION`
+  - `teeMachine.extensionId = project.extensionId`
+  - `msg.value ≥ fee(F_WALLET, KEY_DELETE)`
+- **Effects**:
+  - Sends a [`F_WALLET KEY_DELETE`](../Reference/Operations/F_WALLET.md#key_delete) instruction to `teeId`.
+  - Removes `teeId` from `key.teeIds` (if present; absence is silently ignored as a retry path).
+  - Emits [`WalletKeyDeleted`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeydeleted) and [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
+  - On the TEE machine: the private key material is wiped, but the [wallet-key variables](../Concepts/Keys.md#wallet-key-variables) (`nonce`, `pauseNonce`, `status`, `expiry`) are retained so a later [restoration](KeyRestore.md) cannot reuse a stale nonce.
 
-**What happens:**
-1. The contract sends a [`KEY_DELETE`](../Reference/Operations/F_WALLET.md#key_delete) instruction to the specified TEE machine.
-2. The TEE machine verifies the `nonce` in the instruction is strictly greater than the current nonce stored for that key.
-3. The TEE machine removes the private key material from its memory.
-4. If the `teeId` is in the key's TEE list, it is removed. If the `teeId` is not found, the contract still proceeds — the instruction is sent as a retry mechanism.
-5. The key definition itself remains on the wallet — only the association with the specific TEE is removed.
-6. On the TEE machine, the wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) for that key are *retained* even after deletion, preventing nonce reuse if the key is later restored.
+### cleanUpTeeIds: Stale → OnTee (per remaining TEE)
 
-**Events emitted:** [`WalletKeyDeleted`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeydeleted), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
+- **Action**: [`FlareTeeManager.cleanUpTeeIds(walletId, keyId)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — non-payable.
+- **Caller**: project owner or `project.backupManager`.
+- **Guards**:
+  - `key.publicKey ≠ 0`
+- **Effects**:
+  - For each entry of `key.teeIds` whose machine is not in `PRODUCTION`, removes the entry.
+  - Emits [`WalletKeyDeleted`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeydeleted) for each removed entry.
+  - Does not touch the TEE machines themselves (they may already be paused, banned, or replicated).
 
-> **Note:** Deleting a key from all TEEs does not remove the key definition from the wallet. The key can be restored via the [key restore workflow](KeyRestore.md).
+## Invariants
 
----
+- The key's `publicKey` is immutable; deletion never clears it.
+- `wallet.status` is unrestricted: `deleteKey` is callable across all four statuses.
+- A TEE machine that was once associated with the key keeps its nonce records even after the binding is removed; this lets [KeyRestore](KeyRestore.md) detect and reject stale nonces.
 
-### Step 2: Clean Up Stale TEE IDs — `FlareTeeManager.cleanUpTeeIds()`
+## Terminal States
 
-After deleting keys or decommissioning TEE machines, stale TEE IDs may remain in a key's TEE list.
-This step removes them.
+`Deleted` (for the `(walletId, keyId, teeId)` triple). The key as a whole is _not_ terminal:
 
-**Who can call:** Project owner or backup manager.
-
-**Parameters:**
-- `walletId` (`bytes32`) — the wallet ID.
-- `keyId` (`uint64`) — the key ID whose TEE list should be cleaned.
-
-**Requirements:**
-- The key must exist on the wallet (public key must be non-empty).
-
-**What happens:**
-1. The contract iterates through the TEE IDs associated with the specified key.
-2. TEE IDs whose on-chain status is not `PRODUCTION` are removed from the key definition's TEE list.
-
-**Events emitted:** [`WalletKeyDeleted`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeydeleted) for each removed stale TEE ID.
-
----
+- If at least one other TEE still holds the key, the wallet can keep operating with reduced redundancy.
+- If all TEEs are deleted, the key definition remains, and [KeyRestore](KeyRestore.md) can re-instantiate it from backup.
 
 ## Notes
 
-- The `deleteKey` function does not check wallet status — it can be called regardless of whether the wallet is in `CREATED`, `INITIALIZED`, `PRODUCTION`, or `PAUSED` status.
-- For adding new keys to TEE machines, see the [key add workflow](KeyAdd.md). For TEE machine decommissioning and status changes, see [machine lifecycle](MachineLifecycle.md).
-- On the TEE machine, wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) are retained even after deletion, preventing nonce reuse if the key is later [restored from backup](KeyRestore.md).
+- `deleteKey` is unconditional with respect to wallet status — useful for emergency removal even on `PAUSED` wallets.
+- The cleanup transition is a separate convenience; the `Deleted` state can be reached without ever invoking `cleanUpTeeIds` if the project owner keeps the `teeIds` list tidy via direct `deleteKey` calls.

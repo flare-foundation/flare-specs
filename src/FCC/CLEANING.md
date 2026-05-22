@@ -83,10 +83,12 @@ Done:
 - [x] Write `FCE/Reference/Api.md` (TEE machine ↔ FCE HTTP contract).
 - [x] Write `Reference/Contracts/VrfVerifier.md` (the standalone VRF-verification contract: functions, Proof struct, errors).
 - [x] Write `FDC2/Reference/Contracts/Fdc2Hub.md` (request submission, verification, fees, governance, events, errors).
+- [x] Rewrite `Workflows/Conventions.md` to prescribe a state-machine shape (preconditions, states, initial state, transitions with action/caller/guards/effects, invariants, terminal states).
+- [x] Reshape `Workflows/{KeyAdd,KeyDelete,KeyRestore}.md` to the state-machine format as worked examples.
 
 Remaining:
 
-1. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
+1. Reshape the rest of `Workflows/*` to the new state-machine format: `MachineRegistration.md`, `MachineLifecycle.md`, `WalletSetup.md`, `VrfProof.md`, `MultiTeeOperations.md`, `PMW/Workflows/{XrpPayment,XrplMultisigConfiguration}.md`, `FDC2/Workflows/Fdc2Attestation.md`, `FCE/Workflows/{Configuration,Instructions}.md`.
 2. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
 
 ## Cross-cutting renames and fixes
