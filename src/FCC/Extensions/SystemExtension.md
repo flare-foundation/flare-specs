@@ -21,7 +21,7 @@ The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only b
 | `F_XRP`    | XRP payment and reissue operations. |
 | `F_FDC2`   | FDC2 attestation proof generation. |
 
-Command references live under [Operations/Commands](../Operations/Commands/README.md) (infrastructure operations) and the application-specific directories under [PMW/Commands](PMW/Commands/README.md) and [FDC2/Commands](FDC2/Commands/README.md).
+Command references live under [Operations/System](../Operations/System/README.md) (infrastructure operations) and the application-specific directories under [PMW/Commands](PMW/Commands/README.md) and [FDC2/Commands](FDC2/Commands/README.md).
 
 ## FDC2
 

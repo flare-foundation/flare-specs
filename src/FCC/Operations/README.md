@@ -11,7 +11,7 @@ This directory documents the operation lifecycle and the system catalog:
 | [Voting](Voting.md) | Data provider and cosigner threshold rules; pass conditions. |
 | [Actions](Actions.md) | What a TEE machine receives and produces, including direct actions (which bypass instructions and voting) and action responses. |
 | [Rewarding](Rewarding.md) | Per-vote receipts and the reward-attribution payload they feed into. |
-| [Commands](Commands/README.md) | Reference for each system `(opType, opCommand)` pair, organized by op-type. |
+| [System](System/README.md) | Reference for each system `(opType, opCommand)` pair, organized by op-type. |
 
 The path an operation takes through this directory depends on its kind:
 

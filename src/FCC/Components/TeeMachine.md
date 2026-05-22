@@ -31,7 +31,7 @@ Before executing an instruction action, the TEE machine verifies:
 
 To mitigate the [`cosigners`/`cosignersThreshold` strip threat](../Operations/Instructions.md#cosigners):
 
-- **System actions that consume a [wallet key](../TeeManagement/Keys.md#wallet-private-key-data-structure)** compare the instruction's `cosigners`/`cosignersThreshold` against the values stored with that key (set at [key generation](../Operations/Commands/F_WALLET/KeyGenerate.md), not modifiable after); a mismatch rejects the action.
+- **System actions that consume a [wallet key](../TeeManagement/Keys.md#wallet-private-key-data-structure)** compare the instruction's `cosigners`/`cosignersThreshold` against the values stored with that key (set at [key generation](../Operations/System/F_WALLET.md#key_generate), not modifiable after); a mismatch rejects the action.
 - **System actions that sign only with the $\mathrm{TEE}_{\mathrm{ID}}$ key** (e.g. [`F_FDC2 PROVE`](../Extensions/FDC2/Commands/Prove.md)) commit `cosigners` and `cosignersThreshold` into the signed result, so a downstream verifier can check them.
 - **Custom FCE actions** must implement their own enforcement.
 

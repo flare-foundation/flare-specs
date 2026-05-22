@@ -17,7 +17,7 @@ Owners are recorded separately and updated via the [ownership transfer flow](Reg
 ## Signing Policy
 
 A TEE machine cannot accept signed instructions unless it knows the current [signing policy](../../FSP/SigningPolicy.md).
-The first signing policy is installed at registration time as part of the [initial attestation](Attestation.md); subsequent policies are pushed by the [TEE proxy](../Components/TeeProxy.md) via [`UPDATE_POLICY`](../Operations/Commands/F_POLICY/UpdatePolicy.md) at every reward-epoch boundary.
+The first signing policy is installed at registration time as part of the [initial attestation](Attestation.md); subsequent policies are pushed by the [TEE proxy](../Components/TeeProxy.md) via [`UPDATE_POLICY`](../Operations/System/F_POLICY.md#update_policy) at every reward-epoch boundary.
 
 ## TEE State
 
@@ -28,7 +28,7 @@ The TEE's state is the part of its content that a fresh replica running the same
 - System state variables: initial and current signing policies, the machine's status, the configuration nonce, the pausing nonce.
 - Any [extension-defined state](../Extensions/Concepts.md) added by the FCE the machine is registered to.
 
-On a [replication](../Operations/Commands/F_REG/) upgrade, the essential state — the identity key pair, and all wallet keys and backups — is transferred to the new machine that takes over the identity.
+On a [replication](../Operations/System/F_REG.md) upgrade, the essential state — the identity key pair, and all wallet keys and backups — is transferred to the new machine that takes over the identity.
 Machine-local nonces are not carried over.
 
 ### Encoding

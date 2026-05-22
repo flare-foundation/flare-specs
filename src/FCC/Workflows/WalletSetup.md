@@ -230,7 +230,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 **What happens:**
 
 1. Generates a new `keyId` by incrementing the wallet's key counter.
-2. Sends a [`KEY_GENERATE`](../Operations/Commands/F_WALLET/KeyGenerate.md) instruction to the specified TEE machine.
+2. Sends a [`KEY_GENERATE`](../Operations/System/F_WALLET.md#key_generate) instruction to the specified TEE machine.
 3. The instruction includes the wallet configuration (admins, cosigners), key type, and signing algorithm from the project.
 4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 5. This step can be repeated multiple times to add keys on different TEE machines (each gets a unique `keyId`).
@@ -301,5 +301,5 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 - **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `TeeWalletManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits [`WalletPaused`](../Types/Abi/Events/TeeWalletManager.md#walletpaused). To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
 - **Setting default wallet — `FlareTeeManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
 - **Setting backup manager — `FlareTeeManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
-- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../Operations/Commands/F_WALLET/KeyDelete.md) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted).
+- **Key deletion — `TeeWalletKeyManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../Operations/System/F_WALLET.md#key_delete) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted).
 - **Setting pausing addresses — `FlareTeeManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.

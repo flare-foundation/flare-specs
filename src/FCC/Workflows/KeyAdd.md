@@ -32,7 +32,7 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 
 **What happens:**
 1. The contract generates a new `keyId` by incrementing the wallet's key counter.
-2. A [`KEY_GENERATE`](../Operations/Commands/F_WALLET/KeyGenerate.md) instruction is sent to the specified TEE machine.
+2. A [`KEY_GENERATE`](../Operations/System/F_WALLET.md#key_generate) instruction is sent to the specified TEE machine.
 3. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 4. The TEE machine automatically triggers a key backup for the newly generated key.
 

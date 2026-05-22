@@ -22,5 +22,5 @@ All on-chain calls go through the [`FlareTeeManager`](../TeeManagement/FlareTeeM
 | [KeyRestore](KeyRestore.md) | Restore a key from backup onto a new TEE machine. | [Keys](../TeeManagement/Keys.md) |
 | [MachineLifecycle](MachineLifecycle.md) | Post-registration operations: pause, resume, upgrade, ownership transfer. | [Registration](../TeeManagement/Registration.md) |
 | [ExtensionInstructions](ExtensionInstructions.md) | Send custom instructions to an FCE and retrieve the result. | [Extensions](../Extensions/README.md), [Actions](../Operations/Actions.md) |
-| [VrfProof](VrfProof.md) | Generate and verify a VRF proof from a TEE-managed VRF key. | [Keys](../TeeManagement/Keys.md), [`F_WALLET VRF`](../Operations/Commands/F_WALLET/Vrf.md) |
+| [VrfProof](VrfProof.md) | Generate and verify a VRF proof from a TEE-managed VRF key. | [Keys](../TeeManagement/Keys.md), [`F_WALLET VRF`](../Operations/System/F_WALLET.md#vrf) |
 | [MultiTeeOperations](MultiTeeOperations.md) | Deltas for running a wallet or application across multiple TEE machines. | All of the above |

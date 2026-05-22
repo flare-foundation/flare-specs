@@ -1,6 +1,6 @@
 # Policy Wire Types
 
-JSON types carried in policy direct actions ([`INITIALIZE_POLICY`](../../Operations/Commands/F_POLICY/InitializePolicy.md), [`UPDATE_POLICY`](../../Operations/Commands/F_POLICY/UpdatePolicy.md)).
+JSON types carried in policy direct actions ([`INITIALIZE_POLICY`](../../Operations/System/F_POLICY.md#initialize_policy), [`UPDATE_POLICY`](../../Operations/System/F_POLICY.md#update_policy)).
 
 ## InitializePolicyRequest
 

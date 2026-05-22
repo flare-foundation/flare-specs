@@ -5,7 +5,7 @@ For the corresponding ABI types used for on-chain encoding, see [Key (ABI)](../A
 
 ## KeyInfo
 
-Single element of the [`KEY_INFO`](../../Operations/Commands/F_GET/KeyInfo.md) action result list.
+Single element of the [`KEY_INFO`](../../Operations/System/F_GET.md#key_info) action result list.
 
 ```json
 {
@@ -22,7 +22,7 @@ Single element of the [`KEY_INFO`](../../Operations/Commands/F_GET/KeyInfo.md) a
 
 ## SignedKeyExistenceProof
 
-Returned by `GET /wallet/<walletId>/<keyId>`, by the [`KEY_PROOF`](../../Operations/Commands/F_GET/KeyProof.md) action (as a list), and by the [`KEY_GENERATE`](../../Operations/Commands/F_WALLET/KeyGenerate.md) and [`KEY_DATA_PROVIDER_RESTORE`](../../Operations/Commands/F_WALLET/KeyDataProviderRestore.md) instruction action results.
+Returned by `GET /wallet/<walletId>/<keyId>`, by the [`KEY_PROOF`](../../Operations/System/F_GET.md#key_proof) action (as a list), and by the [`KEY_GENERATE`](../../Operations/System/F_WALLET.md#key_generate) and [`KEY_DATA_PROVIDER_RESTORE`](../../Operations/System/F_WALLET.md#key_data_provider_restore) instruction action results.
 Wraps an ABI-encoded [`KeyExistence`](../Abi/Key.md#keyexistence) struct with a TEE identity signature.
 
 
@@ -74,7 +74,7 @@ The decoded fields use the following JSON representation:
 
 ## KeyIDPair
 
-Returned in the action result of a [`KEY_DELETE`](../../Operations/Commands/F_WALLET/KeyDelete.md) command.
+Returned in the action result of a [`KEY_DELETE`](../../Operations/System/F_WALLET.md#key_delete) command.
 
 
 ```json
@@ -91,7 +91,7 @@ Returned in the action result of a [`KEY_DELETE`](../../Operations/Commands/F_WA
 
 ## TeeBackupRequest
 
-Direct action message for the [`TEE_BACKUP`](../../Operations/Commands/F_GET/TeeBackup.md) command.
+Direct action message for the [`TEE_BACKUP`](../../Operations/System/F_GET.md#tee_backup) command.
 Same shape as [`KeyIDPair`](#keyidpair).
 
 ```json
@@ -108,7 +108,7 @@ Same shape as [`KeyIDPair`](#keyidpair).
 
 ## TeeBackupResponse
 
-Action result for the [`TEE_BACKUP`](../../Operations/Commands/F_GET/TeeBackup.md) command.
+Action result for the [`TEE_BACKUP`](../../Operations/System/F_GET.md#tee_backup) command.
 
 ```json
 {

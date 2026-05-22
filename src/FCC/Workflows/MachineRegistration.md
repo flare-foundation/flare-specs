@@ -236,7 +236,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 **What happens:**
 
 1. The contract checks if the previous challenge is still valid (within `challengeValidityDurationSeconds`). If so, it reuses the existing challenge. Otherwise, it generates a new random challenge via the Relay contract.
-2. A [`TEE_ATTESTATION`](../Operations/Commands/F_REG/TeeAttestation.md) instruction is sent to the TEE machine.
+2. A [`TEE_ATTESTATION`](../Operations/System/F_REG.md#tee_attestation) instruction is sent to the TEE machine.
 3. The TEE machine generates a challenge hash by ABI-encoding and hashing an `Attestation` struct containing: the challenge, public key, signing policy information, TEE state, and timestamp.
 4. The platform provider (e.g., Google Cloud) signs the challenge hash and returns the attestation response.
 5. The attestation result becomes available at the proxy.

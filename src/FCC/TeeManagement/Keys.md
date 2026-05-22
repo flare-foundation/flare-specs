@@ -41,8 +41,8 @@ Independently of the key data above, every TEE machine maintains a per-key varia
 
 $$(\mathrm{walletId},\ \mathrm{keyId}) \Rightarrow (\mathrm{nonce},\ \mathrm{pauseNonce},\ \mathrm{status},\ \mathrm{expiry})$$
 
-- `nonce`: replay-protection counter for state-changing operations (e.g. [`KEY_DELETE`](../Operations/Commands/F_WALLET/KeyDelete.md)).
-- `pauseNonce`: random nonce reserved for [`PAUSE`](../Operations/Commands/F_WALLET/) / [`RESUME`](../Operations/Commands/F_WALLET/) operations.
+- `nonce`: replay-protection counter for state-changing operations (e.g. [`KEY_DELETE`](../Operations/System/F_WALLET.md#key_delete)).
+- `pauseNonce`: random nonce reserved for [`PAUSE`](../Operations/System/F_WALLET.md) / [`RESUME`](../Operations/System/F_WALLET.md) operations.
 - `status`: e.g. `active`, `paused`.
 - `expiry`: TEE-side expiry time. After this timestamp the key is deleted automatically.
 
@@ -53,13 +53,13 @@ These variables are machine-local and are _not_ included in [backups](#key-backu
 On key generation, the TEE machine produces a [`KeyExistence`](../Types/Abi/Key.md#keyexistence) struct signed by the TEE's identity key — the [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof).
 The proof binds the `(teeId, walletId, keyId, publicKey)` tuple together with the key's nonce, restored flag, and [`configConstants`](../Types/Abi/Key.md#keyconfigconstants); on-chain confirmation via `confirmKey` writes the public key into the wallet's record (see [Wallets](Wallets.md#wallet-keys)).
 
-The [TEE proxy](../Components/TeeProxy.md#key-data-store) refreshes its cached proofs by combining [`KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) (returns `(walletId, keyId, nonce)` triples) with [`KEY_PROOF`](../Operations/Commands/F_GET/KeyProof.md) (returns signed proofs for triples whose nonce changed since the last sync).
+The [TEE proxy](../Components/TeeProxy.md#key-data-store) refreshes its cached proofs by combining [`KEY_INFO`](../Operations/System/F_GET.md#key_info) (returns `(walletId, keyId, nonce)` triples) with [`KEY_PROOF`](../Operations/System/F_GET.md#key_proof) (returns signed proofs for triples whose nonce changed since the last sync).
 
 ## VRF Keys
 
 A TEE machine can also hold VRF keys, used for verifiable randomness.
-VRF keys use the `keccak256-secp256k1-vrf` [signing algorithm](#signing-algorithms) and are managed by the same [`KEY_GENERATE`](../Operations/Commands/F_WALLET/KeyGenerate.md) and [`KEY_DELETE`](../Operations/Commands/F_WALLET/KeyDelete.md) instructions as other wallet keys.
-See [`F_WALLET VRF`](../Operations/Commands/F_WALLET/Vrf.md) for the proof structure, on-chain verification, and randomness extraction.
+VRF keys use the `keccak256-secp256k1-vrf` [signing algorithm](#signing-algorithms) and are managed by the same [`KEY_GENERATE`](../Operations/System/F_WALLET.md#key_generate) and [`KEY_DELETE`](../Operations/System/F_WALLET.md#key_delete) instructions as other wallet keys.
+See [`F_WALLET VRF`](../Operations/System/F_WALLET.md#vrf) for the proof structure, on-chain verification, and randomness extraction.
 
 ## Key Backup
 
@@ -125,8 +125,8 @@ The flow:
 
 1. Each data provider and key admin extracts and decrypts the holder backup package addressed to it, recovering its share of $S_\mathrm{dp}$ or $S_\mathrm{ka}$.
 2. Each holder re-encrypts the decrypted share under the destination TEE's public key, e.g. $\mathrm{Enc}_{\mathrm{TEE}_\mathrm{id}}(S_\mathrm{ka}^{i})$.
-3. Each holder submits an [`KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md) instruction with the backup metadata in `additionalFixedMessage` and the encrypted share in `additionalVariableMessage`.
-   Data providers go through their [relay client](../Components/RelayClient.md) (see [`KEY_DATA_PROVIDER_RESTORE` augmentation](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md#augmentation)); admins without a relay client use an equivalent offline tool.
+3. Each holder submits an [`KEY_DATA_PROVIDER_RESTORE`](../Operations/System/F_WALLET.md#key_data_provider_restore) instruction with the backup metadata in `additionalFixedMessage` and the encrypted share in `additionalVariableMessage`.
+   Data providers go through their [relay client](../Components/RelayClient.md) (see [`KEY_DATA_PROVIDER_RESTORE` augmentation](../Operations/System/F_WALLET.md#augmentation)); admins without a relay client use an equivalent offline tool.
 4. The TEE proxy sets `submissionTag = end` so [voting](../Operations/Voting.md) stays open for the full window. At the end of voting, if both share sets meet their thresholds, the proxy delivers the bundle to the destination TEE.
 5. The destination TEE decrypts each share, reconstructs $S_\mathrm{dp}$ and $S_\mathrm{ka}$, and recovers $K = S_\mathrm{dp} + S_\mathrm{ka} \pmod N$.
 6. The TEE returns an [action response](../Operations/Actions.md#action-responses) indicating success or failure and, if any holders submitted invalid shares, names them.

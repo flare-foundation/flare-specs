@@ -47,6 +47,6 @@ A passing box produces two [instruction actions](Actions.md#instruction-actions)
 2. `end`: Produced when the box closes.
    The TEE machine emits the [`RewardingData`](Rewarding.md#rewardingdata) payload as the action's result data and performs no further operation work (system commands may run a consistency check at this stage and downgrade the status if it fails).
 
-[`F_WALLET KEY_DATA_PROVIDER_RESTORE`](Commands/F_WALLET/KeyDataProviderRestore.md) is the exception: both actions are produced at close so the proxy can collect additional shares before key reconstruction.
+[`F_WALLET KEY_DATA_PROVIDER_RESTORE`](System/F_WALLET.md#key_data_provider_restore) is the exception: both actions are produced at close so the proxy can collect additional shares before key reconstruction.
 
 Each accepted vote is acknowledged in the [`POST /instruction`](../Components/TeeProxy.md#external-write-apis) response with a signed receipt that feeds [reward attribution](Rewarding.md).

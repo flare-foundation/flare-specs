@@ -51,7 +51,7 @@ The instruction carries two fields the signer may populate per command:
 Two system commands populate them via a per-command procedure run by the relay client:
 
 - [`F_FDC2 PROVE`](../Extensions/FDC2/Commands/Prove.md#augmentation-procedure)
-- [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](Commands/F_WALLET/KeyDataProviderRestore.md#augmentation)
+- [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](System/F_WALLET.md#augmentation)
 
 All other instructions — including every custom extension instruction — leave both fields empty.
 

@@ -45,7 +45,7 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
-1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md) instruction to the target TEE machine.
+1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../Operations/System/F_WALLET.md#key_data_provider_restore) instruction to the target TEE machine.
 2. This signals the TEE network (data providers and key admins) to begin the share collection process.
 
 **Events emitted:** [`BackupRestoreTriggered`](../Types/Abi/Events/TeeWalletBackupManager.md#backuprestoretriggered), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)

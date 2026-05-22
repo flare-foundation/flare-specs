@@ -33,12 +33,12 @@ The payload originates in one of two ways:
   When enabled, the proxy authenticates requests (e.g. via API key).
   The endpoint rejects any operation in the system (`F_`) namespace; it is intended for custom [extension](../Extensions/Concepts.md#system-vs-custom-extensions) operations.
 - _Proxy-initiated_: the proxy constructs a `DirectInstruction` for system services:
-  - [`TEE_INFO`](Commands/F_GET/TeeInfo.md) — periodic liveness and state polling (every $\sim 10$ seconds).
-  - [`INITIALIZE_POLICY`](Commands/F_POLICY/InitializePolicy.md) — once at proxy startup.
-  - [`UPDATE_POLICY`](Commands/F_POLICY/UpdatePolicy.md) — when the proxy observes a new [signing policy](../../FSP/SigningPolicy.md) on-chain.
-  - [`KEY_INFO`](Commands/F_GET/KeyInfo.md) — periodic wallet sync (every $\sim 60$ minutes).
-  - [`KEY_PROOF`](Commands/F_GET/KeyProof.md) — fetched during wallet sync for keys whose stored proof is missing or stale.
-  - [`TEE_BACKUP`](Commands/F_GET/TeeBackup.md) — on new key generation and after every signing policy update.
+  - [`TEE_INFO`](System/F_GET.md#tee_info) — periodic liveness and state polling (every $\sim 10$ seconds).
+  - [`INITIALIZE_POLICY`](System/F_POLICY.md#initialize_policy) — once at proxy startup.
+  - [`UPDATE_POLICY`](System/F_POLICY.md#update_policy) — when the proxy observes a new [signing policy](../../FSP/SigningPolicy.md) on-chain.
+  - [`KEY_INFO`](System/F_GET.md#key_info) — periodic wallet sync (every $\sim 60$ minutes).
+  - [`KEY_PROOF`](System/F_GET.md#key_proof) — fetched during wallet sync for keys whose stored proof is missing or stale.
+  - [`TEE_BACKUP`](System/F_GET.md#tee_backup) — on new key generation and after every signing policy update.
 
 The proxy then builds the [`Action`](../Types/Wire/Action.md#action), populating each field as follows:
 
@@ -51,11 +51,11 @@ The proxy then builds the [`Action`](../Types/Wire/Action.md#action), populating
 ## Action Results
 
 An [`ActionResult`](../Types/Wire/Action.md#actionresult) is the per-action outcome the TEE machine produces; it is then wrapped in an [`ActionResponse`](#action-responses) and posted to the proxy.
-Field population depends on whether the action belongs to a system [command](Commands/README.md) — processed locally by the TEE machine — or to a custom extension.
+Field population depends on whether the action belongs to a system [command](System/README.md) — processed locally by the TEE machine — or to a custom extension.
 
 ### System Commands
 
-The TEE machine processes system commands locally — both the [infrastructure commands](Commands/README.md) and the system extension's application commands ([PMW](../Extensions/PMW/Commands/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../Extensions/FDC2/Commands/README.md) `F_FDC2 PROVE`).
+The TEE machine processes system commands locally — both the [infrastructure commands](System/README.md) and the system extension's application commands ([PMW](../Extensions/PMW/Commands/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../Extensions/FDC2/Commands/README.md) `F_FDC2 PROVE`).
 It populates each field as follows:
 
 - `id`, `submissionTag`: copied from the inbound `Action.data`.

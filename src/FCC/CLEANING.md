@@ -5,7 +5,7 @@
 Phase 2 [cleaning](#cleaning-plan) status:
 
 - [x] `Images/`
-- [x] `Operations/*.md` (except `Operations/Commands/`)
+- [x] `Operations/*.md` (except `Operations/System/`)
 - [x] `Components/RelayClient.md`
 - [x] `Architecture.md`
 - [x] `README.md`

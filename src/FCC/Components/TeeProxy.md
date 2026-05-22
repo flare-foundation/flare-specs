@@ -17,9 +17,9 @@ Until a caller holds that receipt, it has no guarantee that the proxy forwarded 
 
 The proxy keeps its paired TEE machine in sync with the current [signing policy](../../FSP/SigningPolicy.md):
 
-- On initialization, it installs the current policy on the machine via [`INITIALIZE_POLICY`](../Operations/Commands/F_POLICY/InitializePolicy.md).
+- On initialization, it installs the current policy on the machine via [`INITIALIZE_POLICY`](../Operations/System/F_POLICY.md#initialize_policy).
    The initial [attestation](../TeeManagement/Attestation.md) lets data providers verify that the correct policy was installed.
-- During operation, the proxy reads new policies from a C-chain indexer and pushes them via [`UPDATE_POLICY`](../Operations/Commands/F_POLICY/UpdatePolicy.md) as a [direct action](../Operations/Actions.md#direct-actions).
+- During operation, the proxy reads new policies from a C-chain indexer and pushes them via [`UPDATE_POLICY`](../Operations/System/F_POLICY.md#update_policy) as a [direct action](../Operations/Actions.md#direct-actions).
 
 ## Proxy-Issued Direct Actions
 
@@ -27,12 +27,12 @@ Every [direct action](../Operations/Actions.md#direct-actions) the proxy issues 
 
 | Command | Trigger | [Queue](#processing-queues) | Purpose |
 |---|---|---|---|
-| [`F_POLICY INITIALIZE_POLICY`](../Operations/Commands/F_POLICY/InitializePolicy.md) | Once per paired TEE machine, on first connection | Direct | Seed the machine's first signing policy. |
-| [`F_POLICY UPDATE_POLICY`](../Operations/Commands/F_POLICY/UpdatePolicy.md) | When a new signing policy becomes active on the Flare C-chain | Direct | Rotate the signing policy on the machine. |
-| [`F_GET TEE_INFO`](../Operations/Commands/F_GET/TeeInfo.md) | Periodic, every $\sim 10$ s | Direct | Refresh the [last-attestation cache](#in-memory-stores) served at `GET /info`. |
-| [`F_GET KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) | Periodic, every $\sim 60$ min | Direct | Sync the [key data store](#in-memory-stores) (keys present, nonces). |
-| [`F_GET KEY_PROOF`](../Operations/Commands/F_GET/KeyProof.md) | Follow-up to `KEY_INFO`, for pairs whose nonce changed | Direct | Fetch fresh [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) values for the key data store. |
-| [`F_GET TEE_BACKUP`](../Operations/Commands/F_GET/TeeBackup.md) | Via [result hooks](#result-hooks): per new key, or per stored key after each `UPDATE_POLICY` | Backup | Store fresh backups in the [backup store](#persistent-stores). |
+| [`F_POLICY INITIALIZE_POLICY`](../Operations/System/F_POLICY.md#initialize_policy) | Once per paired TEE machine, on first connection | Direct | Seed the machine's first signing policy. |
+| [`F_POLICY UPDATE_POLICY`](../Operations/System/F_POLICY.md#update_policy) | When a new signing policy becomes active on the Flare C-chain | Direct | Rotate the signing policy on the machine. |
+| [`F_GET TEE_INFO`](../Operations/System/F_GET.md#tee_info) | Periodic, every $\sim 10$ s | Direct | Refresh the [last-attestation cache](#in-memory-stores) served at `GET /info`. |
+| [`F_GET KEY_INFO`](../Operations/System/F_GET.md#key_info) | Periodic, every $\sim 60$ min | Direct | Sync the [key data store](#in-memory-stores) (keys present, nonces). |
+| [`F_GET KEY_PROOF`](../Operations/System/F_GET.md#key_proof) | Follow-up to `KEY_INFO`, for pairs whose nonce changed | Direct | Fetch fresh [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) values for the key data store. |
+| [`F_GET TEE_BACKUP`](../Operations/System/F_GET.md#tee_backup) | Via [result hooks](#result-hooks): per new key, or per stored key after each `UPDATE_POLICY` | Backup | Store fresh backups in the [backup store](#persistent-stores). |
 
 The proxy does not issue any other `F_` action; all other `F_` instructions originate on-chain (`FlareTeeManager`, `Fdc2Hub`, `TeePayments`) and reach the proxy through [signers](../Operations/Instructions.md#signers).
 
@@ -41,7 +41,7 @@ The proxy does not issue any other `F_` action; all other `F_` instructions orig
 The proxy resolves the effective [cosigner](../Operations/Instructions.md#cosigners) set and data-provider threshold for an instruction based on its `(opType, opCommand)`:
 
 1. [`F_XRP PAY`](../Extensions/PMW/Commands/Pay.md) and [`F_XRP REISSUE`](../Extensions/PMW/Commands/Reissue.md): cosigners are taken from the wallet configuration.
-2. [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md): cosigners and thresholds are taken from the backup metadata.
+2. [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/System/F_WALLET.md#key_data_provider_restore): cosigners and thresholds are taken from the backup metadata.
 3. [`F_FDC2 PROVE`](../Extensions/FDC2/Commands/Prove.md): the data-provider threshold is taken from `thresholdBIPS` in the [`Fdc2RequestHeader`](../Types/Abi/Fdc2.md#fdc2requestheader); a zero value falls back to the signing policy default.
 4. All other instructions: `cosigners` and `cosignersThreshold` are taken from the instruction itself.
 
@@ -56,7 +56,7 @@ Example profile:
 1. `originalMessage`: up to $50$ KiB for all families.
 2. `additionalFixedMessage`: up to $100$ KiB for all families.
 3. `additionalVariableMessage`: up to $50$ KiB for standard families.
-4. `additionalVariableMessage`: up to $1$ MiB for [`KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md).
+4. `additionalVariableMessage`: up to $1$ MiB for [`KEY_DATA_PROVIDER_RESTORE`](../Operations/System/F_WALLET.md#key_data_provider_restore).
 
 ## Per-Provider Open-Vote Cap
 
@@ -70,7 +70,7 @@ The proxy hosts three independent queues, each polled separately by the TEE mach
 
 1. **Direct**: every [direct action](../Operations/Actions.md#direct-actions) except `TEE_BACKUP` — both proxy-issued system operations and externally submitted custom extension operations.
 2. **Main**: [instruction actions](../Operations/Actions.md#instruction-actions).
-3. **Backup**: [`TEE_BACKUP`](../Operations/Commands/F_GET/TeeBackup.md) direct actions.
+3. **Backup**: [`TEE_BACKUP`](../Operations/System/F_GET.md#tee_backup) direct actions.
 
 The proxy may apply per-queue filtering and may prioritize its own internal reads.
 
@@ -97,9 +97,9 @@ Transient statuses are therefore monotonically increasing and final statuses are
 
 A small set of successful system command results trigger proxy-side follow-up before storage:
 
-1. [`UPDATE_POLICY`](../Operations/Commands/F_POLICY/UpdatePolicy.md): the proxy enqueues a [`TEE_BACKUP`](../Operations/Commands/F_GET/TeeBackup.md) action on the backup queue for every stored wallet key.
-2. [`KEY_GENERATE`](../Operations/Commands/F_WALLET/KeyGenerate.md), [`KEY_DATA_PROVIDER_RESTORE`](../Operations/Commands/F_WALLET/KeyDataProviderRestore.md), [`KEY_DELETE`](../Operations/Commands/F_WALLET/KeyDelete.md): the proxy updates its tracked keys; additions also enqueue a `TEE_BACKUP` for the new key.
-3. [`TEE_BACKUP`](../Operations/Commands/F_GET/TeeBackup.md): the produced backup is made available via the [external backup APIs](#external-read-apis).
+1. [`UPDATE_POLICY`](../Operations/System/F_POLICY.md#update_policy): the proxy enqueues a [`TEE_BACKUP`](../Operations/System/F_GET.md#tee_backup) action on the backup queue for every stored wallet key.
+2. [`KEY_GENERATE`](../Operations/System/F_WALLET.md#key_generate), [`KEY_DATA_PROVIDER_RESTORE`](../Operations/System/F_WALLET.md#key_data_provider_restore), [`KEY_DELETE`](../Operations/System/F_WALLET.md#key_delete): the proxy updates its tracked keys; additions also enqueue a `TEE_BACKUP` for the new key.
+3. [`TEE_BACKUP`](../Operations/System/F_GET.md#tee_backup): the produced backup is made available via the [external backup APIs](#external-read-apis).
 
 ## Proxy State
 
@@ -110,7 +110,7 @@ Retention is per record.
 
 - **Action store**: `(actionId, submissionTag) → actionData`. Tracks the action payload that was queued for the machine. Retained for $30$ days.
 - **Action result store**: `(actionId, submissionTag) → actionResult`. Tracks the result returned by the machine. Retained for $14$ days; `submit`-tag results for $30$ minutes. Subject to [override rules](#result-store-override-rules).
-- **Backup store**: `backupIdHash → backupData`. Holds extracted key backups produced by [`TEE_BACKUP`](../Operations/Commands/F_GET/TeeBackup.md), triggered by [`UPDATE_POLICY`](../Operations/Commands/F_POLICY/UpdatePolicy.md) and key generation/restoration. Retained for $8$ days.
+- **Backup store**: `backupIdHash → backupData`. Holds extracted key backups produced by [`TEE_BACKUP`](../Operations/System/F_GET.md#tee_backup), triggered by [`UPDATE_POLICY`](../Operations/System/F_POLICY.md#update_policy) and key generation/restoration. Retained for $8$ days.
 - **Backup index store**: `(walletId, keyId) → backupIdHash`. Resolves a wallet key to the latest backup. Retained for $8$ days.
 
 ### In-Memory Stores
@@ -119,8 +119,8 @@ Recomputed on restart.
 
 - **Voting process store**: `instructionHash → VotingProcess`. Tracks active voting processes; cyclic with one round per signing policy.
 - **Voting process list**: `instructionId → []instructionHash`. Concurrent votes for the same instruction ID, scoped to the voting process store.
-- **Key data store**: `(walletId, keyId) → (timestamp, SignedKeyExistenceProof)`. The proxy refreshes it periodically (every $\sim 60$ minutes) by combining [`KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) (returns `(walletId, keyId, nonce)` triples) with [`KEY_PROOF`](../Operations/Commands/F_GET/KeyProof.md) (returns [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) for triples whose nonce changed). Entries for keys no longer present on the TEE are dropped on each sync.
-- **Last attestation**: cached output of the most recent [`TEE_INFO`](../Operations/Commands/F_GET/TeeInfo.md), exposed at `GET /info`. Refreshed periodically, every $\sim 10$ seconds, with a challenge derived from the latest C-chain block hash.
+- **Key data store**: `(walletId, keyId) → (timestamp, SignedKeyExistenceProof)`. The proxy refreshes it periodically (every $\sim 60$ minutes) by combining [`KEY_INFO`](../Operations/System/F_GET.md#key_info) (returns `(walletId, keyId, nonce)` triples) with [`KEY_PROOF`](../Operations/System/F_GET.md#key_proof) (returns [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) for triples whose nonce changed). Entries for keys no longer present on the TEE are dropped on each sync.
+- **Last attestation**: cached output of the most recent [`TEE_INFO`](../Operations/System/F_GET.md#tee_info), exposed at `GET /info`. Refreshed periodically, every $\sim 10$ seconds, with a challenge derived from the latest C-chain block hash.
 
 ## TEE Proxy APIs
 
@@ -157,7 +157,7 @@ Every request carries a random challenge; responses return a receipt signed by t
 
 ### External Read APIs
 
-- **`GET /info`** — latest TEE attestation. Reads from the cached [`TEE_INFO`](../Operations/Commands/F_GET/TeeInfo.md) result.
+- **`GET /info`** — latest TEE attestation. Reads from the cached [`TEE_INFO`](../Operations/System/F_GET.md#tee_info) result.
   - **$200$ OK**: `teeInfo` (`challenge`, `publicKey`, `initialSigningPolicyId`, `initialSigningPolicyHash`, `lastSigningPolicyId`, `lastSigningPolicyHash`, `state`, `teeTimestamp`, `platform`, `attestation`, `proxySignature`).
   - **$503$ Service Unavailable**: proxy not yet initialized.
 

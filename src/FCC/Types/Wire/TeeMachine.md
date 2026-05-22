@@ -22,7 +22,7 @@ Sent by the TEE proxy to its TEE machine.
 
 ## TeeInfoResponse
 
-Action result returned for [`TEE_INFO`](../../Operations/Commands/F_GET/TeeInfo.md) and [`TEE_ATTESTATION`](../../Operations/Commands/F_REG/TeeAttestation.md) commands.
+Action result returned for [`TEE_INFO`](../../Operations/System/F_GET.md#tee_info) and [`TEE_ATTESTATION`](../../Operations/System/F_REG.md#tee_attestation) commands.
 
 
 ```json
