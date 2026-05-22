@@ -1,191 +1,104 @@
-# XRP Payment
+# XrpPayment
 
-## Overview
+State machine for one XRP payment (or batched group) from a [PMW](../README.md) wallet through to on-chain settlement, with reissuance and nullification as alternate paths.
 
-This workflow describes sending XRP payments from a TEE-managed Protocol Managed Wallet (PMW), including reissuance and nullification for failed payments.
+Canonical user-facing semantics live in [PMW Transactions](../Transactions.md); contract surface in [`Payments`](../Reference/Contracts/Payments.md); on-machine signing in [`F_XRP PAY`](../Reference/Operations/Pay.md) / [`F_XRP REISSUE`](../Reference/Operations/Reissue.md).
 
-## Prerequisites
+## Preconditions
 
-- **Completed wallet-setup workflow** — the wallet must be in `PRODUCTION` status (see [WalletSetup.md](../../Workflows/WalletSetup.md)).
-- **Completed XRPL multisig configuration workflow** — a multisig account must be linked to the wallet via `TeePayments.addPMWMultisigAccount()` (see [XrplMultisigConfiguration.md](XrplMultisigConfiguration.md)).
-- **Batch settings configured** — `TeePayments.setBatchSettings()` must have been called for the multisig account (see [Step 6 of XrplMultisigConfiguration.md](XrplMultisigConfiguration.md#step-6-set-batch-settings-optional)).
-- **Fee schedule configured (optional)** — `TeePayments.setFeeSchedule()` can be called to set a custom fee escalation schedule. If not set, the default schedule (100% of `maxFee` at 0s delay) is used. See [Fee Scheduling](../Transactions.md#fee-scheduling).
-- **TEE machine(s) in PRODUCTION status** — at least one TEE machine holding the wallet's keys must be registered and operational.
+- The wallet is in `PRODUCTION` ([WalletSetup](../../Workflows/WalletSetup.md)).
+- A multisig account is linked via [`Payments.addPMWMultisigAccount`](../Reference/Contracts/Payments.md#multisig-accounts) ([XrplMultisigConfiguration](XrplMultisigConfiguration.md)).
+- Batch settings and fee schedule are configured (or the defaults are acceptable; see [Concepts](../Transactions.md#batching) and [Fee Schedules](../Transactions.md#fee-schedules)).
+- At least `multisigThreshold` TEE machines holding a wallet key are in `PRODUCTION`.
 
----
+## States
 
-## Steps
+- `Idle` — no in-flight payment for the next `subNonce` of this account.
+- `Pending` — `pay` has registered the payment but the batch has not yet been submitted on chain (batch open, batch size and duration not yet exhausted).
+- `Submitted` — the batch closed and [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) carries the [`F_XRP PAY`](../Reference/Operations/Pay.md) instruction; voting is in progress.
+- `Signed` — voting reached threshold; each participating TEE machine produced its partial signature and posted the JSON XRPL transaction to its proxy. The TEE machine continues to post one transaction per fee-schedule entry on its delay schedule.
+- `OnLedger` — a combined `multisigThreshold`-of-$n$ XRPL transaction has been submitted to XRPL and included in a validated ledger.
+- `StatusVerified` — an optional [`PMWPaymentStatus`](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md) attestation has been verified on chain, certifying the outcome.
 
-### Step 1: Submit Payment — `TeePayments.pay()`
+## Initial State
 
-**Who can call:** The project's authorized payment submission address.
+`Idle` for the next `(account, subNonce)`.
 
-**Parameters:**
-- `account` (`PMWMultisigAccount`) — the multisig account, consisting of:
-  - `sourceId` (`bytes32`) — source chain identifier (e.g., `bytes32("XRP")` or `bytes32("testXRP")` for testnet).
-  - `accountAddress` (`string`) — the XRPL multisig account address.
-- `paymentInstruction` (`PaymentInstruction`) — the payment details:
-  - `recipientAddress` (`string`) — the recipient address on the XRP Ledger.
-  - `tokenId` (`bytes`) — token identifier; zero-valued for native XRP.
-  - `amount` (`uint256`) — amount in drops to transfer.
-  - `maxFee` (`uint256`) — maximum transaction fee on the XRP Ledger, in drops.
-  - `paymentReference` (`bytes32`) — a 32-byte payment reference.
-- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
+## Transitions
 
-**Requirements:**
-- The wallet must be in `PRODUCTION` status.
-- The multisig account must be linked to the wallet.
-- The payment amount must be greater than $0$.
-- The recipient address must differ from the sender address.
-- The caller must be the authorized payment submission address for the account.
-- Sufficient FLR must be sent with the transaction to cover the instruction fee.
+### pay: Idle → Pending
 
-**What happens:**
+- **Action**: [`Payments.pay(account, paymentInstruction, claimBackAddress)`](../Reference/Contracts/Payments.md#payments) — payable.
+- **Caller**: the multisig account's `authorizationAddress`.
+- **Guards**:
+  - `wallet.status = PRODUCTION`
+  - account linked via `addPMWMultisigAccount`
+  - `paymentInstruction.amount > 0` (the zero-amount [nullification](#reissue-nullify-pending--submitted) path goes through `reissue`)
+  - `paymentInstruction.recipientAddress ≠ account.accountAddress` (same condition)
+  - `msg.value ≥ fee(F_XRP, PAY)`
+- **Effects**:
+  - The contract calls `FlareTeeManager.receivingTeesAndKeys(walletId)` to obtain the `(teeId, keyId)` pairs and the effective fee schedule.
+  - The payment is added to the account's current batch, or opens a new batch if none is active. The assigned `(nonce, subNonce)` is returned to the caller.
+  - No on-chain instruction is emitted yet — that happens at batch close.
 
-1. The `TeePayments` contract calls `receivingTeesAndKeys(walletId)` on [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) to retrieve the list of TEE machines and key IDs.
-2. The contract forms a [`PAY`](../Reference/Operations/Pay.md) instruction and submits it via `FlareTeeManager.sendInstructions()`.
+### batchClose: Pending → Submitted
 
-**Events emitted:** [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
+- **Action**: implicit on-chain step inside `Payments`. Fires when the current batch reaches `batchSize`, when `batchDurationSeconds` elapses, or when the active reward epoch boundary is reached (to keep all payments under one [signing policy](../../../FSP/SigningPolicy.md)).
+- **Caller**: the same `Payments.pay` (or `Payments.reissue`) call that overflows the batch.
+- **Guards**: at least one payment in the batch.
+- **Effects**:
+  - Builds a [`PaymentInstructionMessage`](../Reference/Types/Payment.md#paymentinstructionmessage) covering every entry in the batch.
+  - Calls [`FlareTeeManager.sendInstructions`](../../Reference/Contracts/FlareTeeManager.md#sending-instructions), emitting [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
 
----
+### vote: Submitted → Signed
 
-### Step 2: Batching
+- **Action**: standard [voting](../../Concepts/Voting.md) on each target TEE proxy. Each TEE machine signs one XRPL transaction per fee-schedule entry on its delay schedule.
+- **Caller**: [data providers](../../../Terminology/Roles.md#data-provider).
+- **Guards**: data-provider weight $\geq$ signing-policy threshold; cosigner threshold met if the wallet configured one.
+- **Effects**:
+  - The `threshold`-tagged [action result](../../Concepts/Actions.md#action-results) carries the first signed transaction (or a placeholder for asynchronous fee-schedule delivery).
+  - Subsequent fee-schedule entries arrive as later [`ActionResult`](../../Reference/Types/Wire/Action.md#actionresult) updates with monotonically-increasing `status`; the final entry carries the `end` submission tag.
+  - Each signed transaction is a JSON XRPL transaction with a populated `Signers` field (or an `AccountSet` for [nullification](#reissue-nullify-pending--submitted)).
 
-If batching is enabled for the multisig account, payments accumulate in a batch before being submitted as an instruction.
+### submit: Signed → OnLedger
 
-**Batch behavior:**
+- **Action**: off-chain — submitter reads partial signatures from each participating proxy (`GET /action/result/<actionId>`), aggregates them into a single XRPL transaction reaching `SignerQuorum`, and submits via the XRPL `submit_multisigned` RPC.
+- **Caller**: anyone.
+- **Guards**: aggregated partial signatures satisfy the XRPL `SignerList` quorum.
+- **Effects**: XRPL validates and includes the transaction; `tesSUCCESS` or a fail code is returned in `engine_result`.
 
-1. When a payment arrives and no batch is currently open, a new batch is opened.
-2. Successive payments are added to the current batch.
-3. The batch closes when any of the following conditions is met:
-   - The batch reaches the configured `batchSize`.
-   - The configured `batchDurationSeconds` have elapsed since the batch was opened.
-   - A new reward epoch starts (to prevent ambiguity in signing policies).
-4. Once the batch closes, all payments in the batch are submitted as a single instruction to the `TeeInstructions` contract, and the process proceeds as usual.
+### verifyStatus: OnLedger → StatusVerified (optional)
 
-If `batchSize` is set to `1` and `batchDurationSeconds` is set to `0`, each payment is submitted immediately without batching.
+- **Action**: invoke the [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = PMWPaymentStatus`. Final on-chain verification is via the [verifier entry](../../Reference/Contracts/FlareTeeManager.md#facets) on `FlareTeeManager`.
+- **Caller**: anyone.
+- **Effects**: an FDC2 proof certifies the XRPL `(sender, nonce)`'s outcome — recipient, amount, fee, payment reference, on-ledger transaction hash, and `transactionStatus` ($0$ = success, $1$ = reverted). See [`PMWPaymentStatus`](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md).
 
----
+### reissue / nullify: Pending → Submitted (alternate path)
 
-### Step 3: TEE Processing
+- **Action**: [`Payments.reissue(account, nonce, firstSubNonce, paymentInstructions, reissueFeeParams, claimBackAddress)`](../Reference/Contracts/Payments.md#payments) — payable.
+- **Caller**: the multisig account's `authorizationAddress`.
+- **Guards**:
+  - `wallet.status = PRODUCTION`
+  - `paymentInstructions` is non-empty
+  - `|paymentInstructions| = |reissueFeeParams.maxFeePerPayment|`
+  - The batch hash for `(nonce, firstSubNonce)` matches the on-chain record.
+  - `msg.value ≥ fee(F_XRP, REISSUE)`
+- **Effects**:
+  - Builds a `F_XRP REISSUE` instruction with the new fee schedule and emits it via `FlareTeeManager.sendInstructions`.
+  - **Nullification** is the degenerate case where the per-payment amount is $0$ and the recipient equals the sender; the TEE machine then signs an `AccountSet` transaction (consuming the chain nonce without transferring funds). See [Nullification](../Transactions.md#nullification).
 
-After the instruction is submitted, [data providers](../../../Terminology/Roles.md#data-provider) vote on it and the action is processed by the TEE machine(s).
+## Invariants
 
-**What happens:**
+- `(walletId, nonce, subNonce)` uniquely identifies a payment within a batch; reissuance replaces the signed transaction at the same `(nonce, subNonce)` but does not double-spend on XRPL because the XRPL `Sequence` is unchanged.
+- The XRPL `SignerQuorum` equals the wallet's `multisigThreshold` (enforced at [XrplMultisigConfiguration](XrplMultisigConfiguration.md)).
+- The TEE machine signs one transaction per fee-schedule entry; higher-fee entries land later under the delay schedule but only one ever clears on chain because they share `Sequence`.
 
-1. Data providers observe the `TeeInstructionsSent` event and vote on the instruction.
-2. Once sufficient votes are collected, the action is formed and sent to the TEE machine(s).
-3. Each TEE machine signs the XRP Ledger multisig transaction using its stored private key for the wallet. The signed transaction is a standard XRPL multisig `Payment` (or `AccountSet` for nullification) with a filled `Signers` field.
-4. The result is made available at the TEE proxy.
+## Terminal States
 
-> **Note:** The `F_XRP PAY` command does not produce an immediate result. The action is processed asynchronously, and the result must be retrieved from the TEE proxy (see Step 4).
+`OnLedger` (or `StatusVerified` if proof verification is run). The payment is settled; the `(nonce, subNonce)` is consumed and subsequent payments draw a fresh sub-nonce within the same batch or open a new one.
 
----
+## Notes
 
-### Step 4: Retrieve Signed Transaction
-
-Fetch the signed XRPL transaction from the TEE proxy.
-
-**Who can call:** Anyone with access to the TEE proxy.
-
-**Endpoint:** `GET /action/result/<actionId>`
-
-**Input:**
-- `actionId` (`bytes32`) — the `instructionId` from Step 1.
-
-**What happens:**
-
-1. The TEE proxy is polled for the action result using the `instructionId`.
-2. Once available, the response contains:
-   - `status` — indicates whether the action succeeded.
-   - `data` — JSON of the signed XRPL transaction with a filled `Signers` field.
-3. In a multi-TEE setup, each TEE proxy returns its own partial signature. All partial signatures must be collected and combined into a single transaction before submission.
-
----
-
-### Step 5: Submit to XRPL
-
-Submit the multisigned transaction to the XRP Ledger.
-
-**Who can call:** Anyone.
-
-**Input:**
-- The signed XRPL transaction JSON from Step 4 (with all required signatures combined).
-
-**What happens:**
-
-1. The multisigned transaction is submitted to an XRPL node via the `submit_multisigned` method.
-2. The XRP Ledger validates the transaction, checking that:
-   - The number of valid signatures meets the `SignerQuorum`.
-   - Each signature corresponds to a `SignerEntry` on the account's signer list.
-   - The fee and other transaction fields are valid.
-3. If accepted, the transaction is included in a validated ledger. The result includes:
-   - `engine_result` — the transaction result code (e.g., `tesSUCCESS`).
-   - `Sequence` — the transaction sequence number (used as the nonce for verification and reissuance).
-
----
-
-### Step 6: Verify Payment (Optional) — [`PMWPaymentStatus`](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md) FDC2 Attestation
-
-Request a [`PMWPaymentStatus`](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md) attestation to verify the on-chain status of the payment.
-
-**Who can call:** Anyone.
-
-**Parameters:**
-- `opType` (`bytes32`) — wallet operation type (e.g., `bytes32("F_XRP")`).
-- `senderAddress` (`string`) — the XRPL multisig account address.
-- `nonce` (`uint64`) — the XRP `sequenceNumber` of the transaction.
-- `subNonce` (`uint64`) — same as `nonce` for XRP.
-
-**What happens:**
-
-1. An FDC2 attestation request is submitted via `Fdc2Hub.requestAttestation()` with the [`PMWPaymentStatus`](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md) attestation type.
-2. TEE machines independently look up the transaction on the XRP Ledger using the `senderAddress` and `nonce`.
-3. The attestation response includes:
-   - `recipientAddress` — the recipient from the on-chain payment instruction.
-   - `amount`, `fee`, `paymentReference` — from the on-chain payment instruction.
-   - `transactionStatus` — `0` (success) or `1` (reverted).
-   - `revertReason` — empty on success; the XRPL [transaction result code](https://xrpl.org/docs/references/protocol/transactions/transaction-results) on failure.
-   - `receivedAmount` — the amount actually received.
-   - `transactionFee` — the fee spent.
-   - `transactionId` — the transaction hash on the XRP Ledger.
-   - `blockNumber`, `blockTimestamp` — the ledger index and timestamp.
-4. The attestation proof is retrieved from the TEE proxy and can be verified on-chain (e.g., via a `PMWPaymentStatusVerifier` contract).
-
-See [PMWPaymentStatus](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md) for the full attestation type specification.
-
----
-
-### Step 7: Reissuance — `TeePayments.reissue()`
-
-If a payment fails (e.g., due to a low fee or chain-level issues), the transaction can be reissued with updated parameters.
-
-**Who can call:** The project's authorized payment submission address.
-
-**Parameters:**
-- `account` (`PMWMultisigAccount`) — the multisig account (same as Step 1).
-- `nonce` (`uint64`) — the batch nonce of the original payment instruction.
-- `firstSubNonce` (`uint64`) — the sub-nonce of the first transaction in the batch.
-- `paymentInstructions` (`PaymentInstruction[]`) — the original payment instructions in the batch.
-- `reissueFeeParams` (`ReissueFeeParams`) — the reissue fee parameters, containing:
-  - `maxFees` (`uint256[]`) — the new maximum fees per instruction.
-  - `feeFactorScheduleBIPS` (`int16[][]`) — fee factor schedules per instruction (in BIPS).
-  - `feeDelayScheduleSeconds` (`uint16[]`) — time schedule for fee escalation (in seconds, ascending).
-- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
-
-**Requirements:**
-- The wallet must be in `PRODUCTION` status.
-- The `paymentInstructions` array must be non-empty.
-- The lengths of `paymentInstructions` and `reissueFeeParams.maxFees` must match.
-- The batch hash must match the on-chain recorded hash for the nonce.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
-
-**What happens:**
-
-1. The `TeePayments` contract forms a new instruction with the [`REISSUE`](../Reference/Operations/Reissue.md) command.
-2. Data providers vote and the TEE machine(s) sign the replacement transaction with the same nonce but updated fee.
-3. The signed transaction is retrieved from the TEE proxy and submitted to the XRP Ledger, following the same flow as Steps 4 and 5.
-
-**Nullification:** To nullify a payment, submit a reissue where the payment amount is $0$ and the sender address equals the recipient address.
-The TEE machine signs an `AccountSet` transaction that consumes the blockchain nonce without transferring funds.
-
+- The `F_XRP PAY` operation is asynchronous (`immediateResult = false`): the `threshold` action carries a placeholder, then one signed transaction per fee entry arrives with monotonically-increasing status, and the last is tagged `end` (`status = 1`). See [`F_XRP PAY` action result](../Reference/Operations/Pay.md#action-result).
+- For multi-TEE deployments, partial signatures must be collected from each participating proxy before submission; see [MultiTeeOperations § CP-6](../../Workflows/MultiTeeOperations.md#cp-6-payments-parallel-sign-single-submit).
+- The XRPL transaction-result code is documented at [xrpl.org transaction results](https://xrpl.org/docs/references/protocol/transactions/transaction-results).

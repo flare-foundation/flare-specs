@@ -1,206 +1,81 @@
-# XRPL Multisig Configuration
+# XrplMultisigConfiguration
 
-## Overview
+State machine for binding an XRPL multisig account to a PMW wallet so the wallet can issue XRP payments.
+Three layers cooperate: the XRP Ledger holds the actual signer list and quorum; an [FDC2 attestation](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md) certifies that the XRPL configuration matches the wallet; the [`Payments`](../Reference/Contracts/Payments.md) contract records the binding and unlocks `pay` / `reissue`.
 
-This workflow describes binding an XRPL multisig account to a TEE-managed Protocol Managed Wallet (PMW).
-Once complete, the wallet can issue payment transactions on the XRP Ledger through the TEE infrastructure.
+## Preconditions
 
-## Prerequisites
+- The wallet is in `PRODUCTION` (or `PAUSED`) with at least `multisigThreshold` confirmed keys ([WalletSetup](../../Workflows/WalletSetup.md)).
+- The wallet's `extensionId = 0` (system extension); the project's `keyType` is supported by the source chain (`XRP` / `testXRP`).
+- The submitter holds access to an XRPL node and enough XRP to cover the XRPL owner reserve and transaction fees on the new multisig account.
 
-- A PMW wallet in `PRODUCTION` status with keys already added (see [WalletSetup.md](../../Workflows/WalletSetup.md)).
-- Access to an XRPL node (e.g., `wss://s.altnet.rippletest.net:51233` for testnet).
-- The wallet's public keys retrieved from the TEE proxy.
-- The wallet's multisig threshold configured.
-- Sufficient FLR to cover instruction fees on Flare.
+## States
 
----
+- `KeysOnly` — wallet keys exist on chain; no XRPL account has been bound yet.
+- `XrplProvisioned` — an XRPL account has been created and configured as multisig over the TEE-derived addresses (`SignerList` set, master key disabled, no regular key, no prohibited flags).
+- `Attested` — an FDC2 [`PMWMultisigAccountConfigured`](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md) proof has been produced by the TEE network certifying the XRPL configuration.
+- `Bound` — [`Payments.addPMWMultisigAccount`](../Reference/Contracts/Payments.md#multisig-accounts) has accepted the proof; the `(walletId, sourceId, accountAddress)` is on chain with an `initialNonce` from the XRPL `Sequence`.
+- `BatchConfigured` — optional: `setBatchSettings` has set the account's batching parameters (a `BatchConfigured ⇄ Bound` re-entry is allowed).
 
-## Steps
+## Initial State
 
-### Step 1: Derive XRP Addresses
+`KeysOnly`.
 
-Convert each TEE wallet public key into an XRPL account address.
+## Transitions
 
-**Who can call:** Anyone with access to the wallet's public keys (typically the [project owner](../../../Terminology/Roles.md#project-owner)).
+### deriveAndConfigureXrpl: KeysOnly → XrplProvisioned
 
-**Input:**
-- `publicKey` (`bytes`) -- The wallet key's public key in uncompressed format (`pubkey.X | pubkey.Y`, 64 bytes).
+- **Action**: off-chain XRPL transactions:
+  1. For each wallet key, convert the uncompressed `(X, Y)` pubkey to compressed form (33 bytes, prefix `0x02`/`0x03` by `Y` parity), hash via `SHA-256` then `RIPEMD-160` to a 20-byte account ID, and Base58Check-encode to an XRPL `r`-address.
+  2. Submit a `SignerListSet` transaction on the chosen XRPL account: one `SignerEntry` per derived address with `SignerWeight = 1` and `SignerQuorum = multisigThreshold`.
+  3. Submit `AccountSet` with `asfDisableMaster` to disable the master key. Ensure no regular key is set, and that deposit-auth and other prohibited flags are not enabled.
+- **Caller**: anyone with an XRPL account and sufficient XRP.
+- **Guards** (enforced by XRPL):
+  - The XRPL account funds the owner reserve required for the signer list.
+  - `SignerQuorum = wallet.multisigThreshold`.
+- **Effects**: the XRPL account is irrevocably under multisig control of the TEE-held keys. The account flags satisfy the [`PMWMultisigAccountConfigured` checks](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md).
 
-**What happens:**
+### attest: XrplProvisioned → Attested
 
-1. The uncompressed public key is converted to compressed format (33 bytes). The prefix byte is `0x02` if the Y coordinate is even, or `0x03` if odd.
-2. The compressed public key is hashed using SHA-256 followed by RIPEMD-160 to produce a 20-byte account ID.
-3. The account ID is encoded into an XRPL r-address using Base58Check encoding.
+- **Action**: invoke the [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = PMWMultisigAccountConfigured`, supplying `(walletId, sourceId, accountAddress)` in the request. Each participating TEE machine queries its own XRP node, runs the [verification rules](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md), and signs the response.
+- **Caller**: any user (typically the wallet owner).
+- **Guards**: the XRPL account's signer list, quorum, and flags satisfy every check in the [`PMWMultisigAccountConfigured` spec](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md); the response carries `status = ok` and the current XRPL `Sequence` as `sequence`.
+- **Effects**: the resulting [`ProveResponse`](../../FDC2/Reference/Types/Wire/Fdc2.md#proveresponse) is retrievable from the TEE proxy.
 
-Each wallet key produces one XRP address that will be used as a signer on the multisig account.
+### bind: Attested → Bound
 
----
+- **Action**: [`Payments.addPMWMultisigAccount(walletId, proof, authorizationAddress)`](../Reference/Contracts/Payments.md#multisig-accounts) — non-payable. (The first proof step is `verifyPMWMultisigAccountConfiguredProof` on `FlareTeeManager`, invoked internally.)
+- **Caller**: project owner.
+- **Guards**:
+  - `wallet.status ∈ {PRODUCTION, PAUSED}`.
+  - proof passes signature and configuration checks (signing policy, cosigners, TEE signatures, key set match, threshold match, response status = `ok`).
+  - `wallet.extensionId = 0` (system extension); `proof.keyType = project.keyType`.
+  - `accountAddress` non-empty; `sourceId` is registered; the account is not already linked.
+  - `authorizationAddress ≠ 0`.
+- **Effects**:
+  - Records `(walletId, sourceId, accountAddress, initialNonce = proof.sequence, authorizationAddress)`.
+  - Emits [`PMWMultisigAccountAdded`](../Reference/Contracts/Payments.md#pmwmultisigaccountadded).
+  - From this point, the `authorizationAddress` can call [`Payments.pay`](../Reference/Contracts/Payments.md#payments) (see [XrpPayment](XrpPayment.md)).
 
-### Step 2: Create XRPL Multisig Account
+### setBatchSettings: Bound ⇄ BatchConfigured
 
-Set up a multisig account on the XRP Ledger with the derived signer addresses.
+- **Action**: [`Payments.setBatchSettings(account, batchSize, batchDurationSeconds)`](../Reference/Contracts/Payments.md#multisig-accounts) — non-payable. Re-callable to change parameters.
+- **Caller**: project owner.
+- **Guards**: `0 < batchSize ≤ maxBatchSize`, `batchDurationSeconds ≤ maxBatchDurationSeconds`.
+- **Effects**: updates the account's batching parameters; emits [`BatchSettingsSet`](../Reference/Contracts/Payments.md#batchsettingsset). `batchSize = 1` and `batchDurationSeconds = 0` together disable batching.
 
-**Who can call:** Anyone with an XRPL account and sufficient XRP for reserve requirements.
+## Invariants
 
-**Input:**
-- `signerAddresses` (`string[]`) -- XRP addresses derived in Step 1, one per wallet key.
-- `threshold` (`int`) -- The multisig threshold, matching the wallet's configured threshold.
+- The XRPL `SignerList` size and the wallet's confirmed-key count remain in correspondence: any change to the wallet's key set requires re-running [`attest`](#attest-xrplprovisioned--attested) and [`bind`](#bind-attested--bound) before payments resume.
+- `Payments.addPMWMultisigAccount` is callable at most once per `(sourceId, accountAddress)` — re-binding requires off-chain XRPL changes and a fresh proof.
+- The account's `nonce` on chain starts at `proof.sequence` (the XRPL `Sequence` at attestation time) and advances monotonically with each closed batch.
 
-**Requirements:**
-- The XRPL account must be funded with enough XRP to meet the owner reserve for the signer list.
-- The account configuration must satisfy all verification rules described in the XRPL Account Flag Requirements below.
+## Terminal States
 
-**What happens:**
+`Bound` (or `BatchConfigured`). From here [XrpPayment](XrpPayment.md) takes over.
 
-1. A signer list is set on the XRPL account via a `SignerListSet` transaction:
-   - Each wallet key's derived XRP address is added as a `SignerEntry`.
-   - Each `SignerWeight` is set to `1`.
-   - `SignerQuorum` is set to the wallet's multisig `threshold`.
-2. The master key is disabled via an `AccountSet` transaction with the `asfDisableMaster` flag.
-3. The account must not have a regular key set. If one exists, it must be removed.
-4. Deposit authorization and other prohibited flags must not be enabled.
+## Notes
 
-After this step, the XRPL account can only authorize transactions through multisig signing by the TEE-held keys.
-
-#### XRPL Account Configuration Requirements
-
-The [`PMWMultisigAccountConfigured`](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md) attestation verifier checks the XRPL account's signer list, quorum, account flags, and regular key status. All checks must pass for the attestation to return `status = ok`. In summary, the account must have:
-
-- A signer list matching the wallet's public keys, each with `SignerWeight = 1`
-- `SignerQuorum` matching the wallet's multisig threshold
-- Master key disabled, no deposit authorization, no destination tag requirement, no incoming XRP disallowed
-- No regular key set
-
-On success, the account's `Sequence` number is returned as the initial nonce for payment transactions.
-
-For the complete verification rules and example `account_info` responses, see [PMWMultisigAccountConfigured](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md).
-
----
-
-### Step 3: Request [`PMWMultisigAccountConfigured`](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md) Attestation
-
-Submit an FDC2 attestation request to verify that the XRPL multisig account is correctly configured.
-
-**Who can call:** Anyone (typically the wallet owner).
-
-**Parameters:**
-- `walletId` (`bytes32`) -- The wallet ID.
-- `sourceId` (`bytes32`) -- Source chain identifier (e.g., `bytes32("XRP")` or `bytes32("testXRP")` for testnet).
-- `accountAddress` (`string`) -- The XRPL multisig account address.
-- `testOnTeeId` (`address`) -- Optional TEE machine ID for testing (set to zero address in production).
-- `proofOwner` (`address`) -- Address that owns the proof (zero address for public proofs).
-- `claimBackAddress` (`address`) -- Address to claim back unused instruction fees.
-
-**Requirements:**
-- The account address must not be empty.
-- Wallet must be in `PRODUCTION` or `PAUSED` status.
-- Must send sufficient FLR to cover the attestation instruction fee.
-
-**What happens:**
-
-1. `FlareTeeManager.requestPMWMultisigAccountConfiguredAttestation()` is called on the Flare C-chain.
-2. The contract collects the wallet's public keys and multisig threshold from `FlareTeeManager`.
-3. An FDC2 attestation request is formed and sent to TEE machines as an instruction.
-4. A [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event is emitted containing the `instructionId`.
-5. Off-chain, each TEE machine independently queries its own XRP node and verifies the account configuration (see [PMWMultisigAccountConfigured](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md) for the full verification procedure).
-6. TEE machines return signed attestation responses to the TEE proxy.
-
-**Events emitted:** [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) with `instructionId`.
-
----
-
-### Step 4: Retrieve and Verify Attestation Proof
-
-Fetch the attestation proof from the TEE proxy and verify it on-chain.
-
-**Who can call:** Anyone (typically the wallet owner).
-
-**Input:**
-- `walletId` (`bytes32`) -- The wallet ID.
-- `instructionId` (`bytes32`) -- The instruction ID from Step 3.
-- `proxyURL` (`string`) -- URL of the TEE proxy.
-
-**Requirements:**
-- Sufficient time must have passed for TEE machines to process the attestation (typically a few seconds).
-
-**What happens:**
-
-1. The attestation proof is fetched from the TEE proxy using the `instructionId`.
-2. The proof is an `IPMWMultisigAccountConfiguredProof` containing:
-   - `Header` -- FDC2 response header.
-   - `RequestBody` -- The original request (`accountAddress`, `publicKeys`, `threshold`).
-   - `ResponseBody` -- The attestation result (`status`, `sequence`).
-   - `Signatures` -- Signing policy signatures, TEE signatures, and cosigner signatures.
-3. The proof is verified on-chain via `FlareTeeManager.verifyPMWMultisigAccountConfiguredProof(walletId, proof)`.
-4. If verification succeeds, the `sequence` number (XRPL account sequence) is extracted from the response body for use as the initial nonce.
-
-**Events emitted:** None (read-only verification call).
-
----
-
-### Step 5: Add PMW Multisig Account
-
-Link the verified XRPL multisig account to the wallet on-chain.
-
-**Who can call:** Wallet owner (project owner) only.
-
-**Parameters:**
-- `walletId` (`bytes32`) -- The wallet ID.
-- `proof` (`IPMWMultisigAccountConfigured.Proof`) -- The verified attestation proof from Step 4.
-- `authorizationAddress` (`address`) -- The address authorized to submit payment instructions for this account.
-
-**Requirements:**
-- Wallet must be in `PRODUCTION` or `PAUSED` status.
-- The proof must be valid (passes all signature and configuration checks).
-- The extension ID must be $0$ (system extension only).
-- The key type must match the wallet's project key type.
-- The account address must not be empty.
-- The source ID must be supported.
-- The authorization address must not be zero.
-- The account must not already be linked to a wallet.
-
-**What happens:**
-
-1. `TeePayments.addPMWMultisigAccount(walletId, proof, authorizationAddress)` is called.
-2. The contract validates the proof:
-   - Verifies proof signatures (signing policy + cosigners).
-   - Checks that the wallet's public keys match the proof's public keys.
-   - Checks that the multisig threshold matches.
-   - Verifies the response status is `ok`.
-3. The XRP account address is linked to the `walletId` and stored in the wallet's account list.
-4. The account's initial nonce is set from the proof's `sequence` value.
-
-**Events emitted:** [`PMWMultisigAccountAdded`](../Reference/Contracts/Payments.md#pmwmultisigaccountadded)
-
----
-
-### Step 6: Set Batch Settings (Optional)
-
-Configure batching parameters for the multisig account to group multiple payments into single XRPL transactions.
-
-**Who can call:** Wallet owner only.
-
-**Parameters:**
-- `account` (`PMWMultisigAccount`) -- The multisig account, consisting of:
-  - `sourceId` (`bytes32`) -- Source chain identifier.
-  - `accountAddress` (`string`) -- The XRPL multisig account address.
-- `batchSize` (`uint64`) -- Maximum number of payments per batch. Set to `1` for single-payment transactions.
-- `batchDurationSeconds` (`uint64`) -- Maximum duration in seconds for a batch to remain open. Set to `0` for immediate execution.
-
-**Requirements:**
-- Caller must be the wallet owner.
-- `batchSize` must be greater than $0$ and not exceed `maxBatchSize`.
-- `batchDurationSeconds` must not exceed `maxBatchDurationSeconds`.
-
-**What happens:**
-
-1. `TeePayments.setBatchSettings(account, batchSize, batchDurationSeconds)` is called.
-2. The account's batch settings are updated.
-3. Batch behavior:
-   - A new batch opens when a payment arrives and no batch is currently open.
-   - The batch closes when `batchSize` is reached, OR `batchDurationSeconds` have elapsed since the batch opened, OR a new reward epoch starts.
-   - All payments in a closed batch share the same nonce and are included in a single XRPL transaction.
-
-**Events emitted:** [`BatchSettingsSet`](../Reference/Contracts/Payments.md#batchsettingsset)
-
-
+- For multi-TEE deployments, ensure the derived XRPL `SignerList` reflects every participating TEE's wallet-key address — see [MultiTeeOperations § CP-5](../../Workflows/MultiTeeOperations.md#cp-5-external-multisig-binding-once).
+- The XRPL configuration is irrevocable once the master key is disabled and no regular key is set; signer-list changes must be authorised by the multisig itself (i.e., a TEE-signed transaction).
+- For the exhaustive XRPL configuration checks and example `account_info` responses, see [`PMWMultisigAccountConfigured`](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md).

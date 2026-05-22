@@ -1,209 +1,110 @@
-# Extension Configuration
+# Configuration
 
-## Overview
+State machine for bringing a new (custom) [FCE](../README.md) from nothing to a ready-to-receive-instructions configuration: registering it on chain, adding a supported code version, gating which addresses may register machines or create projects, declaring supported key types, and provisioning the first TEE node's local settings.
 
-This workflow covers registering and configuring a custom TEE extension, from deploying the instruction sender contract through to configuring the TEE node.
-For background on the extension framework, see [Extensions](../README.md).
+For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface in [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md).
 
-## Prerequisites
+## Preconditions
 
-- Deployed Flare TEE system contracts: the [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) diamond and the `TeePayments` family for PMW
-- A funded Ethereum account to submit transactions
-- A TEE node running inside a Confidential VM (or in local dev mode with `MODE=1`)
-- Access to the TEE node's Configuration API on port $5500$
-- A TEE proxy server deployed and running
-- A reproducible Docker image hash for the extension code
+- The Flare TEE system contracts are deployed (the [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) diamond and, if PMW is in use, the [`Payments`](../../PMW/Reference/Contracts/Payments.md) family).
+- The caller controls a funded Flare address.
+- The FCE's TEE-node Docker image has a reproducible `codeHash`.
+- A TEE proxy server is deployed (or planned) so machines can be paired with it.
+- For Step `provisionTeeNode`, a TEE node is running inside a Confidential VM (or in local-dev mode with `MODE=1`), with the Configuration API reachable.
 
----
+## States
 
-## Steps
+- `Unregistered` — no on-chain record of the FCE.
+- `Registered` — `register` has assigned an `extensionId`; the extension has an owner and an `instructionsSender`, but no code, key types, or allowlist entries.
+- `CodeAdded` — at least one `(codeHash, platform)` combination is registered.
+- `Allowlisted` — machine-owner and project-owner allowlists are populated (or explicitly opened with the "allow all" toggle).
+- `KeyTypesAdded` — `supportedKeyTypes` contains at least one entry (or the FCE does not custody keys, in which case this state is skipped).
+- `Provisioned` — the first TEE node has been configured (proxy URL, initial owner, extension ID) and is ready to register.
+- `OwnerTransferred` — _optional_; the extension's `owner` has been handed to a governance/multisig address via two-step transfer.
 
-### Step 1: Deploy Instruction Sender Contract
+## Initial State
 
-**What happens:**
-1. A new instruction sender contract is deployed on-chain.
-This contract is responsible for encoding and sending instructions to the TEE extension via `FlareTeeManager.sendInstructions()`.
-2. The deployed contract address will be used as the `_teeExtensionInstructionsSender` parameter when registering the extension in the next step.
+`Unregistered`.
 
-The instruction sender contract does not need to implement any specific interface.
-It only needs to be the address registered for the extension and call `FlareTeeManager.sendInstructions()` with the correct parameters.
-The contract's constructor and methods are entirely defined by the extension developer.
+## Transitions
 
-**Events emitted:** None (contract deployment).
+### deployInstructionsSender: (off-chain) → preserves state
 
-> **Note:** The instruction sender contract must call `setExtensionId()` after the extension is registered (Step 2) to discover and store its own extension ID. This is required before any instructions can be sent.
+- **Action**: deploy the extension's `instructionsSender` contract. The contract has no required interface beyond calling [`FlareTeeManager.sendInstructions`](../../Reference/Contracts/FlareTeeManager.md#sending-instructions) on behalf of its users. Its address is needed by the next transition.
+- **Caller**: any.
+- **Effects**: no on-chain state change in `FlareTeeManager` yet; the address is recorded for use in `register`.
 
----
+### register: Unregistered → Registered
 
-### Step 2: Register Extension -- `FlareTeeManager.register()`
+- **Action**: `FlareTeeManager.register(stateVerifier, instructionsSender)` (the [`ExtensionManagerFacet`](../../Reference/Contracts/FlareTeeManager.md#facets) entry).
+- **Caller**: any address (becomes the extension's `owner`).
+- **Guards**:
+  - `instructionsSender ≠ 0`.
+  - `extensionId = 0` is reserved for the [system extension](../System.md); `register` never assigns `0`.
+- **Effects**:
+  - Assigns a fresh `extensionId` (via the diamond's `extensionsCounter`).
+  - Stores `(owner = msg.sender, stateVerifier, instructionsSender)`.
+  - Emits [`TeeExtensionRegistered`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensionregistered) and [`TeeExtensionContractsSet`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensioncontractsset).
+  - The deployed `instructionsSender` should now call its own discovery function (typically `setExtensionId`) to learn its `extensionId` for later `sendInstructions` calls.
 
-**Who can call:** Any address (the caller becomes the extension owner)
+### addTeeVersion: Registered → CodeAdded (repeatable)
 
-**Parameters:**
-- `_teeExtensionStateVerifier` (`ITeeExtensionStateVerifier`): State verifier contract for the extension. Can be `address(0)` initially if no state verification is needed.
-- `_teeExtensionInstructionsSender` (`address`): Address of the instruction sender contract deployed in Step 1. Must be non-zero.
+- **Action**: `FlareTeeManager.addTeeVersion(extensionId, version, codeHash, platforms, governanceHash)`.
+- **Caller**: extension owner.
+- **Guards**:
+  - `version` non-empty.
+  - `codeHash ≠ 0` and not already registered for this extension.
+  - `platforms` non-empty, no duplicates, each one is system-supported.
+  - `governanceHash` matches the latest one for the extension (or is `0`).
+- **Effects**:
+  - Records the `(codeHash, version, platforms, governanceHash)` tuple.
+  - Each `(codeHash, platform)` pair is now eligible for [machine registration](../../Workflows/MachineRegistration.md).
+  - Emits [`TeeVersionAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeversionadded).
 
-**Requirements:**
-- The `_teeExtensionInstructionsSender` address must be non-zero
-- Extension ID 0 is reserved for the system extension and cannot be registered by users
+### setAllowlists: Registered/CodeAdded → Allowlisted
 
-**What happens:**
-1. A new `extensionId` is assigned by incrementing the internal `extensionsCounter`.
-2. `msg.sender` is set as the extension owner.
-3. The state verifier and instructions sender addresses are stored for the extension.
-4. The extension is now registered but has no TEE machines, code versions, or key types associated with it yet.
+- **Action**: any combination of `addAllowedTeeMachineOwners(extensionId, owners)`, `allowAllTeeMachineOwners(extensionId)`, `addAllowedTeeWalletProjectOwners(extensionId, owners)`, `allowAllTeeWalletProjectOwners(extensionId)` on the [`OwnerAllowlistFacet`](../../Reference/Contracts/FlareTeeManager.md#owner-allowlist).
+- **Caller**: extension owner.
+- **Effects**:
+  - Machine-owner and/or project-owner allowlists are populated. The "allow all" variants open the door publicly.
+  - Emits [`AllowedTeeMachineOwnersAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#allowedteemachineownersadded), [`AllTeeMachineOwnersAllowed`](../../Reference/Contracts/FlareTeeManagerEvents.md#allteemachineownersallowed), [`AllowedTeeWalletProjectOwnersAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#allowedteewalletprojectownersadded), or [`AllTeeWalletProjectOwnersAllowed`](../../Reference/Contracts/FlareTeeManagerEvents.md#allteewalletprojectownersallowed) as applicable.
 
-**Events emitted:**
-- [`TeeExtensionRegistered`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensionregistered) -- confirms the extension was created with its assigned ID
-- [`TeeExtensionContractsSet`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensioncontractsset) -- records the contract addresses
+### addKeyTypes: Allowlisted → KeyTypesAdded (skip if the FCE custodies no keys)
 
-> **Note:** After registration, call `setExtensionId()` on the instruction sender contract so it can discover its extension ID from the registry.
+- **Action**: `FlareTeeManager.addSupportedKeyTypes(extensionId, keyTypes)`.
+- **Caller**: extension owner.
+- **Guards**: each entry of `keyTypes` is system-supported (registered by governance via `addSystemSupportedKeyTypesAndSigningAlgos`).
+- **Effects**: wallet projects under this extension can be created with one of the listed key types. Emits [`SupportedKeyTypesAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#supportedkeytypesadded).
 
----
+### provisionTeeNode: KeyTypesAdded → Provisioned
 
-### Step 3: Add TEE Code Version -- `FlareTeeManager.addTeeVersion()`
+- **Action**: configure the TEE node via its Configuration API (or via environment variables before boot):
+  - `POST /proxy` — set the paired TEE proxy URL.
+  - `POST /initial-owner` — set the machine's initial owner address. Immutable once set.
+  - `POST /extension-id` — set the extension ID. Fixed after a successful [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
+- **Caller**: TEE machine owner (with network access to the node's Configuration API).
+- **Effects**: no on-chain state. The TEE node now knows where to fetch actions, which address to register under, and which extension to join. [MachineRegistration](../../Workflows/MachineRegistration.md) can proceed.
 
-**Who can call:** Extension owner only
+### transferOwnership: any → OwnerTransferred (optional, repeatable)
 
-**Parameters:**
-- `_extensionId` (`uint256`): The extension ID returned from Step 2
-- `_version` (`string`): Version string (e.g., `"v0.1.0"`)
-- `_codeHash` (`bytes32`): Hash of the TEE extension Docker image. This must be reproducible and will be verified during machine attestation.
-- `_platforms` (`bytes32[]`): Array of supported TEE platforms (e.g., `GOOGLE_INTEL`, `GOOGLE_AMD`). Each platform must already be registered as a system-supported platform.
-- `_governanceHash` (`bytes32`): Optional governance hash. Can be `bytes32(0)` if not applicable. If provided, it must match the latest governance hash.
+- **Action**: two-step — `FlareTeeManager.proposeNewOwner(extensionId, newOwner)` then `confirmOwnership(extensionId)` from `newOwner`.
+- **Caller**: current owner (propose), proposed owner (confirm).
+- **Guards**: the proposed owner must be allowlisted as a machine owner of the extension (or `address(0)` to cancel).
+- **Effects**: extension `owner` becomes `newOwner`. Emits [`NewOwnerProposed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed) and [`NewOwnerConfirmed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerconfirmed). Production deployments typically transfer to a multisig governance address.
 
-**Requirements:**
-- Caller must be the extension owner.
-- `_version` must be non-empty.
-- `_codeHash` must be non-zero.
-- `_platforms` must be non-empty, with no duplicates.
-- All platforms must be in the system-supported platforms list.
-- The code hash must not already be registered for this extension.
-- If `_governanceHash` is non-zero, it must match the latest governance hash for the extension.
+## Invariants
 
-**What happens:**
-1. The code hash is mapped to the provided version info.
-2. Each platform in `_platforms` is associated with this code hash for the extension.
-3. TEE machines can now register with this code hash and platform combination.
+- An extension's `extensionId` is fixed at registration; only `owner`, `stateVerifier`, `instructionsSender`, allowlists, code versions, and supported key types may change.
+- `instructionsSender` is never `address(0)` after `register`.
+- The `(codeHash, platform)` pairs accepted by `addTeeVersion` are a subset of the system-supported set; changes to the system list do not retroactively invalidate already-registered pairs.
+- The state machine is monotonic until `transferOwnership`: progress from `Unregistered` only moves forward.
 
-**Events emitted:**
-- [`TeeVersionAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeversionadded)
+## Terminal States
 
----
-
-### Step 4: Configure Owner Allowlists
-
-This step configures which addresses are permitted to register TEE machines and create wallet projects for this extension. Two separate allowlists must be configured.
-
-### Step 4a: Machine Owner Allowlist -- `addAllowedTeeMachineOwners()` or `allowAllTeeMachineOwners()`
-
-**Who can call:** Extension owner only
-
-**Parameters (specific allowlist):**
-- `_extensionId` (`uint256`): The extension ID
-- `_owners` (`address[]`): Array of addresses to allow as TEE machine owners
-
-**Parameters (allow all):**
-- `_extensionId` (`uint256`): The extension ID
-
-**What happens:**
-1. The specified addresses are added to the machine owner allowlist for this extension.
-2. Alternatively, `allowAllTeeMachineOwners()` opens registration to any address.
-3. Only allowlisted addresses can register TEE machines for this extension via `FlareTeeManager.register()`.
-
-**Events emitted:**
-- [`AllowedTeeMachineOwnersAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#allowedteemachineownersadded) -- when specific owners are added
-
-### Step 4b: [Project Owner](../../../Terminology/Roles.md#project-owner) Allowlist -- `addAllowedTeeWalletProjectOwners()` or `allowAllTeeWalletProjectOwners()`
-
-**Who can call:** Extension owner only
-
-**Parameters (specific allowlist):**
-- `_extensionId` (`uint256`): The extension ID
-- `_owners` (`address[]`): Array of addresses to allow as wallet project owners
-
-**Parameters (allow all):**
-- `_extensionId` (`uint256`): The extension ID
-
-**What happens:**
-1. The specified addresses are added to the wallet project owner allowlist for this extension.
-2. Alternatively, `allowAllTeeWalletProjectOwners()` opens project creation to any address.
-3. Only allowlisted addresses can create wallet projects for this extension via `FlareTeeManager.createProject()`.
-
-**Events emitted:**
-- [`AllowedTeeWalletProjectOwnersAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#allowedteewalletprojectownersadded) -- when specific owners are added
-
----
-
-### Step 5: Add Supported Key Types -- `FlareTeeManager.addSupportedKeyTypes()`
-
-**Who can call:** Extension owner only
-
-**Parameters:**
-- `_extensionId` (`uint256`): The extension ID
-- `_keyTypes` (`bytes32[]`): Array of key type identifiers to support. Common values include:
-  - `"EVM"` -- for keccak256-secp256k1 ECDSA signing (used with EVM transactions)
-  - `"XRP"` -- for SHA512Half-secp256k1 ECDSA signing (used with XRP transactions)
-
-**Requirements:**
-- Caller must be the extension owner
-- Each key type in `_keyTypes` must be system-supported (added by governance via `addSystemSupportedKeyTypesAndSigningAlgos`)
-
-**What happens:**
-1. The specified key types are registered as supported for this extension.
-2. Wallet projects created under this extension can use these key types.
-3. The associated signing algorithms are determined by the system-level key type registration.
-
-**Events emitted:**
-- [`SupportedKeyTypesAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#supportedkeytypesadded)
-
----
-
-### Step 6: Configure TEE Node -- Config API
-
-Before the TEE machine can be registered on-chain, it must be configured with the proxy URL, initial owner, and extension ID via the TEE Configuration API (not yet published) on port 5500. These are the same three endpoints used in [MachineRegistration.md](../../Workflows/MachineRegistration.md) Steps 2–4, which documents the full Config API details including curl examples and requirements.
-
-**Who can call:** TEE machine owner (network access to port 5500 required)
-
-**Endpoints:**
-- `POST /proxy` -- set the TEE proxy URL (e.g., `http://<TEE_PROXY_INTERNAL_IP>:6661`)
-- `POST /initial-owner` -- set the initial owner address (immutable once set)
-- `POST /extension-id` -- set the extension ID (fixed after [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) verification)
-
-**Events emitted:** None (off-chain configuration)
-
-> **Note:** All three configuration endpoints can alternatively be set via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) before the TEE node starts. The API endpoints allow runtime configuration after boot, which is the typical workflow when the TEE machine is already running inside a confidential VM.
-
----
-
-### Step 7: Extension Ownership Transfer (Optional) -- `proposeNewOwner()` / `confirmOwnership()`
-
-**Who can call:** Current extension owner (for proposal), proposed new owner (for confirmation)
-
-**Parameters (propose):**
-- `_extensionId` (`uint256`): The extension ID
-- `_newOwner` (`address`): The proposed new owner address
-
-**Parameters (confirm):**
-- `_extensionId` (`uint256`): The extension ID
-
-**Requirements:**
-- `proposeNewOwner()` must be called by the current extension owner
-- `confirmOwnership()` must be called from the proposed new owner address
-
-**What happens:**
-1. The current owner calls `proposeNewOwner(extensionId, newOwnerAddress)` to propose a new owner.
-2. The proposed new owner calls `confirmOwnership(extensionId)` to accept the transfer.
-3. Ownership of the extension is transferred to the new address.
-4. The extension owner is typically a multisig governance account for production deployments.
-
-**Events emitted:** [`NewOwnerProposed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed) and [`NewOwnerConfirmed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerconfirmed)
-
----
+`Provisioned`. The extension is ready for [MachineRegistration](../../Workflows/MachineRegistration.md), and once at least one machine reaches `PRODUCTION` the extension can receive [custom instructions](Instructions.md).
 
 ## Notes
 
-- After completing extension configuration, proceed to [Machine Registration](../../Workflows/MachineRegistration.md) to register TEE machines, then [Wallet Setup](../../Workflows/WalletSetup.md) to create wallet projects and keys, and finally [Extension Instructions](Instructions.md) to send custom instructions.
-- The extension owner is typically a multisig governance account for production deployments.
-- All three TEE node configuration endpoints (Step 6) can alternatively be set via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) before the TEE node starts.
-
+- After [`register`](#register-unregistered--registered), the deployed `instructionsSender` contract must learn its own `extensionId` (typically via a `setExtensionId` call) before it can forward user calls to `FlareTeeManager.sendInstructions`.
+- All three TEE-node configuration endpoints can be supplied via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) at boot instead of via the Configuration API.
+- The same allowlist and key-type calls are also used by the [system extension](../System.md) via its governance entry points.
