@@ -85,7 +85,7 @@ Remaining:
 1. `FCE/` — populate `Reference/Api.md` for the TEE machine ↔ FCE HTTP contract.
 2. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
 3. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
-4. Create a proper contract spec for `PMW/Reference/Contracts/Payments.md` (currently events-only with a stub intro) and `FDC2/Reference/Contracts/Fdc2Hub.md`.
+4. Create `FDC2/Reference/Contracts/Fdc2Hub.md` (the `Fdc2Hub` contract has no spec page yet).
 5. `Reference/Contracts/VrfVerifier.md` — full content (currently a stub).
 
 ## Cross-cutting renames and fixes
@@ -97,7 +97,7 @@ Apply as a batch once the prose passes are settled, since they touch many inboun
 The legacy event docs under `Reference/Types/Abi/Events/Tee*.md` (split per-facet/per-manager) all came from the `FlareTeeManager` diamond or from `TeePayments`. They've been folded into:
 
 - `Reference/Contracts/FlareTeeManagerEvents.md` (13 source files; one H2 per concern).
-- `PMW/Reference/Contracts/Payments.md` (4 source files; needs a proper contract-spec intro on top).
+- `PMW/Reference/Contracts/Payments.md` (4 source files; now with a proper contract-spec intro covering multisig accounts, payments, fee schedules, payment limits, and source registry).
 
 #### Replace wallet/project/key-manager contract names with `FlareTeeManager`
 

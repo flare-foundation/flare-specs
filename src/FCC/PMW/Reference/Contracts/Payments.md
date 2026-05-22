@@ -1,12 +1,21 @@
 # TeePayments
 
-The `TeePayments` contract is the PMW-side on-chain hub: it receives payment requests from users and emits them as [`F_XRP PAY`](../Operations/Pay.md) / [`F_XRP REISSUE`](../Operations/Reissue.md) instructions via [`FlareTeeManager`](../../../Reference/Contracts/FlareTeeManager.md). Fee schedules, payment limits, and source-chain registration are managed alongside.
+The `TeePayments` contract is the PMW-side on-chain hub.
+It receives payment requests from users on behalf of external-chain wallets managed by the [system extension](../../../FCE/System.md), routes them to the TEE machines that hold the wallet's keys via [`FlareTeeManager.sendInstructions`](../../../Reference/Contracts/FlareTeeManager.md#sending-instructions), and bundles them as [`F_XRP PAY`](../Operations/Pay.md) / [`F_XRP REISSUE`](../Operations/Reissue.md) instructions.
+Alongside the payment surface it manages multisig-account bookkeeping, fee schedules, payment limits, and the set of supported external chains.
 
-For the request shape and on-chain flow, see [PMW Transactions](../../Transactions.md).
+For the user-facing semantics — payment submission, batching, fee scheduling, reissue/nullification — see [PMW Transactions](../../Transactions.md). The PMW concepts (wallets, key set, multisig) live in [PMW Concepts](../../Concepts.md) and [Concepts/Wallets](../../../Concepts/Wallets.md).
 
-## Payments Events
+## Multisig Accounts
 
-### PMWMultisigAccountAdded
+A _multisig account_ associates a PMW [wallet](../../../Concepts/Wallets.md#wallets) (on-chain `walletId`) with an external-chain account identified by `(sourceId, accountAddress)`. The record holds the initial chain nonce, the authorization address (the only address allowed to submit payments against the account), and the per-account [batching](../../Transactions.md#batching) parameters.
+
+- `addPMWMultisigAccount(walletId, sourceId, accountAddress, initialNonce, authorizationAddress, batchSize, batchDurationSeconds)` — register a multisig account. Callable by the wallet's [project owner](../../../../Terminology/Roles.md#project-owner).
+- `setBatchSettings(account, batchSize, batchDurationSeconds)` — update batching parameters for an existing account. Callable by the project owner.
+
+### Events
+
+#### PMWMultisigAccountAdded
 
 Emitted by: `addPMWMultisigAccount()`
 
@@ -22,7 +31,7 @@ event PMWMultisigAccountAdded(
 );
 ```
 
-### BatchSettingsSet
+#### BatchSettingsSet
 
 Emitted by: `setBatchSettings()`
 
@@ -36,9 +45,26 @@ event BatchSettingsSet(
 );
 ```
 
-## Fee Schedule Events
+## Payments
 
-### FeeScheduleConfigsSet
+Two user-facing entry points; both payable, both routed onward via `FlareTeeManager.sendInstructions` (which emits the [`TeeInstructionsSent`](../../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event):
+
+- `pay(account, paymentInstruction, claimBackAddress)` — submit a single payment; opens a new batch or appends to an existing one. Returns the assigned `(nonce, subNonce)`. See [Submitting a Payment](../../Transactions.md#submitting-a-payment).
+- `reissue(account, nonce, firstSubNonce, paymentInstructions, reissueFeeParams, claimBackAddress)` — re-sign a stuck batch with a fresh fee schedule, or [nullify](../../Transactions.md#nullification) it. See [Reissuing a Payment](../../Transactions.md#reissuing-a-payment).
+
+`msg.value` funds TEE-side execution; `claimBackAddress` reclaims the fee if the instruction does not execute. Caller must be the multisig account's `authorizationAddress`.
+
+## Fee Schedules
+
+A _fee schedule_ is an ordered list of `(factor, delay)` entries that scales the user's `maxFee` per TEE-signed transaction; see [Fee Schedules](../../Transactions.md#fee-schedules) for the wire encoding and semantics. Three layers of configuration apply with precedence `account override > project default > built-in default`:
+
+- `setFeeScheduleConfigs(configs)` / `clearFeeScheduleConfigs(sourceIds)` — [governance](../../../../Terminology/Roles.md#governance). Per-source constraints (max entries, max delay). Sources with no configuration accept only the trivial single-entry schedule.
+- `setProjectFeeSchedule(projectId, sourceId, schedule)` / `clearProjectFeeSchedule(projectId, sourceId)` — project owner. Per-`(project, source)` default schedule.
+- `setAccountFeeSchedule(account, schedule)` / `clearAccountFeeSchedule(account)` — account owner. Per-account override.
+
+### Events
+
+#### FeeScheduleConfigsSet
 
 Emitted by: `setFeeScheduleConfigs()`
 
@@ -48,7 +74,7 @@ event FeeScheduleConfigsSet(
 );
 ```
 
-### FeeScheduleConfigsCleared
+#### FeeScheduleConfigsCleared
 
 Emitted by: `clearFeeScheduleConfigs()`
 
@@ -58,7 +84,7 @@ event FeeScheduleConfigsCleared(
 );
 ```
 
-### ProjectFeeScheduleSet
+#### ProjectFeeScheduleSet
 
 Emitted by: `setProjectFeeSchedule()`
 
@@ -70,7 +96,7 @@ event ProjectFeeScheduleSet(
 );
 ```
 
-### ProjectFeeScheduleCleared
+#### ProjectFeeScheduleCleared
 
 Emitted by: `clearProjectFeeSchedule()`
 
@@ -81,7 +107,7 @@ event ProjectFeeScheduleCleared(
 );
 ```
 
-### AccountFeeScheduleSet
+#### AccountFeeScheduleSet
 
 Emitted by: `setAccountFeeSchedule()`
 
@@ -95,7 +121,7 @@ event AccountFeeScheduleSet(
 );
 ```
 
-### AccountFeeScheduleCleared
+#### AccountFeeScheduleCleared
 
 Emitted by: `clearAccountFeeSchedule()`
 
@@ -108,9 +134,15 @@ event AccountFeeScheduleCleared(
 );
 ```
 
-## Limits Events
+## Payment Limits
 
-### PaymentLimitsSet
+Governance caps per-transaction and daily volumes for an account:
+
+- `setPaymentLimits(walletId, sourceId, accountAddress, transactionLimit, dailyLimit)` — [governance](../../../../Terminology/Roles.md#governance).
+
+### Events
+
+#### PaymentLimitsSet
 
 Emitted by: `setPaymentLimits()`
 
@@ -124,9 +156,16 @@ event PaymentLimitsSet(
 );
 ```
 
-## Registry Events
+## Source Registry
 
-### SourcesRegistered
+Governance manages the set of external chains the contract supports (e.g. `XRP`, `testXRP`); see [PMW PAY](../Operations/Pay.md):
+
+- `registerSources(registrations)` — add new sources.
+- `unregisterSources(sourceIds)` — remove sources.
+
+### Events
+
+#### SourcesRegistered
 
 Emitted by: `registerSources()`
 
@@ -136,7 +175,7 @@ event SourcesRegistered(
 );
 ```
 
-### SourcesUnregistered
+#### SourcesUnregistered
 
 Emitted by: `unregisterSources()`
 
@@ -145,4 +184,3 @@ event SourcesUnregistered(
     bytes32[] sourceIds
 );
 ```
-
