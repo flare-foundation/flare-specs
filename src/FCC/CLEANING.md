@@ -81,13 +81,13 @@ Done:
 - [x] Fold `Reference/Types/Abi/Events/Tee*.md` (13 files) → `Reference/Contracts/FlareTeeManagerEvents.md`; PMW payments events (4 files) → `PMW/Reference/Contracts/Payments.md`; delete the `Events/` directory.
 - [x] Write `PMW/Reference/Contracts/Payments.md` (TeePayments contract surface + events, organised by area).
 - [x] Write `FCE/Reference/Api.md` (TEE machine ↔ FCE HTTP contract).
+- [x] Write `Reference/Contracts/VrfVerifier.md` (the standalone VRF-verification contract: functions, Proof struct, errors).
 
 Remaining:
 
 1. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
 2. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
 3. Create `FDC2/Reference/Contracts/Fdc2Hub.md` (the `Fdc2Hub` contract has no spec page yet).
-4. `Reference/Contracts/VrfVerifier.md` — full content (currently a stub).
 
 ## Cross-cutting renames and fixes
 
