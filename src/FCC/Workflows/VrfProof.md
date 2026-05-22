@@ -1,104 +1,70 @@
-# VRF Proof Generation
+# VrfProof
 
-## Overview
+State machine for generating a verifiable random number from a VRF key held inside a TEE machine, and verifying the resulting proof on chain.
 
-This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
-The result can be verified on-chain by the `VrfVerifier` contract.
-For canonical VRF key semantics, see [Key Management](../Concepts/Keys.md) and the [`F_WALLET--VRF`](../Reference/Operations/F_WALLET.md#vrf) command reference.
+For canonical VRF key semantics, see [Concepts/Keys § VRF Keys](../Concepts/Keys.md#vrf-keys); the operation reference is [`F_WALLET VRF`](../Reference/Operations/F_WALLET.md#vrf); the on-chain verifier is [`VrfVerifier`](../Reference/Contracts/VrfVerifier.md).
 
-## Prerequisites
+## Preconditions
 
-- **TEE machine in PRODUCTION status** — the machine holding the VRF key must be registered and operational (see [MachineRegistration.md](MachineRegistration.md))
-- **Wallet in PRODUCTION status** — the wallet must be enabled via the [wallet-setup workflow](WalletSetup.md)
-- **Wallet with a VRF key** — a key with signing algorithm `keccak256-secp256k1-vrf` must already be generated and confirmed
-- **VRF authorization address set** — the caller must be the VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`)
+- A TEE machine holding the target key is in `PRODUCTION`.
+- The wallet is in `PRODUCTION` ([WalletSetup](WalletSetup.md)).
+- A key for `(walletId, keyId)` exists on the wallet with `signingAlgo = keccak256-secp256k1-vrf`.
+- The wallet's VRF authorisation address has been set (via the `VrfFacet`'s `setVrfAuthorizationAddress`, [project owner](../../Terminology/Roles.md#project-owner) only).
+- The caller holds that authorisation address.
 
----
+## States
 
-## Steps
+- `Idle` — no VRF instruction is in flight for this nonce.
+- `Requested` — [`VrfFacet.requestVrf`](../Reference/Contracts/FlareTeeManager.md#facets) has emitted the [`F_WALLET VRF`](../Reference/Operations/F_WALLET.md#vrf) instruction; voting is in progress.
+- `Signed` — the TEE machine has produced the proof and returned it through its proxy.
+- `Verified` — the proof has been submitted to [`VrfVerifier`](../Reference/Contracts/VrfVerifier.md) and accepted; the randomness $\mathrm{keccak256}(\gamma_x \,\|\, \gamma_y)$ has been extracted via [`randomnessFromProof`](../Reference/Contracts/VrfVerifier.md#randomnessfromproof).
 
-### Step 1: Submit VRF Instruction
+## Initial State
 
-**Who initiates:** The VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`).
+`Idle`.
 
-A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../Reference/Operations/F_WALLET.md#vrf) instruction.
+## Transitions
 
-**Parameters:**
-- `walletId` (`bytes32`) — the wallet ID of the VRF key.
-- `keyId` (`uint64`) — the key ID within the wallet.
-- `nonce` (`bytes`) — an arbitrary bytes value binding the proof to a specific request.
-- `claimBackAddress` (`address`) — address to claim back unused instruction fees.
+### requestVrf: Idle → Requested
 
-**Requirements:**
-- The caller must be the VRF authorization address for the wallet.
-- The wallet must be in `PRODUCTION` status.
-- The `nonce` must be non-empty.
-- The specified `(walletId, keyId)` pair must exist on the target TEE machine.
-- The key's signing algorithm must be `keccak256-secp256k1-vrf`.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
+- **Action**: `FlareTeeManager.requestVrf(walletId, keyId, nonce, claimBackAddress)` (`VrfFacet`) — payable.
+- **Caller**: the wallet's VRF authorisation address.
+- **Guards**:
+  - `wallet.status = PRODUCTION`
+  - `key.signingAlgo = keccak256-secp256k1-vrf`
+  - `nonce` is non-empty
+  - `key.teeIds` contains at least one machine in `PRODUCTION`
+  - `msg.value ≥ fee(F_WALLET, VRF)`
+- **Effects**: emits [`VrfRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#vrfrequested) and [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent); dispatches the instruction to every TEE in `key.teeIds`.
 
-**Events emitted:** [`VrfRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#vrfrequested), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
+### voteAndSign: Requested → Signed
 
----
+- **Action**: standard [voting](../Concepts/Voting.md) plus TEE-side ECVRF proof generation per [F_WALLET VRF](../Reference/Operations/F_WALLET.md#vrf).
+- **Caller**: [data providers](../../Terminology/Roles.md#data-provider) (relay clients); the TEE machine performs the cryptographic work.
+- **Guards**: data-provider weight $\geq$ signing-policy threshold (no cosigner term unless the wallet configured one).
+- **Effects**:
+  - TEE machine computes $H = \mathrm{HashToCurve}(\mathrm{nonce})$, $\gamma = \mathrm{sk} \cdot H$, challenge $c$, response $s$, and pre-computes witness points $u, c\gamma, v, z_{\mathrm{inv}}$ (see [F_WALLET VRF action result](../Reference/Operations/F_WALLET.md#vrf)).
+  - The resulting JSON `proof` is posted to the TEE proxy as the [action result](../Concepts/Actions.md#action-results).
 
-### Step 2: Voting
+### retrieve: Signed → Verified (off-chain step)
 
-[Data providers](../../Terminology/Roles.md#data-provider) vote on the instruction following the standard [voting process](../Concepts/Voting.md). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
+- **Action**: the caller reads the result from the proxy (`GET /action/result/<instructionId>`) and submits it to [`VrfVerifier.verifyRandomness`](../Reference/Contracts/VrfVerifier.md#verifyrandomness).
+- **Caller**: anyone with the proof.
+- **Guards**: the four ecrecover-based checks in `verifyRandomness` (`u`, `cGamma`, `v`, `c`) all pass; see [VrfVerifier § verifyRandomness](../Reference/Contracts/VrfVerifier.md#verifyrandomness).
+- **Effects**: on success the caller derives the randomness via [`randomnessFromProof(γ_x, γ_y)`](../Reference/Contracts/VrfVerifier.md#randomnessfromproof). On failure the verifier reverts with one of the [errors](../Reference/Contracts/VrfVerifier.md#errors); the state machine stays in `Signed`.
 
----
+## Invariants
 
-### Step 3: TEE Processing
+- The challenge $c$ committed by the TEE machine is bit-identical to the one the verifier recomputes; both follow $c = \mathrm{HashToZn}(G, H, \mathrm{pk}, \gamma, u, v)$.
+- The randomness is purely a function of $\gamma$ (and hence of `(sk, nonce)`); identical `(walletId, keyId, nonce)` triples yield identical randomness across re-runs.
+- A successful `verifyRandomness` is a sufficient condition for the proof — neither `walletId`, `keyId`, nor the on-chain key bookkeeping enters the on-chain check beyond the public key.
 
-Once the voting threshold is reached, the TEE proxy delivers the action to the TEE machine. The TEE then:
+## Terminal States
 
-1. **Parses** the `VrfInstructionMessage` from the action's fixed data.
-2. **Loads** the private key for the specified `(walletId, keyId)` pair from wallet storage.
-3. **Validates** that the key's signing algorithm is `keccak256-secp256k1-vrf`. Any other algorithm is rejected.
-4. **Computes** the ECVRF proof using the secp256k1 curve:
-   - Hashes the nonce to a curve point $H = \mathrm{HashToCurve}(\mathrm{nonce})$ via iterative keccak256 hashing until a valid x-coordinate is found.
-   - Computes the VRF output $\gamma = \mathrm{sk} \cdot H$.
-   - Samples a random scalar $k$ and computes commitment points $U = k \cdot G$ and $V = k \cdot H$.
-   - Derives the challenge $c = \mathrm{HashToZn}(\mathrm{Pack}(G, H, \mathrm{pk}, \gamma, U, V))$ using ABI-encoded keccak256 reduced modulo $N$.
-   - Computes the response $s = k - \mathrm{sk} \cdot c \mod N$.
-   - Pre-computes witness points for on-chain verification: $c\gamma$, and $z_{\mathrm{inv}} = (\mathrm{cGamma}_x - V_x)^{-1} \mod P$.
-5. **Returns** the JSON-encoded result to the TEE proxy.
-
----
-
-### Step 4: Retrieve Result
-
-The action result is available from the TEE proxy.
-For the response format, see the [`VRF`](../Reference/Operations/F_WALLET.md#vrf) command reference.
-
----
-
-### Step 5: On-chain Verification
-
-The proof can be verified on-chain by submitting it to the `VrfVerifier` contract. The contract performs $4$ independent checks using `ecrecover`:
-
-1. $U = c \cdot \mathrm{pk} + s \cdot G$ — proves the TEE knows the secret key $\mathrm{sk}$ such that $\mathrm{pk} = \mathrm{sk} \cdot G$.
-2. $c\gamma = c \cdot \gamma$ — confirms that `cGamma` is correctly derived.
-3. $V = c\gamma + s \cdot H$ — confirms that $V$ is correctly derived from $\gamma$, $H$, $c$, and $s$.
-4. $c = \mathrm{HashToZn}(\mathrm{Pack}(G, H, \mathrm{pk}, \gamma, U, V))$ — confirms the challenge is consistent with all public values.
-
-Once verified, the final random value is extracted as:
-
-$$\mathrm{randomness} = \mathrm{keccak256}(\gamma_x \| \gamma_y)$$
-
-where $\gamma_x$ and $\gamma_y$ are $32$-byte big-endian encodings of the gamma point coordinates.
-
----
+`Verified`. The extracted `bytes32` randomness is the workflow's output.
 
 ## Notes
 
-- **Error conditions:**
-
-  | Condition | Result |
-  |-----------|--------|
-  | Empty nonce | Rejected by TEE processor |
-  | Key not found for `(walletId, keyId)` | Action fails |
-  | Signing algorithm is not `keccak256-secp256k1-vrf` | Rejected by TEE processor |
-  | `HashToCurve` fails (no valid point found in $256$ iterations) | Proof generation fails |
-  | Zero denominator for `zInv` (probability $\approx 1/P$) | Proof generation fails; extremely unlikely |
-
-- **Cryptographic reference:** The VRF implementation follows the ECVRF scheme based on secp256k1, as described in "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099). The `HashToCurve` function uses iterative keccak256 hashing with coordinates reduced modulo $P$, retrying until a valid curve point is found (expected $\approx 2$ iterations). The `HashToZn` function computes $\mathrm{keccak256}(\mathrm{msg}) \mod N$.
+- Repeated VRF requests on the same `(walletId, keyId, nonce)` produce the same randomness — the VRF is deterministic.
+- The TEE machine rejects the action if `HashToCurve` fails to find a valid point within $256$ iterations (probability $\approx 2^{-256}$) or if the pre-computed `zInv` would be undefined.
+- For the proof structure and on-machine generation algorithm, see [`F_WALLET VRF`](../Reference/Operations/F_WALLET.md#vrf). The ECVRF scheme follows "Making NSEC5 Practical for DNSSEC" (Cryptology ePrint Archive, Report 2017/099).

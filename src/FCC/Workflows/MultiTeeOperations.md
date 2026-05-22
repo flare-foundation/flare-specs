@@ -1,67 +1,74 @@
-# Distributed Multi-TEE Workflows
+# MultiTeeOperations
 
-## Overview
+A multi-TEE deployment runs $N$ independent instances of the single-TEE workflows in parallel, with synchronisation at a handful of points. This page does not redefine the per-machine state machines; instead it specifies the _composition rules_ that bind $N$ machine-, wallet-, and key-level state machines into one coherent application.
 
-This page describes the parts of a deployment that change when a wallet or application is operated across multiple TEE machines.
-It does not repeat the full single-TEE procedures.
-Use [MachineRegistration.md](MachineRegistration.md), [WalletSetup.md](WalletSetup.md), [XrplMultisigConfiguration.md](../PMW/Workflows/XrplMultisigConfiguration.md), and [XrpPayment.md](../PMW/Workflows/XrpPayment.md) as the base workflows, and apply the deltas below.
+For canonical per-machine behaviour, follow the base workflows: [MachineRegistration](MachineRegistration.md), [WalletSetup](WalletSetup.md), [KeyAdd](KeyAdd.md), [KeyDelete](KeyDelete.md), [KeyRestore](KeyRestore.md), [XrplMultisigConfiguration](../PMW/Workflows/XrplMultisigConfiguration.md), [XrpPayment](../PMW/Workflows/XrpPayment.md). For the concepts, [Concepts/Machines](../Concepts/Machines.md), [Concepts/Wallets](../Concepts/Wallets.md), [Concepts/Keys](../Concepts/Keys.md).
 
-For canonical ownership, state, and key semantics, see [Registration](../Concepts/Machines.md), [State](../Concepts/Machines.md) and [Attestation](../Concepts/Machines.md), and [Key Management](../Concepts/Keys.md).
+## Preconditions
 
-## When Multi-TEE Operation Changes the Flow
+- The $N$ TEE machines that will participate share one `extensionId`.
+- The wallet's `multisigThreshold` matches the intended signing quorum.
+- The wallet's `adminsPublicKeys` / `adminsThreshold` and (where used) `cosigners` / `cosignersThreshold` are sized for the $N$-machine deployment, not a single-machine one.
 
-Multi-TEE operation matters when:
+## Composition Points
 
-- keys are distributed across several machines,
-- a wallet uses a threshold greater than one,
-- signatures must be gathered from multiple proxies, or
-- a machine can be replaced without taking the whole wallet offline.
+Each composition point is a synchronisation barrier across the per-machine workflows.
 
-## Delta Workflow
+### CP-1: machine registration (parallel)
 
-### Step 1: Register Each Machine Independently
+- **Base workflow per machine**: [MachineRegistration](MachineRegistration.md). Each machine reaches `PRODUCTION` independently.
+- **Synchronisation**: none required between machines — registrations are independent.
+- **Postcondition**: $N$ machines have status `PRODUCTION` and `extensionId = project.extensionId`.
 
-Repeat [MachineRegistration.md](MachineRegistration.md) for each TEE machine.
-Each machine has its own identity, proxy, availability proof, lifecycle, and status transitions.
-All machines that will participate in the same workflow must be registered to the same extension.
+### CP-2: wallet creation (once)
 
-### Step 2: Create One Wallet and Distribute Keys Across TEEs
+- **Base workflow**: [WalletSetup](WalletSetup.md), through `INITIALIZED`.
+- **Synchronisation**: a single project owner runs this once; the resulting `walletId` is shared.
+- **Postcondition**: `wallet.status = INITIALIZED`, `multisigThreshold` set to the intended quorum $k$, admins/cosigners sized for $N$.
 
-Follow [WalletSetup.md](WalletSetup.md) once to create the project, wallet, admins, cosigners, and multisig threshold.
-Then add and confirm keys on multiple TEEs instead of stopping after the first key:
+### CP-3: key distribution (fan-out then fan-in)
 
-- issue one `addKey()` call per target TEE,
-- confirm each key individually with its own key-existence proof, and
-- ensure the wallet threshold matches the intended multi-TEE signing model.
+- **Base workflow per machine**: [KeyAdd](KeyAdd.md). One `(walletId, keyId_i)` per machine $i \in \{1, …, N\}$.
+- **Synchronisation**: confirmations may interleave in any order. The wallet stays in `INITIALIZED` until all desired `keyId_i` are `Confirmed` (or until at least `multisigThreshold` are, depending on whether the operator plans to add more keys later).
+- **Postcondition**: at least $k$ keys exist in `Confirmed` state on chain, each pinned to one machine via `key.teeIds`.
 
-If a machine must be replaced, restore the key on the replacement TEE first, confirm it, and only then remove the old copy.
-Use [KeyRestore.md](KeyRestore.md) and [KeyDelete.md](KeyDelete.md) for that sequence.
+### CP-4: wallet enable (once)
 
-### Step 3: Configure the External Multisig Account from All Confirmed Keys
+- Run `enableWallet` from [WalletSetup](WalletSetup.md).
+- **Guard**: $\geq$ `multisigThreshold` confirmed keys exist (CP-3 postcondition).
+- **Postcondition**: `wallet.status = PRODUCTION`.
 
-When the wallet is used for PMW, gather the confirmed public keys from all participating TEEs and follow [XrplMultisigConfiguration.md](../PMW/Workflows/XrplMultisigConfiguration.md).
-The external signer set and quorum must match the wallet's confirmed keys and threshold, not just a single machine.
+### CP-5: external multisig binding (once)
 
-### Step 4: Collect Results from Multiple Proxies
+- **Base workflow**: [XrplMultisigConfiguration](../PMW/Workflows/XrplMultisigConfiguration.md).
+- **Synchronisation**: the external signer set is built from the public keys produced at CP-3; the on-chain quorum must equal the wallet's `multisigThreshold`.
+- **Postcondition**: external account is multisig-configured with the $N$ TEE-controlled keys.
 
-For workflows that produce one result per participating TEE, retrieve the result from each relevant proxy.
-In the PMW payment case, this means collecting partial signatures from multiple proxies, aggregating them into the final multisigned transaction, and then submitting that final transaction on the external chain.
-Follow [XrpPayment.md](../PMW/Workflows/XrpPayment.md) for the base payment flow, and [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md) when post-submission proof verification is needed.
+### CP-6: payments (parallel sign, single submit)
 
-### Step 5: Operate the Lifecycle Per Machine
+- **Base workflow**: [XrpPayment](../PMW/Workflows/XrpPayment.md). The `pay` call dispatches the same `F_XRP PAY` instruction to all $N$ machines (via `FlareTeeManager.receivingTeesAndKeys`).
+- **Synchronisation**:
+  - Each machine signs its share independently; results land in each machine's proxy.
+  - The submitter collects $\geq$ `multisigThreshold` partial signatures from those proxies, assembles the multisigned transaction, and submits it once on the external chain.
+- **Postcondition**: a single external transaction carries threshold signatures from distinct machines.
 
-Availability checks, pauses, upgrades, settings updates, and ownership changes remain per-machine actions.
-The wallet or application remains healthy only while enough machines remain available to satisfy the configured threshold.
-If a machine drops out of service, restore or replace the missing key material before the available signer set falls below the required threshold.
+### CP-7: lifecycle (per machine, decoupled)
 
-## Practical Checks
+- **Base workflow per machine**: [MachineLifecycle](MachineLifecycle.md) — pause, suspend, resume, ban, ownership change. Each machine runs its own lifecycle state machine; the wallet remains healthy as long as $\geq$ `multisigThreshold` machines retain `PRODUCTION` and hold a `Confirmed` key.
+- **Synchronisation**: when a machine becomes permanently unavailable, run [KeyRestore](KeyRestore.md) on a replacement before [KeyDelete](KeyDelete.md) on the failed one, so the in-service count never drops below `multisigThreshold`.
 
-- All participating TEEs must belong to the same extension as the wallet or application.
-- The wallet threshold, external multisig quorum, and available key count must stay aligned.
-- Each proxy should be treated as an independent result source.
-- Recovery and decommissioning should preserve signing availability throughout the migration.
+## Invariants
+
+- Across CP-3 → CP-6, the count of `Confirmed` keys whose owning machine is in `PRODUCTION` is at least `multisigThreshold` whenever the wallet is in `PRODUCTION`.
+- All participating machines share the wallet's `extensionId`.
+- The external multisig quorum equals the wallet's `multisigThreshold` (CP-5 enforces this at setup; CP-7 must preserve it through restores).
+
+## Terminal Composition
+
+`Operational`: $N$ machines in `PRODUCTION`, $\geq k$ confirmed keys, wallet in `PRODUCTION`, external multisig bound. From here CP-6 (payments) and CP-7 (lifecycle) repeat indefinitely.
 
 ## Notes
 
-- Single-TEE workflows remain the primary procedural references.
-- This page should only document the distributed-operation delta, not restate the full single-TEE setup.
+- Recovery and decommissioning sequences should preserve the in-service signer count throughout the migration; never run `KeyDelete` before the replacement's `KeyRestore` has reached its `Confirmed` state.
+- Each proxy is treated as an independent result source at CP-6; do not assume any shared state between proxies.
+- For attestation-driven lifecycle transitions (pause-with-proof, confirm-availability), see [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md).

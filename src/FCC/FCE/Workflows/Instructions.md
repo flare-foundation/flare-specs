@@ -1,68 +1,64 @@
-# Extension Instructions
+# Instructions
 
-## Overview
+State machine for sending a custom (non-system) instruction to an [FCE](../README.md) and retrieving the result.
+The instruction-and-action semantics belong to [Concepts/Instructions](../../Concepts/Instructions.md) and [Concepts/Actions](../../Concepts/Actions.md); the extension-side handler contract is the FCE's [`Api.md`](../Reference/Api.md).
 
-This workflow describes how a caller sends a custom instruction to a non-system extension and retrieves the result.
-Canonical instruction, action, and extension-routing semantics belong to [Instructions](../../Concepts/Instructions.md), [Actions](../../Concepts/Actions.md), and [Extensions](../README.md).
-This page focuses on the procedural flow rather than the internal implementation of any specific extension.
+## Preconditions
 
-## Prerequisites
+- The target extension is [registered and configured](Configuration.md); its `instructionsSender` field is set.
+- At least one TEE machine of the extension is in `PRODUCTION`.
+- `opType` does not carry the `F_` prefix (system-extension-only).
+- Any extension-specific authorisation (e.g. application-level account permissions) is already satisfied.
 
-- The extension must be registered and configured on-chain.
-- At least one TEE machine for that extension must be in `PRODUCTION` status.
-- An instruction sender contract, or another approved entry point, must be available for the extension.
-- Any extension-specific wallet, account, or authorization prerequisites must already be satisfied.
+## States
 
-## Steps
+- `Unsent` — no on-chain instruction has been emitted for this request.
+- `Emitted` — `FlareTeeManager.sendInstructions` (called through the extension's `instructionsSender`) has emitted [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent); voting has not yet reached threshold.
+- `Threshold` — the target proxies' [vote boxes](../../Concepts/Voting.md#vote-boxes) have passed; each proxy has dispatched a `threshold`-tag [action](../../Concepts/Actions.md) to its TEE machine, which forwarded it to the extension via [`POST /action`](../Reference/Api.md#post-action).
+- `Final` — the extension returned a terminal [`ActionResult`](../../Reference/Types/Wire/Action.md#actionresult) (`status` $\in \{0, 1\}$), either synchronously from `/action` or asynchronously via [`POST /result`](../Reference/Api.md#post-result). The proxy has stored the signed [`ActionResponse`](../../Concepts/Actions.md#action-responses) and serves it on `GET /action/result/<instructionId>`.
 
-### Step 1: Build and Submit the Extension Instruction
+## Initial State
 
-The caller invokes the extension's instruction sender logic, which ultimately calls `FlareTeeManager.sendInstructions()`.
-The instruction must define:
+`Unsent`.
 
-- the target `teeIds`,
-- the custom `opType`,
-- the custom `opCommand`,
-- the encoded `message`,
-- any required [`cosigners`](../../Concepts/Instructions.md#cosigners), and
-- the `cosignersThreshold`.
+## Transitions
 
-The meaning of `opType`, `opCommand`, and `message` is owned by the extension itself and should be documented with the extension contracts or application documentation.
+### sendInstructions: Unsent → Emitted
 
-### Step 2: Providers and Cosigners Relay the Instruction
+- **Action**: the caller invokes the extension's instructions-sender contract, which ultimately calls [`FlareTeeManager.sendInstructions(teeIds, instructionParams)`](../../Reference/Contracts/FlareTeeManager.md#sending-instructions). The `instructionParams` carry `opType`, `opCommand`, `message`, optional `cosigners` and `cosignersThreshold`, and `claimBackAddress`. Payable.
+- **Caller**: the address authorised by the instructions-sender contract (extension-specific).
+- **Guards** (enforced by `FlareTeeManager`):
+  - `msg.sender = extension.instructionsSender` (or a [system instructions sender](../../Reference/Contracts/FlareTeeManager.md#caller-validation)).
+  - `opType` does not begin with `F_`.
+  - All `teeIds` belong to the same extension and are in `PRODUCTION`.
+  - `msg.value ≥ operation fee`.
+- **Effects**: emits [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent); off-chain signers begin building and relaying signed instructions.
 
-After the on-chain instruction is emitted, [data providers](../../../Terminology/Roles.md#data-provider) and any required cosigners prepare the corresponding [instruction](../../Concepts/Instructions.md).
-They sign and relay it to the target TEE proxies using the standard FCC instruction flow.
+### vote: Emitted → Threshold
 
-### Step 3: The Proxy Routes the Action to the Extension
+- **Action**: standard [voting](../../Concepts/Voting.md) on each target proxy.
+- **Caller**: data providers (and cosigners, if any).
+- **Guards**: data-provider weight $\geq$ signing-policy threshold (or per-instruction override) and cosigner count $\geq$ `cosignersThreshold`.
+- **Effects**: each proxy enqueues a `threshold`-tag [action](../../Concepts/Actions.md#instruction-actions); the TEE machine fetches it and calls [`POST /action`](../Reference/Api.md#post-action) on the extension.
 
-Once the voting threshold is met, the proxy packages the instruction as an [action](../../Concepts/Actions.md).
-Because the operation is not a system `F_*` command, the TEE node routes it to the configured extension logic instead of handling it with the built-in system processors.
+### resolveResult: Threshold → Final
 
-### Step 4: The Extension Produces a Result
+- **Action**: the extension returns an `ActionResult`. Either synchronously (terminal `status` in the `/action` response) or asynchronously (`status` $\geq 2$ from `/action`, followed by one or more [`POST /result`](../Reference/Api.md#post-result) updates, the last with terminal status).
+- **Caller**: the FCE process (running co-resident with the TEE machine).
+- **Guards** (enforced by the proxy's result store): terminal results are write-once; transient results can only be overwritten by a strictly greater transient or by a terminal.
+- **Effects**: the TEE machine signs the result with its identity key, posts it as an [`ActionResponse`](../../Concepts/Actions.md#action-responses) to the proxy, and the proxy publishes it on `GET /action/result/<instructionId>`.
 
-The extension processes the action and returns a standard action result.
-Depending on the extension, the result may be:
+## Invariants
 
-- a final success result,
-- a final error result, or
-- a transient or in-progress result followed by a later final result.
+- A custom-extension instruction's `opType` never has the `F_` prefix.
+- The extension's `/action` endpoint never sees an `end`-tag action (those are built locally by the TEE machine); see [Reference/Api § /action](../Reference/Api.md#post-action).
+- The result stored at `(id, submissionTag)` echoes the inbound `id`, `submissionTag`, `opType`, and `opCommand` faithfully — a mismatch produces an unreachable result; see the [echo requirement](../Reference/Api.md#post-action).
 
-The payload format of `result.data` is extension-specific.
+## Terminal States
 
-### Step 5: Retrieve and Verify the Result
-
-The caller polls `GET /action/result/<instructionId>` on the TEE proxy until the final result is available.
-The proxy response includes the TEE-signed action result, which the caller then interprets according to the extension's own result schema and any verifying contract logic.
-
-### Step 6: Optional Direct Actions
-
-If an extension intentionally supports [direct actions](../../Concepts/Actions.md#direct-actions), the operator can submit them through the proxy's `POST /direct` endpoint instead of via `sendInstructions()`.
-The resulting action still follows the standard action-response format.
-Signature and authorization requirements for direct actions remain extension-specific.
+`Final`. The caller reads the result with `GET /action/result/<instructionId>` and decodes `result.data` per the extension's own result schema.
 
 ## Notes
 
-- Define the custom `opType`, `opCommand`, and payload encoding with the extension, not in the core FCC pages.
-- Use [Actions](../../Concepts/Actions.md) as the owner page for `submissionTag`, `status`, and response semantics.
-- Current implementation details such as ports, timeouts, and internal extension APIs are not canonical workflow rules and should stay in implementation-facing documentation.
+- An extension that intentionally supports [direct actions](../../Concepts/Actions.md#direct-actions) can be addressed instead via the proxy's `POST /direct` endpoint, skipping `sendInstructions` and voting. The same `Threshold → Final` transition applies (with `submissionTag = submit` rather than `threshold`).
+- For end-to-end authorisation, payload encoding, and result schemas, see the documentation of the specific extension. This workflow is the framework contract.
