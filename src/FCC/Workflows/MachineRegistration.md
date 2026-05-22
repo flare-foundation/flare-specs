@@ -1,334 +1,100 @@
-# TEE Machine Registration — From Boot to PRODUCTION
-
-## Overview
-
-This workflow describes deploying a TEE machine onto the Flare network, from Confidential VM boot through to `PRODUCTION` status.
-For canonical registration semantics, machine state, and ownership rules, see [Registration](../Concepts/Machines.md) and [State](../Concepts/Machines.md) and [Attestation](../Concepts/Machines.md).
-
-## Prerequisites
-
-- **Extension registered** on-chain with a valid extension ID (see [ExtensionConfiguration.md](../FCE/Workflows/Configuration.md))
-- **TEE node running** inside a Google Cloud Confidential VM (MODE=0 for production, MODE=1 for local development)
-- **TEE proxy running** and reachable by the TEE node (requires `PRIVATE_KEY` env var)
-- **Smart contracts deployed** — the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond and `Fdc2Hub` must be available on the target network
-- **Funded owner account** — the Flare address that will own the TEE machine must have sufficient funds for transaction fees
-
----
-
-## Steps
-
-*Phase 1: Local Configuration*
-
-### Step 1: Boot Confidential VM — Identity Key Generation
-
-**Who can call:** Infrastructure operator
-
-**What happens:**
-
-1. The Confidential VM starts and the TEE node process launches.
-2. The TEE generates an identity key pair (TEE_pk, TEE_sk) inside the secure enclave.
-3. The machine's identity `teeId` is derived as the Ethereum address corresponding to TEE_pk.
-4. The public key is represented on-chain as a `PublicKey` struct with `x` and `y` (bytes32) components.
-5. The identity key is stored securely in the memory of the machine and never leaves the TEE boundary.
-
-**Events emitted:** None (off-chain operation)
-
----
-
-### Step 2: Configure Proxy URL — `POST /proxy`
-
-**Who can call:** Machine owner (via Config API, port 5500)
-
-**Input:**
-- `url` (string) — URL of the TEE proxy to connect to (e.g., `http://<TEE_PROXY_INTERNAL_IP>:6661`)
-
-**Requirements:**
-- TEE node must be running and Config API accessible on port 5500
-- The URL must be well-formed
-
-**What happens:**
-
-1. The owner sends a POST request to `<TEE_MACHINE_IP>:5500/proxy` with the proxy URL.
-2. The TEE node stores the proxy URL and begins connecting to the specified proxy.
-
-**Example:**
-
-```shell
-curl --location '<TEE_MACHINE_IP>:5500/proxy' \
-  --header 'Content-Type: application/json' \
-  --data '{"url":"http://<TEE_PROXY_INTERNAL_IP>:6661"}'
-```
-
-> Alternatively, set the `PROXY_URL` environment variable before the TEE node starts.
-
-**Events emitted:** None (off-chain operation)
-
----
-
-### Step 3: Set Initial Owner — `POST /initial-owner`
-
-**Who can call:** Machine owner (via Config API, port 5500)
-
-**Input:**
-- `owner` (address) — Ethereum address of the initial owner
-
-**Requirements:**
-- Must be called before on-chain registration
-- Once set, the initial owner is permanently recorded and **immutable**
-
-**What happens:**
-
-1. The owner sends a POST request to `<TEE_MACHINE_IP>:5500/initial-owner` with the owner address.
-2. The TEE node stores this as the initial owner. The smart contract will validate during registration that the transaction sender matches this value.
-
-**Example:**
-
-```shell
-curl --location '<TEE_MACHINE_IP>:5500/initial-owner' \
-  --header 'Content-Type: application/json' \
-  --data '{"owner":"0x1234..."}'
-```
-
-> Alternatively, set the `INITIAL_OWNER` environment variable before the TEE node starts.
-
-**Events emitted:** None (off-chain operation)
-
----
-
-### Step 4: Set Extension ID — `POST /extension-id`
-
-**Who can call:** Machine owner (via Config API, port 5500)
-
-**Input:**
-- `extensionId` (bytes32) — The extension ID to register the machine against
-
-**Requirements:**
-- Must be called before on-chain registration
-- Once the machine is registered and verified via a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof, the extension ID becomes **fixed and cannot be changed**
-
-**What happens:**
-
-1. The owner sends a POST request to `<TEE_MACHINE_IP>:5500/extension-id` with the extension ID.
-2. The TEE node stores the extension ID. The machine will be registered to this specific [extension](../FCE/README.md), not the network as a whole.
-
-**Example:**
-
-```shell
-curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
-  --header 'Content-Type: application/json' \
-  --data '{"extensionId":"0xabcd..."}'
-```
-
-> Alternatively, set the `EXTENSION_ID` environment variable before the TEE node starts.
-
-**Events emitted:** None (off-chain operation)
-
----
-
-*Phase 2: Retrieve Machine Info*
-
-### Step 5: Get Machine Data from Proxy — `GET /info`
-
-**Who can call:** Anyone (public endpoint on external proxy port 6662)
-
-**Requirements:**
-- TEE node must be connected to the proxy
-- Proxy must be running and reachable
-
-**What happens:**
-
-1. A GET request is made to the proxy's external endpoint: `<PROXY_URL>/info`.
-2. The proxy returns a `SignedTeeInfoResponse` containing:
-   - `teeId` — the machine's identity address (derived from TEE_pk)
-   - `publicKey` — the TEE's public key (x, y components)
-   - `codeHash` — hash of the deployed code image
-   - `platform` — attestation platform identifier (e.g., `GOOGLE_INTEL`, `GOOGLE_AMD`)
-   - `extensionId` — the configured extension ID
-   - `initialOwner` — the configured initial owner address
-   - `attestation` — the current attestation token
-   - `dataSignature` — signature over the machine data by the TEE's private key
-   - `proxySignature` — signature by the proxy, identifying the proxy ID
-3. The code hash and platform can be independently verified from the attestation token to ensure consistency.
-
-**Events emitted:** None (off-chain operation)
-
----
-
-*Phase 3: On-Chain Registration*
-
-### Step 6: Register TEE Code Version (if new) — `FlareTeeManager.addTeeVersion()`
-
-**Who can call:** Extension owner only.
-
-**Parameters:**
-- `extensionId` (uint256) — the extension ID
-- `version` (string) — human-readable version string
-- `codeHash` (bytes32) — hash of the TEE code image
-- `platforms` (bytes32[]) — array of supported attestation platforms (e.g., `[GOOGLE_INTEL]`)
-- `governanceHash` (bytes32) — TEE governance set hash
-
-**Requirements:**
-- `version` must be non-empty.
-- `codeHash` must be non-zero.
-- `platforms` array must be non-empty.
-- All platforms must be system-supported.
-- `governanceHash` must be `bytes32(0)` or match the latest governance hash for the extension.
-- The code hash must not already be registered for this extension.
-
-**What happens:**
-
-1. The governance address calls `FlareTeeManager.addTeeVersion()` with the code hash, platforms, governance hash, and version string.
-2. The registry stores the code version, making it a recognized version for the extension.
-3. TEE machines running this code version can now be registered.
-
-**Events emitted:** [`TeeVersionAdded`](../Reference/Contracts/FlareTeeManagerEvents.md#teeversionadded)
-
----
-
-### Step 7: Register TEE Machine — `FlareTeeManager.register()`
-
-**Who can call:** Machine owner (the `initialOwner` address configured in Step 3)
-
-**Parameters:**
-- `machineData` (struct `TeeMachineData`) — contains `extensionId`, `initialOwner`, `codeHash`, `platform`, and `publicKey`. These values come from the `/info` endpoint (Step 5). For the full struct definition, see the [Registration specification](../Concepts/Machines.md#registration).
-- `signature` (Signature: `{v: uint8, r: bytes32, s: bytes32}`) — signature over `machineData` by the TEE machine's private key, proving consent to registration
-- `teeProxyId` (address) — identity of the proxy server relaying information to/from the TEE
-- `url` (string) — URL at which the TEE machine is reachable via the proxy
-- `claimBackAddress` (address) — address to claim back unused instruction fees
-
-**Requirements:**
-- The transaction sender must match the `initialOwner` in `machineData`.
-- The owner must be allowlisted for the extension.
-- The public key must be valid.
-- The signature must be valid over the machine data, signed by the TEE's private key.
-- The code hash and platform must correspond to a supported code version on the extension.
-- `teeProxyId` must not be zero address.
-- `url` must not be empty.
-- The `teeId` must not already be registered.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
-
-**What happens:**
-
-1. The contract verifies the signature proves the TEE machine consents to registration.
-2. A machine record is created on `FlareTeeManager` with the provided data.
-3. The machine status is set to `INITIALIZED`.
-4. `lastStatusChangeTs` is set to `block.timestamp`.
-5. A TEE attestation request is automatically triggered as part of registration.
-
-`Status: --> INITIALIZED`
-
-**Events emitted:** [`TeeMachineRegistered`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachineregistered), [`TeeAttestationRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
-
----
-
-### Step 8: Request TEE Attestation — `FlareTeeManager.requestTeeAttestation()`
-
-**Who can call:** Anyone.
-
-**Parameters:**
-- `teeId` (address) — the TEE machine's identity.
-- `claimBackAddress` (address) — address to claim back unused instruction fees.
-
-**Requirements:**
-- The TEE machine must be registered.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
-
-**What happens:**
-
-1. The contract checks if the previous challenge is still valid (within `challengeValidityDurationSeconds`). If so, it reuses the existing challenge. Otherwise, it generates a new random challenge via the Relay contract.
-2. A [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) instruction is sent to the TEE machine.
-3. The TEE machine generates a challenge hash by ABI-encoding and hashing an `Attestation` struct containing: the challenge, public key, signing policy information, TEE state, and timestamp.
-4. The platform provider (e.g., Google Cloud) signs the challenge hash and returns the attestation response.
-5. The attestation result becomes available at the proxy.
-
-> **Note:** In practice, this step is typically combined with registration (Step 7) — calling `register()` automatically triggers the attestation request. The standalone `requestTeeAttestation()` is available for cases where attestation must be re-requested separately.
-
-**Events emitted:** [`TeeAttestationRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
-
----
-
-### Step 9: FDC2 Availability Check — `FlareTeeManager.requestAvailabilityCheckAttestation()`
-
-**Who can call:** Anyone.
-
-**Parameters:**
-- `teeId` (address) — the TEE machine to check.
-- `instructionId` (bytes32) — instruction ID from the attestation request in Step 8.
-- `testOnTeeId` (address) — identity of the FDC2 TEE that will perform the verification (zero address in production).
-- `proofOwner` (address) — address that will own the resulting proof (zero address for public proofs).
-- `claimBackAddress` (address) — address to claim back unused instruction fees.
-
-**Requirements:**
-- The challenge from Step 8 must still be fresh (within `challengeValidityDurationSeconds`).
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
-
-**What happens:**
-
-1. The contract sends a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) attestation request through the FDC2 system.
-2. The FDC2 verifier TEE challenges the target machine and verifies:
-   - The machine is reachable at the registered URL
-   - The attestation response is valid and fresh
-   - The code hash matches the registered version
-   - The platform matches
-   - The signing policies are correct
-3. The verifier produces a proof (signed by [data providers](../../Terminology/Roles.md#data-provider)) that the machine is available and correctly configured.
-4. The proof result can be retrieved from the proxy via `GET /action/result/<instructionId>`.
-
-For more details on the FDC2 attestation process, see [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md).
-
-**Events emitted:** [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) (FDC2 instruction)
-
----
-
-### Step 10: Move to Production — `FlareTeeManager.toProduction()`
-
-**Who can call:** Machine owner (when `INITIALIZED` or `PAUSED`). Anyone (when `SUSPENDED`).
-
-**Parameters:**
-- `proof` (`ITeeAvailabilityCheck.Proof`) — a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
-
-**Requirements:**
-- The machine must be in `INITIALIZED`, `PAUSED`, or `SUSPENDED` status.
-- The proof must be valid and show status `OK`.
-- The code version referenced in the proof must still be supported on the extension.
-
-**What happens:**
-
-1. The contract validates the FDC2 [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
-2. If transitioning from `INITIALIZED`, the contract records `initialSigningPolicyId` from the proof's response body.
-3. The machine status changes to `PRODUCTION`.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
-5. An `availabilityCheckValidityEndTs` deadline is set, defining how long the machine is considered available.
-6. The machine is now fully operational and can accept instructions on its extension.
-
-`Status: INITIALIZED/PAUSED/SUSPENDED --> PRODUCTION`
-
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged), [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended)
-
----
-
-*Phase 4: Ongoing Operations*
-
-### Step 11: Periodic Availability Confirmation — `FlareTeeManager.confirmAvailability()`
-
-**Who can call:** Anyone
-
-**Parameters:**
-- `proof` (struct `ITeeAvailabilityCheckProof`) — a fresh [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) attestation proof
-
-**Requirements:**
-- The machine must be in `PRODUCTION` status.
-- The proof's `responseBody.status` must be `OK`.
-- The machine's `codeHash` and `platform` must still be supported by the extension.
-- The proof must be valid and match the machine's current data.
-
-**What happens:**
-
-1. Given a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof, the contract extends the availability deadline (`availabilityCheckValidityEndTs`).
-2. The contract updates `lastSigningPolicyId` from the proof's response body.
-3. This must be called periodically before the current deadline expires.
-4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
-
-For more details on the machine lifecycle after production, see [MachineLifecycle.md](MachineLifecycle.md).
-
-**Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended)
+# MachineRegistration
+
+State machine for one TEE machine from a freshly-booted Confidential VM to on-chain `PRODUCTION` status.
+For ongoing operations on a registered machine, see [MachineLifecycle](MachineLifecycle.md); for the underlying concepts, [Concepts/Machines](../Concepts/Machines.md).
+
+## Preconditions
+
+- An [extension is configured](../FCE/Workflows/Configuration.md) on chain with the desired `(codeHash, platform)` registered (`addTeeVersion`).
+- The machine's intended owner address is on the extension's [machine-owner allowlist](../Concepts/Machines.md#owner-allowlist) and holds enough Flare to cover instruction fees.
+- A [TEE proxy](../Reference/Components/Proxy.md) is reachable from the machine.
+- The [Fdc2Hub](../FDC2/Reference/Contracts/Fdc2Hub.md) is deployed on the target network (used by the availability-check proof flow).
+
+## States
+
+- `Booted` — the Confidential VM is running; the TEE node has generated its identity key pair and `teeId` is the derived address. No proxy URL, no initial owner, no extension ID is configured locally yet.
+- `LocallyConfigured` — proxy URL, initial owner, and extension ID are set on the local node (via the Configuration API on port `5500` or environment variables) and the node is paired with its proxy.
+- `Initialized` — `register(...)` has run; `wallet.status = INITIALIZED`; the contract has auto-enqueued a [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) instruction.
+- `Attested` — the [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) FDC2 sub-workflow has produced a valid `OK` proof for the machine.
+- `Production` — `toProduction(proof)` has accepted the proof; the machine is in the active set and may serve instructions. `availabilityCheckValidityEndTs` is set.
+
+## Initial State
+
+`Booted` (immediately after VM startup).
+
+## Transitions
+
+### configureLocally: Booted → LocallyConfigured
+
+- **Action**: three TEE-node Configuration API calls (or environment variables):
+  1. `POST /proxy` with the proxy URL.
+  2. `POST /initial-owner` with the future `msg.sender` of `register()`.
+  3. `POST /extension-id` with the target `extensionId`.
+- **Caller**: machine operator (with network access to the node's port `5500`).
+- **Guards**:
+  - `initialOwner` is immutable once set.
+  - `extensionId` becomes immutable after the first successful [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
+- **Effects**:
+  - The node connects to the proxy and starts polling for actions.
+  - The proxy's `GET /info` endpoint now serves a `SignedTeeInfoResponse` carrying `(teeId, publicKey, codeHash, platform, extensionId, initialOwner, attestation, dataSignature, proxySignature)` — the inputs to `register` come from here.
+
+### register: LocallyConfigured → Initialized
+
+- **Action**: [`FlareTeeManager.register(machineData, signature, teeProxyId, url, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#registration) — payable.
+- **Caller**: the `initialOwner` configured in `configureLocally`.
+- **Guards**:
+  - `msg.sender = machineData.initialOwner` and the owner is on the [machine-owner allowlist](../Concepts/Machines.md#owner-allowlist).
+  - `signature` recovers to `address(machineData.publicKey)` (proof of possession of the TEE secret key).
+  - `(machineData.codeHash, machineData.platform)` is supported by the extension ([Configuration § addTeeVersion](../FCE/Workflows/Configuration.md#addteeversion-registered--codeadded-repeatable) must already have run).
+  - `teeProxyId ≠ 0`, `url` non-empty.
+  - `teeId` (the address of `machineData.publicKey`) is not already registered.
+  - `msg.value` covers the auto-enqueued attestation request.
+- **Effects**:
+  - Creates the machine record with `status = INITIALIZED`.
+  - Auto-emits a [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) request via [`requestTeeAttestation`](#requestteeattestation-initialized--initialized-fresh-challenge); the corresponding [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) and [`TeeAttestationRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#teeattestationrequested) events fire.
+  - Emits [`TeeMachineRegistered`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachineregistered).
+
+### requestTeeAttestation: Initialized → Initialized (fresh challenge)
+
+- **Action**: `FlareTeeManager.requestTeeAttestation(teeId, claimBackAddress)` — payable. Auto-fires inside `register`; only invoked standalone when the existing challenge has expired or needs refreshing.
+- **Caller**: anyone.
+- **Guards**: the machine is registered; `msg.value` covers the instruction fee.
+- **Effects**:
+  - Reuses the existing challenge if still within `challengeValidityDurationSeconds`; otherwise generates a fresh random challenge via the FSP `Relay` contract.
+  - Sends a [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) instruction to the machine; the TEE machine builds the [`Attestation`](../Reference/Types/Abi/TeeMachine.md#attestation) struct, hashes it, and obtains a platform-signed response (Google for Intel TDX / AMD SEV).
+  - The signed attestation lands at the proxy as a [`TeeInfoResponse`](../Reference/Types/Wire/TeeMachine.md#teeinforesponse).
+
+### attest: Initialized → Attested
+
+- **Action**: run the [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = TeeAvailabilityCheck`, sourcing the machine's attestation from the previous step. In practice this is `requestAvailabilityCheckAttestation(teeId, instructionId, …)` followed by the standard FDC2 voting and proof-retrieval flow.
+- **Caller**: anyone.
+- **Guards**: the `TEE_ATTESTATION` challenge is still fresh; FDC2 thresholds are met; the verifier confirms the machine is reachable at `url`, its `codeHash`/`platform` match the registered version, and its `state`/signing policies are correct.
+- **Effects**: a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof with `responseBody.status = OK` is available at the proxy.
+
+### toProduction: Attested → Production
+
+- **Action**: [`FlareTeeManager.toProduction(proof)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: machine owner.
+- **Guards**:
+  - `status = INITIALIZED` (also accepted from `PAUSED`/`SUSPENDED` for re-entry, see [MachineLifecycle](MachineLifecycle.md)).
+  - `proof.status = OK` and the underlying machine `codeHash`/`platform` are still supported.
+- **Effects**:
+  - First time only: records `initialSigningPolicyId` from `proof.responseBody`.
+  - Status → `PRODUCTION`; sets `availabilityCheckValidityEndTs`.
+  - Emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged) and [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended).
+
+## Invariants
+
+- The on-chain `teeId` is bit-equal to the address derived from the TEE-generated `publicKey`; the registration `signature` is the only proof that the off-chain operator controls the corresponding private key.
+- `initialOwner` is immutable from `LocallyConfigured` onward; `extensionId` is immutable from `Attested` onward.
+- Reaching `Production` requires a `TeeAvailabilityCheck` proof from the FDC2 sub-workflow; no other path exists.
+
+## Terminal States
+
+`Production`. From here [MachineLifecycle](MachineLifecycle.md) takes over — periodic [`confirmAvailability`](MachineLifecycle.md#confirmavailability-production--production-deadline-refresh) keeps the machine reward-eligible; `pause`/`pauseWithProof`/`ban` may move it through the other lifecycle states.
+
+## Notes
+
+- The Configuration API and the three setters can be replaced by the `PROXY_URL`, `INITIAL_OWNER`, and `EXTENSION_ID` environment variables at TEE-node boot.
+- `register` is `payable` because it auto-enqueues the first attestation request. Operators typically fund a margin above the minimum so the machine can also handle the FDC2 availability check immediately.
+- The `claimBackAddress` parameter on `register` reclaims the prepaid TEE fee if attestation fails before the machine reaches `Production`.

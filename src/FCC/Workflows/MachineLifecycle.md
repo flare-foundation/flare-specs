@@ -1,302 +1,121 @@
-# Post-Registration Machine Lifecycle
+# MachineLifecycle
 
-## Overview
+State machine for a registered TEE machine after [MachineRegistration](MachineRegistration.md): availability refresh, owner-initiated and automated pauses, settings updates, ownership transfer, and governance ban/unban.
 
-After a TEE machine reaches `PRODUCTION` status (see [MachineRegistration.md](MachineRegistration.md)), the machine owner can perform management operations including pausing, updating settings, transferring ownership, confirming availability, and governance-level banning.
-For canonical lifecycle semantics, see [Registration](../Concepts/Machines.md) and [State](../Concepts/Machines.md) and [Attestation](../Concepts/Machines.md).
+For canonical semantics, see [Concepts/Machines § Statuses](../Concepts/Machines.md#statuses) and [Availability Deadline](../Concepts/Machines.md#availability-deadline); contract surface in [`FlareTeeManager § Management Calls`](../Reference/Contracts/FlareTeeManager.md#management-calls).
 
-### Status Transition Diagram
+## Preconditions
 
-The following diagram shows the implemented machine statuses and the transitions between them:
+- The machine is registered on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) with a `status` in `{INITIALIZED, PRODUCTION, SUSPENDED, PAUSED, BANNED}`.
 
-```
-                          register()
-                              |
-                              v
-                        INITIALIZED
-                              |
-                    toProduction(proof)
-                              |
-                              v
-                        PRODUCTION
-                       /    |    \
-                      /     |     \
-                     v      v      v
-              SUSPENDED  PAUSED  updateTeeMachineSettings()
-                 |         |          |
-                 |         |          v
-                 |         |        PAUSED
-                 |         |
-                 +--pause()--> PAUSED
-                 |
-              PAUSED --- toProduction(proof) ---> PRODUCTION
-                 ^
-                 |
-             SUSPENDED --- pause() ---> PAUSED
+## States
 
-                PAUSED, SUSPENDED, or PRODUCTION
-                        |
-                    ban() (extension owner)
-                        |
-                        v
-                     BANNED
-                        |
-                    unban() (extension owner)
-                        |
-                        v
-                     PAUSED
-```
+The same set the contract tracks (see [Concepts/Machines § Statuses](../Concepts/Machines.md#statuses)):
 
-For full status definitions, see the [Registration specification](../Concepts/Machines.md#statuses).
+- `INITIALIZED` — registered, no availability proof yet.
+- `PRODUCTION` — operational; accepts instructions; may be earning rewards.
+- `SUSPENDED` — automatically downgraded (failed availability proof, expired deadline, or `pauseWithProof`); recoverable.
+- `PAUSED` — owner-initiated or settings-update stop; recoverable.
+- `BANNED` — extension-owner stop; only reversible via `unban` (lands the machine in `PAUSED`).
 
-## Prerequisites
+## Initial State
 
-- The TEE machine must be registered on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
-- For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [MachineRegistration.md](MachineRegistration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof and a supported code version.
-- The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
-- For proof-based operations, a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) FDC2 proof is required (see [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md)).
+The status the machine has at the moment the workflow starts — usually `PRODUCTION` after a successful [MachineRegistration](MachineRegistration.md).
 
----
+## Transitions
 
-## Steps
+### confirmAvailability: PRODUCTION → PRODUCTION (deadline refresh)
 
-### Step 1: Pause with Proof -- `FlareTeeManager.pauseWithProof()`
+- **Action**: [`FlareTeeManager.confirmAvailability(proof)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: anyone (extends the deadline on behalf of the machine; commonly automated by the operator or rewards bot).
+- **Guards**:
+  - `proof.status = OK`.
+  - The machine's current `codeHash` and `platform` remain in the extension's supported set.
+  - `proof.lastSigningPolicyId` matches or advances the machine's record.
+- **Effects**:
+  - Extends `availabilityCheckValidityEndTs`.
+  - Updates `lastSigningPolicyId` from the proof.
+  - Emits [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended).
+  - The machine remains eligible for rewards.
 
-**Who can call:** Anyone.
+### pauseByOwner: PRODUCTION | SUSPENDED → PAUSED
 
-**Parameters:**
+- **Action**: [`FlareTeeManager.pause(teeId)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: machine owner (or anyone if the machine's code version is currently disabled).
+- **Guards**: `status ∈ {PRODUCTION, SUSPENDED}`.
+- **Effects**: status → `PAUSED`; machine removed from the active set; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
 
-- `proof` (`ITeeAvailabilityCheck.Proof`) -- a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof that is either invalid or shows a non-`OK` status.
+### pauseOnDeadlineExpiry: PRODUCTION → SUSPENDED
 
-**Requirements:**
+- **Action**: [`FlareTeeManager.pause(teeId)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: anyone.
+- **Guards**: `status = PRODUCTION` and `block.timestamp > availabilityCheckValidityEndTs`.
+- **Effects**: status → `SUSPENDED`; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
 
-- The machine must be in `PRODUCTION` status.
-- The proof must be either invalid (fails verification) or have a non-`OK` response status.
-- The proof timestamp must be $\geq$ `lastStatusChangeTs`.
+### pauseWithProof: PRODUCTION → SUSPENDED
 
-**What happens:**
+- **Action**: [`FlareTeeManager.pauseWithProof(proof)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: anyone with a non-`OK` [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
+- **Guards**:
+  - `status = PRODUCTION`.
+  - `proof.timestamp ≥ lastStatusChangeTs` and is no older than $10$ minutes.
+  - Proof either fails verification or carries a non-`OK` `responseBody.status` (e.g. `DOWN`).
+- **Effects**: status → `SUSPENDED`; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
+- **Procedure**: obtain the proof by running the [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = TeeAvailabilityCheck` targeting the suspect machine.
 
-1. The caller submits a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the target machine.
-2. The contract validates the proof timestamp against the machine's last status change.
-3. The machine status changes to `SUSPENDED`.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
+### toProduction: INITIALIZED | SUSPENDED | PAUSED → PRODUCTION
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)
+- **Action**: [`FlareTeeManager.toProduction(proof)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: machine owner (from `INITIALIZED` or `PAUSED`); anyone (from `SUSPENDED`).
+- **Guards**:
+  - `proof.status = OK`.
+  - The machine's current `codeHash` and `platform` remain in the extension's supported set.
+- **Effects**: status → `PRODUCTION`; deadline reset from the proof; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
+- **Procedure**: obtain the proof via [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md) with `attestationType = TeeAvailabilityCheck`.
 
-**Procedure:**
+### updateSettings: PRODUCTION | SUSPENDED → PAUSED (settings change)
 
-To obtain a non-availability proof and pause a machine:
+- **Action**: [`FlareTeeManager.updateTeeMachineSettings(teeId, teeProxyId, url)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: machine owner.
+- **Guards**: `teeProxyId ≠ 0`; `url` non-empty; `status ∈ {PRODUCTION, SUSPENDED, INITIALIZED, PAUSED}`.
+- **Effects**:
+  - Records the new `teeProxyId` and `url`.
+  - If `status ∈ {PRODUCTION, SUSPENDED}`, transitions to `PAUSED`; emits [`TeeMachineSettingsUpdated`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinesettingsupdated) and [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
+  - Otherwise only the settings event fires.
+  - Returning to `PRODUCTION` requires a fresh `toProduction(proof)`.
 
-1. Call `FlareTeeManager.requestTeeAttestation(teeId, claimBackAddress)` to trigger a TEE attestation on the target machine.
-2. Call `TeeVerification.requestAvailabilityCheckAttestation(teeId, instructionId, testOnTeeId, proofOwner, claimBackAddress)` to request an FDC2 availability check. Parse the [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event to obtain the `instructionId`.
-3. Poll `<proxyUrl>/action/result/<instructionId>` until the proof is available.
-4. Call `FlareTeeManager.pauseWithProof(proof)` with the retrieved proof.
+### proposeNewOwner / confirmOwnership: any → any (ownership change, no status change)
 
-**What happens automatically:**
+- **Action**: [`FlareTeeManager.proposeNewOwner(teeId, newOwner)`](../Reference/Contracts/FlareTeeManager.md#management-calls) followed by `confirmOwnership(teeId)` from `newOwner`.
+- **Caller**: current owner (propose), proposed owner (confirm).
+- **Guards**: the proposed owner must be allowlisted for the extension (or `address(0)` to cancel a pending proposal); the confirmer must still be allowlisted at confirmation time.
+- **Effects**: emits [`NewOwnerProposed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed) at propose; emits [`NewOwnerConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerconfirmed) and updates `owner` at confirm. The machine status is unchanged.
 
-The FDC2 verifier TEE challenges the target machine and determines its availability status. If the machine is unreachable or fails verification checks, the proof will contain status `DOWN`, which is required for `pauseWithProof()` to succeed. See [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md) for details on the TeeAvailabilityCheck attestation process.
+### ban: PRODUCTION | SUSPENDED | PAUSED → BANNED
 
----
+- **Action**: [`FlareTeeManager.ban(teeId)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: extension owner.
+- **Effects**: status → `BANNED`; machine removed from the active set; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged). No automatic return is possible.
 
-### Step 2: Pause -- `FlareTeeManager.pause()`
+### unban: BANNED → PAUSED
 
-The `pause()` function handles two distinct paths depending on the caller and conditions:
+- **Action**: [`FlareTeeManager.unban(teeId)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
+- **Caller**: extension owner.
+- **Effects**: status → `PAUSED`; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged). Returning to `PRODUCTION` requires a fresh `toProduction(proof)`.
 
-**Parameters:**
+## Invariants
 
-- `teeId` (`address`) -- the TEE identity address of the machine to pause.
+- `lastStatusChangeTs` updates on every status transition.
+- A machine is in the active set exactly when its `status = PRODUCTION` and `block.timestamp ≤ availabilityCheckValidityEndTs`.
+- `BANNED` is reachable from `{PRODUCTION, SUSPENDED, PAUSED}` and exits only to `PAUSED` via `unban`.
+- After `updateSettings` from `PRODUCTION`/`SUSPENDED`, an availability proof is mandatory to return to `PRODUCTION`.
 
-**Path 1 — Owner or disabled code version → `PAUSED`:**
+## Terminal States
 
-**Who can call:** The machine owner, or anyone if the machine's code version has been disabled.
+None of the running states are terminal — the machine can be cycled through them indefinitely. `BANNED` is sticky (only `unban` exits), but not terminal.
 
-**Requirements:**
-- The machine must be in `PRODUCTION` or `SUSPENDED` status.
+## Notes
 
-**What happens:**
-1. The machine status changes to `PAUSED`.
-2. The machine is removed from the active pools.
-3. `lastStatusChangeTs` is updated to `block.timestamp`.
-
-**Path 2 — Expired availability deadline → `SUSPENDED`:**
-
-**Who can call:** Anyone.
-
-**Requirements:**
-- The machine must be in `PRODUCTION` status.
-- The machine's availability check deadline (`endTs`) must have expired.
-
-**What happens:**
-1. The machine status changes to `SUSPENDED`.
-2. The machine is removed from the active pools.
-3. `lastStatusChangeTs` is updated to `block.timestamp`.
-
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)
-
----
-
-### Step 3: Batch Pause Inactive Machines
-
-Batch pausing is not a single dedicated contract function.
-Anyone can batch-call `pause(teeId)` in two scenarios:
-
-- **Disabled code version:** If a machine's code version is no longer supported, anyone can call `pause()` to move it from `PRODUCTION` or `SUSPENDED` to `PAUSED`.
-- **Expired availability deadline:** If a machine's availability check deadline has expired, anyone can call `pause()` to move it from `PRODUCTION` to `SUSPENDED`.
-
-Additionally, `pauseWithProof()` can be called by anyone with a valid non-availability proof, allowing community-driven suspension of machines that have gone offline (moves `PRODUCTION` to `SUSPENDED`).
-
----
-
-### Step 4: Machine Settings Update -- `FlareTeeManager.updateTeeMachineSettings()`
-
-**Who can call:** The machine owner.
-
-**Parameters:**
-
-- `teeId` (`address`) -- the TEE identity address.
-- `teeProxyId` (`address`) -- the new proxy identity address.
-- `url` (`string`) -- the new URL of the TEE machine.
-
-**Requirements:**
-
-- The caller must be the machine owner.
-- `teeProxyId` must not be the zero address.
-- `url` must not be empty.
-
-**What happens:**
-
-1. The contract updates the machine record with the new `teeProxyId` and `url`.
-2. If the machine is in `PRODUCTION` or `SUSPENDED` status, the status changes to `PAUSED`, the machine is removed from the active pools, and a new [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof is required to return to `PRODUCTION`.
-3. If the machine is in any other status (`INITIALIZED`, `PAUSED`), only the settings are updated — no status change occurs.
-
-**Events emitted:** [`TeeMachineSettingsUpdated`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinesettingsupdated), and [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged) if the machine was in `PRODUCTION` or `SUSPENDED` status.
-
----
-
-### Step 5: Machine Ownership Transfer -- `FlareTeeManager.proposeNewOwner()` and `FlareTeeManager.confirmOwnership()`
-
-This is a two-step process to prevent accidental transfers.
-
-### Step 5a: Propose New Owner -- `proposeNewOwner()`
-
-**Who can call:** The current machine owner.
-
-**Parameters:**
-
-- `teeId` (`address`) -- the TEE identity address.
-- `newOwner` (`address`) -- the proposed new owner's Flare address.
-
-**Requirements:**
-
-- The caller must be the current owner.
-- The `newOwner` must be allowlisted for the extension via the [owner allowlist](../Concepts/Machines.md#owner-allowlist), or `address(0)` to cancel a pending proposal.
-
-**What happens:**
-
-1. The owner proposes a new owner for the TEE machine.
-2. The proposed owner address is recorded on the contract.
-3. No status change occurs.
-
-**Events emitted:** [`NewOwnerProposed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed)
-
-### Step 5b: Confirm Ownership -- `confirmOwnership()`
-
-**Who can call:** The proposed new owner.
-
-**Parameters:**
-
-- `teeId` (`address`) -- the TEE identity address.
-
-**Requirements:**
-
-- The caller must be the address that was proposed as the new owner.
-- The caller must still be allowlisted for the extension at confirmation time.
-
-**What happens:**
-
-1. The proposed new owner confirms acceptance of ownership.
-2. The machine's `owner` field is updated to the new address.
-3. The previous owner loses all management rights.
-
-**Events emitted:** [`NewOwnerConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerconfirmed)
-
-Note: A TEE id can only be transferred to a new owner through this ownership change process while registered. This prevents re-registration of the machine under other owners if it is temporarily unregistered.
-
----
-
-### Step 6: Periodic Availability Confirmation -- `FlareTeeManager.confirmAvailability()`
-
-**Who can call:** Anyone.
-
-**Contract:** [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) (the `confirmAvailability` entry point on the verification facet).
-
-**Parameters:**
-
-- `proof` (`ITeeAvailabilityCheck.Proof`) -- a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
-
-**Requirements:**
-
-- The machine must be in `PRODUCTION` status.
-- The proof's `responseBody.status` must be `OK`.
-- The machine's `codeHash` and `platform` must still be supported by the extension.
-- The proof must be valid and match the machine's current data.
-
-**What happens:**
-
-1. The caller submits a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine to [`FlareTeeManager.confirmAvailability`](../Reference/Contracts/FlareTeeManager.md#management-calls).
-2. The contract validates the proof.
-3. The `availabilityCheckValidityEndTs` deadline is extended.
-4. The contract updates `lastSigningPolicyId` from the proof's response body.
-5. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
-
-**Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Contracts/FlareTeeManagerEvents.md#availabilitycheckvalidityextended) (only if the deadline was extended).
-
-Note: when a machine enters `PRODUCTION` via `toProduction(proof)`, it is considered in production only up to the `availabilityCheckValidityEndTs` deadline. `confirmAvailability()` must be called periodically before that deadline to maintain eligibility — see [Availability Deadline](../Concepts/Machines.md#availability-deadline).
-
----
-
-### Step 7: Ban and Unban -- `FlareTeeManager.ban()` and `FlareTeeManager.unban()`
-
-### Step 7a: Ban -- `ban()`
-
-**Who can call:** Extension owner only.
-
-**Parameters:**
-
-- `teeId` (`address`) -- the TEE identity address of the machine to ban.
-
-**Requirements:**
-
-- The caller must be the owner of the extension to which the TEE is registered.
-- The machine must be in `PAUSED`, `SUSPENDED`, or `PRODUCTION` status.
-
-**What happens:**
-
-1. The extension owner calls `ban(teeId)`.
-2. The machine status changes to `BANNED`.
-3. The machine is removed from the active pools, preventing it from being selected for any tasks.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
-
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)
-
-### Step 7b: Unban -- `unban()`
-
-**Who can call:** Extension owner only.
-
-**Parameters:**
-
-- `teeId` (`address`) -- the TEE identity address of the machine to unban.
-
-**Requirements:**
-
-- The machine must be in `BANNED` status.
-- The caller must be the owner of the extension to which the TEE is registered.
-
-**What happens:**
-
-1. The extension owner calls `unban(teeId)`.
-2. The machine status changes from `BANNED` to `PAUSED`.
-3. A new [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof is required to return the machine to `PRODUCTION` via `toProduction(proof)`.
-4. `lastStatusChangeTs` is updated to `block.timestamp`.
-
-**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged)
+- The "batch pause" idiom is simply calling `pauseByOwner` or `pauseOnDeadlineExpiry` over many machines in one transaction or many; the contract has no dedicated bulk entry.
+- The `confirmAvailability` deadline refresh is what keeps a `PRODUCTION` machine reward-eligible; operators typically automate it on a schedule shorter than the deadline window.
+- For replication / migration (replacing a banned or paused machine), use [KeyRestore](KeyRestore.md) and [MachineRegistration](MachineRegistration.md) on the replacement before deleting state from the original.

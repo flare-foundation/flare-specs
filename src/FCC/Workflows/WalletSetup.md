@@ -1,305 +1,132 @@
-# Project and Wallet Lifecycle — From Creation to PRODUCTION
+# WalletSetup
 
-## Overview
+State machine for creating a project, configuring a wallet, distributing its keys across TEE machines, and enabling it for production use.
 
-This workflow describes creating a project, configuring a wallet, generating keys on TEE machines, and enabling the wallet for production use.
-For canonical ownership, wallet, and key semantics, see [Wallets](../Concepts/Wallets.md) and [Key Management](../Concepts/Keys.md).
+The flow is a composition of two nested machines: the wallet itself (`Created → Initialized → Production`, with a `Paused` side state) and a per-key sub-machine that runs the [KeyAdd](KeyAdd.md) state machine for every `keyId` the wallet wants to back.
 
-## Prerequisites
+For canonical concepts, see [Concepts/Wallets](../Concepts/Wallets.md) (data model) and [Concepts/Keys](../Concepts/Keys.md) (key custody). The contract surface lives in [`FlareTeeManager § Project Management`](../Reference/Contracts/FlareTeeManager.md#project-management) and [`§ Wallet Management`](../Reference/Contracts/FlareTeeManager.md#wallet-management).
 
-- **TEE machine(s) in PRODUCTION status** — at least one TEE machine must be registered and operational on the target extension (see [MachineRegistration.md](MachineRegistration.md))
-- **Extension registered** with supported key types and signing algorithms (see [ExtensionConfiguration.md](../FCE/Workflows/Configuration.md))
-- **Funded owner account** — the Flare address that will own the project must have sufficient funds for transaction fees
-- **Admin key pairs** — ECDSA key pairs for each admin that will be configured on the wallet
-- **(Optional) Cosigner accounts** — Flare addresses for any [cosigners](../Concepts/Instructions.md#cosigners)
+## Preconditions
 
----
+- The extension is configured ([Configuration](../FCE/Workflows/Configuration.md)) with the desired `(keyType, signingAlgo)` registered.
+- At least one TEE machine of the extension is in `PRODUCTION` ([MachineRegistration](MachineRegistration.md)).
+- The caller is allowlisted as a [project owner](../../Terminology/Roles.md#project-owner) on the extension.
+- ECDSA key pairs exist for each intended admin; cosigner Flare addresses exist for the optional cosigners.
 
-## Steps
+## States
 
-### Step 1: Create Project — `FlareTeeManager.createProject()`
+- `NoProject` — no `projectId` exists for this caller's next project.
+- `ProjectCreated` — `projectId` exists; `(extensionId, keyType, signingAlgo)` are pinned; no wallets yet.
+- `WalletCreated` — `wallet.status = CREATED`; admins/cosigners can be set and changed.
+- `WalletInitialized` — `wallet.status = INITIALIZED`; admins and cosigners are frozen; keys can be added.
+- `WalletProduction` — `wallet.status = PRODUCTION`; multisig threshold met; the wallet accepts payment instructions.
+- `WalletPaused` — `wallet.status = PAUSED`; on-chain pause that does not reach the TEE machines (those need [`setPausingAddresses`](../Reference/Contracts/FlareTeeManager.md#wallet-management) separately).
 
-**Who can call:** Must be allowlisted as a wallet [project owner](../../Terminology/Roles.md#project-owner) for the extension.
+Per-key sub-state for each requested `keyId`: see [KeyAdd § States](KeyAdd.md#states) — `NotExists → Generated → Confirmed`.
 
-**Parameters:**
-- `extensionId` (uint256) — the TEE extension ID
-- `keyType` (bytes32) — key type for all wallets in the project (e.g., "EVM", "XRP")
-- `signingAlgo` (bytes32) — signing algorithm for the key type
+## Initial State
 
-**Requirements:**
-- Caller must be allowlisted as a wallet project owner for the extension.
-- The key type must be supported on the extension.
-- The signing algorithm must be supported for the key type.
+`NoProject`.
 
-**What happens:**
+## Transitions
 
-1. A new `projectId` is generated as `keccak256(abi.encode("PROJECT", msg.sender, counter))`.
-2. The caller (`msg.sender`) is set as the project owner.
-3. The `extensionId`, `keyType`, and `signingAlgo` are stored and are *immutable* after creation.
+### createProject: NoProject → ProjectCreated
 
-**Events emitted:** [`ProjectCreated`](../Reference/Contracts/FlareTeeManagerEvents.md#projectcreated)
+- **Action**: [`FlareTeeManager.createProject(extensionId, keyType, signingAlgo)`](../Reference/Contracts/FlareTeeManager.md#project-management).
+- **Caller**: an address on the extension's [project-owner allowlist](../Concepts/Machines.md#owner-allowlist).
+- **Guards**: `keyType` and `signingAlgo` are supported on the extension.
+- **Effects**:
+  - Assigns `projectId = keccak256(abi.encode("PROJECT", msg.sender, counter))`.
+  - Sets `owner = msg.sender`; pins `(extensionId, keyType, signingAlgo)` immutably.
+  - Emits [`ProjectCreated`](../Reference/Contracts/FlareTeeManagerEvents.md#projectcreated).
+  - _Optional_: the project owner may now set a backup manager with `setBackupManager(projectId, address)` ([`BackupManagerSet`](../Reference/Contracts/FlareTeeManagerEvents.md#backupmanagerset)).
 
-> **Optional:** After creation, the project owner can set a backup manager via `setBackupManager(projectId, address)`.
+### createWallet: ProjectCreated → WalletCreated
 
----
+- **Action**: `FlareTeeManager.createWallet(projectId)`.
+- **Caller**: project owner.
+- **Effects**:
+  - Assigns `walletId = keccak256(abi.encode("WALLET", owner, counter))`.
+  - `wallet.status = CREATED`; wallet linked to `projectId`.
+  - Emits [`WalletCreated`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcreated).
 
-### Step 2: Create Wallet — `FlareTeeManager.createWallet()`
+### setAdmins: WalletCreated → WalletCreated (repeatable)
 
-**Who can call:** Project owner only
+- **Action**: `FlareTeeManager.setAdmins(walletId, adminsPublicKeys, adminsThreshold)`.
+- **Caller**: project owner.
+- **Guards**:
+  - `wallet.status = CREATED`.
+  - `|adminsPublicKeys| ≥ adminsThreshold > 0`.
+  - No duplicates; every key valid.
+- **Effects**: replaces the prior admin set; emits [`WalletAdminsSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletadminsset).
 
-**Parameters:**
-- `projectId` (bytes32) — the project ID returned from Step 1
+### confirmAdmin: WalletCreated → WalletCreated (per admin)
 
-**Requirements:**
-- Caller must be the project owner
+- **Action**: `FlareTeeManager.confirmAdmin(walletId)`.
+- **Caller**: an admin (the address derived from one of the configured `adminsPublicKeys`).
+- **Guards**: `wallet.status = CREATED`; caller's address matches a still-unconfirmed admin public key.
+- **Effects**: marks the admin as confirmed; emits [`WalletAdminConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletadminconfirmed).
 
-**What happens:**
+### setCosigners / confirmCosigner: WalletCreated → WalletCreated (optional)
 
-1. Generates a unique `walletId` (hash of "WALLET", owner address, and counter).
-2. Sets the wallet status to `CREATED`.
-3. Links the wallet to the specified project.
+- **Action**: `setCosigners(walletId, cosigners, cosignersThreshold)` (project owner) followed by `confirmCosigner(walletId)` from each cosigner address.
+- **Guards**: `wallet.status = CREATED`; if cosigners is empty, threshold must be 0; otherwise `|cosigners| ≥ cosignersThreshold > 0`, no duplicates, no zero addresses.
+- **Effects**: emits [`WalletCosignersSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcosignersset) and (per cosigner) [`WalletCosignerConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcosignerconfirmed).
 
-`Status: --> CREATED`
+### closeWalletInitialization: WalletCreated → WalletInitialized
 
-**Events emitted:** [`WalletCreated`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcreated)
+- **Action**: `FlareTeeManager.closeWalletInitialization(walletId)`.
+- **Caller**: project owner.
+- **Guards**:
+  - At least one admin set; every admin and every cosigner has confirmed.
+- **Effects**:
+  - `wallet.status = INITIALIZED`; admins, cosigners, and their thresholds are now immutable.
+  - Emits [`WalletInitialized`](../Reference/Contracts/FlareTeeManagerEvents.md#walletinitialized).
 
----
+### setMultisigThreshold: WalletInitialized → WalletInitialized (repeatable)
 
-### Step 3: Set Admins — `FlareTeeManager.setAdmins()`
+- **Action**: `FlareTeeManager.setMultisigThreshold(walletId, multisigThreshold)`.
+- **Caller**: project owner.
+- **Guards**: `wallet.status = INITIALIZED`; `multisigThreshold > 0`.
+- **Effects**: stores the new threshold; emits [`WalletMultisigThresholdSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletmultisigthresholdset). Can be changed any number of times before `enableWallet`.
 
-**Who can call:** Project owner (wallet owner)
+### addKey, confirmKey: WalletInitialized → WalletInitialized (per `keyId`)
 
-**Parameters:**
-- `walletId` (bytes32) — the wallet ID
-- `adminsPublicKeys` (PublicKey[]) — array of admin public keys, each with `{x: bytes32, y: bytes32}`
-- `adminsThreshold` (uint256) — number of admin signatures required (k-of-n)
+- Each `keyId` is governed by the [KeyAdd](KeyAdd.md) sub-state-machine; the wallet stays in `WalletInitialized` until `enableWallet`.
 
-**Requirements:**
-- Wallet must be in `CREATED` status
-- `adminsPublicKeys.length >= adminsThreshold`
-- `adminsThreshold > 0`
-- All public keys must be valid
-- No duplicate public keys
+### enableWallet: WalletInitialized | WalletPaused → WalletProduction
 
-**What happens:**
+- **Action**: `FlareTeeManager.enableWallet(walletId)`.
+- **Caller**: project owner.
+- **Guards**:
+  - `wallet.status ∈ {INITIALIZED, PAUSED}`.
+  - `multisigThreshold` has been set.
+  - At least `multisigThreshold` keys are in `Confirmed` ([KeyAdd terminal state](KeyAdd.md#terminal-states)).
+- **Effects**: `wallet.status = PRODUCTION`; emits [`WalletEnabled`](../Reference/Contracts/FlareTeeManagerEvents.md#walletenabled).
 
-1. Replaces any existing admin configuration.
-2. Stores the admin public keys and threshold.
-3. Admins are used for encrypting Shamir secret shares for key backups and for multisig confirmation of configuration changes (e.g., halting and resuming signings).
+### pauseWallet: WalletProduction → WalletPaused
 
-> **Note:** Can be called multiple times while in `CREATED` status. Each call replaces the previous admin set.
+- **Action**: `FlareTeeManager.pauseWallet(walletId)`.
+- **Caller**: project owner.
+- **Effects**: `wallet.status = PAUSED`; emits [`WalletPaused`](../Reference/Contracts/FlareTeeManagerEvents.md#walletpaused). The wallet stops accepting payment instructions on chain. TEE-side key pausing requires the separate [`setPausingAddresses` / `resume`](../Reference/Contracts/FlareTeeManager.md#pausing-keys-at-the-tee) flow.
 
-**Events emitted:** [`WalletAdminsSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletadminsset)
+## Invariants
 
----
+- `(extensionId, keyType, signingAlgo)` on a project is set once and never changes.
+- After `closeWalletInitialization`, the wallet's admin set, cosigner set, and their thresholds cannot change for the wallet's lifetime.
+- `wallet.status = PRODUCTION` implies at least `multisigThreshold` confirmed keys exist; if keys are deleted below the threshold the wallet must transition through `WalletPaused` before more changes.
+- Two-step ownership transfer ([`proposeNewOwner`](../Reference/Contracts/FlareTeeManager.md#project-management) / `confirmOwnership`) preserves all wallet state; only the project's `owner` changes.
 
-### Step 4: Confirm Admins — `FlareTeeManager.confirmAdmin()`
+## Terminal States
 
-**Who can call:** Each admin (must match one of the admin public keys set in Step 3)
+`WalletProduction` is the goal of this workflow. From here the wallet is consumed by:
 
-**Parameters:**
-- `walletId` (bytes32) — the wallet ID
-
-**Requirements:**
-- Wallet must be in `CREATED` status
-- Caller must correspond to one of the admin public keys
-
-**What happens:**
-
-1. The admin confirms their participation by sending a transaction from the address corresponding to their public key.
-2. The admin is marked as confirmed for this wallet.
-
-> **Note:** All admins must confirm before wallet initialization can be closed (Step 7).
-
-**Events emitted:** [`WalletAdminConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletadminconfirmed)
-
----
-
-### Step 5: Set Cosigners (Optional) — `FlareTeeManager.setCosigners()`
-
-**Who can call:** Project owner (wallet owner)
-
-**Parameters:**
-- `walletId` (bytes32) — the wallet ID
-- `cosigners` (address[]) — array of cosigner addresses
-- `cosignersThreshold` (uint64) — number of cosigner signatures required
-
-**Requirements:**
-- Wallet must be in `CREATED` status
-- If cosigners are provided: `cosigners.length >= cosignersThreshold` and `cosignersThreshold > 0`
-- If no cosigners desired: `cosigners.length == 0` and `cosignersThreshold == 0`
-- No duplicate addresses
-- No zero addresses
-
-**What happens:**
-
-1. Stores the cosigner addresses and threshold.
-2. Cosigners determine the (n, k) threshold signature requirements — k of n cosigner addresses must sign a payment instruction before a TEE machine executes it.
-
-> **Note:** Can be updated while in `CREATED` status, but once initialization is closed (Step 7), cosigners become **immutable**. The TEE machines store cosigner information as metadata alongside wallet keys to enforce cosigning requirements.
-
-**Events emitted:** [`WalletCosignersSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcosignersset)
-
----
-
-### Step 6: Confirm Cosigners — `FlareTeeManager.confirmCosigner()`
-
-**Who can call:** Each cosigner (must match one of the cosigner addresses set in Step 5)
-
-**Parameters:**
-- `walletId` (bytes32) — the wallet ID
-
-**Requirements:**
-- Wallet must be in `CREATED` status
-- Caller must be one of the cosigner addresses
-
-**What happens:**
-
-1. The cosigner confirms their participation by sending a transaction from their address.
-2. The cosigner is marked as confirmed for this wallet.
-
-> **Note:** All cosigners must confirm before wallet initialization can be closed (Step 7).
-
-**Events emitted:** [`WalletCosignerConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletcosignerconfirmed)
-
----
-
-### Step 7: Close Initialization — `FlareTeeManager.closeWalletInitialization()`
-
-**Who can call:** Project owner (wallet owner)
-
-**Parameters:**
-- `walletId` (bytes32) — the wallet ID
-
-**Requirements:**
-- Wallet must be in `CREATED` status
-- At least one admin must be set
-- All admins must have confirmed (Step 4)
-- All cosigners must have confirmed (Step 6), if any were set
-
-**What happens:**
-
-1. The wallet status changes from `CREATED` to `INITIALIZED`.
-2. Admin and cosigner configuration is **locked** — it cannot be changed after this point.
-3. The wallet can now proceed to key configuration.
-
-`Status: CREATED --> INITIALIZED`
-
-**Events emitted:** [`WalletInitialized`](../Reference/Contracts/FlareTeeManagerEvents.md#walletinitialized)
-
----
-
-### Step 8: Set Multisig Threshold — `FlareTeeManager.setMultisigThreshold()`
-
-**Who can call:** Project owner (wallet owner)
-
-**Parameters:**
-- `walletId` (bytes32) — the wallet ID
-- `multisigThreshold` (uint64) — number of keys required for multisig operations
-
-**Requirements:**
-- Wallet must be in `INITIALIZED` status
-- `multisigThreshold > 0`
-
-**What happens:**
-
-1. Sets the multisig threshold k for the wallet, defining how many key signatures are required to authorize a transaction on the external chain.
-2. This determines the k parameter in the (k, n) multisig configuration.
-
-> **Note:** Can be updated while in `INITIALIZED` status (before enabling the wallet).
-
-**Events emitted:** [`WalletMultisigThresholdSet`](../Reference/Contracts/FlareTeeManagerEvents.md#walletmultisigthresholdset)
-
----
-
-### Step 9: Add Key(s) — `FlareTeeManager.addKey()`
-
-**Who can call:** Project owner (wallet owner)
-
-**Parameters:**
-- `teeId` (address) — the TEE machine on which to generate the key
-- `walletId` (bytes32) — the wallet ID
-- `claimBackAddress` (address) — address to claim back unused instruction fees
-
-**Requirements:**
-- Wallet must be in `INITIALIZED` status.
-- The TEE machine must be in `PRODUCTION` status.
-- The TEE machine's extension ID must match the wallet's project extension ID.
-- The function is `payable` — sufficient value must be included to cover the instruction fee.
-
-**What happens:**
-
-1. Generates a new `keyId` by incrementing the wallet's key counter.
-2. Sends a [`KEY_GENERATE`](../Reference/Operations/F_WALLET.md#key_generate) instruction to the specified TEE machine.
-3. The instruction includes the wallet configuration (admins, cosigners), key type, and signing algorithm from the project.
-4. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
-5. This step can be repeated multiple times to add keys on different TEE machines (each gets a unique `keyId`).
-
-**Events emitted:** [`WalletKeyAdded`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyadded), [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent)
-
----
-
-### Step 10: Confirm Key — `FlareTeeManager.confirmKey()`
-
-**Who can call:** Project owner only (for new keys). Project owner or backup manager (for restored keys).
-
-**Parameters:**
-- `proof` (`KeyExistence`) — key existence proof from the TEE machine.
-- `teeSignature` (`Signature`) — signature from the TEE machine over the proof.
-
-**Requirements:**
-- Wallet must be in `INITIALIZED` status (for new keys).
-- TEE machine must be in `PRODUCTION` status.
-- Key ID must exist (created by `addKey` in Step 9).
-- The proof must be consistent with the on-chain wallet and project configuration.
-- The TEE signature must be valid.
-- For restored keys: the `teeId` must not already be in the key's TEE list.
-
-**What happens:**
-
-1. **First confirmation (new key):**
-   - Stores the public key on-chain.
-   - Adds the `keyId` to the wallet's key list.
-   - Adds the `teeId` to the key's TEE list.
-2. **Subsequent confirmations (restore on another TEE):**
-   - Verifies the public key matches the previously stored value.
-   - Adds the `teeId` to the existing key's TEE list.
-
-**Events emitted:** [`WalletKeyConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyconfirmed)
-
----
-
-### Step 11: Enable Wallet — `FlareTeeManager.enableWallet()`
-
-**Who can call:** Project owner (wallet owner)
-
-**Parameters:**
-- `walletId` (bytes32) — the wallet ID
-
-**Requirements:**
-- Wallet must be in `INITIALIZED` or `PAUSED` status
-- Multisig threshold must be set (Step 8)
-- Number of confirmed keys >= multisig threshold
-
-**What happens:**
-
-1. The wallet status changes to `PRODUCTION`.
-2. The wallet is now fully operational and can accept payment instructions.
-
-`Status: INITIALIZED --> PRODUCTION` (or `PAUSED --> PRODUCTION`)
-
-**Events emitted:** [`WalletEnabled`](../Reference/Contracts/FlareTeeManagerEvents.md#walletenabled)
-
----
+- [XrplMultisigConfiguration](../PMW/Workflows/XrplMultisigConfiguration.md), [XrpPayment](../PMW/Workflows/XrpPayment.md) for PMW use.
+- [VrfProof](VrfProof.md) for VRF use.
+- [KeyAdd](KeyAdd.md) / [KeyDelete](KeyDelete.md) / [KeyRestore](KeyRestore.md) for ongoing key-set management.
 
 ## Notes
 
-- **Architecture overview:** For the architectural overview of projects, wallets, and key data structures, see the [Wallets specification](../Concepts/Wallets.md).
-- **Project ownership transfer — `proposeNewOwner()` + `confirmOwnership()`:** Project ownership transfer is a two-step process to ensure security and proper authorization.
-  - *Step A — Propose new owner via `FlareTeeManager.proposeNewOwner()`:* Current project owner calls with `projectId` and `newOwner` address (can be `address(0)` to cancel). If `newOwner` is not `address(0)`, the new owner must be allowlisted. Stores the proposed new owner address but does not transfer ownership yet. Emits [`NewOwnerProposed`](../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed).
-  - *Step B — Confirm ownership via `FlareTeeManager.confirmOwnership()`:* Proposed new owner calls with `projectId`. Caller must be allowlisted. Transfers project ownership, clears the proposal. Emits [`OwnershipConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#ownershipconfirmed).
-- **Wallet pausing — `pauseWallet()` and `enableWallet()`:** `FlareTeeManager.pauseWallet(walletId)` can be called by the project owner only. Changes wallet status to `PAUSED`. Emits [`WalletPaused`](../Reference/Contracts/FlareTeeManagerEvents.md#walletpaused). To resume, call `enableWallet(walletId)` as described in Step 11 (transitions from `PAUSED` back to `PRODUCTION`).
-- **Setting default wallet — `FlareTeeManager.setDefaultWallet()`:** Project owner calls with `projectId` and `walletId` to set the default wallet for the project, which will be used for all signings (payments).
-- **Setting backup manager — `FlareTeeManager.setBackupManager()`:** Project owner calls with `projectId` and backup manager `address`. Sets the backup manager address that can trigger key restores for backed-up keys.
-- **Key deletion — `FlareTeeManager.deleteKey()`:** Project owner can call at any wallet status (but the TEE must be in `PRODUCTION`). Removes the `teeId` from the key's TEE list and sends a [`KEY_DELETE`](../Reference/Operations/F_WALLET.md#key_delete) instruction to the TEE machine. Does not remove the key entirely, only removes it from a specific TEE. Emits [`WalletKeyDeleted`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeydeleted).
-- **Setting pausing addresses — `FlareTeeManager.setPausingAddresses()`:** Project owner calls with `walletId` and an array of `pausingAddresses`. Issues a `SET_PAUSING_ADDRESSES` instruction to all active TEE machines with keys belonging to the wallet.
+- The project owner can transfer ownership via `proposeNewOwner` / `confirmOwnership` on the project at any time; the new owner inherits all wallets.
+- `setDefaultWallet(projectId, walletId)` (project owner) marks one wallet as the default sink for project-scoped payments.
+- TEE-side key pausing (`F_WALLET SET_PAUSING_ADDRESSES`, `F_WALLET RESUME`) is independent of on-chain `pauseWallet`; see [Wallets § Pausing Keys at the TEE](../Concepts/Wallets.md#pausing-keys-at-the-tee).
