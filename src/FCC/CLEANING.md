@@ -32,7 +32,8 @@ Verify factual claims against the latest code in:
 
 Reads can hit the working tree directly, or `git show origin/<ref>:<path>` for an origin-pinned read.
 
-Commit hashes captured on 2026-05-21 (refresh by re-fetching each remote and re-running the head log):
+Commit hashes captured on 2026-05-21 (refresh by re-fetching each remote and re-running the head log).
+Refresh this table at the start of any new Phase 1 verification round if the snapshot is more than a few weeks stale; the verifications below reference specific commit hashes and will need re-checking against the new HEAD if behaviour has changed:
 
 | Repo | Read ref | HEAD commit | Date |
 |------|----------|-------------|------|
@@ -240,6 +241,11 @@ The same refactor likely applies to the inbound FCC mentions of "relay format" i
 
 `SignatureType0` is deprecated and should not be mentioned anywhere in the repo; this includes the `Signing.md` bullet referenced above. See the matching FSP-cleaning TODO for the full removal scope.
 
+#### Extract reference content from `FCE/Concepts.md` into `Reference/Contracts/FlareTeeManager.md`
+
+Same treatment that was applied to `Concepts/{Machines,Wallets,Keys}.md`: pull the management-call list (the `register`, `setExtensionContracts`, `addTeeVersion`, `disableCodeHashPlatform`, `addSupportedKeyTypes`, `removeSupportedKeyTypes`, `proposeNewOwner`, `confirmOwnership`, `sendInstructions`, `sendSystemInstructions`, `addSystemSupportedPlatforms`, `addSystemSupportedKeyTypesAndSigningAlgos`, `registerSystemInstructionsSenders`, `unregisterSystemInstructionsSenders` entries) into a new "Extension Management" section under `Reference/Contracts/FlareTeeManager.md`.
+Leave `FCE/Concepts.md` with the concept-level prose (extension data model, system-vs-custom distinction, lifecycle narrative, instructions-senders concept) and cross-links to the new Reference section.
+
 #### Sweep `Concepts.md` files for content fit
 
 Concepts pages now exist at `FCE/Concepts.md`, `PMW/Concepts.md`, `FDC2/Concepts.md`, and (outside FCC) `Terminology/Concepts.md`.
@@ -308,6 +314,12 @@ The extension API spec should describe both ways an extension can deliver an [`A
 
 Surface this in `FCE/README.md` or `FCE/Concepts.md` when those are cleaned.
 
+#### Create `Concepts/Policy.md`
+
+`Concepts/Policy.md` is listed as a planned page in `Concepts/README.md` but does not exist yet. The signing-policy lifecycle from the FCC side currently lives scattered across `Concepts/Machines.md § Signing Policy`, `Reference/Components/Proxy.md § Signing Policy`, and `Reference/Operations/F_POLICY.md`.
+A dedicated `Concepts/Policy.md` should pull the FCC view together: how a policy is installed at first connection, how it is rotated each reward epoch, how it gates voting, how machine attestations carry the active policy, and how backups bind to it.
+The canonical signing-policy spec stays at [`FSP/SigningPolicy.md`](../FSP/SigningPolicy.md); the new page defers to it for derivation rules and only documents what is FCC-specific.
+
 #### Document proxy result-storage override semantics in `TeeProxy.md`
 
 `tee-proxy/internal/service/result/storage.go:54-63` enforces the following rule for the [action result store](Reference/Components/Proxy.md#redis-backed-stores), keyed by `(actionId, submissionTag)`:
@@ -316,6 +328,25 @@ Surface this in `FCE/README.md` or `FCE/Concepts.md` when those are cleaned.
 - A stored transient result (`status` `≥ 2`) can be overwritten only by a final result, or by a transient result with a strictly greater `status`. A write with a smaller-or-equal transient status is rejected.
 
 Effectively, transient statuses are monotonically increasing (e.g. `2` → `3` is allowed; `3` → `2` is not) and final statuses are write-once. Document this in `Reference/Components/Proxy.md` "Action Result Handling" when that file is cleaned.
+
+## Forward-looking
+
+These items are not yet on the critical path but anchor the longer-term spec direction; record them so they are not lost.
+
+### Quint stub for one Workflow
+
+`Workflows/Conventions.md` prescribes the state-machine shape so that workflows can later be translated mechanically into a formal modelling language (Quint or TLA+). Translate one of the smaller workflows (`KeyAdd.md` is the obvious first candidate) into a Quint module and check it in alongside the markdown page.
+The exercise will:
+
+- Validate that the prescribed shape (preconditions, states, transitions with guards/effects, invariants, terminal states) is in fact mechanically translatable.
+- Surface gaps in the prose where a transition's guards or effects are under-specified.
+- Set a template the remaining workflows can follow.
+
+Once a worked example exists, decide whether to translate the rest workflow-by-workflow or to defer until model-checking actually needs them.
+
+### Drive-by Phase 1 verification of `Reference/Operations/F_*.md`
+
+The `F_*` operation pages were assembled and verified in the consolidation pass but no single sweep has cross-checked every assertion against `tee-node` HEAD. Do one targeted Phase 1 pass per file (`F_GET.md`, `F_POLICY.md`, `F_REG.md`, `F_WALLET.md`) and reconcile against `tee-node/internal/processors/`. Pair with a refresh of the commit-hash table.
 
 ## Outside FCC/
 
