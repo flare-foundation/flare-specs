@@ -32,12 +32,12 @@ For `lowestUsedTimestamp`, `blockTimestamp` is used.
 ## Verification
 
 The transaction with `transactionId` is fetched from the API of the source blockchain node or relevant indexer.
-If the transaction cannot be fetched or the transaction is in a block that does not have a sufficient [number of confirmations](./Reference.md#confirmation-number), the attestation request is rejected.
+If the transaction cannot be fetched or the transaction is in a block that does not have a sufficient [number of confirmations](Reference.md#confirmation-number), the attestation request is rejected.
 Once the transaction is received, the response fields are extracted if the transaction is balance decreasing for the indicated address.
 
 ### UTXO (Bitcoin and Dogecoin)
 
-- `sourceAddressIndicator` is the [standard address hash](./Reference.md#standard-address-hash) of the address whose balance has been decreased.
+- `sourceAddressIndicator` is the [standard address hash](Reference.md#standard-address-hash) of the address whose balance has been decreased.
   If the address indicated by `sourceAddressIndicator` is not among the signers of the transaction and the balance of the address was not lowered in the transaction, the attestation request is rejected.
 
 - `spentAmount` is the sum of values of all inputs with `sourceAddress` minus the sum of all outputs with `sourceAddress`.
@@ -48,7 +48,7 @@ Once the transaction is received, the response fields are extracted if the trans
 
 ### XRPL
 
-- `sourceAddressIndicator` is the [standard address hash](./Reference.md#standard-address-hash) of the address whose balance has been decreased.
+- `sourceAddressIndicator` is the [standard address hash](Reference.md#standard-address-hash) of the address whose balance has been decreased.
   If the address indicated by `sourceAddressIndicator` is not the account that initiated the transaction and the balance of the address was not lowered in the transaction, the attestation request is rejected.
 - `spentAmount` is the difference between the balance of the indicated address before and after the transaction.
   Can be negative.

@@ -12,7 +12,7 @@ In this documentation, "address" refers to the identifier itself, while "account
 
 A *private key* is a 256-bit secret scalar on the secp256k1 curve.
 The corresponding *public key* is the elliptic curve point obtained by multiplying the generator point by the private key.
-The on-chain representation of a public key is the [`PublicKey`](../FCC/Types/Abi/Common.md) struct containing the curve coordinates $(x, y)$.
+The on-chain representation of a public key is the [`PublicKey`](../FCC/Reference/Types/Abi/Common.md) struct containing the curve coordinates $(x, y)$.
 
 A *signature* is produced by signing a message hash with a private key using ECDSA.
 The [signing procedure](../Utilities/Signing.md) used across the Flare protocols prepends the Ethereum signed message prefix before hashing.

@@ -23,7 +23,7 @@ First, the user would submit a request on Flare to the contract for access to th
 The smart contract would then issue a requirement that the user pays $1$ BTC to a specified Bitcoin address.
 The user would carry out this payment on Bitcoin, producing a transaction with transaction ID `XYZ`.
 
-With the transaction made, the user would then submit a [request](./MakingRequest.md) to the FDC to attest to the transaction by submitting an attestation request of type [Payment](./AttestationTypes/Payment.md) to the FDCHub smart contract.
+With the transaction made, the user would then submit a [request](MakingRequest.md) to the FDC to attest to the transaction by submitting an attestation request of type [Payment](AttestationTypes/Payment.md) to the FDCHub smart contract.
 The request is batched together with other requests made at a similar time, and these requests are processed by Flare's data providers.
 Assuming that the request is confirmed, the hash of the attestation data is included in the next Merkle tree published by the FDC, whose root is stored on the Relay contract.
 

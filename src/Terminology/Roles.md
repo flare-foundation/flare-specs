@@ -6,7 +6,7 @@ This page defines the roles and actors that appear across the Flare protocol spe
 
 A *data provider* (also referred to as a *voter*, *validator*, *infrastructure provider*, or *entity*) is an off-chain participant registered as an [entity](../FSP/Voters.md#entity-definition) on Flare.
 Data providers accrue vote power from the Flare community via delegations of wrapped FLR tokens (WFLR) or stakes.
-They participate in all Flare protocols: operating a Flare validator node, submitting and finalizing voting round data in the [Flare Systems Protocol](../FSP/Introduction.md), providing price feeds in [FTSO](../FTSO/Introduction.md), confirming attestations in [FDC](../FDC/Introduction.md), and running [relay clients](../FCC/Components/RelayClient.md) to relay instructions to TEE machines in [FCC](../FCC/README.md).
+They participate in all Flare protocols: operating a Flare validator node, submitting and finalizing voting round data in the [Flare Systems Protocol](../FSP/Introduction.md), providing price feeds in [FTSO](../FTSO/Introduction.md), confirming attestations in [FDC](../FDC/Introduction.md), and running [relay clients](../FCC/Reference/Components/RelayClient.md) to relay instructions to TEE machines in [FCC](../FCC/README.md).
 Data providers must complete [voter registration](../FSP/Voters.md#voter-registration) every reward epoch.
 
 Each protocol rewards data providers for correct participation and penalizes non-compliance:
@@ -22,7 +22,7 @@ Delegators share in the [rewards](../FSP/Rewarding.md) earned by the data provid
 
 ## TEE Operator
 
-A *TEE operator* is the party that deploys and maintains one or more TEE machines and their associated [TEE proxies](../FCC/Components/TeeProxy.md).
+A *TEE operator* is the party that deploys and maintains one or more TEE machines and their associated [TEE proxies](../FCC/Reference/Components/Proxy.md).
 A TEE operator need not be a data provider.
 TEE operators register their machines on-chain through the [registration](../FCC/TeeManagement/Registration.md) process; registration requires being on the extension's [owner allowlist](../FCC/TeeManagement/Registration.md#owner-allowlist).
 
@@ -39,7 +39,7 @@ Operations requiring admin approval use a $k$-of-$n$ threshold over the admin pu
 
 ## Governance
 
-*Governance* is the single Flare address authorized to perform privileged operations on Flare's smart contracts — for example, registering [system instructions senders](../FCC/Operations/Instructions.md#sending-instructions), setting the [signing policy threshold](../FSP/SigningPolicy.md), and adding [system-supported key types](../FCC/Extensions/Concepts.md#system-administration-functions-governance-only).
+*Governance* is the single Flare address authorized to perform privileged operations on Flare's smart contracts — for example, registering [system instructions senders](../FCC/Operations/Instructions.md#sending-instructions), setting the [signing policy threshold](../FSP/SigningPolicy.md), and adding [system-supported key types](../FCC/FCE/Concepts.md#system-administration-functions-governance-only).
 The address is backed by a multisig (or a single key on test networks) and can only be changed by a validator fork.
 
 It is distinct from the per-extension [governance signers](#governance-signer) that approve TEE upgrades.
@@ -47,8 +47,8 @@ It is distinct from the per-extension [governance signers](#governance-signer) t
 ## Governance Signer
 
 A *governance signer* is an address registered on-chain as part of a per-extension governance set.
-The extension owner configures the set of signers and a threshold by calling [`setNewTeeGovernance`](../FCC/Types/Abi/Events/TeeGovernance.md#newgovernanceset).
-Governance signers approve TEE upgrades by calling `signTeeUpgrade`; the contract validates each signature against the governance set and threshold before marking the [upgrade as signed](../FCC/Types/Abi/Events/TeeUpgradeManager.md#teeupgradesigned).
+The extension owner configures the set of signers and a threshold by calling [`setNewTeeGovernance`](../FCC/Reference/Types/Abi/Events/TeeGovernance.md#newgovernanceset).
+Governance signers approve TEE upgrades by calling `signTeeUpgrade`; the contract validates each signature against the governance set and threshold before marking the [upgrade as signed](../FCC/Reference/Types/Abi/Events/TeeUpgradeManager.md#teeupgradesigned).
 
 ## User
 

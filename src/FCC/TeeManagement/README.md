@@ -11,4 +11,4 @@ On-chain TEE management: the behavior of the [`FlareTeeManager`](FlareTeeManager
 | [Keys](Keys.md) | Wallet key custody, backups, and restoration. |
 | [Wallets](Wallets.md) | Projects, wallets, multisig thresholds, and lifecycle. |
 
-For the off-chain TEE machine and proxy that this contract orchestrates, see [Components](../Components/README.md).
+For the off-chain TEE machine and proxy that this contract orchestrates, see [Components](../Reference/Components/README.md).

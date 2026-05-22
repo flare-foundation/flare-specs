@@ -1,17 +1,17 @@
 # Instructions
 
-An _instruction_ is an off-chain payload submitted to a [TEE proxy](../Components/TeeProxy.md), directing a [TEE machine](../Components/TeeMachine.md) to execute an operation.
+An _instruction_ is an off-chain payload submitted to a [TEE proxy](../Reference/Components/Proxy.md), directing a [TEE machine](../Reference/Components/Machine.md) to execute an operation.
 
-The [instruction](../Types/Wire/Instruction.md#instruction) has two fields:
+The [instruction](../Reference/Types/Wire/Instruction.md#instruction) has two fields:
 
-1. `data`: The [`Data`](../Types/Wire/Instruction.md#data) payload (every field of [`TeeInstruction`](../Types/Abi/Instruction.md#teeinstruction) plus `additionalVariableMessage`).
+1. `data`: The [`Data`](../Reference/Types/Wire/Instruction.md#data) payload (every field of [`TeeInstruction`](../Reference/Types/Abi/Instruction.md#teeinstruction) plus `additionalVariableMessage`).
 2. `signature`: A [signature](../../Utilities/Signing.md) over [`hashForSigning`](#hashes), produced by the relaying [signer](#signers).
 
 The signature covers `teeId`, so a compromised proxy cannot replay an instruction to a different machine.
 
 ## Signers
 
-A _signer_ is a [data provider](../../Terminology/Roles.md#data-provider) or [cosigner](#cosigners) that signs an instruction over [`hashForSigning`](#hashes) and submits it to a [TEE proxy](../Components/TeeProxy.md).
+A _signer_ is a [data provider](../../Terminology/Roles.md#data-provider) or [cosigner](#cosigners) that signs an instruction over [`hashForSigning`](#hashes) and submits it to a [TEE proxy](../Reference/Components/Proxy.md).
 
 - Data providers come from the [signing policy](../../FSP/SigningPolicy.md) for the instruction's reward epoch.
 - Cosigners are attached per-instruction.
@@ -20,15 +20,15 @@ A _signer_ is a [data provider](../../Terminology/Roles.md#data-provider) or [co
 ### Cosigners
 
 A _cosigner_ is any Flare [address](../../Terminology/Concepts.md#addresses-accounts-and-keys) attached to an instruction to enforce a multisig requirement on top of data provider voting.
-Cosigners run their [relay client](../Components/RelayClient.md) in cosigner mode and, unlike data providers, need not participate in other Flare protocols.
+Cosigners run their [relay client](../Reference/Components/RelayClient.md) in cosigner mode and, unlike data providers, need not participate in other Flare protocols.
 
 The event's `cosigners` field lists the eligible addresses; `cosignersThreshold` is the minimum number of cosigner signatures required to pass.
-A weighted majority of malicious data providers could strip these fields and bypass proxy-side enforcement, so extensions that rely on cosigners must re-enforce them at the TEE-machine layer (see [Cosigner Enforcement](../Components/TeeMachine.md#cosigner-enforcement)).
+A weighted majority of malicious data providers could strip these fields and bypass proxy-side enforcement, so extensions that rely on cosigners must re-enforce them at the TEE-machine layer (see [Cosigner Enforcement](../Reference/Components/Machine.md#cosigner-enforcement)).
 
 ## Sending Instructions
 
-1. A [user](../../Terminology/Roles.md#user) issues an instruction by calling an [_instructions sender_](../Extensions/Concepts.md#extension-data-structure) contract.
-2. The instructions sender calls the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md#sending-instructions), which emits a [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event listing one or more destination TEE machines.
+1. A [user](../../Terminology/Roles.md#user) issues an instruction by calling an [_instructions sender_](../FCE/Concepts.md#extension-data-structure) contract.
+2. The instructions sender calls the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md#sending-instructions), which emits a [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event listing one or more destination TEE machines.
 3. Signers observe the event; each runs a relay client that submits a separately signed instruction to every destination machine's TEE proxy.
 4. Once [voting](Voting.md#pass-conditions) collects enough signed copies, the proxy bundles the instruction with its signatures into an [action](Actions.md) for the destination TEE machine.
 
@@ -36,10 +36,10 @@ A weighted majority of malicious data providers could strip these fields and byp
 
 There are two kinds:
 
-- A _system instructions sender_: may send any op-type to any [extension](../Extensions/README.md)'s TEE machines.
-- An _extension's instructions sender_: may only send non-[system op-types](../Extensions/Concepts.md#system-vs-custom-extensions) (`F_` prefix forbidden) and only to that extension's own TEE machines.
+- A _system instructions sender_: may send any op-type to any [extension](../FCE/README.md)'s TEE machines.
+- An _extension's instructions sender_: may only send non-[system op-types](../FCE/Concepts.md#system-vs-custom-extensions) (`F_` prefix forbidden) and only to that extension's own TEE machines.
 
-The [system extension](../Extensions/SystemExtension.md) (`extensionId == 0`) cannot have an instructions sender of its own; its TEE machines are reachable only via a system instructions sender.
+The [system extension](../FCE/System.md) (`extensionId == 0`) cannot have an instructions sender of its own; its TEE machines are reachable only via a system instructions sender.
 
 ## Augmentation
 
@@ -50,8 +50,8 @@ The instruction carries two fields the signer may populate per command:
 
 Two system commands populate them via a per-command procedure run by the relay client:
 
-- [`F_FDC2 PROVE`](../Extensions/FDC2/Commands/Prove.md#augmentation-procedure)
-- [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](System/F_WALLET.md#augmentation)
+- [`F_FDC2 PROVE`](../FDC2/Reference/Operations/Prove.md#augmentation-procedure)
+- [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#augmentation)
 
 All other instructions — including every custom extension instruction — leave both fields empty.
 

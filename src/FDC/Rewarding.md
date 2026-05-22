@@ -22,7 +22,7 @@ These events are summarized below.
 
 ### Fee Based Rewards
 
-The fee reward $R_{\mathrm{fee}}(j)$ is determined on a per-round basis, and is the sum of the fees of all _confirmed_ attestation requests in voting round $j$, based on the consensus bit vector and corresponding Merkle root described in [BitVote](./BitVote.md).
+The fee reward $R_{\mathrm{fee}}(j)$ is determined on a per-round basis, and is the sum of the fees of all _confirmed_ attestation requests in voting round $j$, based on the consensus bit vector and corresponding Merkle root described in [BitVote](BitVote.md).
 Fees for requests in round $j$ that were not confirmed are burnt.
 
 ### Inflationary Rewards

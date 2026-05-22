@@ -7,7 +7,7 @@ For canonical registration semantics, machine state, and ownership rules, see [R
 
 ## Prerequisites
 
-- **Extension registered** on-chain with a valid extension ID (see [ExtensionConfiguration.md](ExtensionConfiguration.md))
+- **Extension registered** on-chain with a valid extension ID (see [ExtensionConfiguration.md](../FCE/Workflows/Configuration.md))
 - **TEE node running** inside a Google Cloud Confidential VM (MODE=0 for production, MODE=1 for local development)
 - **TEE proxy running** and reachable by the TEE node (requires `PRIVATE_KEY` env var)
 - **Smart contracts deployed** — the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) diamond and `Fdc2Hub` must be available on the target network
@@ -104,12 +104,12 @@ curl --location '<TEE_MACHINE_IP>:5500/initial-owner' \
 
 **Requirements:**
 - Must be called before on-chain registration
-- Once the machine is registered and verified via a [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof, the extension ID becomes **fixed and cannot be changed**
+- Once the machine is registered and verified via a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof, the extension ID becomes **fixed and cannot be changed**
 
 **What happens:**
 
 1. The owner sends a POST request to `<TEE_MACHINE_IP>:5500/extension-id` with the extension ID.
-2. The TEE node stores the extension ID. The machine will be registered to this specific [extension](../Extensions/README.md), not the network as a whole.
+2. The TEE node stores the extension ID. The machine will be registered to this specific [extension](../FCE/README.md), not the network as a whole.
 
 **Example:**
 
@@ -181,7 +181,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 2. The registry stores the code version, making it a recognized version for the extension.
 3. TEE machines running this code version can now be registered.
 
-**Events emitted:** [`TeeVersionAdded`](../Types/Abi/Events/TeeExtensionRegistry.md#teeversionadded)
+**Events emitted:** [`TeeVersionAdded`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeversionadded)
 
 ---
 
@@ -217,7 +217,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 `Status: --> INITIALIZED`
 
-**Events emitted:** [`TeeMachineRegistered`](../Types/Abi/Events/TeeMachineRegistry.md#teemachineregistered), [`TeeAttestationRequested`](../Types/Abi/Events/TeeVerification.md#teeattestationrequested), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`TeeMachineRegistered`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachineregistered), [`TeeAttestationRequested`](../Reference/Types/Abi/Events/TeeVerification.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 ---
 
@@ -236,14 +236,14 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 **What happens:**
 
 1. The contract checks if the previous challenge is still valid (within `challengeValidityDurationSeconds`). If so, it reuses the existing challenge. Otherwise, it generates a new random challenge via the Relay contract.
-2. A [`TEE_ATTESTATION`](../Operations/System/F_REG.md#tee_attestation) instruction is sent to the TEE machine.
+2. A [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) instruction is sent to the TEE machine.
 3. The TEE machine generates a challenge hash by ABI-encoding and hashing an `Attestation` struct containing: the challenge, public key, signing policy information, TEE state, and timestamp.
 4. The platform provider (e.g., Google Cloud) signs the challenge hash and returns the attestation response.
 5. The attestation result becomes available at the proxy.
 
 > **Note:** In practice, this step is typically combined with registration (Step 7) — calling `register()` automatically triggers the attestation request. The standalone `requestTeeAttestation()` is available for cases where attestation must be re-requested separately.
 
-**Events emitted:** [`TeeAttestationRequested`](../Types/Abi/Events/TeeVerification.md#teeattestationrequested), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`TeeAttestationRequested`](../Reference/Types/Abi/Events/TeeVerification.md#teeattestationrequested), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 ---
 
@@ -264,7 +264,7 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 
 **What happens:**
 
-1. The contract sends a [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) attestation request through the FDC2 system.
+1. The contract sends a [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) attestation request through the FDC2 system.
 2. The FDC2 verifier TEE challenges the target machine and verifies:
    - The machine is reachable at the registered URL
    - The attestation response is valid and fresh
@@ -274,9 +274,9 @@ curl --location '<TEE_MACHINE_IP>:5500/extension-id' \
 3. The verifier produces a proof (signed by [data providers](../../Terminology/Roles.md#data-provider)) that the machine is available and correctly configured.
 4. The proof result can be retrieved from the proxy via `GET /action/result/<instructionId>`.
 
-For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2Attestation.md).
+For more details on the FDC2 attestation process, see [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md).
 
-**Events emitted:** [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) (FDC2 instruction)
+**Events emitted:** [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) (FDC2 instruction)
 
 ---
 
@@ -285,7 +285,7 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2A
 **Who can call:** Machine owner (when `INITIALIZED` or `PAUSED`). Anyone (when `SUSPENDED`).
 
 **Parameters:**
-- `proof` (`ITeeAvailabilityCheck.Proof`) — a valid [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
+- `proof` (`ITeeAvailabilityCheck.Proof`) — a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
 
 **Requirements:**
 - The machine must be in `INITIALIZED`, `PAUSED`, or `SUSPENDED` status.
@@ -294,7 +294,7 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2A
 
 **What happens:**
 
-1. The contract validates the FDC2 [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof.
+1. The contract validates the FDC2 [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
 2. If transitioning from `INITIALIZED`, the contract records `initialSigningPolicyId` from the proof's response body.
 3. The machine status changes to `PRODUCTION`.
 4. `lastStatusChangeTs` is updated to `block.timestamp`.
@@ -303,7 +303,7 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2A
 
 `Status: INITIALIZED/PAUSED/SUSPENDED --> PRODUCTION`
 
-**Events emitted:** [`TeeMachineStatusChanged`](../Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged), [`AvailabilityCheckValidityExtended`](../Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended)
+**Events emitted:** [`TeeMachineStatusChanged`](../Reference/Types/Abi/Events/TeeMachineRegistry.md#teemachinestatuschanged), [`AvailabilityCheckValidityExtended`](../Reference/Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended)
 
 ---
 
@@ -314,7 +314,7 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2A
 **Who can call:** Anyone
 
 **Parameters:**
-- `proof` (struct `ITeeAvailabilityCheckProof`) — a fresh [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) attestation proof
+- `proof` (struct `ITeeAvailabilityCheckProof`) — a fresh [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) attestation proof
 
 **Requirements:**
 - The machine must be in `PRODUCTION` status.
@@ -324,11 +324,11 @@ For more details on the FDC2 attestation process, see [Fdc2Attestation.md](Fdc2A
 
 **What happens:**
 
-1. Given a valid [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof, the contract extends the availability deadline (`availabilityCheckValidityEndTs`).
+1. Given a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof, the contract extends the availability deadline (`availabilityCheckValidityEndTs`).
 2. The contract updates `lastSigningPolicyId` from the proof's response body.
 3. This must be called periodically before the current deadline expires.
 4. If the deadline passes without confirmation, the machine becomes ineligible for reward shares.
 
 For more details on the machine lifecycle after production, see [MachineLifecycle.md](MachineLifecycle.md).
 
-**Events emitted:** [`AvailabilityCheckValidityExtended`](../Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended)
+**Events emitted:** [`AvailabilityCheckValidityExtended`](../Reference/Types/Abi/Events/TeeVerification.md#availabilitycheckvalidityextended)

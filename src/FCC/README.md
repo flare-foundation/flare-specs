@@ -18,7 +18,7 @@ Some TEE deployments also allow [_direct actions_](Operations/Actions.md#direct-
 FCC manages the outsourcing of operations through a system of _extensions_.
 An extension consists of smart contracts on Flare and one or more registered TEE machines running the extension's code.
 The contracts define the instructions users can submit; the TEE machines execute them in a secure environment.
-For example, the [System Extension](Extensions/SystemExtension.md) hosts the PMW infrastructure, allowing users to submit transaction instructions for their external wallets on Flare to be executed by the extension's TEE machines.
+For example, the [System Extension](FCE/System.md) hosts the PMW infrastructure, allowing users to submit transaction instructions for their external wallets on Flare to be executed by the extension's TEE machines.
 
 Developers can create their own FCC extensions, defining custom smart contracts and TEE machine software.
 Each extension is identified by a unique extension ID, and its TEE machines are isolated from those of other extensions.
@@ -28,9 +28,9 @@ Each extension is identified by a unique extension ID, and its TEE machines are 
 | Section | Description |
 |---------|-------------|
 | [Architecture](Architecture.md) | System components, deployment topology, and trust model. |
-| [Operations](Operations/README.md) | How instructions, actions, voting, rewarding, and the system command catalog fit together. |
-| [Extensions](Extensions/README.md) | The extension framework and built-in extensions (PMW, FDC2, System Extension). |
-| [TEE Management](TeeManagement/Registration.md) | Machine registration, key management, state attestation, and the TEE proxy. |
-| [Workflows](Workflows/README.md) | Step-by-step operational procedures. |
-| [Attestation Types](Extensions/FDC2/AttestationTypes/README.md) | FDC2 attestation request and response schemas. |
-| [Types](Types/README.md) | ABI and wire data structures used across the specification. |
+| [Concepts](Concepts/README.md) | Cross-cutting concepts: operations, machines, signing policy, keys, voting, rewarding. |
+| [Reference](Reference/Components/README.md) | Off-chain components, on-chain contracts, system operations, types. |
+| [FCE](FCE/README.md) | The extension framework and the system FCE. |
+| [PMW](PMW/README.md) | Protocol-managed wallet application (XRPL today). |
+| [FDC2](FDC2/README.md) | TEE-based attestation oracle. |
+| [Workflows](Workflows/README.md) | State-machine-shaped operational procedures. |

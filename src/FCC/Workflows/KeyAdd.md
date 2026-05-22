@@ -32,11 +32,11 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 
 **What happens:**
 1. The contract generates a new `keyId` by incrementing the wallet's key counter.
-2. A [`KEY_GENERATE`](../Operations/System/F_WALLET.md#key_generate) instruction is sent to the specified TEE machine.
+2. A [`KEY_GENERATE`](../Reference/Operations/F_WALLET.md#key_generate) instruction is sent to the specified TEE machine.
 3. The TEE machine generates a new key pair inside the enclave and associates it with the wallet.
 4. The TEE machine automatically triggers a key backup for the newly generated key.
 
-**Events emitted:** [`WalletKeyAdded`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeyadded), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`WalletKeyAdded`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeyadded), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 > **Note:** This step can be repeated to add keys on different TEE machines. Each invocation generates a unique `keyId`.
 
@@ -62,7 +62,7 @@ For canonical key semantics and data structures, see [Key Management](../TeeMana
 2. Stores the public key on-chain.
 3. Adds the `teeId` to the key's TEE list, indicating the key exists on this machine.
 
-**Events emitted:** [`WalletKeyConfirmed`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeyconfirmed)
+**Events emitted:** [`WalletKeyConfirmed`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeyconfirmed)
 
 ---
 

@@ -45,10 +45,10 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
-1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../Operations/System/F_WALLET.md#key_data_provider_restore) instruction to the target TEE machine.
+1. The contract emits a [`KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#key_data_provider_restore) instruction to the target TEE machine.
 2. This signals the TEE network (data providers and key admins) to begin the share collection process.
 
-**Events emitted:** [`BackupRestoreTriggered`](../Types/Abi/Events/TeeWalletBackupManager.md#backuprestoretriggered), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`BackupRestoreTriggered`](../Reference/Types/Abi/Events/TeeWalletBackupManager.md#backuprestoretriggered), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 ---
 
@@ -105,16 +105,16 @@ For the backup scheme (Shamir secret sharing, packaging, and distribution), see 
 3. The target `teeId` is added to the key's TEE list, indicating the key now exists on an additional machine.
 4. The nonce for this `teeId` is recorded on-chain for future replay protection.
 
-**Events emitted:** [`WalletKeyConfirmed`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeyconfirmed)
+**Events emitted:** [`WalletKeyConfirmed`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeyconfirmed)
 
 ---
 
 ## Notes
 
 - **Key migration between TEEs:** Key migration moves a key from one TEE machine to another. This is a composite workflow: (1) restore the key on the new TEE using Steps 1-4 above, (2) confirm the restored key with `confirmKey()`, and (3) optionally [delete the key](KeyDelete.md) from the decommissioned machine. During migration, the key exists on both TEEs simultaneously until explicitly deleted from the old one, ensuring zero downtime for signing operations.
-- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md), its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
+- **Extension binding:** Each `teeId` can be registered to at most one extension. Once the machine is confirmed via [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md), its extension is fixed. Each wallet belongs to exactly one extension, and a backup is valid only if the source and target machines belong to the same extension.
 - **Share submission verification:** Data providers and key admins should verify on-chain events and block confirmations before submitting shares, ensuring:
-  - The [`BackupRestoreTriggered`](../Types/Abi/Events/TeeWalletBackupManager.md#backuprestoretriggered) and [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) events were emitted with sufficient confirmations.
+  - The [`BackupRestoreTriggered`](../Reference/Types/Abi/Events/TeeWalletBackupManager.md#backuprestoretriggered) and [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) events were emitted with sufficient confirmations.
   - The backup from the provided URL is consistent with the backup ID.
   - The `signature` and `teeSignature` fields in the backup package match the backup ID and metadata.
 - For related workflows, see [KeyAdd.md](KeyAdd.md) for adding new keys, [KeyDelete.md](KeyDelete.md) for deleting keys, [WalletSetup.md](WalletSetup.md) for initial key creation, and [MachineLifecycle.md](MachineLifecycle.md) for TEE machine status management.

@@ -1,19 +1,19 @@
 # Actions
 
-An _action_ is the payload a [TEE proxy](../Components/TeeProxy.md) hands its [TEE machine](../Components/TeeMachine.md) for execution.
+An _action_ is the payload a [TEE proxy](../Reference/Components/Proxy.md) hands its [TEE machine](../Reference/Components/Machine.md) for execution.
 An action is one of:
 
 - An [_instruction action_](#instruction-actions): carries an [instruction](Instructions.md) that has passed [voting](Voting.md#pass-conditions), together with the contributing [signer](Instructions.md#signers) signatures.
-- A [_direct action_](#direct-actions): built without voting from a [`DirectInstruction`](../Types/Wire/Instruction.md#directinstruction) payload.
+- A [_direct action_](#direct-actions): built without voting from a [`DirectInstruction`](../Reference/Types/Wire/Instruction.md#directinstruction) payload.
 
-The TEE machine [executes the action](../Components/TeeMachine.md#action-processing) and posts an [action response](#action-responses) back to the proxy.
+The TEE machine [executes the action](../Reference/Components/Machine.md#action-processing) and posts an [action response](#action-responses) back to the proxy.
 
 ## Instruction Actions
 
 An instruction action is built by the proxy when a [vote box](Voting.md#vote-boxes) [passes](Voting.md#pass-conditions) or closes.
-It carries one [`TeeInstruction`](../Types/Abi/Instruction.md#teeinstruction) (identical for every [signer](Instructions.md#signers)) plus three parallel per-signer lists collected during voting.
+It carries one [`TeeInstruction`](../Reference/Types/Abi/Instruction.md#teeinstruction) (identical for every [signer](Instructions.md#signers)) plus three parallel per-signer lists collected during voting.
 
-The proxy populates each [`Action`](../Types/Wire/Action.md#action) field as follows:
+The proxy populates each [`Action`](../Reference/Types/Wire/Action.md#action) field as follows:
 
 1. `data.id`: The instruction's `instructionId`.
 2. `data.type`: `"instruction"`.
@@ -26,21 +26,21 @@ The proxy populates each [`Action`](../Types/Wire/Action.md#action) field as fol
 
 ## Direct Actions
 
-A _direct action_ wraps a [`DirectInstruction`](../Types/Wire/Instruction.md#directinstruction) payload.
+A _direct action_ wraps a [`DirectInstruction`](../Reference/Types/Wire/Instruction.md#directinstruction) payload.
 The payload originates in one of two ways:
 
-- _External_: an authorized client builds a `DirectInstruction` and submits it to the proxy's [`POST /direct`](../Components/TeeProxy.md#external-write-apis) endpoint, optionally enabled per deployment.
+- _External_: an authorized client builds a `DirectInstruction` and submits it to the proxy's [`POST /direct`](../Reference/Components/Proxy.md#external-write-apis) endpoint, optionally enabled per deployment.
   When enabled, the proxy authenticates requests (e.g. via API key).
-  The endpoint rejects any operation in the system (`F_`) namespace; it is intended for custom [extension](../Extensions/Concepts.md#system-vs-custom-extensions) operations.
+  The endpoint rejects any operation in the system (`F_`) namespace; it is intended for custom [extension](../FCE/Concepts.md#system-vs-custom-extensions) operations.
 - _Proxy-initiated_: the proxy constructs a `DirectInstruction` for system services:
-  - [`TEE_INFO`](System/F_GET.md#tee_info) — periodic liveness and state polling (every $\sim 10$ seconds).
-  - [`INITIALIZE_POLICY`](System/F_POLICY.md#initialize_policy) — once at proxy startup.
-  - [`UPDATE_POLICY`](System/F_POLICY.md#update_policy) — when the proxy observes a new [signing policy](../../FSP/SigningPolicy.md) on-chain.
-  - [`KEY_INFO`](System/F_GET.md#key_info) — periodic wallet sync (every $\sim 60$ minutes).
-  - [`KEY_PROOF`](System/F_GET.md#key_proof) — fetched during wallet sync for keys whose stored proof is missing or stale.
-  - [`TEE_BACKUP`](System/F_GET.md#tee_backup) — on new key generation and after every signing policy update.
+  - [`TEE_INFO`](../Reference/Operations/F_GET.md#tee_info) — periodic liveness and state polling (every $\sim 10$ seconds).
+  - [`INITIALIZE_POLICY`](../Reference/Operations/F_POLICY.md#initialize_policy) — once at proxy startup.
+  - [`UPDATE_POLICY`](../Reference/Operations/F_POLICY.md#update_policy) — when the proxy observes a new [signing policy](../../FSP/SigningPolicy.md) on-chain.
+  - [`KEY_INFO`](../Reference/Operations/F_GET.md#key_info) — periodic wallet sync (every $\sim 60$ minutes).
+  - [`KEY_PROOF`](../Reference/Operations/F_GET.md#key_proof) — fetched during wallet sync for keys whose stored proof is missing or stale.
+  - [`TEE_BACKUP`](../Reference/Operations/F_GET.md#tee_backup) — on new key generation and after every signing policy update.
 
-The proxy then builds the [`Action`](../Types/Wire/Action.md#action), populating each field as follows:
+The proxy then builds the [`Action`](../Reference/Types/Wire/Action.md#action), populating each field as follows:
 
 1. `data.id`: Cryptographically random 32-byte identifier generated by the proxy.
 2. `data.type`: `"direct"`.
@@ -50,12 +50,12 @@ The proxy then builds the [`Action`](../Types/Wire/Action.md#action), populating
 
 ## Action Results
 
-An [`ActionResult`](../Types/Wire/Action.md#actionresult) is the per-action outcome the TEE machine produces; it is then wrapped in an [`ActionResponse`](#action-responses) and posted to the proxy.
-Field population depends on whether the action belongs to a system [command](System/README.md) — processed locally by the TEE machine — or to a custom extension.
+An [`ActionResult`](../Reference/Types/Wire/Action.md#actionresult) is the per-action outcome the TEE machine produces; it is then wrapped in an [`ActionResponse`](#action-responses) and posted to the proxy.
+Field population depends on whether the action belongs to a system [command](../Reference/Operations/README.md) — processed locally by the TEE machine — or to a custom extension.
 
 ### System Commands
 
-The TEE machine processes system commands locally — both the [infrastructure commands](System/README.md) and the system extension's application commands ([PMW](../Extensions/PMW/Commands/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../Extensions/FDC2/Commands/README.md) `F_FDC2 PROVE`).
+The TEE machine processes system commands locally — both the [infrastructure commands](../Reference/Operations/README.md) and the system extension's application commands ([PMW](../PMW/Reference/Operations/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../FDC2/Reference/Operations/README.md) `F_FDC2 PROVE`).
 It populates each field as follows:
 
 - `id`, `submissionTag`: copied from the inbound `Action.data`.
@@ -76,7 +76,7 @@ Custom extension commands run in an external extension HTTP service alongside th
 
 For `threshold` and `submit` actions:
 
-1. The TEE machine forwards the inbound [`Action`](../Types/Wire/Action.md#action) JSON to the extension's `/action` endpoint.
+1. The TEE machine forwards the inbound [`Action`](../Reference/Types/Wire/Action.md#action) JSON to the extension's `/action` endpoint.
 2. The extension processes the action and returns a JSON-encoded `ActionResult` in the HTTP response body.
 3. The TEE machine takes that response verbatim and wraps it in an [`ActionResponse`](#action-responses).
 
@@ -87,7 +87,7 @@ For `end` instruction actions, the TEE machine builds the result locally as in [
 
 ## Action Responses
 
-An [`ActionResponse`](../Types/Wire/Action.md#actionresponse) is the TEE machine's signed wrapper around an [`ActionResult`](#action-results), posted to the proxy at `POST <proxyURL>/result`.
+An [`ActionResponse`](../Reference/Types/Wire/Action.md#actionresponse) is the TEE machine's signed wrapper around an [`ActionResult`](#action-results), posted to the proxy at `POST <proxyURL>/result`.
 It carries three fields:
 
 - `result`: the [`ActionResult`](#action-results).
@@ -98,4 +98,4 @@ It carries three fields:
   $$
 
   where $r$ is `result`.
-- `proxySignature`: added by the [proxy](../Components/TeeProxy.md) on the [external result API](../Components/TeeProxy.md#external-read-apis); produced with the proxy's identity key over $\mathrm{keccak256}(r.\mathrm{data})$, so external consumers can authenticate the proxy as well as the machine.
+- `proxySignature`: added by the [proxy](../Reference/Components/Proxy.md) on the [external result API](../Reference/Components/Proxy.md#external-read-apis); produced with the proxy's identity key over $\mathrm{keccak256}(r.\mathrm{data})$, so external consumers can authenticate the proxy as well as the machine.

@@ -33,7 +33,7 @@ In addition to this, this sub-protocol uses dedicated accounts for submitting pr
 ## Voter Definition
 
 An entity can become a _voter_ by registering through the [VoterRegistry](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/VoterRegistry.sol) smart contract.
-A voter is able to participate in sub-protocols by [submitting](Submission.md) and [finalizing](./Finalization.md) voting round data, obtaining [rewards](Rewarding.md) for high quality submissions and honest behaviour.
+A voter is able to participate in sub-protocols by [submitting](Submission.md) and [finalizing](Finalization.md) voting round data, obtaining [rewards](Rewarding.md) for high quality submissions and honest behaviour.
 
 ## Voter Registration
 

@@ -4,7 +4,7 @@
 
 This page describes the parts of a deployment that change when a wallet or application is operated across multiple TEE machines.
 It does not repeat the full single-TEE procedures.
-Use [MachineRegistration.md](MachineRegistration.md), [WalletSetup.md](WalletSetup.md), [XrplMultisigConfiguration.md](XrplMultisigConfiguration.md), and [XrpPayment.md](XrpPayment.md) as the base workflows, and apply the deltas below.
+Use [MachineRegistration.md](MachineRegistration.md), [WalletSetup.md](WalletSetup.md), [XrplMultisigConfiguration.md](../PMW/Workflows/XrplMultisigConfiguration.md), and [XrpPayment.md](../PMW/Workflows/XrpPayment.md) as the base workflows, and apply the deltas below.
 
 For canonical ownership, state, and key semantics, see [Registration](../TeeManagement/Registration.md), [State](../TeeManagement/State.md) and [Attestation](../TeeManagement/Attestation.md), and [Key Management](../TeeManagement/Keys.md).
 
@@ -39,14 +39,14 @@ Use [KeyRestore.md](KeyRestore.md) and [KeyDelete.md](KeyDelete.md) for that seq
 
 ### Step 3: Configure the External Multisig Account from All Confirmed Keys
 
-When the wallet is used for PMW, gather the confirmed public keys from all participating TEEs and follow [XrplMultisigConfiguration.md](XrplMultisigConfiguration.md).
+When the wallet is used for PMW, gather the confirmed public keys from all participating TEEs and follow [XrplMultisigConfiguration.md](../PMW/Workflows/XrplMultisigConfiguration.md).
 The external signer set and quorum must match the wallet's confirmed keys and threshold, not just a single machine.
 
 ### Step 4: Collect Results from Multiple Proxies
 
 For workflows that produce one result per participating TEE, retrieve the result from each relevant proxy.
 In the PMW payment case, this means collecting partial signatures from multiple proxies, aggregating them into the final multisigned transaction, and then submitting that final transaction on the external chain.
-Follow [XrpPayment.md](XrpPayment.md) for the base payment flow, and [Fdc2Attestation.md](Fdc2Attestation.md) when post-submission proof verification is needed.
+Follow [XrpPayment.md](../PMW/Workflows/XrpPayment.md) for the base payment flow, and [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md) when post-submission proof verification is needed.
 
 ### Step 5: Operate the Lifecycle Per Machine
 

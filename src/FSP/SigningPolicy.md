@@ -2,7 +2,7 @@
 
 The _Signing Policy_ record defines entities that are eligible to participate in FSP, and their corresponding voting power.
 A new policy is generated for every reward epoch, denoting its starting voting epoch, registered entities (voters) and their weights, as well as the signing weight threshold required for policy updates and finalizations.
-See [SigningPolicy](./Encoding.md/#signingpolicy) encoding reference for more details.
+See [SigningPolicy](Encoding.md#signingpolicy) encoding reference for more details.
 
 ## Definition Protocol
 
@@ -50,7 +50,7 @@ where:
 
 This timestamp $T$ is then used as the start of the random acquisition process, $T_\text{start}$.
 
-Starting from the next block, the `Relay` smart contract is polled to retrieve a random number using the [getRandomNumber](./RandomNumber.md) function until either:
+Starting from the next block, the `Relay` smart contract is polled to retrieve a random number using the [getRandomNumber](RandomNumber.md) function until either:
 
 1. A secure random with a timestamp larger than $T_\text{start}$ is acquired.
 2. $\mathrm{randomAcquisitionMaxDurationBlocks}$ ($15000$ blocks) and $\mathrm{randomAcquisitionMaxDurationTime}$ ($8$ hours) have passed with no secure random acquired.

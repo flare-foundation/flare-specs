@@ -3,9 +3,9 @@
 Some FCC use cases need a TEE machine to hold a long-lived private key — typically because the key signs transactions on an external blockchain (XRPL, EVM chains) on a user's behalf.
 _Projects_, _wallets_, and _wallet keys_ are the on-chain bookkeeping that controls those keys: who may authorize their use, under what threshold, and on which TEE machines they live.
 
-They are scoped per [FCE](../Extensions/README.md): each FCE has its own pool of projects, and every project is pinned to a single FCE at creation.
-The pattern is the foundation of the [Protocol Managed Wallet (PMW)](../Extensions/PMW/README.md) infrastructure on the system extension, and is available to any FCE whose [TEE machines](../Components/TeeMachine.md) need the same custody.
-FCEs that only sign with the TEE's identity key (pure compute, [FDC2 proofs](../Extensions/FDC2/README.md), registration attestation) do not need them.
+They are scoped per [FCE](../FCE/README.md): each FCE has its own pool of projects, and every project is pinned to a single FCE at creation.
+The pattern is the foundation of the [Protocol Managed Wallet (PMW)](../PMW/README.md) infrastructure on the system extension, and is available to any FCE whose [TEE machines](../Reference/Components/Machine.md) need the same custody.
+FCEs that only sign with the TEE's identity key (pure compute, [FDC2 proofs](../FDC2/README.md), registration attestation) do not need them.
 
 All state lives on the [`FlareTeeManager`](FlareTeeManager.md) contract.
 
@@ -21,7 +21,7 @@ The rest of this file describes each level in detail.
 
 ## Projects
 
-A project is created when an address allowlisted as a [project owner](../../Terminology/Roles.md#project-owner) for an [FCE](../Extensions/README.md) calls `createProject(extensionId, keyType, signingAlgo)`.
+A project is created when an address allowlisted as a [project owner](../../Terminology/Roles.md#project-owner) for an [FCE](../FCE/README.md) calls `createProject(extensionId, keyType, signingAlgo)`.
 The new `projectId` is `keccak256(abi.encode("PROJECT", msg.sender, counter))` and the caller becomes the project owner.
 
 Project state:
@@ -33,7 +33,7 @@ Project state:
 
 Both owner roles are gated against the FCE's [owner allowlist](Registration.md#owner-allowlist) at every state-changing call.
 
-Lifecycle events: [`ProjectCreated`](../Types/Abi/Events/TeeWalletProjectManager.md#projectcreated), [`BackupManagerSet`](../Types/Abi/Events/TeeWalletProjectManager.md#backupmanagerset), [`NewOwnerProposed`](../Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed), [`OwnershipConfirmed`](../Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).
+Lifecycle events: [`ProjectCreated`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#projectcreated), [`BackupManagerSet`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#backupmanagerset), [`NewOwnerProposed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#newownerproposed), [`OwnershipConfirmed`](../Reference/Types/Abi/Events/TeeWalletProjectManager.md#ownershipconfirmed).
 
 ## Wallets
 
@@ -49,7 +49,7 @@ Wallet state:
 5. `status`: One of `CREATED`, `INITIALIZED`, `PRODUCTION`, `PAUSED`.
 
 Once a wallet leaves `CREATED`, its admins, cosigners, and their thresholds are immutable.
-A copy of these is also written into every TEE-side [`configConstants`](Keys.md#wallet-private-key-data-structure) record at key generation, for [cosigner enforcement](../Components/TeeMachine.md#cosigner-enforcement) by the TEE machine.
+A copy of these is also written into every TEE-side [`configConstants`](Keys.md#wallet-private-key-data-structure) record at key generation, for [cosigner enforcement](../Reference/Components/Machine.md#cosigner-enforcement) by the TEE machine.
 
 ### Lifecycle
 
@@ -62,7 +62,7 @@ Status transitions, with the call that triggers each:
 
 The project owner is the sole caller for every transition.
 
-Lifecycle events: [`WalletCreated`](../Types/Abi/Events/TeeWalletManager.md#walletcreated), [`WalletAdminsSet`](../Types/Abi/Events/TeeWalletManager.md#walletadminsset), [`WalletAdminConfirmed`](../Types/Abi/Events/TeeWalletManager.md#walletadminconfirmed), [`WalletCosignersSet`](../Types/Abi/Events/TeeWalletManager.md#walletcosignersset), [`WalletCosignerConfirmed`](../Types/Abi/Events/TeeWalletManager.md#walletcosignerconfirmed), [`WalletInitialized`](../Types/Abi/Events/TeeWalletManager.md#walletinitialized), [`WalletEnabled`](../Types/Abi/Events/TeeWalletManager.md#walletenabled), [`WalletPaused`](../Types/Abi/Events/TeeWalletManager.md#walletpaused).
+Lifecycle events: [`WalletCreated`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcreated), [`WalletAdminsSet`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletadminsset), [`WalletAdminConfirmed`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletadminconfirmed), [`WalletCosignersSet`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcosignersset), [`WalletCosignerConfirmed`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletcosignerconfirmed), [`WalletInitialized`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletinitialized), [`WalletEnabled`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletenabled), [`WalletPaused`](../Reference/Types/Abi/Events/TeeWalletManager.md#walletpaused).
 
 ### Pausing Keys at the TEE
 

@@ -53,8 +53,8 @@ The workflows build on each other. Complete earlier workflows before attempting 
 
 > **FDC2 Attestation** is a shared sub-workflow invoked from within other workflows, not a standalone prerequisite. The following workflows use FDC2 attestation:
 > - **TeeAvailabilityCheck** — used in [MachineRegistration.md](MachineRegistration.md) (Steps 9-10), [MachineLifecycle.md](MachineLifecycle.md) (Steps 1, 6), and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 1)
-> - **PMWMultisigAccountConfigured** — used in [XrplMultisigConfiguration.md](XrplMultisigConfiguration.md) (Steps 3-5) and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 3)
-> - **PMWPaymentStatus** — used in [XrpPayment.md](XrpPayment.md) (Step 4) and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 4)
+> - **PMWMultisigAccountConfigured** — used in [XrplMultisigConfiguration.md](../PMW/Workflows/XrplMultisigConfiguration.md) (Steps 3-5) and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 3)
+> - **PMWPaymentStatus** — used in [XrpPayment.md](../PMW/Workflows/XrpPayment.md) (Step 4) and [MultiTeeOperations.md](MultiTeeOperations.md) (Step 4)
 
 ## Notation
 
@@ -96,14 +96,14 @@ See the [Registration specification](../TeeManagement/Registration.md#statuses) 
 
 For a complete single-TEE XRP payment setup from scratch:
 
-1. **[Extension Configuration](ExtensionConfiguration.md)** — Register extension, add code version, configure allowlists.
+1. **[Extension Configuration](../FCE/Workflows/Configuration.md)** — Register extension, add code version, configure allowlists.
 2. **[Machine Registration](MachineRegistration.md)** — Boot VM, configure, register on-chain, move to PRODUCTION.
 3. **[Wallet Setup](WalletSetup.md)** — Create project, create wallet, add keys, enable.
-4. **[XRPL Multisig Configuration](XrplMultisigConfiguration.md)** — Create XRPL account, verify, link to wallet.
-5. **[XRP Payment](XrpPayment.md)** — Send payment, retrieve signed tx, submit, verify.
+4. **[XRPL Multisig Configuration](../PMW/Workflows/XrplMultisigConfiguration.md)** — Create XRPL account, verify, link to wallet.
+5. **[XRP Payment](../PMW/Workflows/XrpPayment.md)** — Send payment, retrieve signed tx, submit, verify.
 
 For multi-TEE deployments, see [Multi-TEE Operations](MultiTeeOperations.md) which adapts each of these steps for distributed operation.
 
 ## Source References
 
-These workflows are derived from the specifications in [`flare-specs/src/FCC/`](../) — see each workflow's **Spec References** column in the [index](README.md#workflow-index) for the relevant specification files.
+These workflows are derived from the specifications in [`flare-specs/src/FCC/`](..) — see each workflow's **Spec References** column in the [index](README.md#workflow-index) for the relevant specification files.

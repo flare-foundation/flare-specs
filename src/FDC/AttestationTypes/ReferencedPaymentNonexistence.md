@@ -16,8 +16,8 @@ This type of attestation can be used to, e.g., provide grounds to liquidate fund
 | `minimalBlockNumber`       | `uint64`      | The start block of the search range.                                                                                  |
 | `deadlineBlockNumber`      | `uint64`      | The blockNumber to be included in the search range.                                                                   |
 | `deadlineTimestamp`        | `uint64`      | The timestamp to be included in the search range.                                                                     |
-| `destinationAddressHash`   | `bytes32`     | The [standard address hash](./Reference.md#standard-address-hash) of the address to which the payment had to be done. |
-| `amount`                   | `uint256`     | The requested amount in minimal units that had to be paid.                                                           |
+| `destinationAddressHash`   | `bytes32`     | The [standard address hash](Reference.md#standard-address-hash) of the address to which the payment had to be done. |
+| `amount`                   | `uint256`     | The requested amount in minimal units that had to be payed.                                                           |
 | `standardPaymentReference` | `bytes32`     | The requested standard payment reference.                                                                             |
 | `checkSourceAddresses`     | `bool`        | If true, the source address root is checked (only full match).                                                        |
 | `sourceAddressesRoot`      | `bytes32`     | The root of the Merkle tree of the source addresses.                                                                  |
@@ -56,8 +56,8 @@ For Bitcoin, a sufficient number of confirmations is at least 6; for Dogecoin, i
 
 Criteria for the transaction:
 
-- It is not a coinbase transaction.
-- The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference).
+- It is not coinbase transaction.
+- The transaction has the specified [standardPaymentReference](Reference.md#standard-payment-reference).
 - The transaction has exactly one output with the specified address.
 - The value of the output with the specified address minus the sum of values of all inputs with the specified address is greater than or equal to `amount` (in practice the sum of all values of the inputs with the specified address is zero).
 - If `checkSourceAddresses` is set to true, sourceAddressesRoot of the transaction matches the specified `sourceAddressesRoot`.
@@ -72,8 +72,8 @@ For XRPL, a sufficient number of confirmations is at least 3.
 
 Criteria for the transaction:
 
-- The transaction is of type `Payment` and is a Direct XRP payment (sending and receiving XRP).
-- The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference).
+- The transaction is of type payment.
+- The transaction has the specified [standardPaymentReference](Reference.md#standard-payment-reference),
 - One of the following is true:
   - Transaction status is `SUCCESS` (`TransactionResult` is `tesSUCCESS`) and the amount received by the specified destination address is greater than or equal to the specified `amount`.
   - Transaction status is `RECEIVER_FAILURE` (`TransactionResult` is one of `tecDST_TAG_NEEDED`, `tecNO_DST`, or `tecNO_DST_INSUF_XRP`, or is `tecNO_PERMISSION` while the transaction has no `DomainID`) and the specified destination address would receive an amount greater than or equal to the specified `amount` had the transaction been successful.

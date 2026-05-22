@@ -1,6 +1,6 @@
 # Registration and Lifecycle
 
-A TEE machine joins FCC by registering against an [extension](../Extensions/README.md) on the [`FlareTeeManager`](FlareTeeManager.md) contract, then completing an [availability proof](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) before it can serve production traffic.
+A TEE machine joins FCC by registering against an [extension](../FCE/README.md) on the [`FlareTeeManager`](FlareTeeManager.md) contract, then completing an [availability proof](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) before it can serve production traffic.
 This page covers the registration call, the [TEE ID](#tee-id-derivation) derivation, the [status lifecycle](#statuses), and the [management calls](#management-calls) available to TEE operators.
 
 ## Owner Allowlist
@@ -35,7 +35,7 @@ The call is payable; `msg.value` covers the TEE attestation request enqueued aut
 |---|---|
 | `extensionId` | Extension the machine joins. |
 | `initialOwner` | Caller (`msg.sender == initialOwner` is enforced). |
-| `codeHash` | Hash of the code deployed inside the machine. Must be a [supported `(codeHash, platform)` combination](../Extensions/Concepts.md#management-calls). |
+| `codeHash` | Hash of the code deployed inside the machine. Must be a [supported `(codeHash, platform)` combination](../FCE/Concepts.md#management-calls). |
 | `platform` | Attestation platform (e.g. `GOOGLE_INTEL_TDX`, `GOOGLE_AMD_SEV`). |
 | `publicKey` | TEE identity public key. |
 
@@ -43,7 +43,7 @@ The call is payable; `msg.value` covers the TEE attestation request enqueued aut
 The contract recovers the signer and requires it to equal `address(publicKey)`, which it then stores as the machine's `teeId`.
 
 The machine enters [`INITIALIZED`](#statuses).
-To reach `PRODUCTION` it must then present a valid [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof via `toProduction(proof)`.
+To reach `PRODUCTION` it must then present a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof via `toProduction(proof)`.
 
 ### TEE ID Derivation
 
@@ -57,7 +57,7 @@ This binding is what makes the signature in `register` necessary: without it, a 
 `FlareTeeManager` stores per-machine state in a `TeeMachineState` record:
 
 - `extensionId`, `owner`, `teeProxyId`, `url`.
-- `teePublicKey`, `initialTeeId` (used during [replication](../TeeManagement/State.md#tee-state)), `initialSigningPolicyId`.
+- `teePublicKey`, `initialTeeId` (used during [replication](State.md#tee-state)), `initialSigningPolicyId`.
 - `codeHash`, `platform`.
 - `status`, `lastStatusChangeTs`.
 
@@ -69,7 +69,7 @@ A registered machine moves through five statuses:
 
 1. **`INITIALIZED`** — set by `register`. The machine has no rights yet; transition to `PRODUCTION` via `toProduction(proof)`.
 2. **`PRODUCTION`** — fully operational; receives any instruction. Owner may pause; anyone may suspend after the [availability deadline](#availability-deadline) expires.
-3. **`SUSPENDED`** — set by `pauseWithProof(proof)` against a non-`OK` [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof, or by `pause(teeId)` after the availability deadline. Can return to `PRODUCTION` via `toProduction(proof)` with a fresh availability proof, be paused by the owner, or be banned.
+3. **`SUSPENDED`** — set by `pauseWithProof(proof)` against a non-`OK` [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof, or by `pause(teeId)` after the availability deadline. Can return to `PRODUCTION` via `toProduction(proof)` with a fresh availability proof, be paused by the owner, or be banned.
 4. **`PAUSED`** — owner-initiated stop, or automatic on settings update / unsupported code. No instructions are accepted. Return to `PRODUCTION` with a fresh availability proof.
 5. **`BANNED`** — set by `ban(teeId)`; only reversible via `unban(teeId)` (which lands the machine in `PAUSED`).
 
@@ -78,7 +78,7 @@ Each transition emits `TeeMachineStatusChanged`.
 
 ### Availability Deadline
 
-Each [`TeeAvailabilityCheck`](../Extensions/FDC2/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's deadline `availabilityCheckValidityEndTs`.
+Each [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's deadline `availabilityCheckValidityEndTs`.
 Before the deadline anyone may submit a fresh proof via `confirmAvailability(proof)`; after it the machine stays in `PRODUCTION` but:
 
 - its actions stop entitling its owner to [rewards](../../FSP/Rewarding.md).

@@ -32,14 +32,14 @@ Deletion removes private key material from the specified TEE but retains the key
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
 **What happens:**
-1. The contract sends a [`KEY_DELETE`](../Operations/System/F_WALLET.md#key_delete) instruction to the specified TEE machine.
+1. The contract sends a [`KEY_DELETE`](../Reference/Operations/F_WALLET.md#key_delete) instruction to the specified TEE machine.
 2. The TEE machine verifies the `nonce` in the instruction is strictly greater than the current nonce stored for that key.
 3. The TEE machine removes the private key material from its memory.
 4. If the `teeId` is in the key's TEE list, it is removed. If the `teeId` is not found, the contract still proceeds — the instruction is sent as a retry mechanism.
 5. The key definition itself remains on the wallet — only the association with the specific TEE is removed.
 6. On the TEE machine, the wallet key variables (`nonce`, `pauseNonce`, `status`, `expiry`) for that key are *retained* even after deletion, preventing nonce reuse if the key is later restored.
 
-**Events emitted:** [`WalletKeyDeleted`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`WalletKeyDeleted`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 > **Note:** Deleting a key from all TEEs does not remove the key definition from the wallet. The key can be restored via the [key restore workflow](KeyRestore.md).
 
@@ -63,7 +63,7 @@ This step removes them.
 1. The contract iterates through the TEE IDs associated with the specified key.
 2. TEE IDs whose on-chain status is not `PRODUCTION` are removed from the key definition's TEE list.
 
-**Events emitted:** [`WalletKeyDeleted`](../Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted) for each removed stale TEE ID.
+**Events emitted:** [`WalletKeyDeleted`](../Reference/Types/Abi/Events/TeeWalletKeyManager.md#walletkeydeleted) for each removed stale TEE ID.
 
 ---
 

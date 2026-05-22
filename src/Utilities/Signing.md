@@ -19,6 +19,6 @@ The signature has three components — a 32-byte $r$, a 32-byte $s$, and a 1-byt
 - **On-chain struct** — every signature consumed on-chain as a Solidity tuple is `{v, r, s}` with $v \in \{27, 28\}$.
 - **On-chain packed wire format** — several FSP-defined formats pack the same components into raw `bytes` for cheap calldata parsing:
   - FSP [`SignatureType0`](../FSP/Encoding.md#signaturetype0) (deprecated) and [`SignatureType1`](../FSP/Encoding.md#signaturetype1) — submission payloads, each wrapping a single 65-byte ECDSA signature inside a [`PayloadMessage`](../FSP/Encoding.md#payloadmessage).
-  - FSP [`ECDSASignatureWithIndex`](../FSP/Encoding.md#ecdsasignaturewithindex) — 67-byte $v \,\|\, r \,\|\, s \,\|\, \mathit{signerIndex}$ entry, used by the `Relay` contract in finalization payloads and embedded in FDC2 [`Fdc2Signatures.signingPolicySignatures`](../FCC/Types/Abi/Fdc2.md#fdc2signatures).
+  - FSP [`ECDSASignatureWithIndex`](../FSP/Encoding.md#ecdsasignaturewithindex) — 67-byte $v \,\|\, r \,\|\, s \,\|\, \mathit{signerIndex}$ entry, used by the `Relay` contract in finalization payloads and embedded in FDC2 [`Fdc2Signatures.signingPolicySignatures`](../FCC/FDC2/Reference/Types/Abi/Fdc2.md#fdc2signatures).
 
 Off-chain ↔ on-chain-struct conversion at the boundary is trivial: $r$ and $s$ are identical; $v_{\mathrm{onchain}} = v_{\mathrm{offchain}} + 27$.

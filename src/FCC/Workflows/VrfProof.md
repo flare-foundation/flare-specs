@@ -4,7 +4,7 @@
 
 This workflow describes generating a verifiable random number using a VRF key held inside a TEE machine.
 The result can be verified on-chain by the `VrfVerifier` contract.
-For canonical VRF key semantics, see [Key Management](../TeeManagement/Keys.md) and the [`F_WALLET--VRF`](../Operations/System/F_WALLET.md#vrf) command reference.
+For canonical VRF key semantics, see [Key Management](../TeeManagement/Keys.md) and the [`F_WALLET--VRF`](../Reference/Operations/F_WALLET.md#vrf) command reference.
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ For canonical VRF key semantics, see [Key Management](../TeeManagement/Keys.md) 
 
 **Who initiates:** The VRF authorization address for the wallet (set via `TeeVrf.setVrfAuthorizationAddress()`).
 
-A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../Operations/System/F_WALLET.md#vrf) instruction.
+A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, claimBackAddress)`, which internally constructs and sends a [`VRF`](../Reference/Operations/F_WALLET.md#vrf) instruction.
 
 **Parameters:**
 - `walletId` (`bytes32`) — the wallet ID of the VRF key.
@@ -37,7 +37,7 @@ A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, 
 - The key's signing algorithm must be `keccak256-secp256k1-vrf`.
 - The function is `payable` — sufficient value must be included to cover the instruction fee.
 
-**Events emitted:** [`VrfRequested`](../Types/Abi/Events/TeeVrf.md#vrfrequested), [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
+**Events emitted:** [`VrfRequested`](../Reference/Types/Abi/Events/TeeVrf.md#vrfrequested), [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent)
 
 ---
 
@@ -68,7 +68,7 @@ Once the voting threshold is reached, the TEE proxy delivers the action to the T
 ### Step 4: Retrieve Result
 
 The action result is available from the TEE proxy.
-For the response format, see the [`VRF`](../Operations/System/F_WALLET.md#vrf) command reference.
+For the response format, see the [`VRF`](../Reference/Operations/F_WALLET.md#vrf) command reference.
 
 ---
 
