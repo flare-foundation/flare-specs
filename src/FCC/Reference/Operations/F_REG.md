@@ -1,11 +1,11 @@
 # F_REG
 
-[Instruction actions](../../Operations/Actions.md#instruction-actions) used to register a TEE machine with `FlareTeeManager`.
+[Instruction actions](../../Concepts/Actions.md#instruction-actions) used to register a TEE machine with `FlareTeeManager`.
 
 ## TEE_ATTESTATION
 
 Used during [registration](../../TeeManagement/Registration.md).
-`FlareTeeManager` emits the instruction with a challenge of $\mathrm{keccak256}(\mathrm{teeId} \,\|\, \mathrm{block.timestamp} \,\|\, \mathrm{Relay.getRandomNumber}())$; [signers](../../Operations/Instructions.md#signers) relay it to the [TEE proxy](../Components/Proxy.md) and the destination TEE machine returns the same attestation payload as a self-initiated [`TEE_INFO`](F_GET.md#tee_info).
+`FlareTeeManager` emits the instruction with a challenge of $\mathrm{keccak256}(\mathrm{teeId} \,\|\, \mathrm{block.timestamp} \,\|\, \mathrm{Relay.getRandomNumber}())$; [signers](../../Concepts/Instructions.md#signers) relay it to the [TEE proxy](../Components/Proxy.md) and the destination TEE machine returns the same attestation payload as a self-initiated [`TEE_INFO`](F_GET.md#tee_info).
 
 **Event message:** the instruction's `originalMessage` decodes to [`TeeAttestation`](../Types/Abi/TeeMachine.md#teeattestation) (wrapping [`TeeMachineWithAttestationData`](../Types/Abi/TeeMachine.md#teemachinewithattestationdata) and a challenge).
 

@@ -11,7 +11,7 @@ For the on-chain data model — projects, wallets, admins, cosigners, multisig t
 
 ## Submitting Transactions
 
-A PMW transaction is an [instruction](../Operations/Instructions.md) on the system extension:
+A PMW transaction is an [instruction](../Concepts/Instructions.md) on the system extension:
 
 1. The project owner submits a payment instruction on Flare, naming the TEE machines that hold the wallet's keys.
 2. Each data provider builds and signs the corresponding instruction off-chain through its [relay client](../Reference/Components/RelayClient.md), then submits it to the targeted [TEE proxies](../Reference/Components/Proxy.md).
@@ -22,7 +22,7 @@ See [Payments](Transactions.md) for the on-chain `pay` and `reissue` calls, [bat
 
 ## Key Management and Backups
 
-Wallet private keys never leave the TEEs' secure memory: transactions are sent to the TEEs to be signed, and PMW security follows from the combination of the TEE machines and the system-extension [voting process](../Operations/Voting.md).
+Wallet private keys never leave the TEEs' secure memory: transactions are sent to the TEEs to be signed, and PMW security follows from the combination of the TEE machines and the system-extension [voting process](../Concepts/Voting.md).
 To prevent keys from being lost when a TEE is paused, banned, or permanently disabled, keys are [backed up](../TeeManagement/Keys.md#key-backup) using a two-layer secret-sharing scheme, with shares distributed to data providers and [key admins](../../Terminology/Roles.md#key-admin) so that secrets are recoverable only under the configured threshold.
 TEE machines additionally serve [`SignedKeyExistenceProof`](../Reference/Types/Wire/Key.md#signedkeyexistenceproof) values that confirm the corresponding private keys still exist on the machine.
 

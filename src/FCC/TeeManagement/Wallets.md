@@ -7,14 +7,14 @@ They are scoped per [FCE](../FCE/README.md): each FCE has its own pool of projec
 The pattern is the foundation of the [Protocol Managed Wallet (PMW)](../PMW/README.md) infrastructure on the system extension, and is available to any FCE whose [TEE machines](../Reference/Components/Machine.md) need the same custody.
 FCEs that only sign with the TEE's identity key (pure compute, [FDC2 proofs](../FDC2/README.md), registration attestation) do not need them.
 
-All state lives on the [`FlareTeeManager`](FlareTeeManager.md) contract.
+All state lives on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
 
 ## Overview
 
 The data model is three nested levels:
 
 1. **Project** — the top-level grouping. Bound at creation to a single FCE (the `extensionId` is immutable and a project never spans extensions) and to one `(keyType, signingAlgo)` pair, so a project targets one external-chain family (e.g. XRPL keys, EVM keys). Owned by a single Flare address — the [project owner](../../Terminology/Roles.md#project-owner) — which is the only address allowed to add or configure wallets under it.
-2. **Wallet** — sits inside a project. Defines _who can authorize operations against the wallet's keys_: a set of admin public keys with a $k$-of-$n$ threshold for [backup operations](Keys.md#backup-procedure), and optionally a set of [cosigner](../Operations/Instructions.md#cosigners) addresses with a threshold for transaction-level multisig. A wallet progresses through statuses (`CREATED` → `INITIALIZED` → `PRODUCTION`, with a `PAUSED` side state) before its keys can be used.
+2. **Wallet** — sits inside a project. Defines _who can authorize operations against the wallet's keys_: a set of admin public keys with a $k$-of-$n$ threshold for [backup operations](Keys.md#backup-procedure), and optionally a set of [cosigner](../Concepts/Instructions.md#cosigners) addresses with a threshold for transaction-level multisig. A wallet progresses through statuses (`CREATED` → `INITIALIZED` → `PRODUCTION`, with a `PAUSED` side state) before its keys can be used.
 3. **Wallet key** — a single private key, generated inside one or more TEE machines, confirmed on-chain via a [key existence proof](Keys.md#tee-key-existence-proof). A wallet's `multisigThreshold` sets how many distinct keys must sign for the wallet to authorize a transaction; combined with the per-chain native multisig (e.g. XRPL `SignerList`), this gives a $k$-of-$n$ split across TEE machines.
 
 The rest of this file describes each level in detail.
@@ -44,7 +44,7 @@ Wallet state:
 
 1. `projectId`: The parent project.
 2. `adminsPublicKeys` and `adminsThreshold`: The [key admin](../../Terminology/Roles.md#key-admin) public keys and the $k$-of-$n$ threshold over them; set with `setAdmins`, finalized at close.
-3. `cosigners` and `cosignersThreshold`: An optional [cosigner](../Operations/Instructions.md#cosigners) address set and its threshold; set with `setCosigners`, finalized at close.
+3. `cosigners` and `cosignersThreshold`: An optional [cosigner](../Concepts/Instructions.md#cosigners) address set and its threshold; set with `setCosigners`, finalized at close.
 4. `multisigThreshold`: The minimum number of confirmed keys required to sign with the wallet; set with `setMultisigThreshold`.
 5. `status`: One of `CREATED`, `INITIALIZED`, `PRODUCTION`, `PAUSED`.
 

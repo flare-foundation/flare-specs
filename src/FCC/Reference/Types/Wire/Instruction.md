@@ -1,12 +1,12 @@
 # Instruction Wire Types
 
-JSON types for [instructions](../../../Operations/Instructions.md) submitted by [relay clients](../../Components/RelayClient.md) to the [TEE proxy](../../Components/Proxy.md).
+JSON types for [instructions](../../../Concepts/Instructions.md) submitted by [relay clients](../../Components/RelayClient.md) to the [TEE proxy](../../Components/Proxy.md).
 For the corresponding ABI struct used to compute `instructionHash`, see [Instruction (ABI)](../Abi/Instruction.md).
 
 ## Instruction
 
 The JSON body posted at [`POST /instruction`](../../Components/Proxy.md#external-write-apis).
-`signature` is produced by the relaying [data provider](../../../../Terminology/Roles.md#data-provider) or [cosigner](../../../Operations/Instructions.md#cosigners) over [`hashForSigning`](../../../Operations/Instructions.md#hashes).
+`signature` is produced by the relaying [data provider](../../../../Terminology/Roles.md#data-provider) or [cosigner](../../../Concepts/Instructions.md#cosigners) over [`hashForSigning`](../../../Concepts/Instructions.md#hashes).
 
 
 ```json
@@ -15,7 +15,7 @@ The JSON body posted at [`POST /instruction`](../../Components/Proxy.md#external
   "type": "object",
   "properties": {
     "data": { "$ref": "#data" },
-    "signature": { "type": "string", "format": "bytes", "description": "ECDSA signature over [`hashForSigning`](../../../Operations/Instructions.md#hashes)." }
+    "signature": { "type": "string", "format": "bytes", "description": "ECDSA signature over [`hashForSigning`](../../../Concepts/Instructions.md#hashes)." }
   },
   "required": ["data", "signature"]
 }
@@ -50,7 +50,7 @@ Carries every field of the [`TeeInstruction`](../Abi/Instruction.md#teeinstructi
 
 ## DirectInstruction
 
-The JSON body posted at [`POST /direct`](../../Components/Proxy.md#external-write-apis) for [direct actions](../../../Operations/Actions.md#direct-actions).
+The JSON body posted at [`POST /direct`](../../Components/Proxy.md#external-write-apis) for [direct actions](../../../Concepts/Actions.md#direct-actions).
 The proxy rejects bodies with a system (`F_`) `opType`.
 
 ```json

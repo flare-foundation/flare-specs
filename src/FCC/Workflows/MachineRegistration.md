@@ -10,7 +10,7 @@ For canonical registration semantics, machine state, and ownership rules, see [R
 - **Extension registered** on-chain with a valid extension ID (see [ExtensionConfiguration.md](../FCE/Workflows/Configuration.md))
 - **TEE node running** inside a Google Cloud Confidential VM (MODE=0 for production, MODE=1 for local development)
 - **TEE proxy running** and reachable by the TEE node (requires `PRIVATE_KEY` env var)
-- **Smart contracts deployed** — the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) diamond and `Fdc2Hub` must be available on the target network
+- **Smart contracts deployed** — the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond and `Fdc2Hub` must be available on the target network
 - **Funded owner account** — the Flare address that will own the TEE machine must have sufficient funds for transaction fees
 
 ---

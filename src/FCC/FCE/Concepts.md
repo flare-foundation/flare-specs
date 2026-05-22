@@ -4,7 +4,7 @@ A _Flare Compute Extension_ (FCE) packages an application on [Flare Confidential
 Each extension has a unique `extensionId`.
 Extension ID $0$ is reserved for the [system extension](System.md), which hosts FCC's PMW and FDC2 applications; custom extensions use IDs greater than $0$.
 
-All extension state lives on the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) contract.
+All extension state lives on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
 
 ## Extension Data
 
@@ -16,7 +16,7 @@ Each extension is identified by:
 - `supportedCodeHashes`: The set of code hashes (Docker images) that registered [TEE machines](../Reference/Components/Machine.md) may run.
 - `supportedKeyTypes`: The set of [wallet key types](../TeeManagement/Keys.md#key-types) the extension permits (e.g. `EVM`, `XRP`).
 
-The `(extensionId, instructionsSender, stateVerifier, supportedCodeHashes, supportedKeyTypes)` tuple is sufficient to operate an extension: registered TEE machines run one of the supported code versions and process [instructions](../Operations/Instructions.md) routed through `sendInstructions`.
+The `(extensionId, instructionsSender, stateVerifier, supportedCodeHashes, supportedKeyTypes)` tuple is sufficient to operate an extension: registered TEE machines run one of the supported code versions and process [instructions](../Concepts/Instructions.md) routed through `sendInstructions`.
 
 ## System vs. Custom Extensions
 
@@ -27,7 +27,7 @@ The distinction is enforced by an operation-type prefix:
 
 ## Instructions Senders
 
-Two roles can call [`sendInstructions`](../TeeManagement/FlareTeeManager.md) on `FlareTeeManager`:
+Two roles can call [`sendInstructions`](../Reference/Contracts/FlareTeeManager.md) on `FlareTeeManager`:
 
 - An _extension's instructions sender_: the contract address stored in the extension's `instructionsSender` field. May send any non-system (`opType` without the `F_` prefix) instruction to TEE machines registered to its extension.
 - A _system instructions sender_: any address whitelisted by governance via `registerSystemInstructionsSenders` (removed with `unregisterSystemInstructionsSenders`). May send `F_`-prefixed system instructions to any TEE machine and may call the `sendSystemInstructions` overloads that take an externally chosen `instructionId`.
@@ -63,7 +63,7 @@ Functions exposed by `FlareTeeManager` for managing extensions:
 
 ### Sending Instructions
 
-- `sendInstructions(teeIds, instructionParams)`: Sends an [instruction](../Operations/Instructions.md) to the specified TEE machines. The `instructionParams` struct carries `opType`, `opCommand`, `message`, `cosigners`, `cosignersThreshold`, and `claimBackAddress`. All target machines must belong to the same extension. Caller must be the extension's `instructionsSender` or a system instructions sender; for system-extension calls, the caller must additionally be a system instructions sender when sending an `F_` op-type.
+- `sendInstructions(teeIds, instructionParams)`: Sends an [instruction](../Concepts/Instructions.md) to the specified TEE machines. The `instructionParams` struct carries `opType`, `opCommand`, `message`, `cosigners`, `cosignersThreshold`, and `claimBackAddress`. All target machines must belong to the same extension. Caller must be the extension's `instructionsSender` or a system instructions sender; for system-extension calls, the caller must additionally be a system instructions sender when sending an `F_` op-type.
 - `sendSystemInstructions(instructionId, teeIds | teeMachines, instructionParams)`: System-only overloads that let the caller supply an externally chosen `instructionId`. Caller must be a system instructions sender.
 
 ### Governance (system extension only)

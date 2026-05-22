@@ -18,7 +18,7 @@ Each private key on a TEE machine is held alongside this structure:
 - `privateKey`: the key material itself.
 - `restored`: `true` if the key was produced by [restoration](#key-restoration), `false` if it was generated on-machine.
 - `configConstants`: immutable wallet-side configuration mirrored at key-generation time — see [`KeyConfigConstants`](../Reference/Types/Abi/Key.md#keyconfigconstants).
-  Carries the [key admins](../../Terminology/Roles.md#key-admin) (`adminsPublicKeys` and `adminsThreshold`) and the optional [cosigner](../Operations/Instructions.md#cosigners) set (`cosigners` and `cosignersThreshold`).
+  Carries the [key admins](../../Terminology/Roles.md#key-admin) (`adminsPublicKeys` and `adminsThreshold`) and the optional [cosigner](../Concepts/Instructions.md#cosigners) set (`cosigners` and `cosignersThreshold`).
 
 All fields except `configConstants` are set at key generation; `configConstants` is fixed at key generation and is what [cosigner enforcement](../Reference/Components/Machine.md#cosigner-enforcement) compares against on every system action that consumes the key.
 
@@ -110,7 +110,7 @@ Recipients fetch their package from the TEE proxy's [backup API](../Reference/Co
 
 ### Key Restoration
 
-Restoration is initiated by an authorized address (the wallet's [project owner](../../Terminology/Roles.md#project-owner) or its `backupManager`) calling `backupRestore` on [`FlareTeeManager`](FlareTeeManager.md):
+Restoration is initiated by an authorized address (the wallet's [project owner](../../Terminology/Roles.md#project-owner) or its `backupManager`) calling `backupRestore` on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md):
 
 ```solidity
 backupRestore(backupId, backupURL, teeId, randomNonce)
@@ -127,9 +127,9 @@ The flow:
 2. Each holder re-encrypts the decrypted share under the destination TEE's public key, e.g. $\mathrm{Enc}_{\mathrm{TEE}_\mathrm{id}}(S_\mathrm{ka}^{i})$.
 3. Each holder submits an [`KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#key_data_provider_restore) instruction with the backup metadata in `additionalFixedMessage` and the encrypted share in `additionalVariableMessage`.
    Data providers go through their [relay client](../Reference/Components/RelayClient.md) (see [`KEY_DATA_PROVIDER_RESTORE` augmentation](../Reference/Operations/F_WALLET.md#augmentation)); admins without a relay client use an equivalent offline tool.
-4. The TEE proxy sets `submissionTag = end` so [voting](../Operations/Voting.md) stays open for the full window. At the end of voting, if both share sets meet their thresholds, the proxy delivers the bundle to the destination TEE.
+4. The TEE proxy sets `submissionTag = end` so [voting](../Concepts/Voting.md) stays open for the full window. At the end of voting, if both share sets meet their thresholds, the proxy delivers the bundle to the destination TEE.
 5. The destination TEE decrypts each share, reconstructs $S_\mathrm{dp}$ and $S_\mathrm{ka}$, and recovers $K = S_\mathrm{dp} + S_\mathrm{ka} \pmod N$.
-6. The TEE returns an [action response](../Operations/Actions.md#action-responses) indicating success or failure and, if any holders submitted invalid shares, names them.
+6. The TEE returns an [action response](../Concepts/Actions.md#action-responses) indicating success or failure and, if any holders submitted invalid shares, names them.
 7. The destination TEE produces a fresh [key existence proof](#tee-key-existence-proof) for the restored key.
 
 The TEE proxy cannot tell whether a submitted share is valid until decryption; that is why step $6$ surfaces the bad-share list.

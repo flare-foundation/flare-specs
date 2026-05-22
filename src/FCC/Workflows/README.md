@@ -22,4 +22,4 @@ App-specific workflows live with their app:
 | [VrfProof](VrfProof.md) | Generate and verify a VRF proof from a TEE-managed VRF key. | [Keys](../TeeManagement/Keys.md), [`F_WALLET VRF`](../Reference/Operations/F_WALLET.md#vrf) |
 | [MultiTeeOperations](MultiTeeOperations.md) | Deltas for running a wallet or application across multiple TEE machines. | All of the above |
 
-On-chain calls go through the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) diamond or one of the PMW contracts (`TeePayments`, `TeePaymentsFeeScheduleManager`); only the [`Fdc2Hub`](../FDC2/README.md) and the off-chain TEE proxy sit outside the diamond.
+On-chain calls go through the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond or one of the PMW contracts (`TeePayments`, `TeePaymentsFeeScheduleManager`); only the [`Fdc2Hub`](../FDC2/README.md) and the off-chain TEE proxy sit outside the diamond.

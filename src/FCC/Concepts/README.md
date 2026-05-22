@@ -2,22 +2,33 @@
 
 Cross-cutting concept pages — _the "what and why" of FCC_. Each page defines a concept and its invariants; precise validation rules and field-level schemas live under [Reference/](../Reference/Components/README.md).
 
-This chapter is currently being populated from content in [`../Operations/`](../Operations/README.md) and [`../TeeManagement/`](../TeeManagement/README.md). Pending pages:
+## Pages
 
-- `Operations.md` — the operation lifecycle (instructions → voting → actions → result → reward).
-- `Machines.md` — identity, attestation, registration, statuses, replication.
-- `Policy.md` — signing policy (FCC view; defers to FSP for the canonical spec).
-- `Keys.md` — wallet key custody, backup, restoration.
-- `Voting.md` — threshold consensus, cosigners.
-- `Rewarding.md` — vote-receipt chain.
+| Page | Contents |
+|---|---|
+| [Instructions](Instructions.md) | The off-chain payload that requests an operation: issuance, signing, augmentation; the on-chain event and its off-chain envelope. |
+| [Actions](Actions.md) | What a TEE machine receives and produces, including direct actions and action responses. |
+| [Voting](Voting.md) | Data-provider and cosigner threshold rules; pass conditions. |
+| [Rewarding](Rewarding.md) | Per-vote receipts and the reward-attribution payload. |
+
+The path an operation takes through these phases:
+
+- _Instruction operations_ flow through Instructions → Voting → Actions → Rewarding.
+- _Direct operations_ skip Instructions and Voting and arrive as actions directly; see [Actions § Direct Actions](Actions.md#direct-actions).
+
+## Pending pages
+
+Phase B will add:
+
+- `Machines.md` — TEE identity, attestation, registration, statuses, replication (from `../TeeManagement/{Attestation,Registration,State}.md`).
+- `Keys.md` — wallet key custody, backup, restoration (from `../TeeManagement/Keys.md`).
+- `Wallets.md` — projects, wallets, multisig (from `../TeeManagement/Wallets.md`).
+- `Policy.md` — signing-policy lifecycle on the FCC side (defers to FSP for the canonical spec).
 
 ## Reading order
 
-For new readers, the recommended path is:
-
 1. [Architecture](../Architecture.md) — high-level overview and trust model.
-2. `Operations.md` — what an operation is and how it flows.
-3. `Machines.md` — what a TEE machine is and how it joins the network.
-4. `Policy.md` — the cross-protocol signing policy that gates voting.
-5. `Voting.md` and `Keys.md` — threshold rules and key custody, in either order.
-6. `Rewarding.md` — last, since it is downstream of everything else.
+2. `Instructions.md`, `Actions.md` — the lifecycle of one operation.
+3. `Voting.md` — how proxies aggregate signatures into a pass.
+4. `Rewarding.md` — how participation is attributed and reconstructed off-chain.
+5. (Pending) `Machines.md`, `Keys.md`, `Wallets.md` — TEE machine state and the keys they custody.

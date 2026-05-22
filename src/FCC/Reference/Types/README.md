@@ -84,7 +84,7 @@ Smart contract events, organized by contract: [Events index](Abi/Events/README.m
 
 - [Instruction](Wire/Instruction.md#instruction) — Signed instruction envelope posted at `POST /instruction`.
 - [Data](Wire/Instruction.md#data) — Instruction payload: `TeeInstruction` fields plus `additionalVariableMessage`.
-- [DirectInstruction](Wire/Instruction.md#directinstruction) — Payload submitted at `POST /direct` to create a [direct action](../../Operations/Actions.md#direct-actions).
+- [DirectInstruction](Wire/Instruction.md#directinstruction) — Payload submitted at `POST /direct` to create a [direct action](../../Concepts/Actions.md#direct-actions).
 
 ### Actions
 

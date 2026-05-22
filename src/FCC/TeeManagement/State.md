@@ -8,7 +8,7 @@ For the procedure that surfaces this state to challengers, see [Attestation](Att
 ## Identity Key and Initial Identity
 
 The boot-time key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$ never leaves the enclave; $\mathrm{TEE}_\mathrm{ID}$ is the public key's Ethereum-style address.
-On Flare, $\mathrm{TEE}_\mathrm{pk}$ is represented as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on the [`FlareTeeManager`](FlareTeeManager.md) contract.
+On Flare, $\mathrm{TEE}_\mathrm{pk}$ is represented as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
 
 Each machine also has an _initial identity_ $\mathrm{TEE}_\mathrm{ID}^*$.
 For a fresh registration $\mathrm{TEE}_\mathrm{ID}^* = \mathrm{TEE}_\mathrm{ID}$; for a [replica](#tee-state) taking over from a TEE with identity $\mathrm{TEE}_\mathrm{ID}^{\prime}$, $\mathrm{TEE}_\mathrm{ID}^* = \mathrm{TEE}_\mathrm{ID}^{\prime}$.

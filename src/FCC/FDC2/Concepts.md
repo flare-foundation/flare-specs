@@ -3,7 +3,7 @@
 The Flare Data Connector v2 (FDC2) is an application on the [system extension](../FCE/System.md), managed via the `Fdc2Hub` smart contract.
 Like the [FDC](../../FDC/Introduction.md), FDC2 is an enshrined oracle that imports validated external data onto Flare; unlike the FDC, it uses TEE machines as the trust anchor instead of on-chain bit voting.
 
-Users submit attestation requests as [instructions](../Operations/Instructions.md) on the system extension; participating TEE machines, after a sufficient weight of [data-provider](../../Terminology/Roles.md#data-provider) votes, sign the attestation response with their identity key.
+Users submit attestation requests as [instructions](../Concepts/Instructions.md) on the system extension; participating TEE machines, after a sufficient weight of [data-provider](../../Terminology/Roles.md#data-provider) votes, sign the attestation response with their identity key.
 The signed attestation is then available from the [TEE proxy](../Reference/Components/Proxy.md) and can be published on Flare.
 
 Compared with the FDC, this gives:
@@ -18,9 +18,9 @@ In FCC, FDC2 also handles attestation types specific to TEE liveness and PMW tra
 1. A user submits an [`Fdc2AttestationRequest`](Reference/Types/Abi/Fdc2.md#fdc2attestationrequest) via `Fdc2Hub`, which routes it as an [`F_FDC2 PROVE`](Reference/Operations/Prove.md) instruction to the TEE machines selected by `Fdc2Hub` (either explicitly listed in the request or chosen randomly from the registered set; see [Request Format](#request-format)).
 2. Each [data provider](../../Terminology/Roles.md#data-provider) picks up the instruction off-chain, validates `(data, source)` against the request, and produces an attestation response.
 3. The provider builds a signed instruction with the [`F_FDC2 PROVE` augmentation procedure](Reference/Operations/Prove.md#augmentation-procedure): `additionalFixedMessage` holds the ABI-encoded response body; `additionalVariableMessage` holds the provider's signature over the [attestation response hash](#signature-computation).
-4. The signed instruction is sent to the [TEE proxies](../Reference/Components/Proxy.md) of the target machines and enters the standard [voting process](../Operations/Voting.md).
+4. The signed instruction is sent to the [TEE proxies](../Reference/Components/Proxy.md) of the target machines and enters the standard [voting process](../Concepts/Voting.md).
 5. On reaching the data-provider weight threshold (and the cosigner threshold, if set), the TEE machine signs the attestation response with its identity key.
-6. The TEE proxy serves the resulting [`ProveResponse`](Reference/Types/Wire/Fdc2.md#proveresponse) as the [action result](../Operations/Actions.md#action-results).
+6. The TEE proxy serves the resulting [`ProveResponse`](Reference/Types/Wire/Fdc2.md#proveresponse) as the [action result](../Concepts/Actions.md#action-results).
 7. The proof can then be assembled and submitted on Flare; this final step is typically performed by a data provider.
 
 ## Attestation Types
@@ -90,7 +90,7 @@ The on-chain [`Proof`](Reference/Types/Abi/Fdc2.md#proof) struct for each attest
 | `TEESignature` | `signatures.teeSignatures` | Split the raw bytes into [`(v, r, s)`](../Reference/Types/Abi/Common.md#signature) and wrap in a one-element array. |
 | `CosignerSignatures` | `signatures.cosignerSignatures` | Split each entry into `(v, r, s)`. |
 
-The result is submitted to the verification entry point on [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) (e.g. `verifyAvailabilityCheckProof`, `verifyPMWMultisigAccountConfiguredProof`).
+The result is submitted to the verification entry point on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) (e.g. `verifyAvailabilityCheckProof`, `verifyPMWMultisigAccountConfiguredProof`).
 
 ### On-Chain Verification
 

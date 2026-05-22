@@ -13,7 +13,7 @@ The event message is the [`Fdc2AttestationRequest`](../Types/Abi/Fdc2.md#fdc2att
 The instruction event additionally carries:
 
 - `teeIds`: TEE machines to vote on the request.
-- `cosigners`, `cosignersThreshold` (optional): [cosigner](../../../Operations/Instructions.md#cosigners) set and threshold. When set, both the data-provider and cosigner thresholds must be reached before the TEE machine signs.
+- `cosigners`, `cosignersThreshold` (optional): [cosigner](../../../Concepts/Instructions.md#cosigners) set and threshold. When set, both the data-provider and cosigner thresholds must be reached before the TEE machine signs.
 
 The request header's `thresholdBIPS` field overrides the signing policy's default data-provider voting threshold for this instruction; a value of $0$ falls back to the policy default. See [Signing Threshold Resolution](../../../Reference/Components/Proxy.md#signing-threshold-resolution).
 

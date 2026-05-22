@@ -3,7 +3,7 @@
 This directory documents the _system operations_: those carrying the `F_` op-type prefix that every TEE machine processes regardless of which [FCE](../../FCE/README.md) it is registered to.
 They cover TEE-machine infrastructure (registration, attestation, key custody, policy updates) and are available to any extension.
 
-Each operation is processed either as a [_direct action_](../../Operations/Actions.md#direct-actions) (issued by the [TEE proxy](../Components/Proxy.md) without voting) or an [_instruction action_](../../Operations/Actions.md#instruction-actions) (issued by [signers](../../Operations/Instructions.md#signers) and gated by [voting](../../Operations/Voting.md)).
+Each operation is processed either as a [_direct action_](../../Concepts/Actions.md#direct-actions) (issued by the [TEE proxy](../Components/Proxy.md) without voting) or an [_instruction action_](../../Concepts/Actions.md#instruction-actions) (issued by [signers](../../Concepts/Instructions.md#signers) and gated by [voting](../../Concepts/Voting.md)).
 
 | opType | Action kind | Operations |
 |---|---|---|

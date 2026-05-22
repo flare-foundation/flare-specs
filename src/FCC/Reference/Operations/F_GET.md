@@ -1,6 +1,6 @@
 # F_GET
 
-[Direct actions](../../Operations/Actions.md#direct-actions) issued by the [TEE proxy](../Components/Proxy.md) to poll the TEE machine for state and proofs.
+[Direct actions](../../Concepts/Actions.md#direct-actions) issued by the [TEE proxy](../Components/Proxy.md) to poll the TEE machine for state and proofs.
 
 ## TEE_INFO
 

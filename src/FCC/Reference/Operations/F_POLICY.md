@@ -1,6 +1,6 @@
 # F_POLICY
 
-[Direct actions](../../Operations/Actions.md#direct-actions) issued by the [TEE proxy](../Components/Proxy.md) to install and rotate the active [signing policy](../../../FSP/SigningPolicy.md) on the machine.
+[Direct actions](../../Concepts/Actions.md#direct-actions) issued by the [TEE proxy](../Components/Proxy.md) to install and rotate the active [signing policy](../../../FSP/SigningPolicy.md) on the machine.
 
 ## INITIALIZE_POLICY
 

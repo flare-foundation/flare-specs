@@ -1,6 +1,6 @@
 # Instruction Types
 
-Types related to [instructions](../../../Operations/Instructions.md) and their processing.
+Types related to [instructions](../../../Concepts/Instructions.md) and their processing.
 
 ## TeeInstruction
 

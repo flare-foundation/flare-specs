@@ -1,6 +1,6 @@
 # FlareTeeManager
 
-The `FlareTeeManager` contract is the Flare-side hub of FCC: a [diamond](https://eips.ethereum.org/EIPS/eip-2535) contract whose facets manage [extensions](../FCE/README.md), [TEE machines](Registration.md), [instructions](../Operations/Instructions.md), wallets and keys, attestation verification, and governance.
+The `FlareTeeManager` contract is the Flare-side hub of FCC: a [diamond](https://eips.ethereum.org/EIPS/eip-2535) contract whose facets manage [extensions](../../FCE/README.md), [TEE machines](../../TeeManagement/Registration.md), [instructions](../../Concepts/Instructions.md), wallets and keys, attestation verification, and governance.
 
 ## Facets
 
@@ -17,11 +17,11 @@ Each concern is implemented as an independent facet:
 - `VrfFacet`, `SystemStateVerifierFacet`, `ReplicationFacet`: VRF, state verification, and replication.
 - `DiamondGovernanceFacet`, `OwnerAllowlistFacet`, `ExternalAddressesFacet`: governance and external-address plumbing.
 
-Event signatures are listed under [`Types/Abi/Events/`](../Reference/Types/Abi/Events).
+Event signatures are listed under [`Types/Abi/Events/`](../Types/Abi/Events).
 
 ## Sending Instructions
 
-`InstructionsFacet` exposes two entry points that emit a [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event after caller validation, payload validation, and fee collection:
+`InstructionsFacet` exposes two entry points that emit a [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event after caller validation, payload validation, and fee collection:
 
 - `sendInstructions(teeIds, instructionParams)`.
 - `sendSystemInstructions(instructionId, teeMachines | teeIds, instructionParams)`: lets a system instructions sender supply an explicit `instructionId`.
@@ -31,16 +31,16 @@ Event signatures are listed under [`Types/Abi/Events/`](../Reference/Types/Abi/E
 For `sendInstructions`, `msg.sender` must satisfy one of:
 
 - registered as a _system instructions sender_ (`Instructions.isSystemInstructionsSender(msg.sender)`): any op-type, any extension.
-- equal to the destination extension's registered instructions sender (`ExtensionManager.getExtensionInstructionsSender(extensionId)`): non-[system op-types](../FCE/Concepts.md#system-vs-custom-extensions) only (`F_` prefix forbidden).
+- equal to the destination extension's registered instructions sender (`ExtensionManager.getExtensionInstructionsSender(extensionId)`): non-[system op-types](../../FCE/Concepts.md#system-vs-custom-extensions) only (`F_` prefix forbidden).
 
 The destination extension is determined by the first destination TEE machine (`MachineManager.getExtensionId(teeMachines[0].teeId)`).
 All other destination TEE machines must belong to the same extension.
 
-The [system extension](../FCE/System.md) (`extensionId == 0`) cannot have its own registered instructions sender: `extensionsCounter` is initialized to $1$, so `register` never assigns id $0$, and `setExtensionContracts` rejects `_extensionId == 0`.
+The [system extension](../../FCE/System.md) (`extensionId == 0`) cannot have its own registered instructions sender: `extensionsCounter` is initialized to $1$, so `register` never assigns id $0$, and `setExtensionContracts` rejects `_extensionId == 0`.
 Its TEE machines are reachable only via a system instructions sender.
 
 `sendSystemInstructions` requires `msg.sender` to be a system instructions sender.
-The set is managed by [governance](../../Terminology/Roles.md#governance) via `registerSystemInstructionsSenders` and `unregisterSystemInstructionsSenders`.
+The set is managed by [governance](../../../Terminology/Roles.md#governance) via `registerSystemInstructionsSenders` and `unregisterSystemInstructionsSenders`.
 
 ### Payload Validation
 
@@ -55,12 +55,12 @@ The library further enforces:
 
 ### Event Field Origins
 
-Fields of the emitted [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event:
+Fields of the emitted [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) event:
 
 | Field | Origin |
 |---|---|
 | `extensionId` | `MachineManager.getExtensionId(teeMachines[0].teeId)` — the extension owning the destination TEE machines. |
-| `instructionId` | Auto-generated as $\mathrm{keccak256}(\mathrm{abi.encode}(\mathrm{extensionId},\ n,\ \mathrm{blockhash}(b - 1)))$ where $n$ is the per-extension counter and $b$ the emitting block number; or caller-supplied (only via `sendSystemInstructions`). See [Hashes](../Operations/Instructions.md#hashes). |
+| `instructionId` | Auto-generated as $\mathrm{keccak256}(\mathrm{abi.encode}(\mathrm{extensionId},\ n,\ \mathrm{blockhash}(b - 1)))$ where $n$ is the per-extension counter and $b$ the emitting block number; or caller-supplied (only via `sendSystemInstructions`). See [Hashes](../../Concepts/Instructions.md#hashes). |
 | `rewardEpochId` | `FlareSystemsManager.getCurrentRewardEpochId()` narrowed to `uint32`. |
 | `teeMachines` | Caller argument (passed directly, or resolved from `teeIds` via `MachineManager.getTeeMachine`). |
 | `opType` | Caller argument (`instructionParams.opType`). |
@@ -71,4 +71,4 @@ Fields of the emitted [`TeeInstructionsSent`](../Reference/Types/Abi/Events/TeeE
 | `claimBackAddress` | Caller argument (`instructionParams.claimBackAddress`). |
 | `fee` | `msg.value`, forwarded to the reward manager. |
 
-Each [instructions sender](../Operations/Instructions.md#instructions-senders) contract defines how it derives the caller-argument fields from the call its own users make.
+Each [instructions sender](../../Concepts/Instructions.md#instructions-senders) contract defines how it derives the caller-argument fields from the call its own users make.

@@ -60,7 +60,7 @@ The workflows build on each other. Complete earlier workflows before attempting 
 
 ### Contract Notation
 
-- Function calls are written as `ContractName.functionName()` (e.g., `FlareTeeManager.register()`). Most FCC entry points sit on the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) diamond.
+- Function calls are written as `ContractName.functionName()` (e.g., `FlareTeeManager.register()`). Most FCC entry points sit on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) diamond.
 - Events are written as `EventName(field1, field2)` (e.g., `TeeMachineRegistered(teeId, extensionId)`).
 
 ### Status Transitions

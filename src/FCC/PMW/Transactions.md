@@ -1,7 +1,7 @@
 # Payments
 
 PMW payments are submitted on Flare and executed on an external chain by the [TEE machines](../Reference/Components/Machine.md) holding the wallet's keys.
-The `TeePayments` contract receives requests, expands them into [`PaymentInstructionMessage`](Reference/Types/Payment.md#paymentinstructionmessage) payloads, and submits them as [`F_XRP PAY`](Reference/Operations/Pay.md) (or [`F_XRP REISSUE`](Reference/Operations/Reissue.md)) [instructions](../Operations/Instructions.md) via [`FlareTeeManager.sendInstructions`](../TeeManagement/FlareTeeManager.md).
+The `TeePayments` contract receives requests, expands them into [`PaymentInstructionMessage`](Reference/Types/Payment.md#paymentinstructionmessage) payloads, and submits them as [`F_XRP PAY`](Reference/Operations/Pay.md) (or [`F_XRP REISSUE`](Reference/Operations/Reissue.md)) [instructions](../Concepts/Instructions.md) via [`FlareTeeManager.sendInstructions`](../Reference/Contracts/FlareTeeManager.md).
 This page covers the payment surface (`pay`, `reissue`) and the [fee schedule](#fee-schedules) and [batching](#batching) mechanisms that drive them.
 
 ## Submitting a Payment

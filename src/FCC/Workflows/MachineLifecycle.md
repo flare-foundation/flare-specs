@@ -51,7 +51,7 @@ For full status definitions, see the [Registration specification](../TeeManageme
 
 ## Prerequisites
 
-- The TEE machine must be registered on the [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) contract.
+- The TEE machine must be registered on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
 - For most operations, the machine should be in `PRODUCTION` status (completed via `toProduction(proof)` as described in [MachineRegistration.md](MachineRegistration.md)). Note that `toProduction(proof)` works from both `INITIALIZED` and `PAUSED` statuses and requires a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof and a supported code version.
 - The caller must have the appropriate role (owner, governance, or anyone -- depending on the operation).
 - For proof-based operations, a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) FDC2 proof is required (see [Fdc2Attestation.md](../FDC2/Workflows/Fdc2Attestation.md)).
@@ -228,7 +228,7 @@ Note: A TEE id can only be transferred to a new owner through this ownership cha
 
 **Who can call:** Anyone.
 
-**Contract:** [`FlareTeeManager`](../TeeManagement/FlareTeeManager.md) (the `confirmAvailability` entry point on the verification facet).
+**Contract:** [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) (the `confirmAvailability` entry point on the verification facet).
 
 **Parameters:**
 

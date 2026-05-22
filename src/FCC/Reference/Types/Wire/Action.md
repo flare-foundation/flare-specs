@@ -1,6 +1,6 @@
 # Action Wire Types
 
-JSON types for [actions](../../../Operations/Actions.md) and their [responses](../../../Operations/Actions.md#action-responses), exchanged between the [TEE proxy](../../Components/Proxy.md) and its TEE machine.
+JSON types for [actions](../../../Concepts/Actions.md) and their [responses](../../../Concepts/Actions.md#action-responses), exchanged between the [TEE proxy](../../Components/Proxy.md) and its TEE machine.
 
 ## Action
 
@@ -16,7 +16,7 @@ For instruction actions, the per-signer arrays (`signatures`, `additionalVariabl
     "additionalVariableMessages": { "type": "array", "items": { "type": "string", "format": "bytes" }, "description": "Per-signer `additionalVariableMessage` values. Empty for direct actions." },
     "timestamps": { "type": "array", "items": { "type": "integer", "format": "uint64" }, "description": "Per-signer proxy arrival timestamps. Empty for direct actions." },
     "additionalActionData": { "type": "string", "format": "bytes", "description": "Optional proxy-supplied data for the machine." },
-    "signatures": { "type": "array", "items": { "type": "string", "format": "bytes" }, "description": "Per-signer signatures collected by [voting](../../../Operations/Voting.md). Empty for direct actions." }
+    "signatures": { "type": "array", "items": { "type": "string", "format": "bytes" }, "description": "Per-signer signatures collected by [voting](../../../Concepts/Voting.md). Empty for direct actions." }
   },
   "required": ["data"]
 }
@@ -48,8 +48,8 @@ Posted by the TEE machine to the proxy's internal `/result` endpoint, and served
   "type": "object",
   "properties": {
     "result": { "$ref": "#actionresult" },
-    "signature": { "type": "string", "format": "bytes", "description": "TEE-machine signature over the result; see [Action Responses](../../../Operations/Actions.md#action-responses)." },
-    "proxySignature": { "type": "string", "format": "bytes", "description": "Proxy signature added when the proxy serves the external `/result` endpoint; see [Action Responses](../../../Operations/Actions.md#action-responses)." }
+    "signature": { "type": "string", "format": "bytes", "description": "TEE-machine signature over the result; see [Action Responses](../../../Concepts/Actions.md#action-responses)." },
+    "proxySignature": { "type": "string", "format": "bytes", "description": "Proxy signature added when the proxy serves the external `/result` endpoint; see [Action Responses](../../../Concepts/Actions.md#action-responses)." }
   },
   "required": ["result", "signature"]
 }
@@ -89,7 +89,7 @@ Used to attribute fees as rewards to data providers.
     "voteSequence": { "$ref": "#votesequence" },
     "additionalData": { "type": "string", "format": "bytes", "description": "Copy of the response's `additionalResultStatus`." },
     "version": { "type": "string", "description": "Encoding version." },
-    "signature": { "type": "string", "format": "bytes", "description": "TEE-machine signature over `voteHash`; see [Rewarding](../../../Operations/Rewarding.md#rewardingdata)." }
+    "signature": { "type": "string", "format": "bytes", "description": "TEE-machine signature over `voteHash`; see [Rewarding](../../../Concepts/Rewarding.md#rewardingdata)." }
   },
   "required": ["voteSequence", "version", "signature"]
 }
@@ -98,7 +98,7 @@ Used to attribute fees as rewards to data providers.
 ## VoteSequence
 
 The reward-attribution state for the instruction.
-`voteHash` is the final hash of the proxy's [vote-hash chain](../../../Operations/Rewarding.md#vote-receipts); together with the per-vote [`VoteReceipt`](../Abi/Voting.md#votereceipt)s it reconstructs the full vote ordering.
+`voteHash` is the final hash of the proxy's [vote-hash chain](../../../Concepts/Rewarding.md#vote-receipts); together with the per-vote [`VoteReceipt`](../Abi/Voting.md#votereceipt)s it reconstructs the full vote ordering.
 
 ```json
 {

@@ -1,16 +1,16 @@
 # Relay Client
 
-A _relay client_ transforms [instruction events](../../Operations/Instructions.md#sending-instructions) into signed [instructions](../../Operations/Instructions.md) and submits them to [TEE proxies](Proxy.md).
-It runs as either a _[data provider](../../../Terminology/Roles.md#data-provider)_ or a _[cosigner](../../Operations/Instructions.md#cosigners)_, identified by the address of a private key (its _operator_).
+A _relay client_ transforms [instruction events](../../Concepts/Instructions.md#sending-instructions) into signed [instructions](../../Concepts/Instructions.md) and submits them to [TEE proxies](Proxy.md).
+It runs as either a _[data provider](../../../Terminology/Roles.md#data-provider)_ or a _[cosigner](../../Concepts/Instructions.md#cosigners)_, identified by the address of a private key (its _operator_).
 
 ## Relay Flow
 
-1. Observe [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) events from the [`FlareTeeManager`](../../TeeManagement/FlareTeeManager.md) contract by polling an operator-run C-chain indexer database.
+1. Observe [`TeeInstructionsSent`](../Types/Abi/Events/TeeExtensionRegistry.md#teeinstructionssent) events from the [`FlareTeeManager`](../Contracts/FlareTeeManager.md) contract by polling an operator-run C-chain indexer database.
    Identically-named events from other contracts are ignored.
 2. Filter by mode:
    - _Data provider_: accept all instructions.
-   - _Cosigner_: accept only instructions whose [`cosigners` list](../../Operations/Instructions.md#cosigners) includes the operator's address.
-3. For [augmented](../../Operations/Instructions.md#augmentation) commands, run the per-command procedure:
+   - _Cosigner_: accept only instructions whose [`cosigners` list](../../Concepts/Instructions.md#cosigners) includes the operator's address.
+3. For [augmented](../../Concepts/Instructions.md#augmentation) commands, run the per-command procedure:
    - [`F_FDC2 PROVE`](../../FDC2/Reference/Operations/Prove.md#augmentation-procedure)
    - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#augmentation)
 4. De-duplicate the event's `teeMachines` list and, for each remaining [`TeeMachine`](../Types/Abi/TeeMachine.md#teemachine) record, build one [`Instruction`](../Types/Wire/Instruction.md#instruction):
@@ -18,7 +18,7 @@ It runs as either a _[data provider](../../../Terminology/Roles.md#data-provider
    - Set `timestamp` to the timestamp of the block that emitted the event.
    - Set `teeId` to the record's `teeId`.
    - Set `additionalFixedMessage` and `additionalVariableMessage` from step 3 for augmented commands; otherwise leave them empty.
-   - Set `signature` to the [ECDSA signature](../../../Utilities/Signing.md) over [`hashForSigning`](../../Operations/Instructions.md#hashes) with the operator's private key.
+   - Set `signature` to the [ECDSA signature](../../../Utilities/Signing.md) over [`hashForSigning`](../../Concepts/Instructions.md#hashes) with the operator's private key.
 5. Submit the resulting `Instruction` as JSON via [`POST /instruction`](Proxy.md#external-write-apis) to the record's `url`.
 
 ## Behavior

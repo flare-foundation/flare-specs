@@ -1,6 +1,6 @@
 # Voting Types
 
-Types used in the [voting](../../../Operations/Voting.md) process for instruction signature aggregation.
+Types used in the [voting](../../../Concepts/Voting.md) process for instruction signature aggregation.
 These structs are ABI-encoded for computing the iterative `voteHash` chain.
 
 ## VoteSequenceInit

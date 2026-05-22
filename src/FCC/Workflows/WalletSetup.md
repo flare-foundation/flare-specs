@@ -11,7 +11,7 @@ For canonical ownership, wallet, and key semantics, see [Wallets](../TeeManageme
 - **Extension registered** with supported key types and signing algorithms (see [ExtensionConfiguration.md](../FCE/Workflows/Configuration.md))
 - **Funded owner account** — the Flare address that will own the project must have sufficient funds for transaction fees
 - **Admin key pairs** — ECDSA key pairs for each admin that will be configured on the wallet
-- **(Optional) Cosigner accounts** — Flare addresses for any [cosigners](../Operations/Instructions.md#cosigners)
+- **(Optional) Cosigner accounts** — Flare addresses for any [cosigners](../Concepts/Instructions.md#cosigners)
 
 ---
 

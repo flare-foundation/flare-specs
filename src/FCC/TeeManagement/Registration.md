@@ -1,6 +1,6 @@
 # Registration and Lifecycle
 
-A TEE machine joins FCC by registering against an [extension](../FCE/README.md) on the [`FlareTeeManager`](FlareTeeManager.md) contract, then completing an [availability proof](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) before it can serve production traffic.
+A TEE machine joins FCC by registering against an [extension](../FCE/README.md) on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract, then completing an [availability proof](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) before it can serve production traffic.
 This page covers the registration call, the [TEE ID](#tee-id-derivation) derivation, the [status lifecycle](#statuses), and the [management calls](#management-calls) available to TEE operators.
 
 ## Owner Allowlist

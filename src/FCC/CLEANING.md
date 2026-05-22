@@ -70,11 +70,18 @@ Commit hashes captured on 2026-05-21 (refresh by re-fetching each remote and re-
 
 ### Order
 
-Phase B — concept/reference split — is in progress. Remaining work:
+Phase B — concept/reference split — is in progress.
 
-1. Dissolve `Operations/` (`Actions.md`, `Instructions.md`, `Voting.md`, `Rewarding.md`, `README.md`): concept content → `Concepts/{Operations,Voting,Rewarding}.md`; reference content folds into `Reference/Components/Proxy.md` and `Reference/Types/Wire/*.md`.
-2. Dissolve `TeeManagement/` (`Attestation.md`, `Keys.md`, `Registration.md`, `State.md`, `Wallets.md`): concept content → `Concepts/{Machines,Keys}.md`; reference content (functions, statuses, events) into `Reference/Contracts/FlareTeeManager.md` together with the events currently under `Reference/Types/Abi/Events/`.
-3. `FCE/` — populate `Reference/Api.md` for the TEE machine ↔ extension HTTP contract.
+Done:
+
+- [x] Relocate `Operations/{Instructions,Actions,Voting,Rewarding}.md` → `Concepts/`; delete the `Operations/` directory.
+- [x] Relocate `TeeManagement/FlareTeeManager.md` → `Reference/Contracts/FlareTeeManager.md`.
+
+Remaining:
+
+1. Dissolve `TeeManagement/{Attestation,Registration,State,Wallets,Keys}.md`: concept content → `Concepts/{Machines,Keys,Wallets}.md`; reference content (functions, statuses, validation) into `Reference/Contracts/FlareTeeManager.md`.
+2. Fold `Reference/Types/Abi/Events/Tee*.md` into the contract page that emits each event (mostly `Reference/Contracts/FlareTeeManager.md`; `Reference/Types/Abi/Events/TeePayments*.md` → `PMW/Reference/Contracts/Payments.md` (create); `TeeFdc2*` → `FDC2/Reference/Contracts/Fdc2Hub.md` (create)).
+3. `FCE/` — populate `Reference/Api.md` for the TEE machine ↔ FCE HTTP contract.
 4. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
 5. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
 
@@ -291,11 +298,11 @@ These two PMW commands are registered with `immediateResult=false` (`tee-node/in
 
 #### Document that extensions only handle `threshold` and `submit` actions
 
-When the extension API spec is cleaned (`FCE/README.md` or `FCE/Concepts.md`), surface that a custom extension's `/action` endpoint only ever receives actions with `submissionTag` of `threshold` (instruction actions) or `submit` (direct actions). `end` instruction actions are built locally by the TEE machine without consulting the extension (`tee-node/internal/processors/instructions/default.go:57-72`; see also [`Operations/Actions.md#custom-extension-commands`](Operations/Actions.md#custom-extension-commands)).
+When the extension API spec is cleaned (`FCE/README.md` or `FCE/Concepts.md`), surface that a custom extension's `/action` endpoint only ever receives actions with `submissionTag` of `threshold` (instruction actions) or `submit` (direct actions). `end` instruction actions are built locally by the TEE machine without consulting the extension (`tee-node/internal/processors/instructions/default.go:57-72`; see also [`Operations/Actions.md#custom-extension-commands`](Concepts/Actions.md#custom-extension-commands)).
 
 #### Document the two extension → TEE machine result-delivery paths
 
-The extension API spec should describe both ways an extension can deliver an [`ActionResult`](Operations/Actions.md#action-results) to the TEE machine:
+The extension API spec should describe both ways an extension can deliver an [`ActionResult`](Concepts/Actions.md#action-results) to the TEE machine:
 
 1. **Synchronous** — always: the result returned as the HTTP response body to the TEE machine's `POST /action` call (`tee-node/internal/extension/extension.go:14-44`).
 2. **Asynchronous** — for time-consuming actions: a further update posted later to the TEE machine's own `POST /result` endpoint (`tee-node/internal/extension/server/server.go:228-273`), which signs and forwards it to the proxy. This drives the `status=2` (in-progress) → final-status transition for async commands.

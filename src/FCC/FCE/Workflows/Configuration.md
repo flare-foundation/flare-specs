@@ -7,7 +7,7 @@ For background on the extension framework, see [Extensions](../README.md).
 
 ## Prerequisites
 
-- Deployed Flare TEE system contracts: the [`FlareTeeManager`](../../TeeManagement/FlareTeeManager.md) diamond and the `TeePayments` family for PMW
+- Deployed Flare TEE system contracts: the [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) diamond and the `TeePayments` family for PMW
 - A funded Ethereum account to submit transactions
 - A TEE node running inside a Confidential VM (or in local dev mode with `MODE=1`)
 - Access to the TEE node's Configuration API on port $5500$

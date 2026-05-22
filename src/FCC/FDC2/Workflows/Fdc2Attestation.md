@@ -18,13 +18,13 @@ The same flow applies to [`TeeAvailabilityCheck`](../Reference/AttestationTypes/
 
 ### Step 1: Submit the Attestation Request
 
-Submit an attestation request as an [instruction](../../Operations/Instructions.md) on the system extension.
-Depending on the attestation type, this is done either through a convenience contract such as the verification entry points on [`FlareTeeManager`](../../TeeManagement/FlareTeeManager.md), or directly through `Fdc2Hub.requestAttestation()`.
+Submit an attestation request as an [instruction](../../Concepts/Instructions.md) on the system extension.
+Depending on the attestation type, this is done either through a convenience contract such as the verification entry points on [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md), or directly through `Fdc2Hub.requestAttestation()`.
 The request body, source ID, threshold, proof owner, and target TEE list are defined by the owning FDC2 specification.
 
 ### Step 2: Providers Verify and Relay the Request
 
-Data providers, and any required [cosigners](../../Operations/Instructions.md#cosigners), verify the requested data off-chain.
+Data providers, and any required [cosigners](../../Concepts/Instructions.md#cosigners), verify the requested data off-chain.
 Each signer then prepares the instruction for the selected machines using the standard FDC2 message layout:
 
 - `additionalFixedMessage`: the ABI-encoded attestation response body.
@@ -34,7 +34,7 @@ The signed instructions are relayed to the target TEE proxies.
 
 ### Step 3: TEEs Vote and Produce the Signed Response
 
-Each TEE proxy runs the standard [voting process](../../Operations/Voting.md) for the attestation instruction.
+Each TEE proxy runs the standard [voting process](../../Concepts/Voting.md) for the attestation instruction.
 Once the data-provider threshold, and any cosigner threshold, are satisfied, the TEE signs the attestation response with its identity key and returns the result to the proxy.
 
 ### Step 4: Retrieve the Proof from the Proxy

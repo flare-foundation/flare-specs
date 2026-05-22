@@ -1,6 +1,6 @@
 # F_WALLET
 
-[Instruction actions](../../Operations/Actions.md#instruction-actions) that manage wallet-stored private keys on TEE machines: generation, deletion, restoration from backup, and VRF proof production.
+[Instruction actions](../../Concepts/Actions.md#instruction-actions) that manage wallet-stored private keys on TEE machines: generation, deletion, restoration from backup, and VRF proof production.
 
 ## KEY_GENERATE
 
@@ -51,10 +51,10 @@ The retained nonce is reused if the same `(walletId, keyId)` is later restored v
 ## KEY_DATA_PROVIDER_RESTORE
 
 Restores a previously backed-up key onto a target TEE machine.
-Each [signer](../../Operations/Instructions.md#signers) ([data provider](../../../Terminology/Roles.md#data-provider) and/or [key admin](../../../Terminology/Roles.md#key-admin)) fetches the backup package, verifies it, and re-encrypts its [Shamir secret share](../../TeeManagement/Keys.md#backup-procedure) under the target TEE's public key (see [Augmentation](#augmentation)).
+Each [signer](../../Concepts/Instructions.md#signers) ([data provider](../../../Terminology/Roles.md#data-provider) and/or [key admin](../../../Terminology/Roles.md#key-admin)) fetches the backup package, verifies it, and re-encrypts its [Shamir secret share](../../TeeManagement/Keys.md#backup-procedure) under the target TEE's public key (see [Augmentation](#augmentation)).
 The TEE machine recovers the private key from these shares and returns a signed `KeyExistence` proof.
 
-This is the proxy-level exception for [voting outcomes](../../Operations/Voting.md#outcomes): both the `threshold` and `end` actions are produced when the vote box closes, so the machine receives every share that arrived before close.
+This is the proxy-level exception for [voting outcomes](../../Concepts/Voting.md#outcomes): both the `threshold` and `end` actions are produced when the vote box closes, so the machine receives every share that arrived before close.
 
 **Event message:** [`KeyDataProviderRestore`](../Types/Abi/Key.md#keydataproviderrestore), referencing [`BackupId`](../Types/Abi/Key.md#backupid) and [`PublicKey`](../Types/Abi/Common.md#publickey).
 
@@ -88,7 +88,7 @@ The TEE machine rejects the instruction unless all of the following hold:
 - The `additionalFixedMessage` metadata's `WalletBackupID` matches the instruction's `BackupId`.
 - The metadata's admin public keys derive to distinct admin addresses (no duplicates).
 - The instruction's `cosigners` and `cosignersThreshold` agree with the admins and admin threshold recorded in the backup metadata.
-- Every [signer](../../Operations/Instructions.md#signers) is in either the data-provider pool of the signing policy at backup time or the admin pool from the metadata; the admin threshold is reached.
+- Every [signer](../../Concepts/Instructions.md#signers) is in either the data-provider pool of the signing policy at backup time or the admin pool from the metadata; the admin threshold is reached.
 - No active key for `(walletId, keyId)` is currently stored on the machine. If a nonce record from a previous lifecycle exists, the instruction's `nonce` must be strictly greater than the stored nonce.
 
 ### Notes

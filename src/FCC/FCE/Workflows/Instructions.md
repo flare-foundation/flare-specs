@@ -3,7 +3,7 @@
 ## Overview
 
 This workflow describes how a caller sends a custom instruction to a non-system extension and retrieves the result.
-Canonical instruction, action, and extension-routing semantics belong to [Instructions](../../Operations/Instructions.md), [Actions](../../Operations/Actions.md), and [Extensions](../README.md).
+Canonical instruction, action, and extension-routing semantics belong to [Instructions](../../Concepts/Instructions.md), [Actions](../../Concepts/Actions.md), and [Extensions](../README.md).
 This page focuses on the procedural flow rather than the internal implementation of any specific extension.
 
 ## Prerequisites
@@ -24,19 +24,19 @@ The instruction must define:
 - the custom `opType`,
 - the custom `opCommand`,
 - the encoded `message`,
-- any required [`cosigners`](../../Operations/Instructions.md#cosigners), and
+- any required [`cosigners`](../../Concepts/Instructions.md#cosigners), and
 - the `cosignersThreshold`.
 
 The meaning of `opType`, `opCommand`, and `message` is owned by the extension itself and should be documented with the extension contracts or application documentation.
 
 ### Step 2: Providers and Cosigners Relay the Instruction
 
-After the on-chain instruction is emitted, [data providers](../../../Terminology/Roles.md#data-provider) and any required cosigners prepare the corresponding [instruction](../../Operations/Instructions.md).
+After the on-chain instruction is emitted, [data providers](../../../Terminology/Roles.md#data-provider) and any required cosigners prepare the corresponding [instruction](../../Concepts/Instructions.md).
 They sign and relay it to the target TEE proxies using the standard FCC instruction flow.
 
 ### Step 3: The Proxy Routes the Action to the Extension
 
-Once the voting threshold is met, the proxy packages the instruction as an [action](../../Operations/Actions.md).
+Once the voting threshold is met, the proxy packages the instruction as an [action](../../Concepts/Actions.md).
 Because the operation is not a system `F_*` command, the TEE node routes it to the configured extension logic instead of handling it with the built-in system processors.
 
 ### Step 4: The Extension Produces a Result
@@ -57,12 +57,12 @@ The proxy response includes the TEE-signed action result, which the caller then 
 
 ### Step 6: Optional Direct Actions
 
-If an extension intentionally supports [direct actions](../../Operations/Actions.md#direct-actions), the operator can submit them through the proxy's `POST /direct` endpoint instead of via `sendInstructions()`.
+If an extension intentionally supports [direct actions](../../Concepts/Actions.md#direct-actions), the operator can submit them through the proxy's `POST /direct` endpoint instead of via `sendInstructions()`.
 The resulting action still follows the standard action-response format.
 Signature and authorization requirements for direct actions remain extension-specific.
 
 ## Notes
 
 - Define the custom `opType`, `opCommand`, and payload encoding with the extension, not in the core FCC pages.
-- Use [Actions](../../Operations/Actions.md) as the owner page for `submissionTag`, `status`, and response semantics.
+- Use [Actions](../../Concepts/Actions.md) as the owner page for `submissionTag`, `status`, and response semantics.
 - Current implementation details such as ports, timeouts, and internal extension APIs are not canonical workflow rules and should stay in implementation-facing documentation.

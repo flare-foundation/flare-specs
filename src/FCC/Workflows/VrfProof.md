@@ -43,7 +43,7 @@ A VRF proof request is submitted via `TeeVrf.requestVrf(walletId, keyId, nonce, 
 
 ### Step 2: Voting
 
-[Data providers](../../Terminology/Roles.md#data-provider) vote on the instruction following the standard [voting process](../Operations/Voting.md). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
+[Data providers](../../Terminology/Roles.md#data-provider) vote on the instruction following the standard [voting process](../Concepts/Voting.md). Since this is an instruction command, it requires a threshold of signatures from the current signing policy before the TEE proxy forwards the action to the TEE machine.
 
 ---
 

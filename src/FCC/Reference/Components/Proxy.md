@@ -1,7 +1,7 @@
 # TEE Proxy
 
 A _TEE proxy_ is the public-facing gateway for its paired [TEE machine](Machine.md).
-It accepts [instructions](../../Operations/Instructions.md) and signatures from [data providers](../../../Terminology/Roles.md#data-provider) and [cosigners](../../Operations/Instructions.md#cosigners), runs the [voting process](../../Operations/Voting.md), queues [actions](../../Operations/Actions.md) for the machine, stores results, and serves them onward to external consumers.
+It accepts [instructions](../../Concepts/Instructions.md) and signatures from [data providers](../../../Terminology/Roles.md#data-provider) and [cosigners](../../Concepts/Instructions.md#cosigners), runs the [voting process](../../Concepts/Voting.md), queues [actions](../../Concepts/Actions.md) for the machine, stores results, and serves them onward to external consumers.
 Each TEE machine has exactly one TEE proxy; together they form a registered FCC node.
 
 ## Proxy Identity
@@ -19,11 +19,11 @@ The proxy keeps its paired TEE machine in sync with the current [signing policy]
 
 - On initialization, it installs the current policy on the machine via [`INITIALIZE_POLICY`](../Operations/F_POLICY.md#initialize_policy).
    The initial [attestation](../../TeeManagement/Attestation.md) lets data providers verify that the correct policy was installed.
-- During operation, the proxy reads new policies from a C-chain indexer and pushes them via [`UPDATE_POLICY`](../Operations/F_POLICY.md#update_policy) as a [direct action](../../Operations/Actions.md#direct-actions).
+- During operation, the proxy reads new policies from a C-chain indexer and pushes them via [`UPDATE_POLICY`](../Operations/F_POLICY.md#update_policy) as a [direct action](../../Concepts/Actions.md#direct-actions).
 
 ## Proxy-Issued Direct Actions
 
-Every [direct action](../../Operations/Actions.md#direct-actions) the proxy issues to its paired TEE machine on its own initiative:
+Every [direct action](../../Concepts/Actions.md#direct-actions) the proxy issues to its paired TEE machine on its own initiative:
 
 | Command | Trigger | [Queue](#processing-queues) | Purpose |
 |---|---|---|---|
@@ -34,11 +34,11 @@ Every [direct action](../../Operations/Actions.md#direct-actions) the proxy issu
 | [`F_GET KEY_PROOF`](../Operations/F_GET.md#key_proof) | Follow-up to `KEY_INFO`, for pairs whose nonce changed | Direct | Fetch fresh [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) values for the key data store. |
 | [`F_GET TEE_BACKUP`](../Operations/F_GET.md#tee_backup) | Via [result hooks](#result-hooks): per new key, or per stored key after each `UPDATE_POLICY` | Backup | Store fresh backups in the [backup store](#persistent-stores). |
 
-The proxy does not issue any other `F_` action; all other `F_` instructions originate on-chain (`FlareTeeManager`, `Fdc2Hub`, `TeePayments`) and reach the proxy through [signers](../../Operations/Instructions.md#signers).
+The proxy does not issue any other `F_` action; all other `F_` instructions originate on-chain (`FlareTeeManager`, `Fdc2Hub`, `TeePayments`) and reach the proxy through [signers](../../Concepts/Instructions.md#signers).
 
 ## Signing Threshold Resolution
 
-The proxy resolves the effective [cosigner](../../Operations/Instructions.md#cosigners) set and data-provider threshold for an instruction based on its `(opType, opCommand)`:
+The proxy resolves the effective [cosigner](../../Concepts/Instructions.md#cosigners) set and data-provider threshold for an instruction based on its `(opType, opCommand)`:
 
 1. [`F_XRP PAY`](../../PMW/Reference/Operations/Pay.md) and [`F_XRP REISSUE`](../../PMW/Reference/Operations/Reissue.md): cosigners are taken from the wallet configuration.
 2. [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#key_data_provider_restore): cosigners and thresholds are taken from the backup metadata.
@@ -68,8 +68,8 @@ This is a deliberate DoS protection: it prevents a single compromised data provi
 
 The proxy hosts three independent queues, each polled separately by the TEE machine so a slow or failing action on one queue does not block the others:
 
-1. **Direct**: every [direct action](../../Operations/Actions.md#direct-actions) except `TEE_BACKUP` — both proxy-issued system operations and externally submitted custom extension operations.
-2. **Main**: [instruction actions](../../Operations/Actions.md#instruction-actions).
+1. **Direct**: every [direct action](../../Concepts/Actions.md#direct-actions) except `TEE_BACKUP` — both proxy-issued system operations and externally submitted custom extension operations.
+2. **Main**: [instruction actions](../../Concepts/Actions.md#instruction-actions).
 3. **Backup**: [`TEE_BACKUP`](../Operations/F_GET.md#tee_backup) direct actions.
 
 The proxy may apply per-queue filtering and may prioritize its own internal reads.
@@ -78,17 +78,17 @@ The proxy may apply per-queue filtering and may prioritize its own internal read
 
 When the TEE machine posts an [`ActionResponse`](../Types/Wire/Action.md#actionresponse) to the [internal result API](#internal-apis), the proxy:
 
-1. Verifies the response's [TEE-machine signature](../../Operations/Actions.md#action-responses) against its paired machine identity.
+1. Verifies the response's [TEE-machine signature](../../Concepts/Actions.md#action-responses) against its paired machine identity.
 2. Runs any matching [result hook](#result-hooks).
 3. Stores the response in the [action result store](#persistent-stores), keyed by `(actionId, submissionTag)`, subject to the [override rules](#result-store-override-rules) below.
 
-When the same response is later served via the [external result API](#external-read-apis), the proxy adds its own [`proxySignature`](../../Operations/Actions.md#action-responses) so consumers can authenticate the proxy as well.
+When the same response is later served via the [external result API](#external-read-apis), the proxy adds its own [`proxySignature`](../../Concepts/Actions.md#action-responses) so consumers can authenticate the proxy as well.
 
 ### Result Store Override Rules
 
 The action result store is keyed by `(actionId, submissionTag)` and enforces:
 
-- A stored _final_ result ([`status`](../../Operations/Actions.md#action-results) `0` or `1`) is immutable; any subsequent write is rejected.
+- A stored _final_ result ([`status`](../../Concepts/Actions.md#action-results) `0` or `1`) is immutable; any subsequent write is rejected.
 - A stored _transient_ result (`status ≥ 2`) is overwritten only by a final result, or by a transient result with a strictly greater `status`. Equal or lower transient status is rejected.
 
 Transient statuses are therefore monotonically increasing and final statuses are write-once.
@@ -146,7 +146,7 @@ Every request carries a random challenge; responses return a receipt signed by t
   - **$429$ Too Many Requests**: per-data-provider [open-vote cap](#per-provider-open-vote-cap) reached; the [relay client](RelayClient.md) should retry.
   - **$500$ Internal Server Error**: other error; details in `description`.
 
-- **`POST /direct`** — submits a [`DirectInstruction`](../Types/Wire/Instruction.md#directinstruction) to create a [direct action](../../Operations/Actions.md#direct-actions) for a non-system operation.
+- **`POST /direct`** — submits a [`DirectInstruction`](../Types/Wire/Instruction.md#directinstruction) to create a [direct action](../../Concepts/Actions.md#direct-actions) for a non-system operation.
   Optionally enabled per deployment and may require API-key authentication.
   System (`F_`-prefixed) operations are rejected.
   Responses:

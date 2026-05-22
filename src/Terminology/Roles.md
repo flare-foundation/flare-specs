@@ -39,7 +39,7 @@ Operations requiring admin approval use a $k$-of-$n$ threshold over the admin pu
 
 ## Governance
 
-*Governance* is the single Flare address authorized to perform privileged operations on Flare's smart contracts — for example, registering [system instructions senders](../FCC/Operations/Instructions.md#sending-instructions), setting the [signing policy threshold](../FSP/SigningPolicy.md), and adding [system-supported key types](../FCC/FCE/Concepts.md#system-administration-functions-governance-only).
+*Governance* is the single Flare address authorized to perform privileged operations on Flare's smart contracts — for example, registering [system instructions senders](../FCC/Concepts/Instructions.md#sending-instructions), setting the [signing policy threshold](../FSP/SigningPolicy.md), and adding [system-supported key types](../FCC/FCE/Concepts.md#system-administration-functions-governance-only).
 The address is backed by a multisig (or a single key on test networks) and can only be changed by a validator fork.
 
 It is distinct from the per-extension [governance signers](#governance-signer) that approve TEE upgrades.
