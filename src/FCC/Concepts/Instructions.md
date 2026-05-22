@@ -48,7 +48,7 @@ The instruction carries two fields the signer may populate per command:
 1. `additionalFixedMessage`: Lies inside `TeeInstruction`, is part of [`instructionHash`](#hashes), and must be identical across all signers contributing to the same vote.
 2. `additionalVariableMessage`: Lies alongside `TeeInstruction` in `data`, is hashed and signed separately, and may differ per signer.
 
-Two system commands populate them via a per-command procedure run by the relay client:
+Two system operations populate them via a per-command procedure run by the relay client:
 
 - [`F_FDC2 PROVE`](../FDC2/Reference/Operations/Prove.md#augmentation-procedure)
 - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#augmentation)

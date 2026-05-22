@@ -45,7 +45,7 @@ A passing box produces two [instruction actions](Actions.md#instruction-actions)
 1. `threshold`: Produced when the box passes.
    The TEE machine executes the operation; the action's [result data](Actions.md#action-results) carries the operation output.
 2. `end`: Produced when the box closes.
-   The TEE machine emits the [`RewardingData`](Rewarding.md#rewardingdata) payload as the action's result data and performs no further operation work (system commands may run a consistency check at this stage and downgrade the status if it fails).
+   The TEE machine emits the [`RewardingData`](Rewarding.md#rewardingdata) payload as the action's result data and performs no further operation work (system operations may run a consistency check at this stage and downgrade the status if it fails).
 
 [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#key_data_provider_restore) is the exception: both actions are produced at close so the proxy can collect additional shares before key reconstruction.
 

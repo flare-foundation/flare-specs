@@ -95,7 +95,7 @@ Transient statuses are therefore monotonically increasing and final statuses are
 
 ### Result Hooks
 
-A small set of successful system command results trigger proxy-side follow-up before storage:
+A small set of successful system operation results trigger proxy-side follow-up before storage:
 
 1. [`UPDATE_POLICY`](../Operations/F_POLICY.md#update_policy): the proxy enqueues a [`TEE_BACKUP`](../Operations/F_GET.md#tee_backup) action on the backup queue for every stored wallet key.
 2. [`KEY_GENERATE`](../Operations/F_WALLET.md#key_generate), [`KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#key_data_provider_restore), [`KEY_DELETE`](../Operations/F_WALLET.md#key_delete): the proxy updates its tracked keys; additions also enqueue a `TEE_BACKUP` for the new key.

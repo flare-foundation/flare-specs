@@ -55,7 +55,7 @@ Field population depends on whether the action belongs to a system [command](../
 
 ### System Commands
 
-The TEE machine processes system commands locally — both the [infrastructure commands](../Reference/Operations/README.md) and the system extension's application commands ([PMW](../PMW/Reference/Operations/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../FDC2/Reference/Operations/README.md) `F_FDC2 PROVE`).
+The TEE machine processes system operations locally — both the [infrastructure operations](../Reference/Operations/README.md) and the system extension's application operations ([PMW](../PMW/Reference/Operations/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../FDC2/Reference/Operations/README.md) `F_FDC2 PROVE`).
 It populates each field as follows:
 
 - `id`, `submissionTag`: copied from the inbound `Action.data`.
