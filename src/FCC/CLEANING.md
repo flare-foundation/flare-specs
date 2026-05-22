@@ -82,12 +82,12 @@ Done:
 - [x] Write `PMW/Reference/Contracts/Payments.md` (TeePayments contract surface + events, organised by area).
 - [x] Write `FCE/Reference/Api.md` (TEE machine ↔ FCE HTTP contract).
 - [x] Write `Reference/Contracts/VrfVerifier.md` (the standalone VRF-verification contract: functions, Proof struct, errors).
+- [x] Write `FDC2/Reference/Contracts/Fdc2Hub.md` (request submission, verification, fees, governance, events, errors).
 
 Remaining:
 
 1. `Workflows/` — reshape pages as state machines per `Workflows/Conventions.md`.
 2. Per-page leaf cleaning of `Reference/Components/`, `Reference/Operations/`, `PMW/`, `FDC2/`.
-3. Create `FDC2/Reference/Contracts/Fdc2Hub.md` (the `Fdc2Hub` contract has no spec page yet).
 
 ## Cross-cutting renames and fixes
 

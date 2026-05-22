@@ -8,6 +8,7 @@ The signed attestation is served by the [TEE proxy](../Reference/Components/Prox
 |---|---|
 | [Concepts](Concepts.md) | Request flow, attestation types, signature computation, request/response format, on-chain proof assembly. |
 | [Verifier](Verifier.md) | HTTP interface of the FDC2 verifier server run by each data provider. |
+| [Reference/Contracts/Fdc2Hub](Reference/Contracts/Fdc2Hub.md) | The on-chain hub: request submission, verification, fees, governance. |
 | [Reference/AttestationTypes](Reference/AttestationTypes/README.md) | Per-type request and response specifications. |
 | [Reference/Operations](Reference/Operations/README.md) | The `F_FDC2 PROVE` operation. |
 | [Reference/Types](Reference/Types/Abi/Fdc2.md) | ABI and wire types ([Abi/Fdc2](Reference/Types/Abi/Fdc2.md), [Wire/Fdc2](Reference/Types/Wire/Fdc2.md), [AttestationType](Reference/Types/Abi/AttestationType.md)). |
