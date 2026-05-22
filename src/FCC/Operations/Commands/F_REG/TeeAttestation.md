@@ -1,6 +1,7 @@
 # F_REG TEE_ATTESTATION
 
-[Instruction action](../../Actions.md#instruction-actions) used during [registration](../../../TeeManagement/Registration.md): a [signer](../../Instructions.md#signers) submits a challenge through the [TEE proxy](../../../Components/TeeProxy.md) and the TEE machine returns the same attestation payload as a self-initiated [`TEE_INFO`](../F_GET/TeeInfo.md).
+[Instruction action](../../Actions.md#instruction-actions) used during [registration](../../../TeeManagement/Registration.md).
+`FlareTeeManager` emits the instruction with a challenge of $\mathrm{keccak256}(\mathrm{teeId} \,\|\, \mathrm{block.timestamp} \,\|\, \mathrm{Relay.getRandomNumber}())$; [signers](../../Instructions.md#signers) relay it to the [TEE proxy](../../../Components/TeeProxy.md) and the destination TEE machine returns the same attestation payload as a self-initiated [`TEE_INFO`](../F_GET/TeeInfo.md).
 
 ## Event message
 

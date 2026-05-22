@@ -1,6 +1,6 @@
 # F_POLICY INITIALIZE_POLICY
 
-[Direct action](../../Actions.md#direct-actions) issued by the [TEE proxy](../../../Components/TeeProxy.md) at startup to seed the TEE machine's first [signing policy](../../../../FSP/SigningPolicy.md), using the current policy read from the Flare C-chain.
+[Direct action](../../Actions.md#direct-actions) issued by the [TEE proxy](../../../Components/TeeProxy.md) once per paired TEE machine, on first connection, to seed the machine's first [signing policy](../../../../FSP/SigningPolicy.md).
 
 ## Action message
 

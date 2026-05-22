@@ -53,7 +53,15 @@ Commit hashes captured on 2026-05-21 (refresh by re-fetching each remote and re-
 4. Prefer linking to other files over repeating their content.
 5. Link any term, role, concept, type, contract, or command discussed elsewhere in the docs on its first occurrence in the file.
 6. Do not document implementation details.
-7. Treat each component as a black box: document only what crosses its boundary — HTTP requests/responses, on-chain calls and events, file artifacts handed to other parties, and externally observable timing or ordering guarantees (e.g. best-effort delivery, or that one queue's processing does not block another's).
+   What counts as implementation detail:
+   - Internal data structures, function decompositions, libraries, language-level choices, and storage backends.
+   - Smart-contract functions that are not part of the user-facing surface.
+
+   What is _not_ implementation detail and should be documented:
+   - Periodic triggers — name the component that owns the schedule and give an approximate cadence as a "feel for the system" cue using $\sim$ (e.g. "the proxy issues `KEY_INFO` every $\sim 60$ minutes"). The exact cadence is impl detail, but the existence of the periodic loop is part of the externally observable behavior.
+   - User-facing smart-contract interfaces — function names intended to be called by users, their parameters, ownership rules, and emitted events.
+
+7. Treat each component as a black box: document only what crosses its boundary — HTTP requests/responses, on-chain calls and events, file artifacts handed to other parties, and externally observable timing or ordering guarantees (e.g. best-effort delivery, periodic refresh every $\sim X$ seconds, or that one queue's processing does not block another's).
    Do not document internal structs or formats that never leave the component.
    On-chain state and events count as external — document them.
 8. Replace inline ABI and wire schemas with links into the canonical type docs (e.g. `Types/Abi/...` and `Types/Wire/...`); do not duplicate type definitions in prose.
@@ -198,6 +206,12 @@ Apply the same split when cleaning the remaining docs.
 
 Relay-client construction uses _build_ (`Operations/Instructions.md`, `Components/RelayClient.md`).
 Spot-check the rest of the docs (`Commands/`, `Workflows/`, etc.) for inconsistent usage (_produce_, _assemble_, _construct_, _create_, _make_, ...) and converge on _build_.
+
+#### Generalize Redis references to "key-value store"
+
+Redis is the chosen backend for the proxy's persistent stores, but the spec only requires a key-value store that supports queues; any equivalent backend could replace it.
+Sweep `Components/TeeProxy.md`, `Operations/Actions.md`, and any leaf docs that mention Redis by name and rewrite as "key-value store" (or similar) unless the reference is to a specific operational concern (e.g. a deployment-doc context outside the spec).
+Section title `### Redis-Backed Stores` in `TeeProxy.md` should become `### Persistent Stores` or similar; keep TTLs and the keying schema because those are observable behavior.
 
 #### Rewrite implementation-specific code snippets as equations
 

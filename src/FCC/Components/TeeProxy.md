@@ -21,6 +21,21 @@ The proxy keeps its paired TEE machine in sync with the current [signing policy]
    The initial [attestation](../TeeManagement/Attestation.md) lets data providers verify that the correct policy was installed.
 - During operation, the proxy reads new policies from a C-chain indexer and pushes them via [`UPDATE_POLICY`](../Operations/Commands/F_POLICY/UpdatePolicy.md) as a [direct action](../Operations/Actions.md#direct-actions).
 
+## Proxy-Issued Direct Actions
+
+Every [direct action](../Operations/Actions.md#direct-actions) the proxy issues to its paired TEE machine on its own initiative:
+
+| Command | Trigger | [Queue](#processing-queues) | Purpose |
+|---|---|---|---|
+| [`F_POLICY INITIALIZE_POLICY`](../Operations/Commands/F_POLICY/InitializePolicy.md) | Once per paired TEE machine, on first connection | Direct | Seed the machine's first signing policy. |
+| [`F_POLICY UPDATE_POLICY`](../Operations/Commands/F_POLICY/UpdatePolicy.md) | When a new signing policy becomes active on the Flare C-chain | Direct | Rotate the signing policy on the machine. |
+| [`F_GET TEE_INFO`](../Operations/Commands/F_GET/TeeInfo.md) | Periodic, every $\sim 10$ s | Direct | Refresh the [last-attestation cache](#in-memory-stores) served at `GET /info`. |
+| [`F_GET KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) | Periodic, every $\sim 60$ min | Direct | Sync the [key data store](#in-memory-stores) (keys present, nonces). |
+| [`F_GET KEY_PROOF`](../Operations/Commands/F_GET/KeyProof.md) | Follow-up to `KEY_INFO`, for pairs whose nonce changed | Direct | Fetch fresh [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) values for the key data store. |
+| [`F_GET TEE_BACKUP`](../Operations/Commands/F_GET/TeeBackup.md) | Via [result hooks](#result-hooks): per new key, or per stored key after each `UPDATE_POLICY` | Backup | Store fresh backups in the [backup store](#persistent-stores). |
+
+The proxy does not issue any other `F_` action; all other `F_` instructions originate on-chain (`FlareTeeManager`, `Fdc2Hub`, `TeePayments`) and reach the proxy through [signers](../Operations/Instructions.md#signers).
+
 ## Signing Threshold Resolution
 
 The proxy resolves the effective [cosigner](../Operations/Instructions.md#cosigners) set and data-provider threshold for an instruction based on its `(opType, opCommand)`:
@@ -65,7 +80,7 @@ When the TEE machine posts an [`ActionResponse`](../Types/Wire/Action.md#actionr
 
 1. Verifies the response's [TEE-machine signature](../Operations/Actions.md#action-responses) against its paired machine identity.
 2. Runs any matching [result hook](#result-hooks).
-3. Stores the response in the [action result store](#redis-backed-stores), keyed by `(actionId, submissionTag)`, subject to the [override rules](#result-store-override-rules) below.
+3. Stores the response in the [action result store](#persistent-stores), keyed by `(actionId, submissionTag)`, subject to the [override rules](#result-store-override-rules) below.
 
 When the same response is later served via the [external result API](#external-read-apis), the proxy adds its own [`proxySignature`](../Operations/Actions.md#action-responses) so consumers can authenticate the proxy as well.
 
@@ -88,9 +103,10 @@ A small set of successful system command results trigger proxy-side follow-up be
 
 ## Proxy State
 
-### Redis-Backed Stores
+### Persistent Stores
 
-Persistent stores; survive proxy restarts. Retention is per record.
+Survive proxy restarts; held in a key-value store that supports queues (Redis in the reference deployment, any equivalent backend works).
+Retention is per record.
 
 - **Action store**: `(actionId, submissionTag) → actionData`. Tracks the action payload that was queued for the machine. Retained for $30$ days.
 - **Action result store**: `(actionId, submissionTag) → actionResult`. Tracks the result returned by the machine. Retained for $14$ days; `submit`-tag results for $30$ minutes. Subject to [override rules](#result-store-override-rules).
@@ -103,8 +119,8 @@ Recomputed on restart.
 
 - **Voting process store**: `instructionHash → VotingProcess`. Tracks active voting processes; cyclic with one round per signing policy.
 - **Voting process list**: `instructionId → []instructionHash`. Concurrent votes for the same instruction ID, scoped to the voting process store.
-- **Key data store**: `(walletId, keyId) → (timestamp, SignedKeyExistenceProof)`. The proxy refreshes it by combining [`KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) (returns `(walletId, keyId, nonce)` triples) with [`KEY_PROOF`](../Operations/Commands/F_GET/KeyProof.md) (returns [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) for triples whose nonce changed). Entries for keys no longer present on the TEE are dropped on each sync.
-- **Last attestation**: cached output of the most recent [`TEE_INFO`](../Operations/Commands/F_GET/TeeInfo.md), exposed at `GET /info`.
+- **Key data store**: `(walletId, keyId) → (timestamp, SignedKeyExistenceProof)`. The proxy refreshes it periodically (every $\sim 60$ minutes) by combining [`KEY_INFO`](../Operations/Commands/F_GET/KeyInfo.md) (returns `(walletId, keyId, nonce)` triples) with [`KEY_PROOF`](../Operations/Commands/F_GET/KeyProof.md) (returns [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) for triples whose nonce changed). Entries for keys no longer present on the TEE are dropped on each sync.
+- **Last attestation**: cached output of the most recent [`TEE_INFO`](../Operations/Commands/F_GET/TeeInfo.md), exposed at `GET /info`. Refreshed periodically, every $\sim 10$ seconds, with a challenge derived from the latest C-chain block hash.
 
 ## TEE Proxy APIs
 

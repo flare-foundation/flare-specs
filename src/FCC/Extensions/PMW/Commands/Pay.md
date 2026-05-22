@@ -3,6 +3,7 @@
 ## Description
 
 Signs an XRP Ledger multisig payment from a PMW wallet using one or more TEE-managed private keys.
+Emitted as an instruction when a user calls [`TeePayments.pay`](../Transactions.md#submitting-a-payment) (directly or through a batched call from the same wallet).
 
 - If `amount = 0` and the recipient address equals the sender, the TEE signs an empty `AccountSet` (nullification) transaction; the payment reference is still attached. See [Nullification](../Transactions.md#nullification).
 - If `tokenId` is zero-valued, the transaction is a direct XRP payment. Other token IDs are reserved for future use.

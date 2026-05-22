@@ -24,4 +24,5 @@ The TEE machine rejects the instruction unless all of the following hold:
 
 ## Notes
 
+- On the `end` submission tag the machine re-checks that the key is still stored under `(walletId, keyId)`, so a missing or evicted record fails the end-tag action.
 - On chain the first confirmed `KeyExistence` attestation fixes the key's public key; later attestations from other machines for the same `(walletId, keyId)` cannot change it. A malicious data provider majority that signs the same instruction to multiple machines can therefore cause different generated keys to attest, but only one survives on chain.

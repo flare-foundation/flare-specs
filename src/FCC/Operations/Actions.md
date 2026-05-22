@@ -33,10 +33,10 @@ The payload originates in one of two ways:
   When enabled, the proxy authenticates requests (e.g. via API key).
   The endpoint rejects any operation in the system (`F_`) namespace; it is intended for custom [extension](../Extensions/Concepts.md#system-vs-custom-extensions) operations.
 - _Proxy-initiated_: the proxy constructs a `DirectInstruction` for system services:
-  - [`TEE_INFO`](Commands/F_GET/TeeInfo.md) — liveness and state polling.
-  - [`INITIALIZE_POLICY`](Commands/F_POLICY/InitializePolicy.md) — on proxy startup.
+  - [`TEE_INFO`](Commands/F_GET/TeeInfo.md) — periodic liveness and state polling (every $\sim 10$ seconds).
+  - [`INITIALIZE_POLICY`](Commands/F_POLICY/InitializePolicy.md) — once at proxy startup.
   - [`UPDATE_POLICY`](Commands/F_POLICY/UpdatePolicy.md) — when the proxy observes a new [signing policy](../../FSP/SigningPolicy.md) on-chain.
-  - [`KEY_INFO`](Commands/F_GET/KeyInfo.md) — wallet sync.
+  - [`KEY_INFO`](Commands/F_GET/KeyInfo.md) — periodic wallet sync (every $\sim 60$ minutes).
   - [`KEY_PROOF`](Commands/F_GET/KeyProof.md) — fetched during wallet sync for keys whose stored proof is missing or stale.
   - [`TEE_BACKUP`](Commands/F_GET/TeeBackup.md) — on new key generation and after every signing policy update.
 

@@ -15,7 +15,7 @@ This is the proxy-level exception for [voting outcomes](../../Voting.md#outcomes
 During [backup](../../../TeeManagement/Keys.md#backup-procedure), each holder (data provider or admin) receives a _holder backup package_: its Shamir share of the original private key, ECIES-encrypted under its own public key.
 Before signing the instruction, the [relay client](../../../Components/RelayClient.md) re-encrypts that share for the target TEE:
 
-1. Fetch the backup package from `backupUrl`. The package is subject to a deployment-configured size limit; oversized responses or HTTP errors drop the instruction.
+1. Fetch the backup package from `backupUrl`. The instruction is dropped if the fetch fails.
 2. Verify that the package's metadata matches every field of the instruction's [`BackupId`](../../../Types/Abi/Key.md#backupid); any mismatch drops the instruction.
 3. Verify that the target TEE machine (identified by the `BackupId.teeId` recipient address) is registered, currently attested, and not running banned code.
 4. Extract the holder backup package(s) addressed to the relay client's public key. The key may appear in the data-provider pool, the admin pool, or both; if in both, both packages are extracted. If in neither, the instruction is dropped.

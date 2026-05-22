@@ -32,7 +32,7 @@ Each [TEE operator](../Terminology/Roles.md#tee-operator) deploys the following 
 
 3. **C-chain indexer**: A database-backed indexer used by the TEE proxy to track signing policy updates.
 
-4. **Redis**: Persistent storage for proxy state including voting processes, action queues, and key data.
+4. **Key-value store with queues**: Persistent backing for the proxy's [stores](Components/TeeProxy.md#persistent-stores) (Redis in the reference deployment).
 
 ## Trust Model
 
