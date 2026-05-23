@@ -11,7 +11,7 @@ For the contract surface (function signatures, struct fields, management-call ca
 - Boot-time key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$ generated inside the enclave; $\mathrm{TEE}_\mathrm{sk}$ never leaves it.
 - $\mathrm{TEE}_\mathrm{ID}$ — the last $20$ bytes of $\mathrm{keccak256}(\mathrm{TEE}_\mathrm{pk})$. _Not_ the address of the registering operator (the [TEE operator](../../Terminology/Roles.md#tee-operator), recorded separately as the machine's [owner](#owner-allowlist)).
 - On Flare, $\mathrm{TEE}_\mathrm{pk}$ is held as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md).
-- _Initial identity_ $\mathrm{TEE}_\mathrm{ID}^*$ — equal to $\mathrm{TEE}_\mathrm{ID}$ for a fresh registration; equal to the predecessor's $\mathrm{TEE}_\mathrm{ID}$ when this machine [replicates](#statuses) one.
+- _Initial identity_ $\mathrm{TEE}_\mathrm{ID}^*$ — equal to $\mathrm{TEE}_\mathrm{ID}$ for a fresh registration; after [replication](../Workflows/MachineReplication.md), the persistent slot's $\mathrm{TEE}_\mathrm{ID}^*$ records the _successor_'s original $\mathrm{TEE}_\mathrm{ID}$ (the identity of the new hardware now backing the slot).
 - Owner changes go through the two-step ownership-transfer flow on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md#management-calls).
 
 ## Signing Policy
@@ -84,7 +84,7 @@ A registered machine moves through seven statuses:
 2. **`PRODUCTION`** — fully operational; accepts instructions. Owner may pause; anyone may suspend after the [availability deadline](#availability-deadline) expires.
 3. **`SUSPENDED`** — set on a non-`OK` [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof or after the availability deadline. Can return to `PRODUCTION` with a fresh proof, be paused, or be banned.
 4. **`PAUSED`** — owner-initiated stop, or automatic on settings update or unsupported code. No instructions accepted. Return to `PRODUCTION` requires a fresh availability proof.
-5. **`PAUSED_FOR_UPGRADE`** — owner-initiated, prepares the machine for [replication](../Workflows/MachineLifecycle.md). Entered from `PAUSED` after a minimum dwell.
+5. **`PAUSED_FOR_UPGRADE`** — owner-initiated, prepares the machine for [replication](../Workflows/MachineReplication.md). Entered from `PAUSED` after a minimum dwell.
 6. **`REPLICATING`** — a successor machine is taking over this machine's identity and key set; reached from `PAUSED_FOR_UPGRADE` on a successful availability proof from the successor.
 7. **`BANNED`** — extension-owner only; reversal lands the machine in `PAUSED`.
 

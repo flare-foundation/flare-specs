@@ -263,16 +263,17 @@ The canonical signing-policy spec stays at [`FSP/SigningPolicy.md`](../FSP/Signi
 
 These items are not yet on the critical path but anchor the longer-term spec direction; record them so they are not lost.
 
-### Quint stub for one Workflow
+### TLA+ formal models
 
-`Workflows/Conventions.md` prescribes the state-machine shape so that workflows can later be translated mechanically into a formal modelling language (Quint or TLA+). Translate one of the smaller workflows (`KeyAdd.md` is the obvious first candidate) into a Quint module and check it in alongside the markdown page.
-The exercise will:
+The state-machine shape that `Workflows/Conventions.md` prescribes is intended to translate near-mechanically into TLA+ (the chosen formal language; TEE-spec readers natively read TLA+ math notation, so the ergonomic case for Quint does not apply here). Initial TLA+ files for workflows and concept-level state machines live under `Formal/` on the `formal` branch. Open items:
 
-- Validate that the prescribed shape (preconditions, states, transitions with guards/effects, invariants, terminal states) is in fact mechanically translatable.
-- Surface gaps in the prose where a transition's guards or effects are under-specified.
-- Set a template the remaining workflows can follow.
+- Decide on the canonical home (`src/FCC/Formal/` mirroring the markdown tree, or a sibling tree).
+- Add a CI job that runs SANY (syntax) on every `.tla`; TLC/Apalache model checking as a slower optional job.
+- Cross-reference each `.tla` file from the matching markdown page once the conventions stabilize.
 
-Once a worked example exists, decide whether to translate the rest workflow-by-workflow or to defer until model-checking actually needs them.
+### RewardDistribution workflow (FSP scope)
+
+The reward-distribution flow — how participation in TEE voting and signing is attributed and reconstructed off-chain into per-data-provider rewards — was considered for `FCC/Workflows/` but rejected: the mechanism lives in the FSP, and the FCC side already documents the per-vote receipt structure in [`Concepts/Rewarding.md`](Concepts/Rewarding.md). Cover the full reward-distribution workflow in `src/FSP/` rather than `FCC/` when the FSP cleaning pass picks it up.
 
 ### Drive-by Phase 1 verification of `Reference/Operations/F_*.md`
 

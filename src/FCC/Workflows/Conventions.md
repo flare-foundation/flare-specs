@@ -41,6 +41,8 @@ Auxiliary explanations (rationale, edge cases, FAQ) live in a final **Notes** se
 | `PRODUCTION` | Operational. |
 | `SUSPENDED` | Auto-suspended on stale availability or non-`OK` proof. |
 | `PAUSED` | Owner-initiated or settings-update stop. |
+| `PAUSED_FOR_UPGRADE` | Owner has scheduled a [replication](MachineReplication.md); awaiting `replicateFrom`. |
+| `REPLICATING` | Successor machine is taking over an existing $\mathrm{TEE}_\mathrm{ID}$. |
 | `BANNED` | Extension-owner stop. |
 
 See [Concepts/Machines § Statuses](../Concepts/Machines.md#statuses) for the on-chain definitions.
@@ -63,16 +65,20 @@ See [Concepts/Wallets § Wallet Lifecycle](../Concepts/Wallets.md#wallet-lifecyc
      ▼        ▼          │
   machine-  machine-     │
   registration lifecycle │
-     │                   │
+     │           │       │
+     │           ├──▶ machine-replication
+     │           │
+     │           ├──▶ owner-transfer  (also from wallet-setup for projects)
+     │           │
      ▼                   │
   wallet-setup           │
      │                   │
      ├────────────────┐  │
      ▼                ▼  ▼
   xrpl-multisig-   key-add / key-delete / key-restore
-  configuration
-     │
-     ▼
+  configuration       │
+     │                ▼
+     ▼            tee-backup
   xrp-payment
 
   wallet-setup (with VRF key)
@@ -84,6 +90,13 @@ See [Concepts/Wallets § Wallet Lifecycle](../Concepts/Wallets.md#wallet-lifecyc
               │
               ▼
      extension-instructions
+
+  Every instruction-driven step above is one cycle of
+              instruction-lifecycle
+
+  signing-policy-transition runs once per reward epoch
+  on every TEE machine in PRODUCTION, in parallel with
+  the rest of the graph
 
   All single-TEE workflows
               │
