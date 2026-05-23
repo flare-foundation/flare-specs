@@ -5,9 +5,9 @@
 Phase 2 [cleaning](#cleaning-plan) status:
 
 - [x] `Images/`
-- [x] `Concepts/{Actions,Instructions,Voting,Rewarding,README}.md` (formerly `Operations/`)
+- [x] `Concepts/{Actions,Instructions,Machines,Voting,Rewarding,README,TrustModel}.md`
 - [x] `Reference/Components/RelayClient.md`
-- [x] `Reference/Operations/*.md` (system operations consolidation)
+- [x] `Reference/Operations/
 - [x] `Architecture.md`
 - [x] `README.md`
 - [x] `../Utilities/Signing.md`
