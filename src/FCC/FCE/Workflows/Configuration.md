@@ -1,6 +1,6 @@
 # Configuration
 
-State machine for bringing a new (custom) [FCE](../README.md) from nothing to a ready-to-receive-instructions configuration: registering it on chain, adding a supported code version, gating which addresses may register machines or create projects, declaring supported key types, and provisioning the first TEE node's local settings.
+State machine for bringing a new (custom) [FCE](../README.md) from nothing to a ready-to-receive-instructions configuration: registering it on chain, adding a supported code version, gating which addresses may register machines or create projects, declaring supported key types, and provisioning the first TEE machine's local settings.
 
 For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface in [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md).
 
@@ -8,9 +8,9 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 
 - The Flare TEE system contracts are deployed (the [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) diamond and, if PMW is in use, the [`Payments`](../../PMW/Reference/Contracts/Payments.md) family).
 - The caller controls a funded Flare address.
-- The FCE's TEE-node Docker image has a reproducible `codeHash`.
+- The FCE's TEE-machine Docker image has a reproducible `codeHash`.
 - A TEE proxy server is deployed (or planned) so machines can be paired with it.
-- For Step `provisionTeeNode`, a TEE node is running inside a Confidential VM (or in local-dev mode with `MODE=1`), with the Configuration API reachable.
+- For Step `provisionTeeMachine`, a TEE machine is running inside a Confidential VM (or in local-dev mode with `MODE=1`), with the Configuration API reachable.
 
 ## States
 
@@ -19,7 +19,7 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 - `CodeAdded` — at least one `(codeHash, platform)` combination is registered.
 - `Allowlisted` — machine-owner and project-owner allowlists are populated (or explicitly opened with the "allow all" toggle).
 - `KeyTypesAdded` — `supportedKeyTypes` contains at least one entry (or the FCE does not custody keys, in which case this state is skipped).
-- `Provisioned` — the first TEE node has been configured (proxy URL, initial owner, extension ID) and is ready to register.
+- `Provisioned` — the first TEE machine has been configured (proxy URL, initial owner, extension ID) and is ready to register.
 - `OwnerTransferred` — _optional_; the extension's `owner` has been handed to a governance/multisig address via two-step transfer.
 
 ## Initial State
@@ -76,14 +76,14 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 - **Guards**: each entry of `keyTypes` is system-supported (registered by governance via `addSystemSupportedKeyTypesAndSigningAlgos`).
 - **Effects**: wallet projects under this extension can be created with one of the listed key types. Emits [`SupportedKeyTypesAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#supportedkeytypesadded).
 
-### provisionTeeNode: KeyTypesAdded → Provisioned
+### provisionTeeMachine: KeyTypesAdded → Provisioned
 
-- **Action**: configure the TEE node via its Configuration API (or via environment variables before boot):
+- **Action**: configure the TEE machine via its Configuration API (or via environment variables before boot):
   - `POST /proxy` — set the paired TEE proxy URL.
   - `POST /initial-owner` — set the machine's initial owner address. Immutable once set.
   - `POST /extension-id` — set the extension ID. Fixed after a successful [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
-- **Caller**: TEE machine owner (with network access to the node's Configuration API).
-- **Effects**: no on-chain state. The TEE node now knows where to fetch actions, which address to register under, and which extension to join. [MachineRegistration](../../Workflows/MachineRegistration.md) can proceed.
+- **Caller**: TEE machine owner (with network access to the machine's Configuration API).
+- **Effects**: no on-chain state. The TEE machine now knows where to fetch actions, which address to register under, and which extension to join. [MachineRegistration](../../Workflows/MachineRegistration.md) can proceed.
 
 ### transferOwnership: any → OwnerTransferred (optional, repeatable)
 
@@ -106,5 +106,5 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 ## Notes
 
 - After [`register`](#register-unregistered--registered), the deployed `instructionsSender` contract must learn its own `extensionId` (typically via a `setExtensionId` call) before it can forward user calls to `FlareTeeManager.sendInstructions`.
-- All three TEE-node configuration endpoints can be supplied via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) at boot instead of via the Configuration API.
+- All three TEE-machine configuration endpoints can be supplied via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) at boot instead of via the Configuration API.
 - The same allowlist and key-type calls are also used by the [system extension](../System.md) via its governance entry points.

@@ -3,7 +3,7 @@
 Data structures used across the FCC specification, organized into two categories:
 
 - **[ABI types](Abi)** — Solidity struct definitions used for ABI encoding, hash computation, and on-chain verification.
-- **[Wire types](Wire)** — JSON types as communicated over HTTP between TEE components (proxy APIs, TEE node actions).
+- **[Wire types](Wire)** — JSON types as communicated over HTTP between TEE components (proxy APIs, TEE machine actions).
 
 Both categories are documented as JSON schemas; see [Format Glossary](Glossary.md) for the custom `format` values used in those schemas and their JSON wire representations.
 Where a type appears in both contexts, the ABI page defines the canonical struct and the wire page documents any differences in representation or wrapping.

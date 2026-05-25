@@ -22,8 +22,8 @@ The `(extensionId, instructionsSender, stateVerifier, supportedCodeHashes, suppo
 
 The distinction is enforced by an operation-type prefix:
 
-- _System operations_ use the `F_` prefix (e.g. `F_WALLET`, `F_XRP`, `F_FDC2`) and are handled by built-in processors on every TEE machine. They cover both infrastructure operations (registration, key management, signing-policy updates) and the system extension's PMW and FDC2 applications. `F_`-prefixed instructions can be sent only by the system extension's instructions sender or by a registered [system instructions sender](#instructions-senders).
-- _Custom operations_ have no `F_` prefix and are routed to the extension's own code via the [extension API](README.md).
+- _System operations_ use the `F_` prefix (e.g. `F_WALLET`, `F_XRP`, `F_FDC2`) and are handled in-process by the [node app](../Reference/Components/Machine.md) on every TEE machine. They cover both infrastructure operations (registration, key management, signing-policy updates) and the system extension's PMW and FDC2 applications. `F_`-prefixed instructions can be sent only by the system extension's instructions sender or by a registered [system instructions sender](#instructions-senders).
+- _Custom operations_ have no `F_` prefix and are dispatched to the FCE's own [extension app](../Reference/Components/Machine.md) over a [local HTTP interface](Reference/Api.md).
 
 ## Instructions Senders
 

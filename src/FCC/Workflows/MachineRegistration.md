@@ -12,8 +12,8 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 
 ## States
 
-- `Booted` — the Confidential VM is running; the TEE node has generated its identity key pair and `teeId` is the derived address. No proxy URL, no initial owner, no extension ID is configured locally yet.
-- `LocallyConfigured` — proxy URL, initial owner, and extension ID are set on the local node (via the Configuration API on port `5500` or environment variables) and the node is paired with its proxy.
+- `Booted` — the Confidential VM is running; the TEE machine has generated its identity key pair and `teeId` is the derived address. No proxy URL, no initial owner, no extension ID is configured locally yet.
+- `LocallyConfigured` — proxy URL, initial owner, and extension ID are set on the machine (via the Configuration API on port `5500` or environment variables) and the machine is paired with its proxy.
 - `Initialized` — `register(...)` has run; `wallet.status = INITIALIZED`; the contract has auto-enqueued a [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) instruction.
 - `Attested` — the [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) FDC2 sub-workflow has produced a valid `OK` proof for the machine.
 - `Production` — `toProduction(proof)` has accepted the proof; the machine is in the active set and may serve instructions. `availabilityCheckValidityEndTs` is set.
@@ -26,16 +26,16 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 
 ### configureLocally: Booted → LocallyConfigured
 
-- **Action**: three TEE-node Configuration API calls (or environment variables):
+- **Action**: three TEE-machine Configuration API calls (or environment variables):
   1. `POST /proxy` with the proxy URL.
   2. `POST /initial-owner` with the future `msg.sender` of `register()`.
   3. `POST /extension-id` with the target `extensionId`.
-- **Caller**: machine operator (with network access to the node's port `5500`).
+- **Caller**: machine operator (with network access to the machine's port `5500`).
 - **Guards**:
   - `initialOwner` is immutable once set.
   - `extensionId` becomes immutable after the first successful [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
 - **Effects**:
-  - The node connects to the proxy and starts polling for actions.
+  - The machine connects to the proxy and starts polling for actions.
   - The proxy's `GET /info` endpoint now serves a `SignedTeeInfoResponse` carrying `(teeId, publicKey, codeHash, platform, extensionId, initialOwner, attestation, dataSignature, proxySignature)` — the inputs to `register` come from here.
 
 ### register: LocallyConfigured → Initialized
@@ -95,6 +95,6 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 
 ## Notes
 
-- The Configuration API and the three setters can be replaced by the `PROXY_URL`, `INITIAL_OWNER`, and `EXTENSION_ID` environment variables at TEE-node boot.
+- The Configuration API and the three setters can be replaced by the `PROXY_URL`, `INITIAL_OWNER`, and `EXTENSION_ID` environment variables at machine boot.
 - `register` is `payable` because it auto-enqueues the first attestation request. Operators typically fund a margin above the minimum so the machine can also handle the FDC2 availability check immediately.
 - The `claimBackAddress` parameter on `register` reclaims the prepaid TEE fee if attestation fails before the machine reaches `Production`.

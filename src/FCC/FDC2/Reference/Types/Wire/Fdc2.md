@@ -1,6 +1,6 @@
 # FDC2 Wire Types
 
-JSON types returned by TEE node actions for FDC2 operations.
+JSON types returned by TEE machine actions for FDC2 operations.
 For the corresponding ABI types used for on-chain proof verification, see [FDC2 (ABI)](../Abi/Fdc2.md).
 
 ## ProveResponse
