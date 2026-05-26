@@ -32,18 +32,18 @@ Verify factual claims against the latest code in:
 
 Reads can hit the working tree directly, or `git show origin/<ref>:<path>` for an origin-pinned read.
 
-Commit hashes captured on 2026-05-25 (refresh by re-fetching each remote and re-running the head log).
+Commit hashes captured on 2026-05-26 (refresh by re-fetching each remote and re-running the head log).
 Refresh this table at the start of any new Phase 1 verification round if the snapshot is more than a few weeks stale; the verifications below reference specific commit hashes and will need re-checking against the new HEAD if behaviour has changed:
 
 | Repo | Read ref | HEAD commit | Date |
 |------|----------|-------------|------|
 | `tee/tee-node` | `origin/main` | `4ba38512` | 2026-05-14 |
 | `tee/tee-proxy` | `origin/main` | `31bfb8e0` | 2026-05-14 |
-| `tee/tee-relay-client` | `origin/tee-diamond-cut` | `52eee370` | 2026-04-24 |
+| `tee/tee-relay-client` | `origin/tee-diamond-cut` | `3bfbb5d8` | 2026-05-25 |
 | `tee/go-verifier-api` | `origin/main` | `d7efb89a` | 2026-05-22 |
-| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` | `2a1536cc` | 2026-05-22 |
+| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` | `0bc80b0b` | 2026-05-25 |
 | `libs/go-flare-common` | `origin/tee-diamond-cut` | `876c09e6` | 2026-04-24 |
-| `fdc/verifier-xrp-indexer` | `origin/main` | `fbf952c9` | 2026-04-17 |
+| `fdc/verifier-xrp-indexer` | `origin/main` | `5506c431` | 2026-05-25 |
 
 `tee-node` is the base TEE machine implementation; deployments may extend it by composing user-provided FCE repos on top.
 
@@ -247,15 +247,6 @@ The C-chain indexer (mentioned in `Architecture.md`'s deployment topology and `R
 Decide whether each warrants a `Components/` page documenting its observable surface (schemas, retention guarantees, endpoint shape) or remains a passing mention.
 The external signer used by the relay client is currently only mentioned by name; if there is a stable HTTP contract for it (`POST /sign`, `POST /decrypt`, `GET /id` are observed in code), surface it explicitly — either as a section in `Reference/Components/RelayClient.md` or as a sibling `Components/ExternalSigner.md`.
 
-#### Document `PMWMultisigAccountConfigured` `publicKeys` cap
-
-`internal/api/types/pmw_multisig_account_configured.go` caps `publicKeys` at $32$ (XRPL `SignerList` maximum) and rejects empty entries, enforced on both the JSON and ABI-decoded request paths (`ValidatePublicKeys`).
-Add this as a request-validation rule when `FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md` is cleaned.
-
-#### Fix inverted `ALLOW_TEE_DEBUG` description in `TeeAvailabilityCheck.md`
-
-`FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md:61` describes the pre-`027fbbf0` semantics, where `ALLOW_TEE_DEBUG=true` accepted only debug TEEs and rejected production ones. As of `go-verifier-api@027fbbf0` (2026-05-21), the flag is permissive: `false` (default) accepts only production TEEs (STABLE attribute checked, downgrades to OBSOLETE otherwise); `true` accepts both production AND debug TEEs (the debug path skips the STABLE check and logs a warning). Rewrite the note when the file is cleaned, and confirm against `internal/attestation/teeavailabilitycheck/verifier/claims.go` `ValidateClaims`.
-
 #### Document async-result behavior in `F_XRP PAY` / `F_XRP REISSUE`
 
 These two PMW commands are registered with `immediateResult=false` (`tee-node/internal/router/routers.go:49-50`), so their `ActionResult.status` flows `2` (in-progress) on `threshold` → `1` (success) on `end`. All other system commands return `status=1` directly on `threshold`. `Operations/Actions.md` keeps the `status=2` description generic; surface this command-specific behavior in `PMW/Reference/Operations/Pay.md` and `Reissue.md` as part of the `Action result` section when those files are cleaned.
@@ -264,12 +255,51 @@ These two PMW commands are registered with `immediateResult=false` (`tee-node/in
 
 `flare-smart-contracts-v2` `23a4d812` introduced `MachinePathManagerFacet` and a parallel direct path on `WalletBackupManagerFacet` (`directBackup` / `directRestore`, op commands `KEY_DIRECT_BACKUP` / `KEY_DIRECT_RESTORE`). Path lists are governance-signed `(sourceTeeIds[], destinationTeeIds[])` records gated by a strictly-increasing per-extension nonce, with multi-governance approval semantics analogous to `UpgradeManagerFacet`. The direct path is _not_ a replacement for the existing admin-cosigner `backupRestore` flow — both coexist.
 
+`cd32db53` (2026-05-25) refined the payload: `destinationNonce` was dropped from `KeyDirectBackup`, so the backup blob is stateless w.r.t. the destination's per-key nonce and `directRestore` can be retried (each retry bumps the nonce) without re-issuing `directBackup`. Replay protection is preserved by the restore-side defenses: the `destinationNonce` attestation binding on `KeyDirectRestore`, `KeyAlreadyAvailable`/`InvalidPublicKey` checks, machine-path-list gating, and blob encryption to the destination TEE's public key.
+
 Spec work to do:
 
 - Surface `directBackup` / `directRestore` and the path-list authorization in `Reference/Contracts/FlareTeeManager.md`.
-- Add `KEY_DIRECT_BACKUP` and `KEY_DIRECT_RESTORE` to `Reference/Operations/F_WALLET.md` alongside the existing key commands.
+- Add `KEY_DIRECT_BACKUP` and `KEY_DIRECT_RESTORE` to `Reference/Operations/F_WALLET.md` alongside the existing key commands; reflect the post-`cd32db53` payload (no `destinationNonce` on backup; nonce binding only on restore).
 - Decide whether [`Workflows/TeeBackup.md`](Workflows/TeeBackup.md) and [`Workflows/KeyRestore.md`](Workflows/KeyRestore.md) document the direct alternative inline, gain new sibling workflows (`KeyDirectBackup.md` / `KeyDirectRestore.md`), or both. Mirror in the [TLA+ formal models](#tla-formal-models).
 - `WalletKeyManager.getKeyNonce(teeId, walletId, keyId)` and `UpgradeManager.getTeeUpgradeMessageHash(upgradeId)` views are new — surface alongside the existing key/upgrade reference material.
+
+#### Document chain-id binding in TEE and FDC2 signed payloads
+
+`flare-smart-contracts-v2` `0bc80b0b` (2026-05-25) binds `block.chainid` into every TEE-local and FDC2-attestation signed payload on the diamond, preventing cross-chain replay. Two shapes:
+
+- TEE-local signatures (machine register, wallet key-existence confirm) and the existing TeeUpgrade / ExtensionPausing / MachinePathManager flows now hash as `keccak256(abi.encode(bytes32("<domain-tag>"), block.chainid, <payload>))` — per-flow `bytes32` domain tag plus `chainId` prepended.
+- FDC2 attestation proofs (TEE availability check, PMW multisig configured, PMW payment status) gain `chainId` as a first-class leading field on `Fdc2ResponseHeader`; on-chain verifiers `require(header.chainId == block.chainid)` before recovering signers.
+- `TeeStructs.Instruction` gains a leading `chainId` field so any future code recovering signers from an `Instruction` hash gets chain binding for free.
+
+**Upstream state**: contracts are updated but `tee-node@4ba38512`, `tee-proxy@31bfb8e0`, and `tee-relay-client@3bfbb5d8` predate the change and have **not** been updated in lockstep. Do not write specs against the new layout until the off-chain side lands — track for re-verification.
+
+Spec surfaces to touch when the off-chain catches up:
+
+- `Reference/Types/Abi/Instruction.md` and `Reference/Types/Wire/Instruction.md` — add leading `chainId` to `Instruction`.
+- `FDC2/Reference/Types/Abi/Fdc2.md` (and `Wire/Fdc2.md`) — add leading `chainId` to `Fdc2ResponseHeader`; note the verifier requirement.
+- `Concepts/Machines.md § Attestation`, `Reference/Operations/F_REG.md`, `Reference/Operations/F_WALLET.md` — describe the `(domain-tag, chainId, payload)` hashing shape on the relevant signatures.
+- `Workflows/MachineReplication.md` (TeeUpgrade flow), the TeeUpgrade event family in `FlareTeeManagerEvents.md`, and the upgrade-related parts of `Reference/Contracts/FlareTeeManager.md` — surface the new hash preimage.
+- `Utilities/Signing.md` — consider a paragraph on the `(domain-tag, chainId, body)` convention now that it is shared across flows.
+
+#### Document wallet project pauser/unpauser delegation
+
+`flare-smart-contracts-v2` `4521efaa` (2026-05-25) added `WalletProjectPauseFacet`. Per-project _pauser_ and _unpauser_ address lists let the project owner delegate operational pause authority without handing over ownership. List members can `pauseWallets` (PRODUCTION → PAUSED) and `unpauseWallets` (PAUSED → PRODUCTION) batched across wallets, alongside the owner. Related changes:
+
+- `enableWallet` narrowed to `INITIALIZED → PRODUCTION` only. The old `PAUSED → PRODUCTION` path is gone — unpause now goes through `unpauseWallets` exclusively, so unpause delegation cannot accidentally activate a wallet that never reached PRODUCTION.
+- Singular `pauseWallet` removed in favour of batch `pauseWallets`.
+- Set-membership errors (`InvalidAddress`, `AddressAlreadyInSet`, `AddressNotInSet`, `NotOwnerOrPauser`, `NotOwnerOrUnpauser`, `NoAddresses`) lifted into `ITeeCommonErrors`; `OwnerAllowlist` and `IWalletKeyManager` rewired to share them.
+
+Spec work to do:
+
+- Add a _pauser_ / _unpauser_ entry (or a single delegated-pause role) to `Terminology/Roles.md`. The project owner section in `Roles.md` should mention the delegation surface.
+- Update `Concepts/Wallets.md` lifecycle to reflect: `INITIALIZED → PRODUCTION` via `enableWallet`; `PRODUCTION ↔ PAUSED` via `pauseWallets` / `unpauseWallets`; per-project pauser/unpauser allowlists.
+- Surface the new facet in `Reference/Contracts/FlareTeeManager.md` (struct fields, management calls, batch-event semantics — `pauseWallets`/`unpauseWallets` emit one batch event per call, not one per wallet).
+- Touch `Workflows/WalletSetup.md` (and any wallet-pause workflow that emerges) to reflect the narrowed `enableWallet` and the new path.
+
+#### Add `domainID` check to XRP `transactionStatus` validation note
+
+`verifier-xrp-indexer@5506c431` (2026-05-25) added a `domainID` check to the XRP `transactionStatus` validation path (`internal/xrp/transaction.go`). When PMW Payment / XRP-related attestation-type pages are cleaned, confirm whether the spec already mentions the domain-tag check or whether it needs to be added; current `FDC/AttestationTypes/Payment.md` only mentions `transactionStatus` in passing (line 115) and may not need the level of detail.
 
 #### Create `Concepts/Policy.md`
 
