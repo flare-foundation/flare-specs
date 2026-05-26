@@ -1,11 +1,12 @@
 # Trust Model
 
-The integrity of FCC rests on a small number of explicit assumptions about what can and cannot be trusted to behave correctly.
+FCC's integrity rests on a small number of explicit assumptions about what can and cannot be trusted.
 
 ## Honest-Majority Assumption
 
 Within any given [signing policy](../../FSP/SigningPolicy.md), malicious actors hold strictly less than the threshold weight needed to pass a vote.
-Signed instruction execution, attestation proofs, and signing policy updates all rely on this — if a colluding super-threshold of data providers exists, they can pass arbitrary instructions, including ones that strip per-instruction safeguards such as the `cosigners` field; extensions that want defense in depth re-enforce cosigner thresholds at the TEE-machine layer (see [Cosigner Enforcement](../Reference/Components/Machine.md#cosigner-enforcement)).
+A super-threshold of colluding data providers could pass arbitrary instructions, including ones with stripped or rewritten `cosigners` fields.
+Wallet-key operations are protected regardless: [cosigner enforcement](../Reference/Components/Machine.md#cosigner-enforcement) inside the TEE machine binds each action against the cosigner set committed at key generation, catching mismatches from any path — colluding majority, malicious [proxy](#untrusted-proxy), or buggy instructions-sender contract.
 
 ## TEE Platform Trust
 
@@ -18,17 +19,14 @@ A platform compromise — leaked attestation signing keys, broken hardware isola
 
 ## Untrusted Proxy
 
-The [TEE proxy](../Reference/Components/Proxy.md) is considered untrusted.
-The TEE machine independently verifies that each instruction carries sufficient data provider and cosigner signatures before executing it.
-A malicious proxy can censor, delay, or flood the processing queue, but cannot cause unauthorized execution.
+The [TEE proxy](../Reference/Components/Proxy.md) is untrusted: the TEE machine independently verifies signatures before executing any instruction.
+A malicious proxy can censor, delay, or flood the queue, but cannot cause unauthorized execution.
 
 ## No Direct Chain Reads
 
-The TEE machine does not query blockchain nodes directly.
-It relies entirely on the consensus of data providers to learn about on-chain events.
+The TEE machine does not query blockchain nodes directly; it learns about on-chain events only through the consensus of data providers.
 
 ## Delivery and Replay Semantics
 
-[Relay clients](../Reference/Components/RelayClient.md) deliver instructions _best effort_: delivery and ordering are not guaranteed; instructions may arrive duplicated or out of order.
-The system does not enforce a global nonce, so any instruction can be relayed to a TEE machine multiple times.
-Operations that alter TEE state — e.g. key deletion, key restoration, or stateful custom [extension](../FCE/README.md) operations — must define their own replay protection (typically a per-operation nonce that the TEE machine tracks).
+[Relay clients](../Reference/Components/RelayClient.md) deliver instructions best-effort — duplicates and out-of-order arrivals are possible, and no global nonce protects against replay.
+Operations that mutate TEE state (key deletion, key restoration, stateful custom [extension](../FCE/README.md) operations) must define their own replay protection — e.g. a per-operation nonce tracked by the machine.

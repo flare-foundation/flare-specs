@@ -2,23 +2,8 @@
 
 Cross-cutting concept pages — _the "what and why" of FCC_. Each page defines a concept and its invariants; precise validation rules, field schemas, and contract function surfaces live under [Reference/](../Reference/Components/README.md).
 
-## Pages
-
-| Page | Contents |
-|---|---|
-| [Instructions](Instructions.md) | The off-chain payload that requests an operation: issuance, signing, augmentation; the on-chain event and its off-chain envelope. |
-| [Actions](Actions.md) | What a TEE machine receives and produces, including direct actions and action responses. |
-| [Voting](Voting.md) | Data-provider and cosigner threshold rules; pass conditions. |
-| [Rewarding](Rewarding.md) | Per-vote receipts and the reward-attribution payload. |
-| [Machines](Machines.md) | TEE identity, attestation, state, registration, statuses, replication. |
-| [Keys](Keys.md) | Wallet key custody, signing algorithms, backup, restoration. |
-| [Wallets](Wallets.md) | Projects, wallets, multisig, wallet-key bookkeeping. |
-| [Trust Model](TrustModel.md) | Honest-majority assumption, TEE platform trust, untrusted proxy, no direct chain reads, delivery and replay semantics. |
-
-The path an operation takes through these phases:
-
-- _Instruction operations_ flow through Instructions → Voting → Actions → Rewarding.
-- _Direct operations_ skip Instructions and Voting and arrive as actions directly; see [Actions § Direct Actions](Actions.md#direct-actions).
+Most operations flow [Instructions](Instructions.md) → [Voting](Voting.md) → [Actions](Actions.md) → [Rewarding](Rewarding.md).
+[Direct actions](Actions.md#direct-actions) skip the first two phases and arrive at the machine immediately.
 
 ## Reading order
 
