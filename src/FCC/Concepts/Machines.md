@@ -57,12 +57,13 @@ For the FDC2 attestation type that wraps this procedure into an on-chain proof, 
 
 ## Owner Allowlist
 
-Per-extension allowlists gate two roles:
+Three allowlists gate the FCC owner roles:
 
-- _machine owner_ — the Flare address that registers and owns a TEE machine on the extension.
-- _wallet [project owner](../../Terminology/Roles.md#project-owner)_ — the Flare address that creates wallet projects under the extension.
+- _machine owner_ — the Flare address that registers and owns a TEE machine on an extension. Per-extension list maintained by the [extension owner](../../Terminology/Roles.md#extension-owner).
+- _wallet [project owner](../../Terminology/Roles.md#project-owner)_ — the Flare address that creates wallet projects under an extension. Per-extension list maintained by the extension owner.
+- _[extension owner](../../Terminology/Roles.md#extension-owner)_ — the Flare address that registers and owns an extension (`register`, two-step ownership transfer). Single global list maintained by immediate [governance](../../Terminology/Roles.md#governance).
 
-Checked on registration, ownership changes, and project creation; an extension that wants public participation can open the lists with the extension owner's "allow-all" toggles.
+Checked on registration, ownership changes, and project creation; each list has an "allow-all" toggle for fully public participation.
 
 For the management calls, see [`FlareTeeManager § Owner Allowlist`](../Reference/Contracts/FlareTeeManager.md#owner-allowlist).
 

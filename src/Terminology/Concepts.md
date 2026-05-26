@@ -1,39 +1,37 @@
 # Concepts
 
-This page defines foundational concepts used across the Flare protocol specifications.
+Foundational concepts used across the Flare protocol specifications.
 
 ## Addresses, Accounts, and Keys
 
-An *address* is a 20-byte identifier derived from a public key.
-On EVM-compatible chains, an address is computed as the last 20 bytes of the keccak256 hash of the uncompressed public key.
-
-An *account* is the on-chain state associated with an address — its balance, nonce, and (for contract accounts) code and storage.
-In this documentation, "address" refers to the identifier itself, while "account" refers to the on-chain state behind it.
-
-A *private key* is a 256-bit secret scalar on the secp256k1 curve.
-The corresponding *public key* is the elliptic curve point obtained by multiplying the generator point by the private key.
-The on-chain representation of a public key is the [`PublicKey`](../FCC/Reference/Types/Abi/Common.md) struct containing the curve coordinates $(x, y)$.
-
-A *signature* is produced by signing a message hash with a private key using ECDSA.
-The [signing procedure](../Utilities/Signing.md) used across the Flare protocols prepends the Ethereum signed message prefix before hashing.
+- _address_ — a $20$-byte identifier derived from a public key.
+  On EVM-compatible chains, the last $20$ bytes of keccak256 of the uncompressed public key.
+- _account_ — the on-chain state behind an address: balance, nonce, and (for contract accounts) code and storage.
+  Use "address" for the identifier, "account" for the state.
+- _private key_ — a $256$-bit secret scalar on the secp256k1 curve.
+- _public key_ — the elliptic curve point obtained by multiplying the generator by the private key.
+  Held on-chain as the [`PublicKey`](../FCC/Reference/Types/Abi/Common.md) struct with curve coordinates $(x, y)$.
+- _signature_ — produced by signing a message hash with a private key using ECDSA.
+  Flare's [signing procedure](../Utilities/Signing.md) prepends the Ethereum signed-message prefix before hashing.
 
 ## Epochs
 
-A *voting epoch* is the basic time unit of the Flare Systems Protocol, lasting 90 seconds.
-A *reward epoch* spans 3360 voting epochs (approximately 3.5 days).
-Voter registration, signing policies, and reward distribution are all scoped to reward epochs.
-See [Epochs](../FSP/Epochs.md) for the full specification.
+- _voting epoch_ — the FSP's basic time unit; $90$ seconds.
+- _reward epoch_ — $3360$ voting epochs (approximately $3.5$ days).
+  Voter registration, signing policies, and reward distribution are scoped to reward epochs.
+
+Full specification: [Epochs](../FSP/Epochs.md).
 
 ## Signing Policy
 
-A *signing policy* defines the set of data providers eligible to participate in a given reward epoch and their corresponding voting weights.
-A new signing policy is generated each reward epoch during the [voter registration](../FSP/Voters.md#voter-registration) phase.
-See [Signing Policy](../FSP/SigningPolicy.md) for the full specification.
+A _signing policy_ defines the data providers eligible to participate in a given reward epoch and their voting weights.
+A new policy is generated each reward epoch during [voter registration](../FSP/Voters.md#voter-registration).
+
+Full specification: [Signing Policy](../FSP/SigningPolicy.md).
 
 ## Weight and Vote Power
 
-*Vote power* is the influence a data provider has in protocol voting.
-It is derived from WFLR delegations and validator stakes, then normalized into a *weight* between 0 and 1 for use in signing policies.
-The weighting formula applies a diversity factor to encourage decentralization.
-See [Weighting](../FSP/Weighting.md) for the full specification.
+- _vote power_ — a data provider's influence in protocol voting; derived from WFLR delegations and validator stakes.
+- _weight_ — vote power normalized to $[0, 1]$ for use in signing policies; a diversity factor encourages decentralization.
 
+Full specification: [Weighting](../FSP/Weighting.md).

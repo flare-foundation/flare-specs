@@ -60,20 +60,6 @@ Required claims:
 - `data.lastSigningPolicyHash` must equal the current signing policy on-chain (`Relay.toSigningPolicyHash(rewardEpochId)`).
 - `data.initialSigningPolicyHash` must equal the initial signing policy on-chain (same contract call).
 
-## Verifier-Side Availability Polling
-
-The verifier server also acts as an availability poller, exposing `GET /poller/tees` for external monitoring.
-It enumerates active machines via `FlareTeeManager.getAllActiveTeeMachines` and queries `<proxyUrl>/info` for each.
-Per machine, the most recent samples are retained in a circular buffer; each sample is classified `VALID` (all checks pass), `INDETERMINATE` (verifier fault, e.g. RPC unreachable), or `INVALID` (data-side failure).
-
-Availability statuses:
-
-- `DOWN`: requires sufficient `INVALID` samples in a row (insufficient samples → `INDETERMINATE`).
-- `OBSOLETE`: production TEE missing `STABLE` attribute.
-- `OK`: all checks pass.
-
-When no attestation result is available on `/action/result/<instructionId>`, the verifier falls back to the most recent samples — `DOWN` if every recent sample is `INVALID`, otherwise `UNDETERMINED` (HTTP $503$).
-
 ## Notes
 
 - Block freshness is not a concern on Flare due to its fast deterministic finality.

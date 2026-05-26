@@ -9,15 +9,17 @@ For the concepts these calls implement, see [Machines](../../Concepts/Machines.m
 Each concern is implemented as an independent facet:
 
 - `InstructionsFacet`: instruction submission and system-instructions-sender registration.
-- `ExtensionManagerFacet`: extension registration, per-extension contract updates, system-supported platforms and key types.
-- `ExtensionGovernanceFacet`: per-extension governance signers and pausing addresses.
+- `ExtensionManagerFacet`: extension registration (including governance-reserved IDs), per-extension contract updates, system-supported platforms and key types.
+- `ExtensionGovernanceFacet`: per-extension governance signer-set management.
+- `ExtensionPausingFacet`: governance-signed pausing-address records.
 - `MachineManagerFacet`: TEE machine registration, status transitions, ownership.
+- `MachinePathManagerFacet`: governance-signed authorized `(sourceTeeIds, destinationTeeIds)` paths used by direct backup/restore.
 - `VerificationFacet`: on-chain verification of TEE attestations and FDC2 proofs.
 - `OperationFeesFacet`: per-operation fee configuration.
 - `UpgradeManagerFacet`: TEE upgrade flow.
-- `WalletManagerFacet`, `WalletKeyManagerFacet`, `WalletBackupManagerFacet`, `WalletResumeFacet`, `WalletProjectManagerFacet`: protocol-managed-wallet lifecycle.
+- `WalletManagerFacet`, `WalletKeyManagerFacet`, `WalletBackupManagerFacet`, `WalletResumeFacet`, `WalletProjectManagerFacet`: protocol-managed-wallet lifecycle (`WalletBackupManagerFacet` includes both the legacy admin-cosigner `backupRestore` and the path-list-gated `directBackup`/`directRestore`).
 - `VrfFacet`, `SystemStateVerifierFacet`, `ReplicationFacet`: VRF, state verification, and replication.
-- `DiamondGovernanceFacet`, `OwnerAllowlistFacet`, `ExternalAddressesFacet`: governance and external-address plumbing.
+- `DiamondGovernanceFacet`, `OwnerAllowlistFacet`, `ExternalAddressesFacet`: governance, the extension-owner / machine-owner / project-owner allowlists, and external-address plumbing.
 
 Event signatures are listed in [Events](FlareTeeManagerEvents.md).
 
@@ -38,7 +40,7 @@ For `sendInstructions`, `msg.sender` must satisfy one of:
 The destination extension is determined by the first destination TEE machine (`MachineManager.getExtensionId(teeMachines[0].teeId)`).
 All other destination TEE machines must belong to the same extension.
 
-The [system extension](../../FCE/System.md) (`extensionId == 0`) cannot have its own registered instructions sender: `extensionsCounter` is initialized to $1$, so `register` never assigns id $0$, and `setExtensionContracts` rejects `_extensionId == 0`.
+The [system extension](../../FCE/System.md) (`extensionId == 0`) cannot have its own registered instructions sender: extension id $0$ is unassignable (public `register` allocates ids from `nextPublicExtensionId`, which starts at $65536$; governance can reserve ids $1$–$65535$ via `registerReserved` but never $0$), and `setExtensionContracts` rejects `_extensionId == 0`.
 Its TEE machines are reachable only via a system instructions sender.
 
 `sendSystemInstructions` requires `msg.sender` to be a system instructions sender.
@@ -77,15 +79,20 @@ Each [instructions sender](../../Concepts/Instructions.md#instructions-senders) 
 
 ## Owner Allowlist
 
-Per-extension allowlists gate two roles (see [Concepts/Machines § Owner Allowlist](../../Concepts/Machines.md#owner-allowlist) for what the roles mean):
+Three allowlists on `OwnerAllowlistFacet` (see [Concepts/Machines § Owner Allowlist](../../Concepts/Machines.md#owner-allowlist) for what the roles mean):
 
-- _machine owner_ — gates `register`, `proposeNewOwner` / `confirmOwnership` on machines.
-- _wallet [project owner](../../../Terminology/Roles.md#project-owner)_ — gates `createProject`.
+- _machine owner_ (per-extension) — gates `register`, `proposeNewOwner` / `confirmOwnership` on machines.
+- _wallet [project owner](../../../Terminology/Roles.md#project-owner)_ (per-extension) — gates `createProject`.
+- _[extension owner](../../../Terminology/Roles.md#extension-owner)_ (global) — gates `register`, `proposeNewOwner` / `confirmOwnership` on extensions.
 
-Extension-owner-only management of each list:
+Extension owners manage the two per-extension lists for their own extension:
 
 - `addAllowedTeeMachineOwners`, `removeAllowedTeeMachineOwners`, `allowAllTeeMachineOwners`.
 - `addAllowedTeeWalletProjectOwners`, `removeAllowedTeeWalletProjectOwners`, `allowAllTeeWalletProjectOwners`.
+
+Immediate [governance](../../../Terminology/Roles.md#governance) manages the global extension-owner list:
+
+- `addAllowedExtensionOwners`, `removeAllowedExtensionOwners`, `allowAllExtensionOwners`, `disallowAllExtensionOwners`.
 
 ## Machine Management
 

@@ -1,15 +1,21 @@
 # Roles
 
-This page defines the roles and actors that appear across the Flare protocol specifications.
+Roles and actors that appear across the Flare protocol specifications.
 
 ## Data Provider
 
-A *data provider* (also referred to as a *voter*, *validator*, *infrastructure provider*, or *entity*) is an off-chain participant registered as an [entity](../FSP/Voters.md#entity-definition) on Flare.
-Data providers accrue vote power from the Flare community via delegations of wrapped FLR tokens (WFLR) or stakes.
-They participate in all Flare protocols: operating a Flare validator node, submitting and finalizing voting round data in the [Flare Systems Protocol](../FSP/Introduction.md), providing price feeds in [FTSO](../FTSO/Introduction.md), confirming attestations in [FDC](../FDC/Introduction.md), and running [relay clients](../FCC/Reference/Components/RelayClient.md) to relay instructions to TEE machines in [FCC](../FCC/README.md).
-Data providers must complete [voter registration](../FSP/Voters.md#voter-registration) every reward epoch.
+A _data provider_ (also _voter_, _validator_, _infrastructure provider_, or _entity_) is an off-chain participant on Flare who accrues [vote power](Concepts.md#weight-and-vote-power) from the community via delegations of wrapped FLR tokens (WFLR) or stakes.
+Data providers participate in every Flare protocol:
 
-Each protocol rewards data providers for correct participation and penalizes non-compliance:
+- operate a Flare validator node.
+- submit and finalize voting-round data in the [FSP](../FSP/Introduction.md).
+- sign the [signing policy](../FSP/SigningPolicy.md) for each new [reward epoch](Concepts.md#epochs).
+- provide price feeds in the [FTSO](../FTSO/Introduction.md).
+- confirm attestations in the [FDC](../FDC/Introduction.md).
+- run [relay clients](../FCC/Reference/Components/RelayClient.md) to relay instructions to [TEE machines](../FCC/Concepts/Machines.md) in the [FCC](../FCC/README.md).
+
+Each protocol rewards correct participation and penalizes non-compliance:
+
 - [FSP Rewarding](../FSP/Rewarding.md)
 - [FTSO Rewarding](../FTSO/Rewarding.md)
 - [FDC Rewarding](../FDC/Rewarding.md)
@@ -17,40 +23,48 @@ Each protocol rewards data providers for correct participation and penalizes non
 
 ## Delegator
 
-A *delegator* is a WFLR token holder who delegates vote power to a data provider's [delegation address](../FSP/Voters.md#entity-definition).
-Delegators share in the [rewards](../FSP/Rewarding.md) earned by the data provider they delegate to.
+A _delegator_ is a WFLR holder who delegates vote power to a data provider's [delegation address](../FSP/Voters.md#entity-definition), and shares in the [rewards](../FSP/Rewarding.md) earned by that data provider.
 
 ## TEE Operator
 
-A *TEE operator* is the party that deploys and maintains one or more TEE machines and their associated [TEE proxies](../FCC/Reference/Components/Proxy.md).
+A _TEE operator_ deploys and maintains one or more TEE machines and their associated [TEE proxies](../FCC/Reference/Components/Proxy.md).
 A TEE operator need not be a data provider.
-TEE operators register their machines on-chain through the [registration](../FCC/Concepts/Machines.md) process; registration requires being on the extension's [owner allowlist](../FCC/Concepts/Machines.md#owner-allowlist).
+Eligibility is gated by the extension's [machine owner allowlist](../FCC/Concepts/Machines.md#owner-allowlist).
+
+## Extension Owner
+
+An _extension owner_ is the Flare [address](Concepts.md#addresses-accounts-and-keys) that registers and administers a [Flare Compute Extension](../FCC/FCE/README.md).
+Responsibilities:
+
+- control the supported code versions.
+- manage the extension's allowlists of machine owners and project owners.
+- configure the [governance signer](#governance-signer) set.
+
+Eligibility is gated by a global allowlist maintained by [governance](#governance) — see [Concepts/Machines § Owner Allowlist](../FCC/Concepts/Machines.md#owner-allowlist).
 
 ## Project Owner
 
-A *project owner* is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/Concepts/Wallets.md).
-The project owner controls wallet creation, key management, and configuration for the project's wallets.
+A _project owner_ is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/Concepts/Wallets.md), controlling wallet creation, key management, and wallet configuration.
 
 ## Key Admin
 
-A *key admin* is one of a set of addresses associated with a wallet whose public keys are used for encrypting [Shamir secret shares](../FCC/Concepts/Keys.md#backup-procedure) during key backup.
-Key admins participate in [key restoration](../FCC/Concepts/Keys.md#key-restoration-procedure) by decrypting and re-submitting their shares.
+A _key admin_ is one of a set of addresses associated with a [wallet](../FCC/Concepts/Wallets.md) whose public keys encrypt [Shamir secret shares](../FCC/Concepts/Keys.md#backup-procedure) during key backup.
+On [key restoration](../FCC/Concepts/Keys.md#key-restoration-procedure), admins decrypt and re-submit their shares.
 Operations requiring admin approval use a $k$-of-$n$ threshold over the admin public keys.
 
 ## Governance
 
-*Governance* is the single Flare address authorized to perform privileged operations on Flare's smart contracts — for example, registering [system instructions senders](../FCC/Concepts/Instructions.md#sending-instructions), setting the [signing policy threshold](../FSP/SigningPolicy.md), and adding [system-supported key types](../FCC/FCE/Concepts.md#system-administration-functions-governance-only).
-The address is backed by a multisig (or a single key on test networks) and can only be changed by a validator fork.
+_Governance_ is the single Flare address authorized to perform privileged operations on Flare's smart contracts — e.g. registering [system instructions senders](../FCC/Concepts/Instructions.md#sending-instructions), setting the [signing policy threshold](../FSP/SigningPolicy.md), and adding [system-supported key types](../FCC/FCE/Concepts.md#system-administration-functions-governance-only).
+Backed by a multisig (or a single key on test networks); changeable only by a validator fork.
 
-It is distinct from the per-extension [governance signers](#governance-signer) that approve TEE upgrades.
+Distinct from the per-extension [governance signers](#governance-signer) that approve TEE upgrades.
 
 ## Governance Signer
 
-A *governance signer* is an address registered on-chain as part of a per-extension governance set.
-The extension owner configures the set of signers and a threshold by calling [`setNewTeeGovernance`](../FCC/Reference/Contracts/FlareTeeManagerEvents.md#newgovernanceset).
-Governance signers approve TEE upgrades by calling `signTeeUpgrade`; the contract validates each signature against the governance set and threshold before marking the [upgrade as signed](../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeupgradesigned).
+A _governance signer_ is one of a per-extension set of addresses authorized to approve TEE upgrades.
+The [extension owner](#extension-owner) configures the set and a signing threshold.
 
 ## User
 
-A *user* is any Flare address holder who interacts with the protocols — for example, by submitting FCC instructions via smart contracts, making [FDC attestation requests](../FDC/MakingRequest.md), or delegating tokens.
-Unlike data providers, users do not need to register or run off-chain infrastructure.
+A _user_ is any Flare address holder who interacts with the protocols — e.g. submitting FCC instructions via smart contracts, making [FDC attestation requests](../FDC/MakingRequest.md), or delegating tokens.
+Users need no on-chain registration or off-chain infrastructure.

@@ -36,13 +36,13 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 
 ### register: Unregistered → Registered
 
-- **Action**: `FlareTeeManager.register(stateVerifier, instructionsSender)` (the [`ExtensionManagerFacet`](../../Reference/Contracts/FlareTeeManager.md#facets) entry).
-- **Caller**: any address (becomes the extension's `owner`).
+- **Action**: `FlareTeeManager.register(stateVerifier, instructionsSender)` (the [`ExtensionManagerFacet`](../../Reference/Contracts/FlareTeeManager.md#facets) entry). Governance-reserved ids ($1$–$65535$) are minted instead via `registerReserved(extensionId, owner)` (immediate-governance only); the public path described here allocates ids from `nextPublicExtensionId` starting at $65536$.
+- **Caller**: must be on the extension-owner allowlist (`OwnerAllowlistFacet`, `allExtensionOwnersAllowed` toggle or explicit add by immediate governance). The caller becomes the extension's `owner`.
 - **Guards**:
   - `instructionsSender ≠ 0`.
-  - `extensionId = 0` is reserved for the [system extension](../System.md); `register` never assigns `0`.
+  - `msg.sender` is allowlisted as an extension owner.
 - **Effects**:
-  - Assigns a fresh `extensionId` (via the diamond's `extensionsCounter`).
+  - Assigns a fresh `extensionId` from `nextPublicExtensionId` and increments it.
   - Stores `(owner = msg.sender, stateVerifier, instructionsSender)`.
   - Emits [`TeeExtensionRegistered`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensionregistered) and [`TeeExtensionContractsSet`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeextensioncontractsset).
   - The deployed `instructionsSender` should now call its own discovery function (typically `setExtensionId`) to learn its `extensionId` for later `sendInstructions` calls.
@@ -89,7 +89,7 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 
 - **Action**: two-step — `FlareTeeManager.proposeNewOwner(extensionId, newOwner)` then `confirmOwnership(extensionId)` from `newOwner`.
 - **Caller**: current owner (propose), proposed owner (confirm).
-- **Guards**: the proposed owner must be allowlisted as a machine owner of the extension (or `address(0)` to cancel).
+- **Guards**: the proposed owner must be on the extension-owner allowlist (or `address(0)` to cancel); the confirming address must also be on the allowlist.
 - **Effects**: extension `owner` becomes `newOwner`. Emits [`NewOwnerProposed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerproposed) and [`NewOwnerConfirmed`](../../Reference/Contracts/FlareTeeManagerEvents.md#newownerconfirmed). Production deployments typically transfer to a multisig governance address.
 
 ## Invariants

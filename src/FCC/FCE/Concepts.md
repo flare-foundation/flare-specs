@@ -2,7 +2,9 @@
 
 A _Flare Compute Extension_ (FCE) packages an application on [Flare Confidential Compute](../README.md): a set of supported code versions, a set of TEE machines registered to run them, and (for extensions whose machines custody long-lived signing keys) a pool of [projects, wallets, and keys](../Concepts/Wallets.md).
 Each extension has a unique `extensionId`.
-Extension ID $0$ is reserved for the [system extension](System.md), which hosts FCC's PMW and FDC2 applications; custom extensions use IDs greater than $0$.
+Extension id $0$ is reserved for the [system extension](System.md), which hosts FCC's PMW and FDC2 applications.
+Ids $1$–$65535$ are reserved for governance-minted extensions (`registerReserved`, immediate-governance only).
+Public `register` (gated by the extension-owner allowlist on `OwnerAllowlistFacet`) allocates ids from $65536$ upward.
 
 All extension state lives on the [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) contract.
 

@@ -32,7 +32,7 @@ Verify factual claims against the latest code in:
 
 Reads can hit the working tree directly, or `git show origin/<ref>:<path>` for an origin-pinned read.
 
-Commit hashes captured on 2026-05-21 (refresh by re-fetching each remote and re-running the head log).
+Commit hashes captured on 2026-05-25 (refresh by re-fetching each remote and re-running the head log).
 Refresh this table at the start of any new Phase 1 verification round if the snapshot is more than a few weeks stale; the verifications below reference specific commit hashes and will need re-checking against the new HEAD if behaviour has changed:
 
 | Repo | Read ref | HEAD commit | Date |
@@ -40,8 +40,8 @@ Refresh this table at the start of any new Phase 1 verification round if the sna
 | `tee/tee-node` | `origin/main` | `4ba38512` | 2026-05-14 |
 | `tee/tee-proxy` | `origin/main` | `31bfb8e0` | 2026-05-14 |
 | `tee/tee-relay-client` | `origin/tee-diamond-cut` | `52eee370` | 2026-04-24 |
-| `tee/go-verifier-api` | `origin/main` | `027fbbf0` | 2026-05-21 |
-| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` | `ff7f3cc4` | 2026-05-18 |
+| `tee/go-verifier-api` | `origin/main` | `d7efb89a` | 2026-05-22 |
+| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` | `2a1536cc` | 2026-05-22 |
 | `libs/go-flare-common` | `origin/tee-diamond-cut` | `876c09e6` | 2026-04-24 |
 | `fdc/verifier-xrp-indexer` | `origin/main` | `fbf952c9` | 2026-04-17 |
 
@@ -49,9 +49,16 @@ Refresh this table at the start of any new Phase 1 verification round if the sna
 
 ### Phase 2: Improve style
 
+**The two highest-leverage rules — apply aggressively, every pass:**
+
+- **Terseness.** Cut every word that does not carry information. Most cleaned pages have shrunk substantially under this rule alone; if the page didn't get shorter, the pass wasn't done.
+- **Lists over prose.** If three or more items share a structure (definitions, fields, conditions, steps), they belong in a list. Reach for prose only when sentences genuinely flow.
+
+The full checklist:
+
 1. Apply the [style guide](../../STYLE_GUIDE.md).
-2. Make content as terse as possible without losing information.
-3. Prefer lists to prose.
+2. Make content as terse as possible without losing information. _(See above — the primary goal of every pass.)_
+3. Prefer lists to prose. _(See above — restructure aggressively.)_
 4. Prefer linking to other files over repeating their content.
 5. Link any term, role, concept, type, contract, or command discussed elsewhere in the docs on its first occurrence in the file.
 6. Do not document implementation details.
@@ -252,6 +259,17 @@ Add this as a request-validation rule when `FDC2/Reference/AttestationTypes/PMWM
 #### Document async-result behavior in `F_XRP PAY` / `F_XRP REISSUE`
 
 These two PMW commands are registered with `immediateResult=false` (`tee-node/internal/router/routers.go:49-50`), so their `ActionResult.status` flows `2` (in-progress) on `threshold` → `1` (success) on `end`. All other system commands return `status=1` directly on `threshold`. `Operations/Actions.md` keeps the `status=2` description generic; surface this command-specific behavior in `PMW/Reference/Operations/Pay.md` and `Reissue.md` as part of the `Action result` section when those files are cleaned.
+
+#### Document MachinePathManager + direct backup/restore
+
+`flare-smart-contracts-v2` `23a4d812` introduced `MachinePathManagerFacet` and a parallel direct path on `WalletBackupManagerFacet` (`directBackup` / `directRestore`, op commands `KEY_DIRECT_BACKUP` / `KEY_DIRECT_RESTORE`). Path lists are governance-signed `(sourceTeeIds[], destinationTeeIds[])` records gated by a strictly-increasing per-extension nonce, with multi-governance approval semantics analogous to `UpgradeManagerFacet`. The direct path is _not_ a replacement for the existing admin-cosigner `backupRestore` flow — both coexist.
+
+Spec work to do:
+
+- Surface `directBackup` / `directRestore` and the path-list authorization in `Reference/Contracts/FlareTeeManager.md`.
+- Add `KEY_DIRECT_BACKUP` and `KEY_DIRECT_RESTORE` to `Reference/Operations/F_WALLET.md` alongside the existing key commands.
+- Decide whether [`Workflows/TeeBackup.md`](Workflows/TeeBackup.md) and [`Workflows/KeyRestore.md`](Workflows/KeyRestore.md) document the direct alternative inline, gain new sibling workflows (`KeyDirectBackup.md` / `KeyDirectRestore.md`), or both. Mirror in the [TLA+ formal models](#tla-formal-models).
+- `WalletKeyManager.getKeyNonce(teeId, walletId, keyId)` and `UpgradeManager.getTeeUpgradeMessageHash(upgradeId)` views are new — surface alongside the existing key/upgrade reference material.
 
 #### Create `Concepts/Policy.md`
 
