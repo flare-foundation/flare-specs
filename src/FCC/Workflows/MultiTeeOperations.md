@@ -2,7 +2,7 @@
 
 A multi-TEE deployment runs $N$ independent instances of the single-TEE workflows in parallel, with synchronisation at a handful of points. This page does not redefine the per-machine state machines; instead it specifies the _composition rules_ that bind $N$ machine-, wallet-, and key-level state machines into one coherent application.
 
-For canonical per-machine behaviour, follow the base workflows: [MachineRegistration](MachineRegistration.md), [WalletSetup](WalletSetup.md), [KeyAdd](KeyAdd.md), [KeyDelete](KeyDelete.md), [KeyRestore](KeyRestore.md), [XrplMultisigConfiguration](../PMW/Workflows/XrplMultisigConfiguration.md), [XrpPayment](../PMW/Workflows/XrpPayment.md). For the concepts, [Concepts/Machines](../Concepts/Machines.md), [Concepts/Wallets](../Concepts/Wallets.md), [Concepts/Keys](../Concepts/Keys.md).
+For canonical per-machine behaviour, follow the base workflows: [MachineRegistration](MachineRegistration.md), [WalletSetup](WalletSetup.md), [KeyAdd](KeyAdd.md), [KeyDelete](KeyDelete.md), [KeyRestore](KeyRestore.md), [XrplMultisigConfiguration](../../PMW/Workflows/XrplMultisigConfiguration.md), [XrpPayment](../../PMW/Workflows/XrpPayment.md). For the concepts, [Concepts/Machines](../Concepts/Machines.md), [Concepts/Wallets](../Concepts/Wallets.md), [Concepts/Keys](../Concepts/Keys.md).
 
 ## Preconditions
 
@@ -40,13 +40,13 @@ Each composition point is a synchronisation barrier across the per-machine workf
 
 ### CP-5: external multisig binding (once)
 
-- **Base workflow**: [XrplMultisigConfiguration](../PMW/Workflows/XrplMultisigConfiguration.md).
+- **Base workflow**: [XrplMultisigConfiguration](../../PMW/Workflows/XrplMultisigConfiguration.md).
 - **Synchronisation**: the external signer set is built from the public keys produced at CP-3; the on-chain quorum must equal the wallet's `multisigThreshold`.
 - **Postcondition**: external account is multisig-configured with the $N$ TEE-controlled keys.
 
 ### CP-6: payments (parallel sign, single submit)
 
-- **Base workflow**: [XrpPayment](../PMW/Workflows/XrpPayment.md). The `pay` call dispatches the same `F_XRP PAY` instruction to all $N$ machines (via `FlareTeeManager.receivingTeesAndKeys`).
+- **Base workflow**: [XrpPayment](../../PMW/Workflows/XrpPayment.md). The `pay` call dispatches the same `F_XRP PAY` instruction to all $N$ machines (via `FlareTeeManager.receivingTeesAndKeys`).
 - **Synchronisation**:
   - Each machine signs its share independently; results land in each machine's proxy.
   - The submitter collects $\geq$ `multisigThreshold` partial signatures from those proxies, assembles the multisigned transaction, and submits it once on the external chain.
@@ -71,4 +71,4 @@ Each composition point is a synchronisation barrier across the per-machine workf
 
 - Recovery and decommissioning sequences should preserve the in-service signer count throughout the migration; never run `KeyDelete` before the replacement's `KeyRestore` has reached its `Confirmed` state.
 - Each proxy is treated as an independent result source at CP-6; do not assume any shared state between proxies.
-- For attestation-driven lifecycle transitions (pause-with-proof, confirm-availability), see [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md).
+- For attestation-driven lifecycle transitions (pause-with-proof, confirm-availability), see [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md).

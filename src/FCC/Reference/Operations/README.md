@@ -19,7 +19,7 @@ Each operation entry documents its event message (instruction operations) or act
 The [system extension](../../FCE/System.md) registers additional `F_`-prefixed operations for its own applications.
 These are application operations rather than infrastructure, so they live alongside the application's spec:
 
-- [PMW operations](../../PMW/Reference/Operations/README.md) — `F_XRP PAY`, `F_XRP REISSUE`.
-- [FDC2 operations](../../FDC2/Reference/Operations/README.md) — `F_FDC2 PROVE`.
+- [PMW operations](../../../PMW/Reference/Operations/README.md) — `F_XRP PAY`, `F_XRP REISSUE`.
+- [FDC2 operations](../../../FDC2/Reference/Operations/README.md) — `F_FDC2 PROVE`.
 
 Custom [FCEs](../../FCE/README.md) register their own operations under non-`F_` op-type prefixes; those are defined and documented by each FCE and are out of scope for this directory.

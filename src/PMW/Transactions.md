@@ -1,7 +1,7 @@
 # Payments
 
-PMW payments are submitted on Flare and executed on an external chain by the [TEE machines](../Reference/Components/Machine.md) holding the wallet's keys.
-The `TeePayments` contract receives requests, expands them into [`PaymentInstructionMessage`](Reference/Types/Payment.md#paymentinstructionmessage) payloads, and submits them as [`F_XRP PAY`](Reference/Operations/Pay.md) (or [`F_XRP REISSUE`](Reference/Operations/Reissue.md)) [instructions](../Concepts/Instructions.md) via [`FlareTeeManager.sendInstructions`](../Reference/Contracts/FlareTeeManager.md).
+PMW payments are submitted on Flare and executed on an external chain by the [TEE machines](../FCC/Reference/Components/Machine.md) holding the wallet's keys.
+The `TeePayments` contract receives requests, expands them into [`PaymentInstructionMessage`](Reference/Types/Payment.md#paymentinstructionmessage) payloads, and submits them as [`F_XRP PAY`](Reference/Operations/Pay.md) (or [`F_XRP REISSUE`](Reference/Operations/Reissue.md)) [instructions](../FCC/Concepts/Instructions.md) via [`FlareTeeManager.sendInstructions`](../FCC/Reference/Contracts/FlareTeeManager.md).
 This page covers the payment surface (`pay`, `reissue`) and the [fee schedule](#fee-schedules) and [batching](#batching) mechanisms that drive them.
 
 ## Submitting a Payment
@@ -62,7 +62,7 @@ For each `pay` (or `reissue`) call, `TeePayments`:
    - `feeSchedule` (encoded; see [Fee Schedules](#fee-schedules)).
    - `nonce`, `subNonce`, `batchEndTs`.
 3. Submits it as an [`F_XRP PAY`](Reference/Operations/Pay.md) (or [`F_XRP REISSUE`](Reference/Operations/Reissue.md)) instruction.
-4. Once the instruction is voted through, each target TEE machine signs the corresponding transaction(s) with its share of the wallet's key set; the signed transactions are then available from the [TEE proxy](../Reference/Components/Proxy.md).
+4. Once the instruction is voted through, each target TEE machine signs the corresponding transaction(s) with its share of the wallet's key set; the signed transactions are then available from the [TEE proxy](../FCC/Reference/Components/Proxy.md).
 
 ## Batching
 
@@ -82,7 +82,7 @@ TeePayments.setBatchSettings(PMWMultisigAccount account, uint64 batchSize, uint6
 
 emitting [`BatchSettingsSet`](Reference/Contracts/Payments.md#batchsettingsset).
 
-> **Reward epochs:** a batch that would otherwise extend past the current reward epoch is closed at the epoch boundary to keep all payments under a single [signing policy](../../FSP/SigningPolicy.md).
+> **Reward epochs:** a batch that would otherwise extend past the current reward epoch is closed at the epoch boundary to keep all payments under a single [signing policy](../FSP/SigningPolicy.md).
 
 ### Example
 
@@ -95,7 +95,7 @@ A wallet has `batchSize = S`, `batchDurationSeconds = d`, and no open batch.
 ## Fee Schedules
 
 When a payment instruction reaches a TEE machine it carries a _fee schedule_ — an ordered list of `(factor, delay)` entries.
-The TEE machine signs one transaction per entry up front and posts them to the [TEE proxy](../Reference/Components/Proxy.md) on the delay schedule, so higher-fee versions become available automatically if earlier ones do not confirm.
+The TEE machine signs one transaction per entry up front and posts them to the [TEE proxy](../FCC/Reference/Components/Proxy.md) on the delay schedule, so higher-fee versions become available automatically if earlier ones do not confirm.
 
 ### Encoded Format
 
@@ -129,7 +129,7 @@ If no project- or account-level schedule is configured, the default is a single 
 
 Schedules are managed on the `TeePaymentsFeeScheduleManager` contract, with precedence `account override > project default > built-in default`:
 
-- `setProjectFeeSchedule(projectId, sourceId, schedule)` / `clearProjectFeeSchedule(projectId, sourceId)`: project-wide default for a source. Callable by the [project owner](../../Terminology/Roles.md#project-owner). Emits [`ProjectFeeScheduleSet`](Reference/Contracts/Payments.md#projectfeescheduleset) / [`ProjectFeeScheduleCleared`](Reference/Contracts/Payments.md#projectfeeschedulecleared).
+- `setProjectFeeSchedule(projectId, sourceId, schedule)` / `clearProjectFeeSchedule(projectId, sourceId)`: project-wide default for a source. Callable by the [project owner](../Terminology/Roles.md#project-owner). Emits [`ProjectFeeScheduleSet`](Reference/Contracts/Payments.md#projectfeescheduleset) / [`ProjectFeeScheduleCleared`](Reference/Contracts/Payments.md#projectfeeschedulecleared).
 - `setAccountFeeSchedule(account, schedule)` / `clearAccountFeeSchedule(account)`: per-account override. Callable by the account owner; the contract resolves the project from the account. Emits [`AccountFeeScheduleSet`](Reference/Contracts/Payments.md#accountfeescheduleset) / [`AccountFeeScheduleCleared`](Reference/Contracts/Payments.md#accountfeeschedulecleared).
 
 Per-source limits (max schedule length, max delay) are configured by governance via `setFeeScheduleConfigs`; sources with no configuration accept only the trivial single-entry schedule.

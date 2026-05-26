@@ -9,7 +9,7 @@ For the underlying status definitions see [Concepts/Machines § Statuses](../Con
 - An "old" machine $A$ exists with `status ∈ {PRODUCTION, PAUSED}` on extension $X$.
 - $A$'s owner has access to a freshly registered "new" machine $B$ with `status = INITIALIZED` on the same extension $X$ and the same owner.
 - $B$'s `(codeHash, platform)` is supported on $X$, and the pair $(A, B)$ is compatible per the registered [TEE upgrade path](../FCE/Workflows/Configuration.md) (`teeUpgradeId`).
-- $B$ holds a fresh [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) `OK` proof with `responseBody.state.systemStateVersion ≠ 0`.
+- $B$ holds a fresh [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) `OK` proof with `responseBody.state.systemStateVersion ≠ 0`.
 - Governance has set `pauseBeforeUpgradeMinDurationSeconds`.
 
 ## States

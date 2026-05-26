@@ -55,13 +55,13 @@ The status the machine has at the moment the workflow starts — usually `PRODUC
 ### pauseWithProof: PRODUCTION → SUSPENDED
 
 - **Action**: [`FlareTeeManager.pauseWithProof(proof)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
-- **Caller**: anyone with a non-`OK` [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
+- **Caller**: anyone with a non-`OK` [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
 - **Guards**:
   - `status = PRODUCTION`.
   - `proof.timestamp ≥ lastStatusChangeTs` and is no older than $10$ minutes.
   - Proof either fails verification or carries a non-`OK` `responseBody.status` (e.g. `DOWN`).
 - **Effects**: status → `SUSPENDED`; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
-- **Procedure**: obtain the proof by running the [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = TeeAvailabilityCheck` targeting the suspect machine.
+- **Procedure**: obtain the proof by running the [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = TeeAvailabilityCheck` targeting the suspect machine.
 
 ### toProduction: INITIALIZED | SUSPENDED | PAUSED → PRODUCTION
 
@@ -71,7 +71,7 @@ The status the machine has at the moment the workflow starts — usually `PRODUC
   - `proof.status = OK`.
   - The machine's current `codeHash` and `platform` remain in the extension's supported set.
 - **Effects**: status → `PRODUCTION`; deadline reset from the proof; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
-- **Procedure**: obtain the proof via [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md) with `attestationType = TeeAvailabilityCheck`.
+- **Procedure**: obtain the proof via [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) with `attestationType = TeeAvailabilityCheck`.
 
 ### updateSettings: PRODUCTION | SUSPENDED → PAUSED (settings change)
 

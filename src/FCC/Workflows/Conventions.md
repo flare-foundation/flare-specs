@@ -113,11 +113,11 @@ For a complete single-TEE XRP payment setup from scratch:
 1. **[Extension Configuration](../FCE/Workflows/Configuration.md)** — register extension, add code version, configure allowlists.
 2. **[Machine Registration](MachineRegistration.md)** — boot VM, configure, register on-chain, move to `PRODUCTION`.
 3. **[Wallet Setup](WalletSetup.md)** — create project, create wallet, add keys, enable.
-4. **[XRPL Multisig Configuration](../PMW/Workflows/XrplMultisigConfiguration.md)** — create XRPL account, verify, link to wallet.
-5. **[XRP Payment](../PMW/Workflows/XrpPayment.md)** — send payment, retrieve signed tx, submit, verify.
+4. **[XRPL Multisig Configuration](../../PMW/Workflows/XrplMultisigConfiguration.md)** — create XRPL account, verify, link to wallet.
+5. **[XRP Payment](../../PMW/Workflows/XrpPayment.md)** — send payment, retrieve signed tx, submit, verify.
 
 For multi-TEE deployments, see [Multi-TEE Operations](MultiTeeOperations.md), which adapts each of these steps for distributed operation.
 
 ## Source References
 
-These workflows are derived from the specs in [`flare-specs/src/FCC/`](..). Each transition's Action and Effects should be traceable to a contract function ([`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md), [`Payments`](../PMW/Reference/Contracts/Payments.md), [`Fdc2Hub`](../FDC2/Reference/Contracts/Fdc2Hub.md), [`VrfVerifier`](../Reference/Contracts/VrfVerifier.md)) or a TEE-machine action ([`Reference/Operations/`](../Reference/Operations/README.md)).
+These workflows are derived from the specs in [`flare-specs/src/FCC/`](..). Each transition's Action and Effects should be traceable to a contract function ([`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md), [`Payments`](../../PMW/Reference/Contracts/Payments.md), [`Fdc2Hub`](../../FDC2/Reference/Contracts/Fdc2Hub.md), [`VrfVerifier`](../Reference/Contracts/VrfVerifier.md)) or a TEE-machine action ([`Reference/Operations/`](../Reference/Operations/README.md)).

@@ -1,7 +1,7 @@
 # Fdc2Hub
 
 The `Fdc2Hub` contract is the FDC2-side on-chain hub.
-It receives attestation requests from users, routes them to the TEE machines registered to the [system extension](../../../FCE/System.md) via [`FlareTeeManager.sendInstructions`](../../../Reference/Contracts/FlareTeeManager.md#sending-instructions) as [`F_FDC2 PROVE`](../Operations/Prove.md) instructions, and later verifies the assembled proofs on-chain for downstream consumers.
+It receives attestation requests from users, routes them to the TEE machines registered to the [system extension](../../../FCC/FCE/System.md) via [`FlareTeeManager.sendInstructions`](../../../FCC/Reference/Contracts/FlareTeeManager.md#sending-instructions) as [`F_FDC2 PROVE`](../Operations/Prove.md) instructions, and later verifies the assembled proofs on-chain for downstream consumers.
 
 The op-type is the constant `bytes32("F_FDC2")`.
 
@@ -31,9 +31,9 @@ Submits an attestation request. Payable; `msg.value` must cover the configured f
 | `_cosignersThreshold` | Cosigner threshold; must be `0` if `_cosigners` is empty. |
 | `_claimBackAddress` | Optional address that may reclaim the fee if the instructions fail to execute. |
 
-The `header.thresholdBIPS` value, when non-zero, overrides the data-provider [voting threshold](../../../Concepts/Voting.md#pass-conditions) for this specific request; `0` falls back to the signing-policy default (subject to [`setMinThresholdBIPS`](#governance)).
+The `header.thresholdBIPS` value, when non-zero, overrides the data-provider [voting threshold](../../../FCC/Concepts/Voting.md#pass-conditions) for this specific request; `0` falls back to the signing-policy default (subject to [`setMinThresholdBIPS`](#governance)).
 
-Emits [`AttestationRequested`](#events) followed by [`TeeInstructionsSent`](../../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) via `FlareTeeManager`.
+Emits [`AttestationRequested`](#events) followed by [`TeeInstructionsSent`](../../../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) via `FlareTeeManager`.
 
 ## Verification
 
@@ -46,7 +46,7 @@ function verifySigningPolicySignatures(
 ) external returns (uint256 _rewardEpochId);
 ```
 
-Verifies a batch of data-provider signatures (packed in [relay format](../../../../FSP/Encoding.md)) against `_messageHash` using the corresponding signing policy. Returns the reward-epoch id of the policy that reached threshold.
+Verifies a batch of data-provider signatures (packed in [relay format](../../../FSP/Encoding.md)) against `_messageHash` using the corresponding signing policy. Returns the reward-epoch id of the policy that reached threshold.
 
 ```solidity
 function verifyTeeSignature(

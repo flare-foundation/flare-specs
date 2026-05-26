@@ -24,7 +24,7 @@ The first policy is installed at registration as part of the initial [attestatio
 The TEE's state is the part of its content that a fresh replica would not share by default:
 
 - Identity key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$.
-- All [wallet keys](Keys.md) and key backups held for [PMW](../PMW/README.md) or any other key-custody [FCE](../FCE/README.md).
+- All [wallet keys](Keys.md) and key backups held for [PMW](../../PMW/README.md) or any other key-custody [FCE](../FCE/README.md).
 - System state variables — initial and current signing policies, machine status, configuration nonce, pausing nonce.
 - Any [extension-defined state](../FCE/Concepts.md) added by the FCE the machine is registered to.
 
@@ -53,7 +53,7 @@ A _challenger_ provides a $32$-byte challenge; the machine builds an [`Attestati
 
 The machine ABI-encodes the struct, hashes it ($\mathrm{hash}(\mathrm{Attestation})$), and passes the digest to the TEE platform operator's attestation service (Google for Intel TDX and AMD SEV); the platform's signed response binds the digest to the hardware-attested boot state.
 
-For the FDC2 attestation type that wraps this procedure into an on-chain proof, see [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
+For the FDC2 attestation type that wraps this procedure into an on-chain proof, see [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
 
 ## Owner Allowlist
 
@@ -75,7 +75,7 @@ A TEE operator [registers](../Reference/Contracts/FlareTeeManager.md#registratio
 - a signature by the identity key proving possession of the corresponding private key.
 
 The contract recovers the signer and stores it as the machine's `teeId`; the signature is what prevents an operator from registering a `teeId` whose private key they do not control.
-A freshly-registered machine sits in [`INITIALIZED`](#statuses); it cannot serve traffic until it presents a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
+A freshly-registered machine sits in [`INITIALIZED`](#statuses); it cannot serve traffic until it presents a valid [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
 
 ## Statuses
 
@@ -83,7 +83,7 @@ A registered machine moves through seven statuses:
 
 1. **`INITIALIZED`** — set by `register`. No rights yet; transition to `PRODUCTION` requires a valid availability proof.
 2. **`PRODUCTION`** — fully operational; accepts instructions. Owner may pause; anyone may suspend after the [availability deadline](#availability-deadline) expires.
-3. **`SUSPENDED`** — set on a non-`OK` [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof or after the availability deadline. Can return to `PRODUCTION` with a fresh proof, be paused, or be banned.
+3. **`SUSPENDED`** — set on a non-`OK` [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof or after the availability deadline. Can return to `PRODUCTION` with a fresh proof, be paused, or be banned.
 4. **`PAUSED`** — owner-initiated stop, or automatic on settings update or unsupported code. No instructions accepted. Return to `PRODUCTION` requires a fresh availability proof.
 5. **`PAUSED_FOR_UPGRADE`** — owner-initiated, prepares the machine for [replication](../Workflows/MachineReplication.md). Entered from `PAUSED` after a minimum dwell.
 6. **`REPLICATING`** — a successor machine is taking over this machine's identity and key set; reached from `PAUSED_FOR_UPGRADE` on a successful availability proof from the successor.
@@ -93,7 +93,7 @@ Each transition emits `TeeMachineStatusChanged`.
 
 ### Availability Deadline
 
-Each [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's validity deadline — the `endTs` field of its `AvailabilityCheckValidity` record.
+Each [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's validity deadline — the `endTs` field of its `AvailabilityCheckValidity` record.
 Before the deadline anyone may submit a fresh proof; after it the machine stays in `PRODUCTION` but:
 
 - its actions stop entitling its owner to [rewards](../../FSP/Rewarding.md).

@@ -1,10 +1,10 @@
 # FDC2 Concepts
 
-The Flare Data Connector v2 (FDC2) is an application on the [system extension](../FCE/System.md), managed via the `Fdc2Hub` smart contract.
-Like the [FDC](../../FDC/Introduction.md), FDC2 is an enshrined oracle that imports validated external data onto Flare; unlike the FDC, it uses TEE machines as the trust anchor instead of on-chain bit voting.
+The Flare Data Connector v2 (FDC2) is an application on the [system extension](../FCC/FCE/System.md), managed via the `Fdc2Hub` smart contract.
+Like the [FDC](../FDC/Introduction.md), FDC2 is an enshrined oracle that imports validated external data onto Flare; unlike the FDC, it uses TEE machines as the trust anchor instead of on-chain bit voting.
 
-Users submit attestation requests as [instructions](../Concepts/Instructions.md) on the system extension; participating TEE machines, after a sufficient weight of [data-provider](../../Terminology/Roles.md#data-provider) votes, sign the attestation response with their identity key.
-The signed attestation is then available from the [TEE proxy](../Reference/Components/Proxy.md) and can be published on Flare.
+Users submit attestation requests as [instructions](../FCC/Concepts/Instructions.md) on the system extension; participating TEE machines, after a sufficient weight of [data-provider](../Terminology/Roles.md#data-provider) votes, sign the attestation response with their identity key.
+The signed attestation is then available from the [TEE proxy](../FCC/Reference/Components/Proxy.md) and can be published on Flare.
 
 Compared with the FDC, this gives:
 
@@ -16,11 +16,11 @@ In FCC, FDC2 also handles attestation types specific to TEE liveness and PMW tra
 ## Request Flow
 
 1. A user submits an [`Fdc2AttestationRequest`](Reference/Types/Abi/Fdc2.md#fdc2attestationrequest) via `Fdc2Hub`, which routes it as an [`F_FDC2 PROVE`](Reference/Operations/Prove.md) instruction to the TEE machines selected by `Fdc2Hub` (either explicitly listed in the request or chosen randomly from the registered set; see [Request Format](#request-format)).
-2. Each [data provider](../../Terminology/Roles.md#data-provider) picks up the instruction off-chain, validates `(data, source)` against the request, and produces an attestation response.
+2. Each [data provider](../Terminology/Roles.md#data-provider) picks up the instruction off-chain, validates `(data, source)` against the request, and produces an attestation response.
 3. The provider builds a signed instruction with the [`F_FDC2 PROVE` augmentation procedure](Reference/Operations/Prove.md#augmentation-procedure): `additionalFixedMessage` holds the ABI-encoded response body; `additionalVariableMessage` holds the provider's signature over the [attestation response hash](#signature-computation).
-4. The signed instruction is sent to the [TEE proxies](../Reference/Components/Proxy.md) of the target machines and enters the standard [voting process](../Concepts/Voting.md).
+4. The signed instruction is sent to the [TEE proxies](../FCC/Reference/Components/Proxy.md) of the target machines and enters the standard [voting process](../FCC/Concepts/Voting.md).
 5. On reaching the data-provider weight threshold (and the cosigner threshold, if set), the TEE machine signs the attestation response with its identity key.
-6. The TEE proxy serves the resulting [`ProveResponse`](Reference/Types/Wire/Fdc2.md#proveresponse) as the [action result](../Concepts/Actions.md#action-results).
+6. The TEE proxy serves the resulting [`ProveResponse`](Reference/Types/Wire/Fdc2.md#proveresponse) as the [action result](../FCC/Concepts/Actions.md#action-results).
 7. The proof can then be assembled and submitted on Flare; this final step is typically performed by a data provider.
 
 ## Attestation Types
@@ -42,10 +42,10 @@ Key fields:
 
 - `attestationType` and `sourceId`: identify the attestation type and the data source.
 - `proofOwner`: address authorized to publish the proof; the zero address denotes a public proof.
-- `thresholdBIPS`: data-provider voting threshold for this request, in basis points; must be at least $4000$ ($40\%$). The [TEE proxy](../Reference/Components/Proxy.md#signing-threshold-resolution) treats `0` as "use the signing policy default".
+- `thresholdBIPS`: data-provider voting threshold for this request, in basis points; must be at least $4000$ ($40\%$). The [TEE proxy](../FCC/Reference/Components/Proxy.md#signing-threshold-resolution) treats `0` as "use the signing policy default".
 - $\mathrm{TEE}_\mathrm{list} = (\text{numberOfTees}, \text{teeIds})$: target TEE machines (carried on the instruction event, not in the request body). `numberOfTees = 0` instructs `Fdc2Hub` to select a fixed number of machines at random from the registered set.
 
-`cosigners` and `cosignersThreshold` are passed at the `sendInstructions` call rather than in `Fdc2RequestHeader`, and the proxy extracts them from the [`TeeInstructionsSent` event](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) for the voting process.
+`cosigners` and `cosignersThreshold` are passed at the `sendInstructions` call rather than in `Fdc2RequestHeader`, and the proxy extracts them from the [`TeeInstructionsSent` event](../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) for the voting process.
 
 ## Response Format
 
@@ -72,12 +72,12 @@ The prefix matches the FSP protocol-message format for a Merkle root with `proto
 ## Action Result
 
 The [`F_FDC2 PROVE`](Reference/Operations/Prove.md) action result is the [`ProveResponse`](Reference/Types/Wire/Fdc2.md#proveresponse) struct.
-Its `DataProviderSignatures` field is encoded in [relay format](../../Utilities/Signing.md) using the current signing policy, enabling on-chain verification through the existing Relay contract infrastructure.
+Its `DataProviderSignatures` field is encoded in [relay format](../Utilities/Signing.md) using the current signing policy, enabling on-chain verification through the existing Relay contract infrastructure.
 Cosigner or TEE signature fields may be empty when not applicable (e.g. no cosigners specified).
 
 ## On-Chain Proof Assembly
 
-The on-chain [`Proof`](Reference/Types/Abi/Fdc2.md#proof) struct for each attestation type wraps a per-type `(header, requestBody, responseBody)` triple with an [`Fdc2Signatures`](Reference/Types/Abi/Fdc2.md#fdc2signatures) bundle composed of [`Signature`](../Reference/Types/Abi/Common.md#signature) entries.
+The on-chain [`Proof`](Reference/Types/Abi/Fdc2.md#proof) struct for each attestation type wraps a per-type `(header, requestBody, responseBody)` triple with an [`Fdc2Signatures`](Reference/Types/Abi/Fdc2.md#fdc2signatures) bundle composed of [`Signature`](../FCC/Reference/Types/Abi/Common.md#signature) entries.
 
 `ProveResponse` → `Proof` mapping:
 
@@ -87,10 +87,10 @@ The on-chain [`Proof`](Reference/Types/Abi/Fdc2.md#proof) struct for each attest
 | `RequestBody` | `requestBody` | ABI-decode into the type-specific request body. |
 | `ResponseBody` | `responseBody` | ABI-decode into the type-specific response body. |
 | `DataProviderSignatures` | `signatures.signingPolicySignatures` | Use directly (already in relay format). |
-| `TEESignature` | `signatures.teeSignatures` | Split the raw bytes into [`(v, r, s)`](../Reference/Types/Abi/Common.md#signature) and wrap in a one-element array. |
+| `TEESignature` | `signatures.teeSignatures` | Split the raw bytes into [`(v, r, s)`](../FCC/Reference/Types/Abi/Common.md#signature) and wrap in a one-element array. |
 | `CosignerSignatures` | `signatures.cosignerSignatures` | Split each entry into `(v, r, s)`. |
 
-The result is submitted to the verification entry point on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) (e.g. `verifyAvailabilityCheckProof`, `verifyPMWMultisigAccountConfiguredProof`).
+The result is submitted to the verification entry point on [`FlareTeeManager`](../FCC/Reference/Contracts/FlareTeeManager.md) (e.g. `verifyAvailabilityCheckProof`, `verifyPMWMultisigAccountConfiguredProof`).
 
 ### On-Chain Verification
 

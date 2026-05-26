@@ -6,7 +6,7 @@ Canonical user-facing semantics live in [PMW Transactions](../Transactions.md); 
 
 ## Preconditions
 
-- The wallet is in `PRODUCTION` ([WalletSetup](../../Workflows/WalletSetup.md)).
+- The wallet is in `PRODUCTION` ([WalletSetup](../../FCC/Workflows/WalletSetup.md)).
 - A multisig account is linked via [`Payments.addPMWMultisigAccount`](../Reference/Contracts/Payments.md#multisig-accounts) ([XrplMultisigConfiguration](XrplMultisigConfiguration.md)).
 - Batch settings and fee schedule are configured (or the defaults are acceptable; see [Concepts](../Transactions.md#batching) and [Fee Schedules](../Transactions.md#fee-schedules)).
 - At least `multisigThreshold` TEE machines holding a wallet key are in `PRODUCTION`.
@@ -15,7 +15,7 @@ Canonical user-facing semantics live in [PMW Transactions](../Transactions.md); 
 
 - `Idle` — no in-flight payment for the next `subNonce` of this account.
 - `Pending` — `pay` has registered the payment but the batch has not yet been submitted on chain (batch open, batch size and duration not yet exhausted).
-- `Submitted` — the batch closed and [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) carries the [`F_XRP PAY`](../Reference/Operations/Pay.md) instruction; voting is in progress.
+- `Submitted` — the batch closed and [`TeeInstructionsSent`](../../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) carries the [`F_XRP PAY`](../Reference/Operations/Pay.md) instruction; voting is in progress.
 - `Signed` — voting reached threshold; each participating TEE machine produced its partial signature and posted the JSON XRPL transaction to its proxy. The TEE machine continues to post one transaction per fee-schedule entry on its delay schedule.
 - `OnLedger` — a combined `multisigThreshold`-of-$n$ XRPL transaction has been submitted to XRPL and included in a validated ledger.
 - `StatusVerified` — an optional [`PMWPaymentStatus`](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md) attestation has been verified on chain, certifying the outcome.
@@ -43,21 +43,21 @@ Canonical user-facing semantics live in [PMW Transactions](../Transactions.md); 
 
 ### batchClose: Pending → Submitted
 
-- **Action**: implicit on-chain step inside `Payments`. Fires when the current batch reaches `batchSize`, when `batchDurationSeconds` elapses, or when the active reward epoch boundary is reached (to keep all payments under one [signing policy](../../../FSP/SigningPolicy.md)).
+- **Action**: implicit on-chain step inside `Payments`. Fires when the current batch reaches `batchSize`, when `batchDurationSeconds` elapses, or when the active reward epoch boundary is reached (to keep all payments under one [signing policy](../../FSP/SigningPolicy.md)).
 - **Caller**: the same `Payments.pay` (or `Payments.reissue`) call that overflows the batch.
 - **Guards**: at least one payment in the batch.
 - **Effects**:
   - Builds a [`PaymentInstructionMessage`](../Reference/Types/Payment.md#paymentinstructionmessage) covering every entry in the batch.
-  - Calls [`FlareTeeManager.sendInstructions`](../../Reference/Contracts/FlareTeeManager.md#sending-instructions), emitting [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
+  - Calls [`FlareTeeManager.sendInstructions`](../../FCC/Reference/Contracts/FlareTeeManager.md#sending-instructions), emitting [`TeeInstructionsSent`](../../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
 
 ### vote: Submitted → Signed
 
-- **Action**: standard [voting](../../Concepts/Voting.md) on each target TEE proxy. Each TEE machine signs one XRPL transaction per fee-schedule entry on its delay schedule.
-- **Caller**: [data providers](../../../Terminology/Roles.md#data-provider).
+- **Action**: standard [voting](../../FCC/Concepts/Voting.md) on each target TEE proxy. Each TEE machine signs one XRPL transaction per fee-schedule entry on its delay schedule.
+- **Caller**: [data providers](../../Terminology/Roles.md#data-provider).
 - **Guards**: data-provider weight $\geq$ signing-policy threshold; cosigner threshold met if the wallet configured one.
 - **Effects**:
-  - The `threshold`-tagged [action result](../../Concepts/Actions.md#action-results) carries the first signed transaction (or a placeholder for asynchronous fee-schedule delivery).
-  - Subsequent fee-schedule entries arrive as later [`ActionResult`](../../Reference/Types/Wire/Action.md#actionresult) updates with monotonically-increasing `status`; the final entry carries the `end` submission tag.
+  - The `threshold`-tagged [action result](../../FCC/Concepts/Actions.md#action-results) carries the first signed transaction (or a placeholder for asynchronous fee-schedule delivery).
+  - Subsequent fee-schedule entries arrive as later [`ActionResult`](../../FCC/Reference/Types/Wire/Action.md#actionresult) updates with monotonically-increasing `status`; the final entry carries the `end` submission tag.
   - Each signed transaction is a JSON XRPL transaction with a populated `Signers` field (or an `AccountSet` for [nullification](#reissue-nullify-pending--submitted)).
 
 ### submit: Signed → OnLedger
@@ -69,7 +69,7 @@ Canonical user-facing semantics live in [PMW Transactions](../Transactions.md); 
 
 ### verifyStatus: OnLedger → StatusVerified (optional)
 
-- **Action**: invoke the [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = PMWPaymentStatus`. Final on-chain verification is via the [verifier entry](../../Reference/Contracts/FlareTeeManager.md#facets) on `FlareTeeManager`.
+- **Action**: invoke the [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = PMWPaymentStatus`. Final on-chain verification is via the [verifier entry](../../FCC/Reference/Contracts/FlareTeeManager.md#facets) on `FlareTeeManager`.
 - **Caller**: anyone.
 - **Effects**: an FDC2 proof certifies the XRPL `(sender, nonce)`'s outcome — recipient, amount, fee, payment reference, on-ledger transaction hash, and `transactionStatus` ($0$ = success, $1$ = reverted). See [`PMWPaymentStatus`](../../FDC2/Reference/AttestationTypes/PMWPaymentStatus.md).
 
@@ -100,5 +100,5 @@ Canonical user-facing semantics live in [PMW Transactions](../Transactions.md); 
 ## Notes
 
 - The `F_XRP PAY` operation is asynchronous (`immediateResult = false`): the `threshold` action carries a placeholder, then one signed transaction per fee entry arrives with monotonically-increasing status, and the last is tagged `end` (`status = 1`). See [`F_XRP PAY` action result](../Reference/Operations/Pay.md#action-result).
-- For multi-TEE deployments, partial signatures must be collected from each participating proxy before submission; see [MultiTeeOperations § CP-6](../../Workflows/MultiTeeOperations.md#cp-6-payments-parallel-sign-single-submit).
+- For multi-TEE deployments, partial signatures must be collected from each participating proxy before submission; see [MultiTeeOperations § CP-6](../../FCC/Workflows/MultiTeeOperations.md#cp-6-payments-parallel-sign-single-submit).
 - The XRPL transaction-result code is documented at [xrpl.org transaction results](https://xrpl.org/docs/references/protocol/transactions/transaction-results).

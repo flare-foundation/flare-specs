@@ -50,7 +50,7 @@ The instruction carries two fields the signer may populate per command:
 
 Two system operations populate them via a per-command procedure run by the relay client:
 
-- [`F_FDC2 PROVE`](../FDC2/Reference/Operations/Prove.md#augmentation-procedure)
+- [`F_FDC2 PROVE`](../../FDC2/Reference/Operations/Prove.md#augmentation-procedure)
 - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#augmentation)
 
 All other instructions — including every custom extension instruction — leave both fields empty.

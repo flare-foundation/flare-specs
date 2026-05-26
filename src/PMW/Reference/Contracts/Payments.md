@@ -2,18 +2,18 @@
 
 The PMW on-chain surface is a family of contracts on Flare:
 
-- `TeePayments` — the user-facing hub: receives payment requests and routes them to the TEE machines holding the wallet's keys via [`FlareTeeManager.sendInstructions`](../../../Reference/Contracts/FlareTeeManager.md#sending-instructions) as [`F_XRP PAY`](../Operations/Pay.md) / [`F_XRP REISSUE`](../Operations/Reissue.md) instructions. Owns multisig-account bookkeeping and batching.
+- `TeePayments` — the user-facing hub: receives payment requests and routes them to the TEE machines holding the wallet's keys via [`FlareTeeManager.sendInstructions`](../../../FCC/Reference/Contracts/FlareTeeManager.md#sending-instructions) as [`F_XRP PAY`](../Operations/Pay.md) / [`F_XRP REISSUE`](../Operations/Reissue.md) instructions. Owns multisig-account bookkeeping and batching.
 - `TeePaymentsFeeScheduleManager` — fee-schedule configuration at three precedence layers.
 - `TeePaymentsLimitsManager` — per-account transaction and daily volume caps.
 - `TeePaymentsRegistry` — registers the external chains the system supports.
 
-This page documents all four together, grouped by concern. For the user-facing semantics — payment submission, batching, fee scheduling, reissue/nullification — see [PMW Transactions](../../Transactions.md). The PMW concepts (wallets, key set, multisig) live in [PMW Concepts](../../Concepts.md) and [Concepts/Wallets](../../../Concepts/Wallets.md).
+This page documents all four together, grouped by concern. For the user-facing semantics — payment submission, batching, fee scheduling, reissue/nullification — see [PMW Transactions](../../Transactions.md). The PMW concepts (wallets, key set, multisig) live in [PMW Concepts](../../Concepts.md) and [Concepts/Wallets](../../../FCC/Concepts/Wallets.md).
 
 ## Multisig Accounts
 
-A _multisig account_ associates a PMW [wallet](../../../Concepts/Wallets.md#wallets) (on-chain `walletId`) with an external-chain account identified by `(sourceId, accountAddress)`. The record holds the initial chain nonce, the authorization address (the only address allowed to submit payments against the account), and the per-account [batching](../../Transactions.md#batching) parameters.
+A _multisig account_ associates a PMW [wallet](../../../FCC/Concepts/Wallets.md#wallets) (on-chain `walletId`) with an external-chain account identified by `(sourceId, accountAddress)`. The record holds the initial chain nonce, the authorization address (the only address allowed to submit payments against the account), and the per-account [batching](../../Transactions.md#batching) parameters.
 
-- `addPMWMultisigAccount(walletId, sourceId, accountAddress, initialNonce, authorizationAddress, batchSize, batchDurationSeconds)` — register a multisig account. Callable by the wallet's [project owner](../../../../Terminology/Roles.md#project-owner).
+- `addPMWMultisigAccount(walletId, sourceId, accountAddress, initialNonce, authorizationAddress, batchSize, batchDurationSeconds)` — register a multisig account. Callable by the wallet's [project owner](../../../Terminology/Roles.md#project-owner).
 - `setBatchSettings(account, batchSize, batchDurationSeconds)` — update batching parameters for an existing account. Callable by the project owner.
 
 ### Events
@@ -50,7 +50,7 @@ event BatchSettingsSet(
 
 ## Payments
 
-Two user-facing entry points; both payable, both routed onward via `FlareTeeManager.sendInstructions` (which emits the [`TeeInstructionsSent`](../../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event):
+Two user-facing entry points; both payable, both routed onward via `FlareTeeManager.sendInstructions` (which emits the [`TeeInstructionsSent`](../../../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) event):
 
 - `pay(account, paymentInstruction, claimBackAddress)` — submit a single payment; opens a new batch or appends to an existing one. Returns the assigned `(nonce, subNonce)`. See [Submitting a Payment](../../Transactions.md#submitting-a-payment).
 - `reissue(account, nonce, firstSubNonce, paymentInstructions, reissueFeeParams, claimBackAddress)` — re-sign a stuck batch with a fresh fee schedule, or [nullify](../../Transactions.md#nullification) it. See [Reissuing a Payment](../../Transactions.md#reissuing-a-payment).
@@ -61,7 +61,7 @@ Two user-facing entry points; both payable, both routed onward via `FlareTeeMana
 
 A _fee schedule_ is an ordered list of `(factor, delay)` entries that scales the user's `maxFee` per TEE-signed transaction; see [Fee Schedules](../../Transactions.md#fee-schedules) for the wire encoding and semantics. Three layers of configuration apply with precedence `account override > project default > built-in default`:
 
-- `setFeeScheduleConfigs(configs)` / `clearFeeScheduleConfigs(sourceIds)` — [governance](../../../../Terminology/Roles.md#governance). Per-source constraints (max entries, max delay). Sources with no configuration accept only the trivial single-entry schedule.
+- `setFeeScheduleConfigs(configs)` / `clearFeeScheduleConfigs(sourceIds)` — [governance](../../../Terminology/Roles.md#governance). Per-source constraints (max entries, max delay). Sources with no configuration accept only the trivial single-entry schedule.
 - `setProjectFeeSchedule(projectId, sourceId, schedule)` / `clearProjectFeeSchedule(projectId, sourceId)` — project owner. Per-`(project, source)` default schedule.
 - `setAccountFeeSchedule(account, schedule)` / `clearAccountFeeSchedule(account)` — account owner. Per-account override.
 
@@ -141,7 +141,7 @@ event AccountFeeScheduleCleared(
 
 Governance caps per-transaction and daily volumes for an account:
 
-- `setPaymentLimits(walletId, sourceId, accountAddress, transactionLimit, dailyLimit)` — [governance](../../../../Terminology/Roles.md#governance).
+- `setPaymentLimits(walletId, sourceId, accountAddress, transactionLimit, dailyLimit)` — [governance](../../../Terminology/Roles.md#governance).
 
 ### Events
 

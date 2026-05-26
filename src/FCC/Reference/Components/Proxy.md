@@ -40,9 +40,9 @@ The proxy does not issue any other `F_` action; all other `F_` instructions orig
 
 The proxy resolves the effective [cosigner](../../Concepts/Instructions.md#cosigners) set and data-provider threshold for an instruction based on its `(opType, opCommand)`:
 
-1. [`F_XRP PAY`](../../PMW/Reference/Operations/Pay.md) and [`F_XRP REISSUE`](../../PMW/Reference/Operations/Reissue.md): cosigners are taken from the wallet configuration.
+1. [`F_XRP PAY`](../../../PMW/Reference/Operations/Pay.md) and [`F_XRP REISSUE`](../../../PMW/Reference/Operations/Reissue.md): cosigners are taken from the wallet configuration.
 2. [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#key_data_provider_restore): cosigners and thresholds are taken from the backup metadata.
-3. [`F_FDC2 PROVE`](../../FDC2/Reference/Operations/Prove.md): the data-provider threshold is taken from `thresholdBIPS` in the [`Fdc2RequestHeader`](../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2requestheader); a zero value falls back to the signing policy default.
+3. [`F_FDC2 PROVE`](../../../FDC2/Reference/Operations/Prove.md): the data-provider threshold is taken from `thresholdBIPS` in the [`Fdc2RequestHeader`](../../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2requestheader); a zero value falls back to the signing policy default.
 4. All other instructions: `cosigners` and `cosignersThreshold` are taken from the instruction itself.
 
 ## Size Constraints

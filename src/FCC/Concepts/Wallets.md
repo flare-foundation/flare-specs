@@ -4,8 +4,8 @@ Some FCC use cases need a TEE machine to hold a long-lived private key — typic
 _Projects_, _wallets_, and _wallet keys_ are the on-chain bookkeeping that controls those keys: who may authorize their use, under what threshold, and on which TEE machines they live.
 
 They are scoped per [FCE](../FCE/README.md): each FCE has its own pool of projects, and every project is pinned to a single FCE at creation.
-The pattern is the foundation of the [Protocol Managed Wallet (PMW)](../PMW/README.md) infrastructure on the system extension, and is available to any FCE whose [TEE machines](../Reference/Components/Machine.md) need the same custody.
-FCEs that only sign with the TEE's identity key (pure compute, [FDC2 proofs](../FDC2/README.md), registration attestation) do not need them.
+The pattern is the foundation of the [Protocol Managed Wallet (PMW)](../../PMW/README.md) infrastructure on the system extension, and is available to any FCE whose [TEE machines](../Reference/Components/Machine.md) need the same custody.
+FCEs that only sign with the TEE's identity key (pure compute, [FDC2 proofs](../../FDC2/README.md), registration attestation) do not need them.
 
 The on-chain state and the entry points that drive it live on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md); see [Project Management](../Reference/Contracts/FlareTeeManager.md#project-management) and [Wallet Management](../Reference/Contracts/FlareTeeManager.md#wallet-management) for the function catalog.
 

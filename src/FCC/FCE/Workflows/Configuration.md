@@ -6,7 +6,7 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 
 ## Preconditions
 
-- The Flare TEE system contracts are deployed (the [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) diamond and, if PMW is in use, the [`Payments`](../../PMW/Reference/Contracts/Payments.md) family).
+- The Flare TEE system contracts are deployed (the [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) diamond and, if PMW is in use, the [`Payments`](../../../PMW/Reference/Contracts/Payments.md) family).
 - The caller controls a funded Flare address.
 - The FCE's TEE-machine Docker image has a reproducible `codeHash`.
 - A TEE proxy server is deployed (or planned) so machines can be paired with it.
@@ -81,7 +81,7 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 - **Action**: configure the TEE machine via its Configuration API (or via environment variables before boot):
   - `POST /proxy` — set the paired TEE proxy URL.
   - `POST /initial-owner` — set the machine's initial owner address. Immutable once set.
-  - `POST /extension-id` — set the extension ID. Fixed after a successful [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
+  - `POST /extension-id` — set the extension ID. Fixed after a successful [`TeeAvailabilityCheck`](../../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
 - **Caller**: TEE machine owner (with network access to the machine's Configuration API).
 - **Effects**: no on-chain state. The TEE machine now knows where to fetch actions, which address to register under, and which extension to join. [MachineRegistration](../../Workflows/MachineRegistration.md) can proceed.
 

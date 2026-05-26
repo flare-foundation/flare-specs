@@ -117,7 +117,7 @@ Payable. `msg.value` covers the auto-enqueued TEE attestation request; `claimBac
 `signature` is a proof-of-possession over $\mathrm{keccak256}(\mathrm{abi.encode}(\mathrm{teeMachineData}))$ produced inside the enclave following the [Ethereum Signed Message](../../../Utilities/Signing.md) convention.
 The contract recovers the signer and requires it to equal `address(publicKey)`, which it stores as the machine's `teeId`.
 
-Successful registration places the machine in [`INITIALIZED`](../../Concepts/Machines.md#statuses); reaching `PRODUCTION` requires a valid [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof submitted via `toProduction(proof)`.
+Successful registration places the machine in [`INITIALIZED`](../../Concepts/Machines.md#statuses); reaching `PRODUCTION` requires a valid [`TeeAvailabilityCheck`](../../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof submitted via `toProduction(proof)`.
 
 ### Machine Record
 

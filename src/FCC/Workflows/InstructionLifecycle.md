@@ -2,7 +2,7 @@
 
 State machine for one instruction from its on-chain emission to TEE-machine execution and (optionally) on-chain consumption of the result.
 
-The other instruction-driven workflows ([XrpPayment](../PMW/Workflows/XrpPayment.md), [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md), [KeyAdd](KeyAdd.md), and so on) all compose this lifecycle.
+The other instruction-driven workflows ([XrpPayment](../../PMW/Workflows/XrpPayment.md), [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md), [KeyAdd](KeyAdd.md), and so on) all compose this lifecycle.
 For the type-level definitions, see [Concepts/Instructions](../Concepts/Instructions.md) and [Concepts/Actions](../Concepts/Actions.md); for the contract surface, [`FlareTeeManager § Sending Instructions`](../Reference/Contracts/FlareTeeManager.md#sending-instructions).
 
 ## Preconditions
@@ -61,7 +61,7 @@ For the type-level definitions, see [Concepts/Instructions](../Concepts/Instruct
 
 ### consume: Responded → Consumed (optional)
 
-- **Action**: an operation-specific on-chain verification call — e.g. [`Fdc2Hub.verifyProof`](../FDC2/Reference/Contracts/Fdc2Hub.md), an external-chain submission, or an internal `confirm…` call — accepts the action response.
+- **Action**: an operation-specific on-chain verification call — e.g. [`Fdc2Hub.verifyProof`](../../FDC2/Reference/Contracts/Fdc2Hub.md), an external-chain submission, or an internal `confirm…` call — accepts the action response.
 - **Caller**: any party willing to pay gas; typically the original instructions sender or a downstream user.
 - **Effects**: operation-specific on-chain state change.
 

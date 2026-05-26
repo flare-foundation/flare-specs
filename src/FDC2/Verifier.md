@@ -1,6 +1,6 @@
 # FDC2 Verifier Server
 
-The FDC2 verifier server validates attestation requests on behalf of [data providers](../../Terminology/Roles.md#data-provider) as part of the [FDC2](README.md) protocol.
+The FDC2 verifier server validates attestation requests on behalf of [data providers](../Terminology/Roles.md#data-provider) as part of the [FDC2](README.md) protocol.
 Each data provider runs one verifier instance per supported attestation type — a single process loads one attestation-type module at startup.
 
 ## HTTP Endpoints

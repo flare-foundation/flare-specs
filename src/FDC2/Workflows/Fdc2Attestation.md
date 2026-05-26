@@ -6,7 +6,7 @@ This page covers only the ordering and observable transitions; canonical message
 ## Preconditions
 
 - The participating TEE machines are in `PRODUCTION`.
-- [Data providers](../../../Terminology/Roles.md#data-provider) are enrolled in the current signing policy.
+- [Data providers](../../Terminology/Roles.md#data-provider) are enrolled in the current signing policy.
 - An attestation-type-specific request body is prepared per the [type's spec](../Reference/AttestationTypes/README.md).
 
 ## States
@@ -25,26 +25,26 @@ This page covers only the ordering and observable transitions; canonical message
 
 ### requestAttestation: Unrequested → Requested
 
-- **Action**: [`Fdc2Hub.requestAttestation(request, numberOfTees, teeIds, cosigners, cosignersThreshold, claimBackAddress)`](../Reference/Contracts/Fdc2Hub.md#attestation-requests) — payable. Some attestation flows wrap this in a convenience entry on [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) (e.g. `pauseWithProof`, `toProduction`, `confirmAvailability`) that builds the request internally.
+- **Action**: [`Fdc2Hub.requestAttestation(request, numberOfTees, teeIds, cosigners, cosignersThreshold, claimBackAddress)`](../Reference/Contracts/Fdc2Hub.md#attestation-requests) — payable. Some attestation flows wrap this in a convenience entry on [`FlareTeeManager`](../../FCC/Reference/Contracts/FlareTeeManager.md) (e.g. `pauseWithProof`, `toProduction`, `confirmAvailability`) that builds the request internally.
 - **Caller**: any address that funds the fee (`proofOwner` controls who may publish the resulting proof).
 - **Guards**:
   - `msg.value ≥ Fdc2Hub.getTypeAndSourceFee(attestationType, sourceId)`
   - `header.thresholdBIPS = 0` or `≥ Fdc2Hub.minThresholdBIPS`
   - `numberOfTees` and `teeIds` consistent (see [Fdc2Hub guards](../Reference/Contracts/Fdc2Hub.md#attestation-requests))
 - **Effects**:
-  - Emits [`AttestationRequested`](../Reference/Contracts/Fdc2Hub.md#attestationrequested) and [`TeeInstructionsSent`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
+  - Emits [`AttestationRequested`](../Reference/Contracts/Fdc2Hub.md#attestationrequested) and [`TeeInstructionsSent`](../../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent).
   - Dispatches [`F_FDC2 PROVE`](../Reference/Operations/Prove.md) to the selected TEE machines.
 
 ### relayAndVote: Requested → Voted
 
-- **Action**: off-chain — each [data provider](../../../Terminology/Roles.md#data-provider) verifies the requested data, builds the augmented instruction per the [augmentation procedure](../Reference/Operations/Prove.md#augmentation-procedure), and relays signed copies through its [relay client](../../Reference/Components/RelayClient.md). Each TEE proxy runs the [voting process](../../Concepts/Voting.md); on reaching threshold the TEE machine signs the attestation response with its identity key.
+- **Action**: off-chain — each [data provider](../../Terminology/Roles.md#data-provider) verifies the requested data, builds the augmented instruction per the [augmentation procedure](../Reference/Operations/Prove.md#augmentation-procedure), and relays signed copies through its [relay client](../../FCC/Reference/Components/RelayClient.md). Each TEE proxy runs the [voting process](../../FCC/Concepts/Voting.md); on reaching threshold the TEE machine signs the attestation response with its identity key.
 - **Caller**: data providers (and cosigners, if any).
 - **Guards**:
   - Aggregated provider signatures meet `header.thresholdBIPS` (or the signing-policy default when `thresholdBIPS = 0`).
   - Cosigner signatures meet `cosignersThreshold` if cosigners are listed.
 - **Effects**:
   - TEE machine returns a [`ProveResponse`](../Reference/Types/Wire/Fdc2.md#proveresponse) to its proxy.
-  - Per-vote [receipts](../../Concepts/Rewarding.md) accumulate.
+  - Per-vote [receipts](../../FCC/Concepts/Rewarding.md) accumulate.
 
 ### serve: Voted → Available
 
@@ -55,7 +55,7 @@ This page covers only the ordering and observable transitions; canonical message
 
 ### verify: Available → Verified
 
-- **Action**: convert the `ProveResponse` into the per-type [`Proof`](../Reference/Types/Abi/Fdc2.md#proof) struct (see the [response → proof mapping](../Concepts.md#on-chain-proof-assembly)) and submit it to the type-specific verifier entry on [`FlareTeeManager`](../../Reference/Contracts/FlareTeeManager.md) (`verifyAvailabilityCheckProof`, `verifyPMWMultisigAccountConfiguredProof`, …) or directly to a downstream contract.
+- **Action**: convert the `ProveResponse` into the per-type [`Proof`](../Reference/Types/Abi/Fdc2.md#proof) struct (see the [response → proof mapping](../Concepts.md#on-chain-proof-assembly)) and submit it to the type-specific verifier entry on [`FlareTeeManager`](../../FCC/Reference/Contracts/FlareTeeManager.md) (`verifyAvailabilityCheckProof`, `verifyPMWMultisigAccountConfiguredProof`, …) or directly to a downstream contract.
 - **Caller**: the [`proofOwner`](../Concepts.md#request-format) (or anyone, if the request named `address(0)`).
 - **Guards**: the contract recomputes the signed digest, recovers the signing TEEs, verifies the data-provider signatures against the relay-format policy signatures, and validates type-specific fields. Any check failure reverts.
 - **Effects**: the verifier stores or consumes the proof per its type-specific semantics; the off-chain `Available` state is unchanged.
@@ -68,7 +68,7 @@ This page covers only the ordering and observable transitions; canonical message
 
 ## Terminal States
 
-`Verified` for this sub-workflow. Higher-level workflows that invoke `Fdc2Attestation` consume the verified proof and may move their own state machine forward (e.g. [MachineRegistration § toProduction](../../Workflows/MachineRegistration.md), [XrpPayment](../../PMW/Workflows/XrpPayment.md)).
+`Verified` for this sub-workflow. Higher-level workflows that invoke `Fdc2Attestation` consume the verified proof and may move their own state machine forward (e.g. [MachineRegistration § toProduction](../../FCC/Workflows/MachineRegistration.md), [XrpPayment](../../PMW/Workflows/XrpPayment.md)).
 
 ## Notes
 

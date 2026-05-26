@@ -17,7 +17,7 @@ FCC has three kinds of participants:
 3. The TEE proxy aggregates signatures until the [voting threshold](Concepts/Voting.md) is reached, then queues the action for the TEE machine.
 4. The TEE machine executes the action and signs the result; the proxy serves the [action response](Concepts/Actions.md#action-responses) publicly, and it may be relayed back on-chain.
 
-Action side effects depend on the operation: a [PMW](PMW/README.md) action signs a transaction on an external blockchain; a custom [extension](FCE/README.md) action can interact with any external service.
+Action side effects depend on the operation: a [PMW](../PMW/README.md) action signs a transaction on an external blockchain; a custom [extension](FCE/README.md) action can interact with any external service.
 
 For the integrity assumptions this flow relies on, see [Trust Model](Concepts/TrustModel.md).
 

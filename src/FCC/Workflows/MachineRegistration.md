@@ -8,14 +8,14 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 - An [extension is configured](../FCE/Workflows/Configuration.md) on chain with the desired `(codeHash, platform)` registered (`addTeeVersion`).
 - The machine's intended owner address is on the extension's [machine-owner allowlist](../Concepts/Machines.md#owner-allowlist) and holds enough Flare to cover instruction fees.
 - A [TEE proxy](../Reference/Components/Proxy.md) is reachable from the machine.
-- The [Fdc2Hub](../FDC2/Reference/Contracts/Fdc2Hub.md) is deployed on the target network (used by the availability-check proof flow).
+- The [Fdc2Hub](../../FDC2/Reference/Contracts/Fdc2Hub.md) is deployed on the target network (used by the availability-check proof flow).
 
 ## States
 
 - `Booted` — the Confidential VM is running; the TEE machine has generated its identity key pair and `teeId` is the derived address. No proxy URL, no initial owner, no extension ID is configured locally yet.
 - `LocallyConfigured` — proxy URL, initial owner, and extension ID are set on the machine (via the Configuration API on port `5500` or environment variables) and the machine is paired with its proxy.
 - `Initialized` — `register(...)` has run; `wallet.status = INITIALIZED`; the contract has auto-enqueued a [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) instruction.
-- `Attested` — the [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) FDC2 sub-workflow has produced a valid `OK` proof for the machine.
+- `Attested` — the [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) FDC2 sub-workflow has produced a valid `OK` proof for the machine.
 - `Production` — `toProduction(proof)` has accepted the proof; the machine is in the active set and may serve instructions. `availabilityCheckValidityEndTs` is set.
 
 ## Initial State
@@ -33,7 +33,7 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 - **Caller**: machine operator (with network access to the machine's port `5500`).
 - **Guards**:
   - `initialOwner` is immutable once set.
-  - `extensionId` becomes immutable after the first successful [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
+  - `extensionId` becomes immutable after the first successful [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
 - **Effects**:
   - The machine connects to the proxy and starts polling for actions.
   - The proxy's `GET /info` endpoint now serves a `SignedTeeInfoResponse` carrying `(teeId, publicKey, codeHash, platform, extensionId, initialOwner, attestation, dataSignature, proxySignature)` — the inputs to `register` come from here.
@@ -66,10 +66,10 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 
 ### attest: Initialized → Attested
 
-- **Action**: run the [Fdc2Attestation](../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = TeeAvailabilityCheck`, sourcing the machine's attestation from the previous step. In practice this is `requestAvailabilityCheckAttestation(teeId, instructionId, …)` followed by the standard FDC2 voting and proof-retrieval flow.
+- **Action**: run the [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = TeeAvailabilityCheck`, sourcing the machine's attestation from the previous step. In practice this is `requestAvailabilityCheckAttestation(teeId, instructionId, …)` followed by the standard FDC2 voting and proof-retrieval flow.
 - **Caller**: anyone.
 - **Guards**: the `TEE_ATTESTATION` challenge is still fresh; FDC2 thresholds are met; the verifier confirms the machine is reachable at `url`, its `codeHash`/`platform` match the registered version, and its `state`/signing policies are correct.
-- **Effects**: a valid [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof with `responseBody.status = OK` is available at the proxy.
+- **Effects**: a valid [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof with `responseBody.status = OK` is available at the proxy.
 
 ### toProduction: Attested → Production
 

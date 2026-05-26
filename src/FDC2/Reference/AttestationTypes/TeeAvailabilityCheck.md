@@ -7,14 +7,14 @@ The `TeeAvailabilityCheck` attestation type verifies that a registered TEE machi
 Request body: [`TeeAvailabilityCheck.RequestBody`](../Types/Abi/AttestationType.md#requestbody).
 
 - `teeId`: TEE identity address of the machine to be checked.
-- `teeProxyId`: identity address of the paired [TEE proxy](../../../Reference/Components/Proxy.md).
+- `teeProxyId`: identity address of the paired [TEE proxy](../../../FCC/Reference/Components/Proxy.md).
 - `url`: HTTP URL of the TEE proxy.
 - `challenge`: random challenge for the attestation request.
 - `instructionId`: instruction ID of the attestation request.
 
 ## Response
 
-Response body: [`TeeAvailabilityCheck.ResponseBody`](../Types/Abi/AttestationType.md#responsebody), using the [`AvailabilityCheckStatus`](../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../../../Reference/Types/Abi/TeeMachine.md#teestate).
+Response body: [`TeeAvailabilityCheck.ResponseBody`](../Types/Abi/AttestationType.md#responsebody), using the [`AvailabilityCheckStatus`](../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../../../FCC/Reference/Types/Abi/TeeMachine.md#teestate).
 
 - `status`:
   - `OK` — TEE machine is available and valid.
@@ -31,7 +31,7 @@ Currently only Google attestations in JWT-token format are supported.
 
 ## Verification
 
-The attestation result is fetched from `GET /action/result/<instructionId>` on the [TEE proxy](../../../Reference/Components/Proxy.md); the response body is the `bytes result.message` field.
+The attestation result is fetched from `GET /action/result/<instructionId>` on the [TEE proxy](../../../FCC/Reference/Components/Proxy.md); the response body is the `bytes result.message` field.
 
 ### Challenge and Identity Checks
 

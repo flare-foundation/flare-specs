@@ -5,7 +5,7 @@ The integrity of FCC rests on a small number of explicit assumptions about what 
 ## Honest-Majority Assumption
 
 Within any given [signing policy](../../FSP/SigningPolicy.md), malicious actors hold strictly less than the threshold weight needed to pass a vote.
-Signed-instruction execution, attestation proofs, and signing-policy updates all rely on this — if a colluding super-threshold of data providers exists, they can pass arbitrary instructions, including ones that strip per-instruction safeguards such as the `cosigners` field; extensions that want defense in depth re-enforce cosigner thresholds at the TEE-machine layer (see [Cosigner Enforcement](../Reference/Components/Machine.md#cosigner-enforcement)).
+Signed instruction execution, attestation proofs, and signing policy updates all rely on this — if a colluding super-threshold of data providers exists, they can pass arbitrary instructions, including ones that strip per-instruction safeguards such as the `cosigners` field; extensions that want defense in depth re-enforce cosigner thresholds at the TEE-machine layer (see [Cosigner Enforcement](../Reference/Components/Machine.md#cosigner-enforcement)).
 
 ## TEE Platform Trust
 

@@ -78,7 +78,7 @@ The full checklist:
 
 ## Remaining
 
-Per-page leaf cleaning of `Reference/Components/{Machine,Proxy}.md`, `Reference/Operations/F_*.md`, `PMW/Concepts.md`, `PMW/Transactions.md`, `FDC2/Concepts.md`, `FDC2/Verifier.md`, `FCE/Concepts.md`, `FCE/System.md`.
+Per-page leaf cleaning of `Reference/Components/{Machine,Proxy}.md`, `Reference/Operations/F_*.md`, `../PMW/Concepts.md`, `../PMW/Transactions.md`, `../FDC2/Concepts.md`, `../FDC2/Verifier.md`, `FCE/Concepts.md`, `FCE/System.md`.
 
 ## Cross-cutting renames and fixes
 
@@ -113,7 +113,7 @@ Variance is small. Canonical forms:
 - "operation type" and "operation command" in plain prose.
 - "op-type" and "op-command" hyphenated only as compound modifiers (e.g. "op-type prefix").
 
-Spot-check `PMW/Workflows/XrpPayment.md`, `FDC2/Reference/AttestationTypes/PMW*.md`, and `FCE/Workflows/Instructions.md`.
+Spot-check `../PMW/Workflows/XrpPayment.md`, `../FDC2/Reference/AttestationTypes/PMW*.md`, and `FCE/Workflows/Instructions.md`.
 
 #### Disambiguate the term _operator_
 
@@ -206,7 +206,7 @@ Consider:
 - Pushing the byte-layout / size details back into `FSP/Encoding.md` (already the source of truth for these layouts) and leaving `Signing.md` with a one-sentence pointer.
 - Or, if a dedicated FSP/FCC page emerges for the relay-format signatures (e.g. as part of `FSP/Relay.md`, see Outside FCC/), move the `ECDSASignatureWithIndex` discussion there and have `Signing.md` link to it.
 
-The same refactor likely applies to the inbound FCC mentions of "relay format" in `FDC2/Concepts.md` and `FDC2/Reference/Types/Abi/Fdc2.md` — they should defer to the canonical layout doc instead of repeating "encoded in relay format using the signing policy".
+The same refactor likely applies to the inbound FCC mentions of "relay format" in `../FDC2/Concepts.md` and `../FDC2/Reference/Types/Abi/Fdc2.md` — they should defer to the canonical layout doc instead of repeating "encoded in relay format using the signing policy".
 
 `SignatureType0` is deprecated and should not be mentioned anywhere in the repo; this includes the `Signing.md` bullet referenced above. See the matching FSP-cleaning TODO for the full removal scope.
 
@@ -217,10 +217,10 @@ Leave `FCE/Concepts.md` with the concept-level prose (extension data model, syst
 
 #### Sweep `Concepts.md` files for content fit
 
-Concepts pages now exist at `FCE/Concepts.md`, `PMW/Concepts.md`, `FDC2/Concepts.md`, and (outside FCC) `Terminology/Concepts.md`.
+Concepts pages now exist at `FCE/Concepts.md`, `../PMW/Concepts.md`, `../FDC2/Concepts.md`, and (outside FCC) `Terminology/Concepts.md`.
 They were carved out of the corresponding READMEs by topic, but the splits were mechanical — review each in turn and ask:
 
-- Does any section sit at the wrong level (e.g. an extension-framework concept in `PMW/Concepts.md` that belongs in `FCE/Concepts.md`, or an FCC-wide concept in `FCE/Concepts.md` that belongs in `Terminology/Concepts.md`)?
+- Does any section sit at the wrong level (e.g. an extension-framework concept in `../PMW/Concepts.md` that belongs in `FCE/Concepts.md`, or an FCC-wide concept in `FCE/Concepts.md` that belongs in `Terminology/Concepts.md`)?
 - Does any content overlap or duplicate across files that should be unified and cross-linked?
 - Are there sections that read more like reference or how-to material than concept explanation, and should move into a dedicated spec page or a workflow?
 
@@ -249,7 +249,7 @@ The external signer used by the relay client is currently only mentioned by name
 
 #### Document async-result behavior in `F_XRP PAY` / `F_XRP REISSUE`
 
-These two PMW commands are registered with `immediateResult=false` (`tee-node/internal/router/routers.go:49-50`), so their `ActionResult.status` flows `2` (in-progress) on `threshold` → `1` (success) on `end`. All other system commands return `status=1` directly on `threshold`. `Operations/Actions.md` keeps the `status=2` description generic; surface this command-specific behavior in `PMW/Reference/Operations/Pay.md` and `Reissue.md` as part of the `Action result` section when those files are cleaned.
+These two PMW commands are registered with `immediateResult=false` (`tee-node/internal/router/routers.go:49-50`), so their `ActionResult.status` flows `2` (in-progress) on `threshold` → `1` (success) on `end`. All other system commands return `status=1` directly on `threshold`. `Operations/Actions.md` keeps the `status=2` description generic; surface this command-specific behavior in `../PMW/Reference/Operations/Pay.md` and `Reissue.md` as part of the `Action result` section when those files are cleaned.
 
 #### Document MachinePathManager + direct backup/restore
 
@@ -277,7 +277,7 @@ Spec work to do:
 Spec surfaces to touch when the off-chain catches up:
 
 - `Reference/Types/Abi/Instruction.md` and `Reference/Types/Wire/Instruction.md` — add leading `chainId` to `Instruction`.
-- `FDC2/Reference/Types/Abi/Fdc2.md` (and `Wire/Fdc2.md`) — add leading `chainId` to `Fdc2ResponseHeader`; note the verifier requirement.
+- `../FDC2/Reference/Types/Abi/Fdc2.md` (and `Wire/Fdc2.md`) — add leading `chainId` to `Fdc2ResponseHeader`; note the verifier requirement.
 - `Concepts/Machines.md § Attestation`, `Reference/Operations/F_REG.md`, `Reference/Operations/F_WALLET.md` — describe the `(domain-tag, chainId, payload)` hashing shape on the relevant signatures.
 - `Workflows/MachineReplication.md` (TeeUpgrade flow), the TeeUpgrade event family in `FlareTeeManagerEvents.md`, and the upgrade-related parts of `Reference/Contracts/FlareTeeManager.md` — surface the new hash preimage.
 - `Utilities/Signing.md` — consider a paragraph on the `(domain-tag, chainId, body)` convention now that it is shared across flows.
@@ -363,4 +363,4 @@ Surfaced by the FCC link-check sweep:
 - **Fix `FSP/Encoding.md:58` `ECDSASignatureWithIndex.v` description.** Currently says "Adjusted by subtracting `27`", implying the stored byte is $v \in \{0, 1\}$. The byte stored is $v \in \{27, 28\}$: `go-flare-common/pkg/encoding/signature.go:69` writes `rsv[64] + 27` into the packed form, and `Relay.sol`'s signature loop feeds that byte directly into the ecrecover precompile (which requires $v \in \{27, 28\}$). The description should be rewritten to "$v$ value of the ECDSA signature ($v \in \{27, 28\}$)" or similar.
 - `FSP/Voters.md:53` claims the registration signature is over `keccak256(abi.encode(rewardEpochId, _voter))`, but `VoterRegistry.registerVoter` hashes `abi.encode(block.chainid, rewardEpochId, _voter)`. Spec is missing `block.chainid`.
 - `FSP/Rewarding.md:315` says "A reward hash signature is generated using the Signing method" but does not document the actual signed message: `keccak256(abi.encode(_rewardEpochId, keccak256(abi.encode(_noOfWeightBasedClaims)), _rewardsHash))` (`FlareSystemsManager.signRewards`).
-- **Create `FSP/Relay.md` documenting the `Relay` contract** (`flare-smart-contracts-v2/contracts/protocol/implementation/Relay.sol`). It is the FSP-side on-chain hub — the analog of FCC's `FlareTeeManager` diamond — but has no dedicated spec page. Surface to document: signing-policy management (`setSigningPolicy`, `toSigningPolicyHash`, `lastInitializedRewardEpochData`; emits `SigningPolicyInitialized`; `MIN_THRESHOLD_BIPS = 5000` / `MAX_THRESHOLD_BIPS = 6600` clamps), protocol-message finalization via `relay()`, Merkle-root storage and reads (`merkleRoots`, `verify`, `isFinalized`), randomness (`getRandomNumber`, `getRandomNumberHistorical`), voting-round time math (`getVotingRoundId`), and `verifyCustomSignature`. Used by FSP (finalization, signing-policy lifecycle, randomness, rewards), FDC (Merkle-root storage), and FCC/FDC2 (data-provider signature verification, `TeeAvailabilityCheck`). Currently referenced in passing from `FSP/{Finalization,SigningPolicy,RandomNumber,Rewarding}.md`, `FDC/Introduction.md`, and `FCC/FDC2/README.md`; redirect those passing mentions to the new page once it exists.
+- **Create `FSP/Relay.md` documenting the `Relay` contract** (`flare-smart-contracts-v2/contracts/protocol/implementation/Relay.sol`). It is the FSP-side on-chain hub — the analog of FCC's `FlareTeeManager` diamond — but has no dedicated spec page. Surface to document: signing-policy management (`setSigningPolicy`, `toSigningPolicyHash`, `lastInitializedRewardEpochData`; emits `SigningPolicyInitialized`; `MIN_THRESHOLD_BIPS = 5000` / `MAX_THRESHOLD_BIPS = 6600` clamps), protocol-message finalization via `relay()`, Merkle-root storage and reads (`merkleRoots`, `verify`, `isFinalized`), randomness (`getRandomNumber`, `getRandomNumberHistorical`), voting-round time math (`getVotingRoundId`), and `verifyCustomSignature`. Used by FSP (finalization, signing-policy lifecycle, randomness, rewards), FDC (Merkle-root storage), and FCC/FDC2 (data-provider signature verification, `TeeAvailabilityCheck`). Currently referenced in passing from `FSP/{Finalization,SigningPolicy,RandomNumber,Rewarding}.md`, `FDC/Introduction.md`, and `../FDC2/README.md`; redirect those passing mentions to the new page once it exists.

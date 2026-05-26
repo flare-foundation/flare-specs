@@ -1,7 +1,7 @@
 # System Extension
 
 The _system extension_ is the [FCE](Concepts.md) with `extensionId = 0`.
-It is implemented and maintained by Flare itself, and hosts two applications: the [Flare TEE Data Connector v2 (FDC2)](../FDC2/README.md) and the [Protocol Managed Wallet (PMW)](../PMW/README.md) infrastructure.
+It is implemented and maintained by Flare itself, and hosts two applications: the [Flare TEE Data Connector v2 (FDC2)](../../FDC2/README.md) and the [Protocol Managed Wallet (PMW)](../../PMW/README.md) infrastructure.
 Both leverage Flare's [data providers](../../Terminology/Roles.md#data-provider) for additional compute and data provision.
 
 Its code versions, instructions sender, and supported key types are managed at the system level via the [governance-only calls](Concepts.md#governance-system-extension-only) on `FlareTeeManager`.
@@ -21,7 +21,7 @@ The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only b
 | `F_XRP`    | XRP payment and reissue operations. |
 | `F_FDC2`   | FDC2 attestation proof generation. |
 
-Operation references live under [Reference/Operations](../Reference/Operations/README.md) (infrastructure) and the application-specific directories under [PMW/Reference/Operations](../PMW/Reference/Operations/README.md) and [FDC2/Reference/Operations](../FDC2/Reference/Operations/README.md).
+Operation references live under [Reference/Operations](../Reference/Operations/README.md) (infrastructure) and the application-specific directories under [PMW/Reference/Operations](../../PMW/Reference/Operations/README.md) and [FDC2/Reference/Operations](../../FDC2/Reference/Operations/README.md).
 
 ## FDC2
 
@@ -33,11 +33,11 @@ In FCC, FDC2 serves two purposes:
 - Validates TEE machine state (code hash, signing policies) on registration and continued operation.
 - Offers lower latency than the FDC for users who would otherwise use it.
 
-See the [FDC2 spec](../FDC2/README.md) for the full protocol.
+See the [FDC2 spec](../../FDC2/README.md) for the full protocol.
 
 ## PMW
 
 The PMW infrastructure lets Flare users issue transactions on external blockchains (currently XRPL; BTC and EVM chains planned) via instructions on Flare.
 TEE machines registered to the system extension custody the wallet keys and sign transactions; data providers bridge data between Flare, the TEE network, and the external chain.
 
-See the [PMW spec](../PMW/README.md) for the full protocol.
+See the [PMW spec](../../PMW/README.md) for the full protocol.

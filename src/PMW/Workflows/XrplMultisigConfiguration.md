@@ -5,7 +5,7 @@ Three layers cooperate: the XRP Ledger holds the actual signer list and quorum; 
 
 ## Preconditions
 
-- The wallet is in `PRODUCTION` (or `PAUSED`) with at least `multisigThreshold` confirmed keys ([WalletSetup](../../Workflows/WalletSetup.md)).
+- The wallet is in `PRODUCTION` (or `PAUSED`) with at least `multisigThreshold` confirmed keys ([WalletSetup](../../FCC/Workflows/WalletSetup.md)).
 - The wallet's `extensionId = 0` (system extension); the project's `keyType` is supported by the source chain (`XRP` / `testXRP`).
 - The submitter holds access to an XRPL node and enough XRP to cover the XRPL owner reserve and transaction fees on the new multisig account.
 
@@ -76,6 +76,6 @@ Three layers cooperate: the XRP Ledger holds the actual signer list and quorum; 
 
 ## Notes
 
-- For multi-TEE deployments, ensure the derived XRPL `SignerList` reflects every participating TEE's wallet-key address — see [MultiTeeOperations § CP-5](../../Workflows/MultiTeeOperations.md#cp-5-external-multisig-binding-once).
+- For multi-TEE deployments, ensure the derived XRPL `SignerList` reflects every participating TEE's wallet-key address — see [MultiTeeOperations § CP-5](../../FCC/Workflows/MultiTeeOperations.md#cp-5-external-multisig-binding-once).
 - The XRPL configuration is irrevocable once the master key is disabled and no regular key is set; signer-list changes must be authorised by the multisig itself (i.e., a TEE-signed transaction).
 - For the exhaustive XRPL configuration checks and example `account_info` responses, see [`PMWMultisigAccountConfigured`](../../FDC2/Reference/AttestationTypes/PMWMultisigAccountConfigured.md).

@@ -1,7 +1,7 @@
 # FDC2 Operations
 
-Operations defined by the [FDC2](../../README.md) application of the [system extension](../../../FCE/System.md).
-For the cross-FCE infrastructure operations, see [Reference/Operations](../../../Reference/Operations/README.md).
+Operations defined by the [FDC2](../../README.md) application of the [system extension](../../../FCC/FCE/System.md).
+For the cross-FCE infrastructure operations, see [Reference/Operations](../../../FCC/Reference/Operations/README.md).
 
 | `opType` | `opCommand` | Kind | Description |
 |---|---|---|---|

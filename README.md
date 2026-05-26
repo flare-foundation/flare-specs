@@ -47,6 +47,10 @@ This repository contains the technical specifications for Flare's core protocols
 
 ### [Flare Confidential Compute (FCC)](src/FCC/README.md)
 
+### [Protocol Managed Wallets (PMW)](src/PMW/README.md)
+
+### [Flare Data Connector 2 (FDC2)](src/FDC2/README.md)
+
 ## Terminology
 
 Cross-cutting definitions used across protocols:

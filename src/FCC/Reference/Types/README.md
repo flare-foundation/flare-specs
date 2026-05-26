@@ -38,11 +38,11 @@ Where a type appears in both contexts, the ABI page defines the canonical struct
 
 ### FDC2
 
-- [Fdc2AttestationRequest](../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2attestationrequest) — Attestation request wrapper.
-- [Fdc2RequestHeader](../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2requestheader) — Request header.
-- [Fdc2ResponseHeader](../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2responseheader) — Response header.
-- [Fdc2Signatures](../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2signatures) — Bundled signature types for on-chain verification.
-- [Proof](../../FDC2/Reference/Types/Abi/Fdc2.md#proof) — On-chain proof structure.
+- [Fdc2AttestationRequest](../../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2attestationrequest) — Attestation request wrapper.
+- [Fdc2RequestHeader](../../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2requestheader) — Request header.
+- [Fdc2ResponseHeader](../../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2responseheader) — Response header.
+- [Fdc2Signatures](../../../FDC2/Reference/Types/Abi/Fdc2.md#fdc2signatures) — Bundled signature types for on-chain verification.
+- [Proof](../../../FDC2/Reference/Types/Abi/Fdc2.md#proof) — On-chain proof structure.
 
 ### TEE Machine
 
@@ -54,20 +54,20 @@ Where a type appears in both contexts, the ABI page defines the canonical struct
 
 ### Payments
 
-- [PaymentInstructionMessage](../../PMW/Reference/Types/Payment.md#paymentinstructionmessage) — Payment instruction for external chains.
+- [PaymentInstructionMessage](../../../PMW/Reference/Types/Payment.md#paymentinstructionmessage) — Payment instruction for external chains.
 
 ### Attestation Types
 
-- [TeeAvailabilityCheck.RequestBody](../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody) — Availability check request.
-- [TeeAvailabilityCheck.AvailabilityCheckStatus](../../FDC2/Reference/Types/Abi/AttestationType.md#availabilitycheckstatus) — Availability check status enum.
-- [TeeAvailabilityCheck.ResponseBody](../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody) — Availability check response.
-- [PMWPaymentStatus.RequestBody](../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody-1) — Payment status request.
-- [PMWPaymentStatus.ResponseBody](../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody-1) — Payment status response.
-- [PMWFeeProof.RequestBody](../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody-2) — Fee proof request.
-- [PMWFeeProof.ResponseBody](../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody-2) — Fee proof response.
-- [PMWMultisigAccountConfigured.RequestBody](../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody-3) — Multisig account configuration request.
-- [PMWMultisigAccountConfigured.PMWMultisigAccountStatus](../../FDC2/Reference/Types/Abi/AttestationType.md#pmwmultisigaccountstatus) — Multisig account status enum.
-- [PMWMultisigAccountConfigured.ResponseBody](../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody-3) — Multisig account configuration response.
+- [TeeAvailabilityCheck.RequestBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody) — Availability check request.
+- [TeeAvailabilityCheck.AvailabilityCheckStatus](../../../FDC2/Reference/Types/Abi/AttestationType.md#availabilitycheckstatus) — Availability check status enum.
+- [TeeAvailabilityCheck.ResponseBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody) — Availability check response.
+- [PMWPaymentStatus.RequestBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody-1) — Payment status request.
+- [PMWPaymentStatus.ResponseBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody-1) — Payment status response.
+- [PMWFeeProof.RequestBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody-2) — Fee proof request.
+- [PMWFeeProof.ResponseBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody-2) — Fee proof response.
+- [PMWMultisigAccountConfigured.RequestBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#requestbody-3) — Multisig account configuration request.
+- [PMWMultisigAccountConfigured.PMWMultisigAccountStatus](../../../FDC2/Reference/Types/Abi/AttestationType.md#pmwmultisigaccountstatus) — Multisig account status enum.
+- [PMWMultisigAccountConfigured.ResponseBody](../../../FDC2/Reference/Types/Abi/AttestationType.md#responsebody-3) — Multisig account configuration response.
 
 ### Events
 
@@ -120,4 +120,4 @@ Smart contract events, organized by contract: [Events index](../Contracts/FlareT
 
 ### FDC2
 
-- [ProveResponse](../../FDC2/Reference/Types/Wire/Fdc2.md#proveresponse) — Action result for `PROVE` command.
+- [ProveResponse](../../../FDC2/Reference/Types/Wire/Fdc2.md#proveresponse) — Action result for `PROVE` command.

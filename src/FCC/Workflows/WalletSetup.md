@@ -121,7 +121,7 @@ Per-key sub-state for each requested `keyId`: see [KeyAdd § States](KeyAdd.md#s
 
 `WalletProduction` is the goal of this workflow. From here the wallet is consumed by:
 
-- [XrplMultisigConfiguration](../PMW/Workflows/XrplMultisigConfiguration.md), [XrpPayment](../PMW/Workflows/XrpPayment.md) for PMW use.
+- [XrplMultisigConfiguration](../../PMW/Workflows/XrplMultisigConfiguration.md), [XrpPayment](../../PMW/Workflows/XrpPayment.md) for PMW use.
 - [VrfProof](VrfProof.md) for VRF use.
 - [KeyAdd](KeyAdd.md) / [KeyDelete](KeyDelete.md) / [KeyRestore](KeyRestore.md) for ongoing key-set management.
 

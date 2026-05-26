@@ -33,7 +33,7 @@ Request and response body types for FDC2 [attestation types](../../AttestationTy
 
 ### ResponseBody
 
-The `state` field uses the [`TeeState`](../../../../Reference/Types/Abi/TeeMachine.md#teestate) struct.
+The `state` field uses the [`TeeState`](../../../../FCC/Reference/Types/Abi/TeeMachine.md#teestate) struct.
 
 ```json
 {
