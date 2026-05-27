@@ -64,6 +64,8 @@ A registered machine moves through seven statuses:
 
 Each transition emits `TeeMachineStatusChanged`.
 
+An extension-wide [emergency pause](../Reference/Contracts/FlareTeeManager.md#emergency-pause) is a separate overlay: while set, it blocks instruction dispatch to every machine in the extension without changing any machine's status.
+
 ### Availability Deadline
 
 Each [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's availability deadline.

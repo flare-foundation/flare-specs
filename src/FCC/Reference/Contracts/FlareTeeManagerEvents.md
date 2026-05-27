@@ -273,6 +273,71 @@ event AllTeeWalletProjectOwnersAllowed(uint256 extensionId);
 event AllTeeWalletProjectOwnersDisallowed(uint256 extensionId);
 ```
 
+## Emergency Pause
+
+### ExtensionEmergencyPaused
+
+Emitted by: `emergencyPauseExtension()`
+
+```solidity
+event ExtensionEmergencyPaused(
+    uint256 indexed extensionId
+);
+```
+
+### ExtensionEmergencyUnpaused
+
+Emitted by: `emergencyUnpauseExtension()`
+
+```solidity
+event ExtensionEmergencyUnpaused(
+    uint256 indexed extensionId,
+    uint64 unpauseTs
+);
+```
+
+### ExtensionEmergencyPausersAdded
+
+Emitted by: `addExtensionEmergencyPausers()`
+
+```solidity
+event ExtensionEmergencyPausersAdded(uint256 indexed extensionId, address[] addresses);
+```
+
+### ExtensionEmergencyPausersRemoved
+
+Emitted by: `removeExtensionEmergencyPausers()`
+
+```solidity
+event ExtensionEmergencyPausersRemoved(uint256 indexed extensionId, address[] addresses);
+```
+
+### ExtensionEmergencyUnpausersAdded
+
+Emitted by: `addExtensionEmergencyUnpausers()`
+
+```solidity
+event ExtensionEmergencyUnpausersAdded(uint256 indexed extensionId, address[] addresses);
+```
+
+### ExtensionEmergencyUnpausersRemoved
+
+Emitted by: `removeExtensionEmergencyUnpausers()`
+
+```solidity
+event ExtensionEmergencyUnpausersRemoved(uint256 indexed extensionId, address[] addresses);
+```
+
+### EmergencyUnpauseGracePeriodSet
+
+Emitted by: `setEmergencyUnpauseGracePeriodSeconds()`
+
+```solidity
+event EmergencyUnpauseGracePeriodSet(
+    uint256 graceSeconds
+);
+```
+
 ## Governance
 
 ### NewTeeGovernanceSet

@@ -13,6 +13,7 @@ Each concern is implemented as an independent facet:
 - `ExtensionGovernanceFacet`: per-extension governance signer-set management.
 - `ExtensionPausingFacet`: governance-signed pausing-address records.
 - `MachineManagerFacet`: TEE machine registration, status transitions, ownership.
+- `MachineEmergencyPauseFacet`: per-extension [emergency stop](#emergency-pause) and its pauser/unpauser lists.
 - `MachinePathManagerFacet`: governance-signed authorized `(sourceTeeIds, destinationTeeIds)` paths used by direct backup/restore.
 - `VerificationFacet`: on-chain verification of TEE attestations and FDC2 proofs.
 - `OperationFeesFacet`: per-operation fee configuration.
@@ -54,6 +55,7 @@ The library further enforces:
 - non-empty `opType`, `opCommand`, and `message`.
 - $\mathrm{cosignersThreshold} \leq \mathrm{cosigners.length}$.
 - all destination TEE machines belong to the same extension.
+- the destination extension is not [emergency-paused](#emergency-pause).
 - for non-system op-types, every destination TEE machine is in `PRODUCTION` status.
 - `msg.value` is at least the operation's calculated fee; the fee is forwarded to the reward manager for the current reward epoch.
 
@@ -146,6 +148,24 @@ All calls live on the diamond:
 Once registered, a `teeId` belongs to its owner permanently; ownership changes only through `proposeNewOwner` / `confirmOwnership`, which prevents re-registration under a different owner.
 
 Status transitions emit `TeeMachineStatusChanged` ([events doc](FlareTeeManagerEvents.md)).
+
+## Emergency Pause
+
+`MachineEmergencyPauseFacet` is a per-extension emergency stop, separate from per-machine [statuses](../../Concepts/Machines.md#statuses) and per-wallet pausing. While an extension is emergency-paused, [`sendInstructions` / `sendSystemInstructions`](#sending-instructions) reject every dispatch — regular **and** system op-types — to its machines with `EmergencyPauseActive`. Machine statuses, the active sets, and the read getters are untouched, so off-chain consumers must also check `isExtensionEmergencyPaused(extensionId)`. Clearing the flag restores dispatch immediately.
+
+Two per-extension address lists, managed by the [extension owner](../../../Terminology/Roles.md#extension-owner), delegate the stop without ceding ownership — an _emergency pauser_ may pause, an _emergency unpauser_ may unpause, and the extension owner may do both:
+
+- `addExtensionEmergencyPausers` / `removeExtensionEmergencyPausers`, `addExtensionEmergencyUnpausers` / `removeExtensionEmergencyUnpausers` — extension-owner only.
+- `emergencyPauseExtension(extensionId)` — extension owner or a pauser; reverts `ExtensionAlreadyEmergencyPaused` if already set.
+- `emergencyUnpauseExtension(extensionId)` — extension owner or an unpauser; reverts `ExtensionNotEmergencyPaused` if not set. Records the unpause timestamp, opening the grace window below.
+- `setEmergencyUnpauseGracePeriodSeconds(seconds)` — immediate [governance](../../../Terminology/Roles.md#governance) only, timelocked; bounded $30\,\mathrm{min}$–$24\,\mathrm{h}$ (`GracePeriodTooShort` / `GracePeriodTooLong`).
+- Views: `isExtensionEmergencyPaused`, `getLastUnpauseTs`, `getEmergencyUnpauseGracePeriodSeconds`, `getExtensionEmergency{Pausers,Unpausers}`, `isExtensionEmergency{Pauser,Unpauser}`.
+
+### Unpause Grace Window
+
+After unpause, a global grace window (default $\sim 2\,\mathrm{h}$) blocks only the third-party expired-availability branch of [`pause(teeId)`](#management-calls) — revert `EmergencyProtectionActive` — so owners can refresh attestations before a stranger suspends a still-`PRODUCTION` machine. The window covers the longer of the machine's own extension and the [system extension](../../FCE/System.md) (id 0), since an availability refresh needs both an own-extension attestation and an FDC2 attestation routed to system-extension machines. Owner-initiated `pause`, disabled-version pause, and `pauseWithProof` are unaffected.
+
+Events: [Emergency Pause](FlareTeeManagerEvents.md#emergency-pause).
 
 ## Project Management
 

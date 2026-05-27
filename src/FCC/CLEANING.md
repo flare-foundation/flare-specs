@@ -343,13 +343,25 @@ Behavior:
 Surface to document:
 - Methods: list management (`add/removeExtensionEmergency{Pausers,Unpausers}`, extension-owner only), `emergencyPauseExtension` / `emergencyUnpauseExtension` (extension owner **or** the relevant list member), governance-only timelocked `setEmergencyUnpauseGracePeriodSeconds`, and getters (`isExtensionEmergencyPaused`, `getLastUnpauseTs`, `getEmergencyUnpauseGracePeriodSeconds`, list/predicate getters).
 - Events: `ExtensionEmergency{Pausers,Unpausers}{Added,Removed}`, `ExtensionEmergencyPaused`, `ExtensionEmergencyUnpaused(extensionId, unpauseTs)`, `EmergencyUnpauseGracePeriodSet`. Errors: `ExtensionAlready/NotEmergencyPaused`, `EmergencyPauseActive`, `EmergencyProtectionActive`, `GracePeriodToo{Short,Long}`.
-- Spec homes: `Reference/Contracts/FlareTeeManager.md` (new facet/management calls/events); a concept mention (`Concepts/Machines.md` statuses note that emergency pause is an _overlay_ independent of the seven statuses, or a short section); the _extension emergency pauser/unpauser_ roles in `Terminology/Roles.md` (fold into the delegated-pause role work); and `Concepts/Instructions.md`'s dispatch path (rejection during emergency pause).
+- Spec homes — **done**: `Reference/Contracts/FlareTeeManager.md` gained a `## Emergency Pause` section (facet, management calls, grace window) + a dispatch-rejection bullet in Payload Validation + the facet in the Facets list; the seven events are in `FlareTeeManagerEvents.md § Emergency Pause`; `Concepts/Machines.md` statuses gained the overlay note. **Remaining**: the _extension emergency pauser/unpauser_ roles in `Terminology/Roles.md` (fold into the delegated-pause role work); optionally a fuller treatment in `Concepts/Instructions.md`'s dispatch path.
 
 **Upstream state**: contracts only. `tee-node@4ba38512`/`tee-proxy@3938b5d6` predate it; the overlay is an on-chain dispatch gate so off-chain may need only to surface `isExtensionEmergencyPaused`. Confirm before speccing the off-chain side.
 
 #### Cross-check FCC pages against the contract-repo spec-alignment audit
 
 `flare-smart-contracts-v2` `7c943318` (2026-05-27, `docs(specs)`) is an audit that corrected contract↔doc drift in **that repo's** `docs/specs/`. Its findings name the same factual areas to re-verify in our specs on each page's next pass: governance / upgrade-manager flow (`create` / `addPaths` / `finalize` / `sign`; note there is **no** `transferGovernance` / `claimGovernance`), `WalletManager` lifecycle/state machine, `Replication`, `Verification` (attestation), `Instructions`, `OperationFees`, `Extensions`, and entity counts. Diff against `git show 7c943318 -- docs/specs/FCC/<page>.md` when cleaning the matching page. (The contract refactor `4d3cbeff` in the same range is behavior-preserving — `Attestation` struct and the `TEE_ATTESTATION` hash preimage are unchanged — so no attestation-spec change is needed.)
+
+First-pass cross-check done (Verification / Instructions / Replication): our specs already match the corrected model — no stale `endRewardEpoch`, no `getReplicatingTeeId`-returns-PRODUCTION-sibling or full-group-enumeration claims, no extension-0 `sendInstructions` bypass. One concrete gap to fold into the `F_REG` / [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) reference pass: `AvailabilityCheckValidity` is now `(endTs, lastSigningPolicyId)`, so a machine becomes permissionlessly suspendable on **either** `endTs < now` **or** its attested `lastSigningPolicyId` falling outside `signingPolicyValidityDurationInRewardEpochs` of the current reward epoch. `Concepts/Machines.md § Availability Deadline` abstracts this as one "deadline" (acceptable for the concept); surface the dual condition in the reference.
+
+#### Fold tee-proxy observable-surface changes into the `Proxy.md` pass
+
+`tee-proxy` advanced `31bfb8e0 → 3938b5d6` (2026-05-27, large batch). Most is internal (storage/redis/firestore lifecycle, voting-lock discipline, config validation), but a few items touch the observable surface `Reference/Components/Proxy.md` documents — reconcile them when that page gets its Phase 1+2 pass (table HEAD now points there):
+
+- Expanded HTTP status mapping (`409` / `410` / `413`, one-wrap rule) alongside the existing `429`; check the External APIs status-code list.
+- Bootstrap + periodic attestation self-verification with a sticky liveness signal (Confidential Space attestation + TEE-info challenge round-trip at startup); a periodic trigger worth a $\sim$cadence cue.
+- `/direct` accepted without an API key (warn-only) and a queue-depth-threshold warning.
+- Storage TTLs consolidated under a `[storage]` config block — keep the documented TTLs/keying (observable), drop config-shape detail.
+- `publicKey` JSON tag typo fixed in code (`publicKye → publicKey`); our wire-type docs already use `publicKey`, so no change — just confirm on the pass.
 
 #### Add `domainID` check to XRP `transactionStatus` validation note
 
