@@ -343,7 +343,7 @@ These items are not yet on the critical path but anchor the longer-term spec dir
 
 The state-machine shape that `Workflows/Conventions.md` prescribes is intended to translate near-mechanically into TLA+ (the chosen formal language; TEE-spec readers natively read TLA+ math notation, so the ergonomic case for Quint does not apply here). Initial TLA+ files for workflows and concept-level state machines live under `Formal/` on the `formal` branch. Open items:
 
-- Decide on the canonical home (`src/FCC/Formal/` mirroring the markdown tree, or a sibling tree).
+- **Canonical home — decided:** per-protocol `<root>/Formal/` dirs. FCC's models plus the shared harness (`Common`, `Voting`, the `verify-*.sh` scripts, `Formal/README.md`) live at `src/FCC/Formal/`; protocols that extend FCC keep their models with their own dirs (`src/FDC2/Formal/Workflows/`, `src/PMW/Formal/Workflows/`) and reuse the shared modules, mirroring the markdown dependency direction. The verify scripts flatten every `.tla`/`.qnt` under `src/` so cross-protocol `EXTENDS Common` / `import Common.*` resolves by module name. Applied on the `formal` branch (`70b1ad3`).
 - Add a CI job that runs SANY (syntax) on every `.tla`; TLC/Apalache model checking as a slower optional job.
 - Cross-reference each `.tla` file from the matching markdown page once the conventions stabilize.
 
