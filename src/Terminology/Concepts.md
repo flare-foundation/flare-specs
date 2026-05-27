@@ -4,8 +4,7 @@ Foundational concepts used across the Flare protocol specifications.
 
 ## Addresses, Accounts, and Keys
 
-- _address_ — a $20$-byte identifier derived from a public key.
-  On EVM-compatible chains, the last $20$ bytes of keccak256 of the uncompressed public key.
+- _address_ — a $20$-byte identifier: the last $20$ bytes of $\mathrm{keccak256}$ of an uncompressed public key.
 - _account_ — the on-chain state behind an address: balance, nonce, and (for contract accounts) code and storage.
   Use "address" for the identifier, "account" for the state.
 - _private key_ — a $256$-bit secret scalar on the secp256k1 curve.

@@ -5,7 +5,7 @@
 Phase 2 [cleaning](#cleaning-plan) status:
 
 - [x] `Images/`
-- [x] `Concepts/{Actions,Instructions,Machines,Voting,Rewarding,README,TrustModel}.md`
+- [x] `Concepts/{Actions,Instructions,Voting,Rewarding,README,TrustModel}.md`
 - [x] `Reference/Components/RelayClient.md`
 - [x] `Reference/Operations/
 - [x] `Architecture.md`
@@ -84,6 +84,17 @@ Per-page leaf cleaning of `Reference/Components/{Machine,Proxy}.md`, `Reference/
 
 Apply as a batch once the prose passes are settled, since they touch many inbound links.
 
+#### Standardize TEE substrate vocabulary (`enclave` / `hardware` / `Confidential VM` / `TEE machine`)
+
+The repo uses four near-synonyms for "the thing running in a TEE" with an implicit, mostly-consistent split. Make it explicit and sweep the whole repo (`src/`) so each word carries one meaning:
+
+- _enclave_ — the attested instance that boots, generates the identity key, runs the code, and registers. Use it for the **actor** (the thing that boots / generates keys / registers / is swapped on replication).
+- _hardware_ — the **physical substrate** only ("the key never leaves the hardware", "hardware isolation", "hardware-attested"). Do not use it as the actor that registers or runs — that was a category error fixed in `Concepts/Machines.md:10` (hardware doesn't register; an enclave does).
+- _Confidential VM_ — the concrete cloud deployment form of an enclave. Reserve for registration/deployment/platform contexts (`Workflows/MachineRegistration.md`, `FCE/Reference/Api.md`, `Components/README.md`).
+- _TEE machine_ — the persistent logical entity / on-chain identity. Never use it for the swappable instance; that is what the enclave/Confidential-VM terms are for.
+
+Known loose usage to reconcile: `Workflows/MachineReplication.md` frames replication as "replacing the **hardware** behind a TEE machine" with "hardware fields", "hardware fingerprint", and "hardware-refresh chain" — these mean the enclave/instance, not raw silicon (a new enclave may land on the same physical host). Decide whether to retitle these to "enclave" or keep "hardware fingerprint" as an accepted idiom, and apply the choice uniformly. Record the chosen split in `STYLE_GUIDE.md`.
+
 #### Standardize "instructions sender" terminology
 
 Current docs mix _instruction sender_ (singular), _instructions sender_ (plural), `instructionsSender` (backticks), `_teeExtensionInstructionsSender` (Solidity arg), and _instructions-sender_ (hyphenated).
@@ -115,6 +126,19 @@ Variance is small. Canonical forms:
 
 Spot-check `../PMW/Workflows/XrpPayment.md`, `../FDC2/Reference/AttestationTypes/PMW*.md`, and `FCE/Workflows/Instructions.md`.
 
+#### Roles: single canonical glossary in `Terminology/Roles.md`
+
+**Decision (settled):** `Terminology/Roles.md` stays the one cross-protocol "who's who". FCC-specific roles are **not** moved into `FCC/Concepts/`. Role _identity and responsibilities_ live in `Roles.md`; FCC pages link to it rather than re-defining a role, and document only the FCC _mechanism_ (e.g. the allowlist gating). Rationale: several roles are genuinely cross-protocol (data provider, delegator, governance, user) and even the "FCC" ones leak across layers, so a clean per-protocol split doesn't exist; splitting would also fragment the glossary and break many `Roles.md#…` inbound links.
+
+`Concepts/Machines.md § Owner Allowlist` has been deduped under this rule: it links _machine owner_ → [TEE operator], _project owner_, and _extension owner_ to `Roles.md` and keeps only the per-list mechanics (who maintains each list, the allow-all toggle, when checked). `Roles.md` already points back here for the allowlist mechanism.
+
+Remaining sweep (apply on each file's pass):
+
+- `Reference/Contracts/FlareTeeManager.md:84` re-italicizes _machine owner_ etc. when listing which contract functions each allowlist gates. That function-gating detail is legitimate reference content, but it should link the role to `Roles.md` instead of reading as a fresh definition.
+- `Reference/Components/RelayClient.md:11` uses _Data provider_ as a config term; confirm it links `Roles.md#data-provider` on its cleaning pass.
+- Sweep the remaining FCC concept/workflow pages (`Wallets.md`, `Instructions.md` cosigner/signer prose, `FCE/Concepts.md`) for any role re-definition and converge on links.
+- Naming: `Concepts/Machines.md#owner-allowlist` is the canonical home for the _machine owner_ allowlist term; `Roles.md#tee-operator` is the actor. Settle the machine-owner ↔ TEE-operator relationship as part of the operator disambiguation below.
+
 #### Disambiguate the term _operator_
 
 `Terminology/Roles.md#tee-operator` defines a _TEE operator_ as the party deploying TEE machines, but `Components/RelayClient.md:4` introduces a second meaning — the relay-client operator (a data provider or cosigner whose key signs relayed instructions).
@@ -141,6 +165,16 @@ Whichever is chosen, apply uniformly across all `Types/` files.
 Repo-wide sweep to align with the style guide rules that variables, numbers, and indexed identifiers belong in math mode.
 Replace Unicode operators (`∈`, `≤`, `≥`, etc.) and plain-text variable/set notation (e.g. `` `v` ∈ {0, 1} ``) with math-mode equivalents (`$v \in \{0, 1\}$`).
 Use the existing `$\,\|\,$` convention for byte concatenation.
+
+#### Standardize key-pair notation: `pub` / `priv` over `pk` / `sk`
+
+`Concepts/Machines.md` now uses $\mathrm{TEE}_\mathrm{pub}$ / $\mathrm{TEE}_\mathrm{priv}$ for the TEE identity key pair (the prior `pk`/`sk` subscripts read as code names — Go convention — and aren't self-explanatory to spec readers). Apply the same convention everywhere a key pair is introduced:
+
+- `Concepts/Keys.md:104, 106` — holder public keys ($\mathrm{pk}_i$) and the Shamir backup encryption.
+- `Reference/Operations/F_WALLET.md:112-116` and `Workflows/VrfProof.md:46, 58` — VRF math (`sk`, `pk`).
+- `Reference/Contracts/VrfVerifier.md:25, 28, 68-71, 87` — VRF verification equations.
+
+In VRF math the variables come from RFC 9381 and academic crypto papers where `pk`/`sk` is conventional — keeping them there may be the right call. Decide which contexts truly benefit from the rename (TEE/wallet identity vs. equation-internal VRF variables) and document the chosen split in `STYLE_GUIDE.md`.
 
 #### Backtick contract and code function names; leave math functions plain
 
@@ -300,12 +334,6 @@ Spec work to do:
 #### Add `domainID` check to XRP `transactionStatus` validation note
 
 `verifier-xrp-indexer@5506c431` (2026-05-25) added a `domainID` check to the XRP `transactionStatus` validation path (`internal/xrp/transaction.go`). When PMW Payment / XRP-related attestation-type pages are cleaned, confirm whether the spec already mentions the domain-tag check or whether it needs to be added; current `FDC/AttestationTypes/Payment.md` only mentions `transactionStatus` in passing (line 115) and may not need the level of detail.
-
-#### Create `Concepts/Policy.md`
-
-`Concepts/Policy.md` is listed as a planned page in `Concepts/README.md` but does not exist yet. The signing-policy lifecycle from the FCC side currently lives scattered across `Concepts/Machines.md § Signing Policy`, `Reference/Components/Proxy.md § Signing Policy`, and `Reference/Operations/F_POLICY.md`.
-A dedicated `Concepts/Policy.md` should pull the FCC view together: how a policy is installed at first connection, how it is rotated each reward epoch, how it gates voting, how machine attestations carry the active policy, and how backups bind to it.
-The canonical signing-policy spec stays at [`FSP/SigningPolicy.md`](../FSP/SigningPolicy.md); the new page defers to it for derivation rules and only documents what is FCC-specific.
 
 ## Forward-looking
 

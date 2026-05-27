@@ -15,7 +15,7 @@ Until a caller holds that receipt, it has no guarantee that the proxy forwarded 
 
 ## Signing Policy
 
-The proxy keeps its paired TEE machine in sync with the current [signing policy](../../../FSP/SigningPolicy.md):
+The proxy keeps its paired TEE machine in sync with the current [signing policy](../../Concepts/Policy.md):
 
 - On initialization, it installs the current policy on the machine via [`INITIALIZE_POLICY`](../Operations/F_POLICY.md#initialize_policy).
    The initial [attestation](../../Concepts/Machines.md) lets data providers verify that the correct policy was installed.

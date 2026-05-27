@@ -14,7 +14,7 @@ App-specific workflows live with their app:
 | Workflow | Description | Spec |
 |---|---|---|
 | [InstructionLifecycle](InstructionLifecycle.md) | End-to-end flow of one instruction from on-chain emission to TEE execution and (optional) on-chain consumption. | [Instructions](../Concepts/Instructions.md), [Actions](../Concepts/Actions.md), [Voting](../Concepts/Voting.md) |
-| [SigningPolicyTransition](SigningPolicyTransition.md) | Install a new FSP signing policy on a TEE machine at every reward-epoch boundary. | [Machines § Signing Policy](../Concepts/Machines.md#signing-policy), [`F_POLICY UPDATE_POLICY`](../Reference/Operations/F_POLICY.md#update_policy) |
+| [SigningPolicyTransition](SigningPolicyTransition.md) | Install a new FSP signing policy on a TEE machine at every reward-epoch boundary. | [Signing Policy](../Concepts/Policy.md), [`F_POLICY UPDATE_POLICY`](../Reference/Operations/F_POLICY.md#update_policy) |
 | [MachineRegistration](MachineRegistration.md) | Deploy a TEE machine from VM boot to `PRODUCTION`. | [Registration](../Concepts/Machines.md), [State](../Concepts/Machines.md), [Attestation](../Concepts/Machines.md) |
 | [MachineLifecycle](MachineLifecycle.md) | Post-registration operations: pause, resume, upgrade, ownership transfer. | [Registration](../Concepts/Machines.md) |
 | [MachineReplication](MachineReplication.md) | Replace a TEE machine's hardware while preserving its $\mathrm{TEE}_\mathrm{ID}$. | [Machines § Statuses](../Concepts/Machines.md#statuses) |

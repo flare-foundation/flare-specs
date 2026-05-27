@@ -1,53 +1,29 @@
 # Machines
 
-A _TEE machine_ is one TEE-running node registered with FCC, identified by a unique $\mathrm{TEE}_\mathrm{ID}$ — the address of its identity public key, generated inside the enclave at boot.
-
-For the contract surface (function signatures, struct fields, management-call catalog), see [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md).
+A _TEE machine_ is a container running the [node app](../Reference/Components/Machine.md) (and, for custom extensions, an [extension app](../Reference/Components/Machine.md)) inside a hardware-attested enclave on a cloud TEE platform.
 
 ## Identity
 
-- Boot-time key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$ generated inside the enclave; $\mathrm{TEE}_\mathrm{sk}$ never leaves it.
-- $\mathrm{TEE}_\mathrm{ID}$ — the last $20$ bytes of $\mathrm{keccak256}(\mathrm{TEE}_\mathrm{pk})$. Distinct from the registering [TEE operator](../../Terminology/Roles.md#tee-operator)'s address (recorded separately; see [Owner Allowlist](#owner-allowlist)).
-- $\mathrm{TEE}_\mathrm{pk}$ is held as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md).
-- _Initial identity_ $\mathrm{TEE}_\mathrm{ID}^*$ — equal to $\mathrm{TEE}_\mathrm{ID}$ for a fresh registration; after [replication](../Workflows/MachineReplication.md), records the successor's original $\mathrm{TEE}_\mathrm{ID}$ (the hardware now backing the slot).
-- Owner changes go through the two-step ownership-transfer flow on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md#management-calls).
-
-## Signing Policy
-
-A TEE machine cannot accept signed instructions unless it knows the current [signing policy](../../FSP/SigningPolicy.md).
-The first policy is installed at registration as part of the initial [attestation](#attestation); subsequent policies are pushed by the [TEE proxy](../Reference/Components/Proxy.md) via [`UPDATE_POLICY`](../Reference/Operations/F_POLICY.md#update_policy) at every reward-epoch boundary.
+- _Identity key pair_ $(\mathrm{TEE}_\mathrm{pub}, \mathrm{TEE}_\mathrm{priv})$ — public and private keys generated inside the enclave at boot; $\mathrm{TEE}_\mathrm{priv}$ never leaves it.
+- $\mathrm{TEE}_\mathrm{ID}$ — the [address](../../Terminology/Concepts.md#addresses-accounts-and-keys) of $\mathrm{TEE}_\mathrm{pub}$. Distinct from the registering [TEE operator](../../Terminology/Roles.md#tee-operator)'s address (recorded separately; see [Owner Allowlist](#owner-allowlist)).
+- $\mathrm{TEE}_\mathrm{pub}$ is held as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md).
+- _Initial identity_ $\mathrm{TEE}_\mathrm{ID}^*$ — the [`initialTeeId`](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata) field: the $\mathrm{TEE}_\mathrm{ID}$ under which the enclave currently running the machine was first registered. Equal to $\mathrm{TEE}_\mathrm{ID}$ for an unreplicated machine. [Replication](../Workflows/MachineReplication.md) transfers the identity key to a fresh enclave, so $\mathrm{TEE}_\mathrm{ID}$ stays the machine's permanent on-chain identity while $\mathrm{TEE}_\mathrm{ID}^*$ becomes that enclave's own original $\mathrm{TEE}_\mathrm{ID}$ — fingerprinting the enclave now behind the machine.
 
 ## TEE State
 
 The TEE's state is the part of its content that a fresh replica would not share by default:
 
-- Identity key pair $(\mathrm{TEE}_\mathrm{pk}, \mathrm{TEE}_\mathrm{sk})$.
+- Identity key pair $(\mathrm{TEE}_\mathrm{pub}, \mathrm{TEE}_\mathrm{priv})$.
 - All [wallet keys](Keys.md) and key backups held for [PMW](../../PMW/README.md) or any other key-custody [FCE](../FCE/README.md).
-- System state variables — initial and current signing policies, machine status, configuration nonce, pausing nonce.
+- System state variables — initial and current [signing policies](Policy.md), machine status, configuration nonce, pausing nonce.
 - Any [extension-defined state](../FCE/Concepts.md) added by the FCE the machine is registered to.
 
 On replication, the identity key pair and all wallet keys and backups transfer to the successor; machine-local nonces do not.
 
-### Encoding
-
-State is serialized as a [`TeeState`](../Reference/Types/Abi/TeeMachine.md#teestate) struct with two parts:
-
-- **System state** — defined by Flare; covers FCC-framework variables.
-- **Extension state** — defined by the FCE; surfaced through the FCE's `/state` endpoint.
-
-Each part is keyed by a `bytes32` version hash (`systemStateVersion`, `stateVersion`); version `0` (32-byte zero) encodes both bodies as empty `bytes`.
-
 ## Attestation
 
 A TEE machine attests to elements of its [state](#tee-state) when challenged.
-A _challenger_ provides a $32$-byte challenge; the machine builds an [`Attestation`](../Reference/Types/Abi/TeeMachine.md#attestation) struct from the challenge and its own state:
-
-- `challenge` — the challenger's $32$-byte input.
-- `publicKey` — TEE identity public key.
-- `initialSigningPolicyId`, `initialSigningPolicyHash` — first signing policy known to the machine.
-- `lastSigningPolicyId`, `lastSigningPolicyHash` — most recent signing policy known to the machine.
-- `state` — ABI-encoded [`TeeState`](../Reference/Types/Abi/TeeMachine.md#teestate) at attestation time.
-- `teeTimestamp` — local machine timestamp at attestation time.
+A _challenger_ provides a $32$-byte challenge; the machine builds an [`Attestation`](../Reference/Types/Abi/TeeMachine.md#attestation) binding that challenge to its [identity public key](#identity), the first and most recent signing policies it knows, a snapshot of its [state](#tee-state), and its local timestamp.
 
 The machine ABI-encodes the struct, hashes it ($\mathrm{hash}(\mathrm{Attestation})$), and passes the digest to the TEE platform's attestation service (Google for Intel TDX and AMD SEV).
 The platform's signed response binds the digest to the hardware-attested boot state.
@@ -58,22 +34,20 @@ For the FDC2 attestation type that wraps this procedure into an on-chain proof, 
 
 Three allowlists gate the FCC owner roles:
 
-- _machine owner_ — the Flare address that registers and owns a TEE machine on an extension. Per-extension list maintained by the [extension owner](../../Terminology/Roles.md#extension-owner).
-- _wallet [project owner](../../Terminology/Roles.md#project-owner)_ — the Flare address that creates wallet projects under an extension. Per-extension list maintained by the extension owner.
-- _[extension owner](../../Terminology/Roles.md#extension-owner)_ — the Flare address that registers and owns an extension (`register`, two-step ownership transfer). Single global list maintained by immediate [governance](../../Terminology/Roles.md#governance).
+- _machine owner_ — the address that owns a registered TEE machine (a [TEE operator](../../Terminology/Roles.md#tee-operator)). Per-extension list, maintained by the [extension owner](../../Terminology/Roles.md#extension-owner).
+- [project owner](../../Terminology/Roles.md#project-owner) — creates wallet projects under an extension. Per-extension list, maintained by the extension owner.
+- [extension owner](../../Terminology/Roles.md#extension-owner) — registers and owns an extension. Single global list, maintained by immediate [governance](../../Terminology/Roles.md#governance).
 
 Checked on registration, ownership changes, and project creation; each list has an "allow-all" toggle for fully public participation.
+
+Owner changes use the two-step [ownership-transfer flow](../Workflows/OwnerTransfer.md) on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md#management-calls).
 
 For the management calls, see [`FlareTeeManager § Owner Allowlist`](../Reference/Contracts/FlareTeeManager.md#owner-allowlist).
 
 ## Registration
 
-A TEE operator [registers](../Reference/Contracts/FlareTeeManager.md#registration) a machine by submitting:
-
-- a `teeMachineData` struct — extension to join, code hash and platform, identity public key, initial owner.
-- a signature by the identity key proving possession of the corresponding private key.
-
-The contract recovers the signer and stores it as the machine's `teeId`; this prevents registering a `teeId` whose private key the caller does not control.
+A TEE operator [registers](../Reference/Contracts/FlareTeeManager.md#registration) a machine by submitting its `teeMachineData` together with a signature by the identity key proving possession of the corresponding private key.
+The contract recovers the signer and stores it as the machine's `teeId`, so a caller cannot register a `teeId` whose private key it does not control.
 A freshly-registered machine starts in [`INITIALIZED`](#statuses) and needs a valid [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof to reach `PRODUCTION`.
 
 ## Statuses
@@ -84,15 +58,15 @@ A registered machine moves through seven statuses:
 2. **`PRODUCTION`** — fully operational; accepts instructions. Owner may pause; anyone may suspend after the [availability deadline](#availability-deadline) expires.
 3. **`SUSPENDED`** — set on a non-`OK` [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof or after the availability deadline. Can return to `PRODUCTION` with a fresh proof, be paused, or be banned.
 4. **`PAUSED`** — owner-initiated stop, or automatic on settings update or unsupported code. No instructions accepted. Return to `PRODUCTION` requires a fresh availability proof.
-5. **`PAUSED_FOR_UPGRADE`** — owner-initiated, prepares the machine for [replication](../Workflows/MachineReplication.md). Entered from `PAUSED` after a minimum dwell.
-6. **`REPLICATING`** — a successor machine is taking over this machine's identity and key set; reached from `PAUSED_FOR_UPGRADE` on a successful availability proof from the successor.
+5. **`PAUSED_FOR_UPGRADE`** — owner-initiated, prepares the machine for [replication](../Workflows/MachineReplication.md). Entered from `PAUSED`.
+6. **`REPLICATING`** — a successor machine is taking over this machine's identity and key set; reached from `PAUSED_FOR_UPGRADE`.
 7. **`BANNED`** — extension-owner only; reversal lands the machine in `PAUSED`.
 
 Each transition emits `TeeMachineStatusChanged`.
 
 ### Availability Deadline
 
-Each [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's validity deadline (the `endTs` field of its `AvailabilityCheckValidity` record).
+Each [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's availability deadline.
 Anyone may submit a fresh proof at any time.
 
 After the deadline, the machine stays in `PRODUCTION` but:

@@ -10,7 +10,10 @@ Most operations flow [Instructions](Instructions.md) → [Voting](Voting.md) →
 1. [Architecture](../Architecture.md) — participants, instruction flow, deployment topology.
 2. [Trust Model](TrustModel.md) — the integrity assumptions the rest of the spec relies on.
 3. [Machines](Machines.md) — what a TEE machine is and how it joins the network.
-4. [Instructions](Instructions.md), [Actions](Actions.md) — the lifecycle of one operation.
-5. [Voting](Voting.md) — how proxies aggregate signatures into a pass.
-6. [Wallets](Wallets.md), [Keys](Keys.md) — what TEEs custody, and how.
-7. [Rewarding](Rewarding.md) — how participation is attributed and reconstructed off-chain.
+4. [Signing Policy](Policy.md) — the FSP voter set each machine tracks; it gates instruction verification and voting.
+5. [Instructions](Instructions.md) — how an operation is sent and relayed to a machine.
+6. [Voting](Voting.md) — how proxies aggregate signatures into a pass.
+7. [Actions](Actions.md) — what a machine executes once an instruction passes.
+8. [Wallets](Wallets.md) — the projects and wallets TEEs custody keys for.
+9. [Keys](Keys.md) — what TEEs custody, and how.
+10. [Rewarding](Rewarding.md) — how participation is attributed and reconstructed off-chain.

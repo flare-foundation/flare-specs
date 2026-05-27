@@ -26,6 +26,7 @@ Carried in the [`TeeInstructionsSent`](../../Contracts/FlareTeeManagerEvents.md#
 
 Encodes the state of a TEE machine for use in [attestations](#attestation).
 Consists of a system state (defined by Flare) and a custom compute extension state.
+Either version hash may be `0` (the 32-byte zero), in which case the corresponding body is empty `bytes`.
 
 
 ```json

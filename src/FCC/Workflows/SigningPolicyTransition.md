@@ -6,7 +6,7 @@ For the FSP side, see [`SigningPolicy`](../../FSP/SigningPolicy.md); for the ope
 
 ## Preconditions
 
-- The TEE machine is in `PRODUCTION` and knows the current signing policy as `lastSigningPolicyId` (per [Concepts/Machines § Signing Policy](../Concepts/Machines.md#signing-policy)).
+- The TEE machine is in `PRODUCTION` and knows the current signing policy as `lastSigningPolicyId` (per [Concepts § Signing Policy](../Concepts/Policy.md)).
 - The FSP has finalized a new signing policy for the next reward epoch and emitted `SigningPolicyInitialized` on the FSP `Relay` contract.
 - The destination machine's [TEE proxy](../Reference/Components/Proxy.md) has the FSP indexer configured and is reachable from the machine.
 

@@ -19,7 +19,7 @@ For the type-level definitions, see [Concepts/Instructions](../Concepts/Instruct
 - `Executing` — the TEE machine has pulled the bundled [action](../Concepts/Actions.md) from its proxy queue.
 - `Responded` — the TEE machine has posted an [action response](../Concepts/Actions.md#action-responses) back to the proxy.
 - `Consumed` — the action response has been used on-chain (e.g. an FDC2 proof verified, an external transaction submitted, a payment status posted). Optional and operation-specific.
-- `Expired` — the instruction's `rewardEpochId` falls more than one epoch behind the destination machine's active [signing policy](../Concepts/Machines.md#signing-policy) before reaching `Quorate`; the machine rejects it as stale.
+- `Expired` — the instruction's `rewardEpochId` falls more than one epoch behind the destination machine's active [signing policy](../Concepts/Policy.md) before reaching `Quorate`; the machine rejects it as stale.
 
 ## Initial State
 
