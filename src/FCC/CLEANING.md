@@ -32,16 +32,16 @@ Verify factual claims against the latest code in:
 
 Reads can hit the working tree directly, or `git show origin/<ref>:<path>` for an origin-pinned read.
 
-Commit hashes captured on 2026-05-26 (refresh by re-fetching each remote and re-running the head log).
+Commit hashes captured on 2026-05-27 (refresh by re-fetching each remote and re-running the head log).
 Refresh this table at the start of any new Phase 1 verification round if the snapshot is more than a few weeks stale; the verifications below reference specific commit hashes and will need re-checking against the new HEAD if behaviour has changed:
 
 | Repo | Read ref | HEAD commit | Date |
 |------|----------|-------------|------|
 | `tee/tee-node` | `origin/main` | `4ba38512` | 2026-05-14 |
-| `tee/tee-proxy` | `origin/main` | `31bfb8e0` | 2026-05-14 |
-| `tee/tee-relay-client` | `origin/tee-diamond-cut` | `3bfbb5d8` | 2026-05-25 |
+| `tee/tee-proxy` | `origin/main` | `3938b5d6` | 2026-05-27 |
+| `tee/tee-relay-client` | `origin/tee-diamond-cut` | `3bfbb5d1` | 2026-05-25 |
 | `tee/go-verifier-api` | `origin/main` | `d7efb89a` | 2026-05-22 |
-| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` | `0bc80b0b` | 2026-05-25 |
+| `fsp/flare-smart-contracts-v2` | `origin/tee-diamond-cut` | `7c943318` | 2026-05-27 |
 | `libs/go-flare-common` | `origin/tee-diamond-cut` | `876c09e6` | 2026-04-24 |
 | `fdc/verifier-xrp-indexer` | `origin/main` | `5506c431` | 2026-05-25 |
 
@@ -330,6 +330,26 @@ Spec work to do:
 - Update `Concepts/Wallets.md` lifecycle to reflect: `INITIALIZED → PRODUCTION` via `enableWallet`; `PRODUCTION ↔ PAUSED` via `pauseWallets` / `unpauseWallets`; per-project pauser/unpauser allowlists.
 - Surface the new facet in `Reference/Contracts/FlareTeeManager.md` (struct fields, management calls, batch-event semantics — `pauseWallets`/`unpauseWallets` emit one batch event per call, not one per wallet).
 - Touch `Workflows/WalletSetup.md` (and any wallet-pause workflow that emerges) to reflect the narrowed `enableWallet` and the new path.
+
+#### Document per-extension emergency pause overlay
+
+`flare-smart-contracts-v2` `d7906df7` (on `origin/tee-diamond-cut`, captured at HEAD `7c943318`, 2026-05-27) added `MachineEmergencyPauseFacet` + `MachineEmergencyPause` library (`IMachineEmergencyPause` public; governance-only grace setter on `IIMachineEmergencyPause`). A per-extension boolean overlay, **distinct from** the per-project wallet pause in [Document wallet project pauser/unpauser delegation](#document-wallet-project-pauserunpauser-delegation): it gates _instruction dispatch_, not wallet state, and uses its own per-extension pauser/unpauser lists.
+
+Behavior:
+
+- While set, `Instructions.sendInstructions` rejects every dispatch (regular **and** system op-types) to machines in that extension with `EmergencyPauseActive(extensionId)`. Machine statuses, active sets, and the read getters (`getActiveTeeMachines`, `getRandomTeeIds`, …) are **not** mutated — off-chain "is this usable now" checks must also call `isExtensionEmergencyPaused`. Clearing the flag instantly restores dispatch.
+- After unpause, a governance-tunable grace window (bounds $30\,\mathrm{min}$–$24\,\mathrm{h}$, default $\sim 2\,\mathrm{h}$ / `7200 s`) blocks **only** the third-party expired-availability branch of `MachineManagerFacet.pause(teeId)`, so owners can refresh attestations before strangers suspend still-`PRODUCTION` machines. The window combines the machine's own extension and the system extension (id 0), since availability refresh needs `requestTeeAttestation` (own extension) **and** FDC2 attestation routed to extension-0 TEEs.
+
+Surface to document:
+- Methods: list management (`add/removeExtensionEmergency{Pausers,Unpausers}`, extension-owner only), `emergencyPauseExtension` / `emergencyUnpauseExtension` (extension owner **or** the relevant list member), governance-only timelocked `setEmergencyUnpauseGracePeriodSeconds`, and getters (`isExtensionEmergencyPaused`, `getLastUnpauseTs`, `getEmergencyUnpauseGracePeriodSeconds`, list/predicate getters).
+- Events: `ExtensionEmergency{Pausers,Unpausers}{Added,Removed}`, `ExtensionEmergencyPaused`, `ExtensionEmergencyUnpaused(extensionId, unpauseTs)`, `EmergencyUnpauseGracePeriodSet`. Errors: `ExtensionAlready/NotEmergencyPaused`, `EmergencyPauseActive`, `EmergencyProtectionActive`, `GracePeriodToo{Short,Long}`.
+- Spec homes: `Reference/Contracts/FlareTeeManager.md` (new facet/management calls/events); a concept mention (`Concepts/Machines.md` statuses note that emergency pause is an _overlay_ independent of the seven statuses, or a short section); the _extension emergency pauser/unpauser_ roles in `Terminology/Roles.md` (fold into the delegated-pause role work); and `Concepts/Instructions.md`'s dispatch path (rejection during emergency pause).
+
+**Upstream state**: contracts only. `tee-node@4ba38512`/`tee-proxy@3938b5d6` predate it; the overlay is an on-chain dispatch gate so off-chain may need only to surface `isExtensionEmergencyPaused`. Confirm before speccing the off-chain side.
+
+#### Cross-check FCC pages against the contract-repo spec-alignment audit
+
+`flare-smart-contracts-v2` `7c943318` (2026-05-27, `docs(specs)`) is an audit that corrected contract↔doc drift in **that repo's** `docs/specs/`. Its findings name the same factual areas to re-verify in our specs on each page's next pass: governance / upgrade-manager flow (`create` / `addPaths` / `finalize` / `sign`; note there is **no** `transferGovernance` / `claimGovernance`), `WalletManager` lifecycle/state machine, `Replication`, `Verification` (attestation), `Instructions`, `OperationFees`, `Extensions`, and entity counts. Diff against `git show 7c943318 -- docs/specs/FCC/<page>.md` when cleaning the matching page. (The contract refactor `4d3cbeff` in the same range is behavior-preserving — `Attestation` struct and the `TEE_ATTESTATION` hash preimage are unchanged — so no attestation-spec change is needed.)
 
 #### Add `domainID` check to XRP `transactionStatus` validation note
 
