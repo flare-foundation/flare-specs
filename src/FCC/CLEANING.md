@@ -52,7 +52,7 @@ Refresh this table at the start of any new Phase 1 verification round if the sna
 
 **The two highest-leverage rules — apply aggressively, every pass:**
 
-- **Terseness.** Cut every word that does not carry information. Most cleaned pages have shrunk substantially under this rule alone; if the page didn't get shorter, the pass wasn't done.
+- **Terseness.** Cut every word that does not carry information. If the page didn't get shorter, the pass wasn't done.
 - **Lists over prose.** If three or more items share a structure (definitions, fields, conditions, steps), they belong in a list. Reach for prose only when sentences genuinely flow.
 
 The full checklist:
@@ -90,7 +90,7 @@ Apply as a batch once the prose passes are settled, since they touch many inboun
 The repo uses four near-synonyms for "the thing running in a TEE" with an implicit, mostly-consistent split. Make it explicit and sweep the whole repo (`src/`) so each word carries one meaning:
 
 - _enclave_ — the attested instance that boots, generates the identity key, runs the code, and registers. Use it for the **actor** (the thing that boots / generates keys / registers / is swapped on replication).
-- _hardware_ — the **physical substrate** only ("the key never leaves the hardware", "hardware isolation", "hardware-attested"). Do not use it as the actor that registers or runs — that was a category error fixed in `Concepts/Machines.md:10` (hardware doesn't register; an enclave does).
+- _hardware_ — the **physical substrate** only ("the key never leaves the hardware", "hardware isolation", "hardware-attested"). Do not use it as the actor that registers or runs (hardware doesn't register; an enclave does).
 - _Confidential VM_ — the concrete cloud deployment form of an enclave. Reserve for registration/deployment/platform contexts (`Workflows/MachineRegistration.md`, `FCE/Reference/Api.md`, `Components/README.md`).
 - _TEE machine_ — the persistent logical entity / on-chain identity. Never use it for the swappable instance; that is what the enclave/Confidential-VM terms are for.
 
@@ -115,8 +115,6 @@ Once those anchors exist, add links in `Operations/Instructions.md`'s `### Instr
 - _system instructions sender_ → its dedicated subsection in `FCE/Concepts.md` (where governance whitelisting via `registerSystemInstructionsSenders` is documented).
 - an _extension's instructions sender_ → the `instructionsSender` field in `FCE/Concepts.md`'s extension data structure, and the registration call that sets it.
 
-The link additions were attempted on the current `FCE/Concepts.md` anchors but reverted because those anchors are not yet stable (the file is in the not-yet-cleaned set).
-
 #### Light sweep for `opType` / `opCommand` terminology
 
 Variance is small. Canonical forms:
@@ -129,9 +127,7 @@ Spot-check `../PMW/Workflows/XrpPayment.md`, `../FDC2/Reference/AttestationTypes
 
 #### Roles: single canonical glossary in `Terminology/Roles.md`
 
-**Decision (settled):** `Terminology/Roles.md` stays the one cross-protocol "who's who". FCC-specific roles are **not** moved into `FCC/Concepts/`. Role _identity and responsibilities_ live in `Roles.md`; FCC pages link to it rather than re-defining a role, and document only the FCC _mechanism_ (e.g. the allowlist gating). Rationale: several roles are genuinely cross-protocol (data provider, delegator, governance, user) and even the "FCC" ones leak across layers, so a clean per-protocol split doesn't exist; splitting would also fragment the glossary and break many `Roles.md#…` inbound links.
-
-`Concepts/Machines.md § Owner Allowlist` has been deduped under this rule: it links _machine owner_ → [TEE operator], _project owner_, and _extension owner_ to `Roles.md` and keeps only the per-list mechanics (who maintains each list, the allow-all toggle, when checked). `Roles.md` already points back here for the allowlist mechanism.
+**Policy:** `Terminology/Roles.md` is the one cross-protocol "who's who". FCC-specific roles are **not** moved into `FCC/Concepts/`. Role _identity and responsibilities_ live in `Roles.md`; FCC pages link to it rather than re-defining a role, and document only the FCC _mechanism_ (e.g. the allowlist gating). Rationale: several roles are genuinely cross-protocol (data provider, delegator, governance, user) and even the "FCC" ones leak across layers, so a clean per-protocol split doesn't exist; splitting would also fragment the glossary and break many `Roles.md#…` inbound links.
 
 Remaining sweep (apply on each file's pass):
 
@@ -147,8 +143,7 @@ Either rename one usage or add a relay-client-operator entry to `Roles.md` and c
 
 #### Audit `Reference/Types/Abi/` and `Reference/Types/Wire/` for internal-only types
 
-`Reference/Types/Wire/Instruction.md` is in place (added during the Instructions / RelayClient refactor).
-Audit the rest of `Reference/Types/Abi/` and `Reference/Types/Wire/` for types that are purely internal to one component (e.g. Go-only struct names like `DataFixed`, `Data`) and remove or rename them.
+Audit `Reference/Types/Abi/` and `Reference/Types/Wire/` for types that are purely internal to one component (e.g. Go-only struct names like `DataFixed`, `Data`) and remove or rename them.
 
 #### Reconcile `$id` / `$ref` casing in JSON-Schema docs
 
@@ -169,7 +164,7 @@ Use the existing `$\,\|\,$` convention for byte concatenation.
 
 #### Standardize key-pair notation: `pub` / `priv` over `pk` / `sk`
 
-`Concepts/Machines.md` now uses $\mathrm{TEE}_\mathrm{pub}$ / $\mathrm{TEE}_\mathrm{priv}$ for the TEE identity key pair (the prior `pk`/`sk` subscripts read as code names — Go convention — and aren't self-explanatory to spec readers). Apply the same convention everywhere a key pair is introduced:
+Use $\mathrm{TEE}_\mathrm{pub}$ / $\mathrm{TEE}_\mathrm{priv}$ for the TEE identity key pair (the alternative `pk` / `sk` is Go convention and not self-explanatory to spec readers). Apply the same convention everywhere a key pair is introduced:
 
 - `Concepts/Keys.md:104, 106` — holder public keys ($\mathrm{pk}_i$) and the Shamir backup encryption.
 - `Reference/Operations/F_WALLET.md:112-116` and `Workflows/VrfProof.md:46, 58` — VRF math (`sk`, `pk`).
@@ -189,7 +184,7 @@ Apply the analogous form for JSON: _JSON-encoded_ (uppercase JSON, hyphen, lower
 
 Current variants across the repo:
 
-- _JSON-encoded_ — preferred (most cleaned docs already use this).
+- _JSON-encoded_ — preferred.
 - _JSON encoding_ — appears as a noun phrase in `Operations/Actions.md` lines 20, 47; rewrite as "JSON-encoded" wherever grammatically possible, or accept the noun form only where unavoidable.
 - _JSON marshaled_, _marshalled_, _marshaled_ — Go-specific jargon; replace (`Reference/Components/Proxy.md` lines 164, 170; `Reference/Types/Wire/Action.md` line 73).
 
@@ -210,12 +205,12 @@ Introduce the expansion "Flare Compute Extension (FCE)" on first occurrence — 
 
 #### Standardize "emit" vs "produce" terminology
 
-Cleaned docs (`Operations/Actions.md`, `Operations/Instructions.md`, `Reference/Components/RelayClient.md`, `Operations/Voting.md`) use _emit_ only for on-chain Solidity events (`TeeInstructionsSent`) and _produce_ for off-chain artifacts (instructions, signatures, actions, receipts).
-Apply the same split when cleaning the remaining docs.
+Use _emit_ only for on-chain Solidity events (`TeeInstructionsSent`); _produce_ for off-chain artifacts (instructions, signatures, actions, receipts).
+Apply this split when cleaning the remaining docs.
 
 #### Standardize the verb for creating an instruction
 
-Relay-client construction uses _build_ (`Operations/Instructions.md`, `Reference/Components/RelayClient.md`).
+Use _build_ for relay-client construction of instructions.
 Spot-check the rest of the docs (`Workflows/`, etc.) for inconsistent usage (_produce_, _assemble_, _construct_, _create_, _make_, ...) and converge on _build_.
 
 #### Generalize Redis references to "key-value store"
@@ -247,13 +242,13 @@ The same refactor likely applies to the inbound FCC mentions of "relay format" i
 
 #### Extract reference content from `FCE/Concepts.md` into `Reference/Contracts/FlareTeeManager.md`
 
-Same treatment that was applied to `Concepts/{Machines,Wallets,Keys}.md`: pull the management-call list (the `register`, `setExtensionContracts`, `addTeeVersion`, `disableCodeHashPlatform`, `addSupportedKeyTypes`, `removeSupportedKeyTypes`, `proposeNewOwner`, `confirmOwnership`, `sendInstructions`, `sendSystemInstructions`, `addSystemSupportedPlatforms`, `addSystemSupportedKeyTypesAndSigningAlgos`, `registerSystemInstructionsSenders`, `unregisterSystemInstructionsSenders` entries) into a new "Extension Management" section under `Reference/Contracts/FlareTeeManager.md`.
+Pull the management-call list (the `register`, `setExtensionContracts`, `addTeeVersion`, `disableCodeHashPlatform`, `addSupportedKeyTypes`, `removeSupportedKeyTypes`, `proposeNewOwner`, `confirmOwnership`, `sendInstructions`, `sendSystemInstructions`, `addSystemSupportedPlatforms`, `addSystemSupportedKeyTypesAndSigningAlgos`, `registerSystemInstructionsSenders`, `unregisterSystemInstructionsSenders` entries) into a new "Extension Management" section under `Reference/Contracts/FlareTeeManager.md`.
 Leave `FCE/Concepts.md` with the concept-level prose (extension data model, system-vs-custom distinction, lifecycle narrative, instructions-senders concept) and cross-links to the new Reference section.
 
 #### Sweep `Concepts.md` files for content fit
 
-Concepts pages now exist at `FCE/Concepts.md`, `../PMW/Concepts.md`, `../FDC2/Concepts.md`, and (outside FCC) `Terminology/Concepts.md`.
-They were carved out of the corresponding READMEs by topic, but the splits were mechanical — review each in turn and ask:
+Concepts pages exist at `FCE/Concepts.md`, `../PMW/Concepts.md`, `../FDC2/Concepts.md`, and (outside FCC) `Terminology/Concepts.md`.
+Review each in turn:
 
 - Does any section sit at the wrong level (e.g. an extension-framework concept in `../PMW/Concepts.md` that belongs in `FCE/Concepts.md`, or an FCC-wide concept in `FCE/Concepts.md` that belongs in `Terminology/Concepts.md`)?
 - Does any content overlap or duplicate across files that should be unified and cross-linked?
@@ -325,12 +320,7 @@ Spec surfaces to touch when the off-chain catches up:
 - Singular `pauseWallet` removed in favour of batch `pauseWallets`.
 - Set-membership errors (`InvalidAddress`, `AddressAlreadyInSet`, `AddressNotInSet`, `NotOwnerOrPauser`, `NotOwnerOrUnpauser`, `NoAddresses`) lifted into `ITeeCommonErrors`; `OwnerAllowlist` and `IWalletKeyManager` rewired to share them.
 
-Spec work — **done**:
-
-- `Terminology/Roles.md` gained `## Wallet Pauser and Unpauser`; the `## Project Owner` entry references the delegation surface.
-- `Reference/Contracts/FlareTeeManager.md` wallet lifecycle now shows `PRODUCTION ↔ PAUSED` via `pauseWallets` / `unpauseWallets` (project owner or list member) and the narrowed `enableWallet` (`INITIALIZED → PRODUCTION` only); `WalletProjectPauseFacet` is in the Facets list; the events file replaces `WalletPaused` with `WalletsPaused` / `WalletsUnpaused` and adds the four list-management events.
-
-Spec work — **remaining**:
+Spec work:
 
 - Update `Concepts/Wallets.md` lifecycle to reflect the same model.
 - Touch `Workflows/WalletSetup.md` (and any wallet-pause workflow that emerges).
@@ -345,18 +335,13 @@ Behavior:
 - While set, `Instructions.sendInstructions` rejects every dispatch (regular **and** system op-types) to machines in that extension with `EmergencyPauseActive(extensionId)`. Machine statuses, active sets, and the read getters (`getActiveTeeMachines`, `getRandomTeeIds`, …) are **not** mutated — off-chain "is this usable now" checks must also call `isExtensionEmergencyPaused`. Clearing the flag instantly restores dispatch.
 - After unpause, a governance-tunable grace window (bounds $30\,\mathrm{min}$–$24\,\mathrm{h}$, default $\sim 2\,\mathrm{h}$ / `7200 s`) blocks **only** the third-party expired-availability branch of `MachineManagerFacet.pause(teeId)`, so owners can refresh attestations before strangers suspend still-`PRODUCTION` machines. The window combines the machine's own extension and the system extension (id 0), since availability refresh needs `requestTeeAttestation` (own extension) **and** FDC2 attestation routed to extension-0 TEEs.
 
-Surface to document:
-- Methods: list management (`add/removeExtensionEmergency{Pausers,Unpausers}`, extension-owner only), `emergencyPauseExtension` / `emergencyUnpauseExtension` (extension owner **or** the relevant list member), governance-only timelocked `setEmergencyUnpauseGracePeriodSeconds`, and getters (`isExtensionEmergencyPaused`, `getLastUnpauseTs`, `getEmergencyUnpauseGracePeriodSeconds`, list/predicate getters).
-- Events: `ExtensionEmergency{Pausers,Unpausers}{Added,Removed}`, `ExtensionEmergencyPaused`, `ExtensionEmergencyUnpaused(extensionId, unpauseTs)`, `EmergencyUnpauseGracePeriodSet`. Errors: `ExtensionAlready/NotEmergencyPaused`, `EmergencyPauseActive`, `EmergencyProtectionActive`, `GracePeriodToo{Short,Long}`.
-- Spec homes — **done**: `Reference/Contracts/FlareTeeManager.md` gained a `## Emergency Pause` section + Facets entry + Payload-Validation rejection bullet; the seven events live in `FlareTeeManagerEvents.md § Emergency Pause`; `Concepts/Machines.md` statuses gained the overlay note; `Terminology/Roles.md` gained `## Extension Emergency Pauser and Unpauser` with the Extension Owner entry referencing the delegation surface. **Remaining**: optionally a fuller treatment in `Concepts/Instructions.md`'s dispatch path.
+Spec work remaining: optionally a fuller treatment in `Concepts/Instructions.md`'s dispatch path.
 
 **Upstream state**: contracts only. `tee-node@4ba38512`/`tee-proxy@3938b5d6` predate it; the overlay is an on-chain dispatch gate so off-chain may need only to surface `isExtensionEmergencyPaused`. Confirm before speccing the off-chain side.
 
 #### Cross-check FCC pages against the contract-repo spec-alignment audit
 
-`flare-smart-contracts-v2` `7c943318` (2026-05-27, `docs(specs)`) is an audit that corrected contract↔doc drift in **that repo's** `docs/specs/`. Its findings name the same factual areas to re-verify in our specs on each page's next pass: governance / upgrade-manager flow (`create` / `addPaths` / `finalize` / `sign`; note there is **no** `transferGovernance` / `claimGovernance`), `WalletManager` lifecycle/state machine, `Replication`, `Verification` (attestation), `Instructions`, `OperationFees`, `Extensions`, and entity counts. Diff against `git show 7c943318 -- docs/specs/FCC/<page>.md` when cleaning the matching page. (The contract refactor `4d3cbeff` in the same range is behavior-preserving — `Attestation` struct and the `TEE_ATTESTATION` hash preimage are unchanged — so no attestation-spec change is needed.)
-
-First-pass cross-check done (Verification / Instructions / Replication): our specs already match the corrected model — no stale `endRewardEpoch`, no `getReplicatingTeeId`-returns-PRODUCTION-sibling or full-group-enumeration claims, no extension-0 `sendInstructions` bypass. The one gap found (`AvailabilityCheckValidity` is now `(endTs, lastSigningPolicyId)` — dual expiry on time OR signing-policy staleness) is now resolved: `Concepts/Machines.md § Availability Deadline` makes the dual condition explicit and [`TeeAvailabilityCheck.md`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) covers the on-chain consumption.
+`flare-smart-contracts-v2` `7c943318` (2026-05-27, `docs(specs)`) is an audit that corrected contract↔doc drift in **that repo's** `docs/specs/`. Its findings name the same factual areas to re-verify in our specs on each page's next pass: governance / upgrade-manager flow (`create` / `addPaths` / `finalize` / `sign`; note there is **no** `transferGovernance` / `claimGovernance`), `WalletManager` lifecycle/state machine, `Replication`, `Verification` (attestation), `Instructions`, `OperationFees`, `Extensions`, and entity counts. Diff against `git show 7c943318 -- docs/specs/FCC/<page>.md` when cleaning the matching page. The contract refactor `4d3cbeff` in the same range is behavior-preserving — `Attestation` struct and the `TEE_ATTESTATION` hash preimage are unchanged — so no attestation-spec change is needed.
 
 #### Fold tee-proxy observable-surface changes into the `Proxy.md` pass
 
@@ -380,7 +365,7 @@ These items are not yet on the critical path but anchor the longer-term spec dir
 
 The state-machine shape that `Workflows/Conventions.md` prescribes is intended to translate near-mechanically into TLA+ (the chosen formal language; TEE-spec readers natively read TLA+ math notation, so the ergonomic case for Quint does not apply here). Initial TLA+ files for workflows and concept-level state machines live under `Formal/` on the `formal` branch. Open items:
 
-- **Canonical home — decided:** per-protocol `<root>/Formal/` dirs. FCC's models plus the shared harness (`Common`, `Voting`, the `verify-*.sh` scripts, `Formal/README.md`) live at `src/FCC/Formal/`; protocols that extend FCC keep their models with their own dirs (`src/FDC2/Formal/Workflows/`, `src/PMW/Formal/Workflows/`) and reuse the shared modules, mirroring the markdown dependency direction. The verify scripts flatten every `.tla`/`.qnt` under `src/` so cross-protocol `EXTENDS Common` / `import Common.*` resolves by module name. Applied on the `formal` branch (`70b1ad3`).
+- **Canonical home:** per-protocol `<root>/Formal/` dirs. FCC's models plus the shared harness (`Common`, `Voting`, the `verify-*.sh` scripts, `Formal/README.md`) live at `src/FCC/Formal/`; protocols that extend FCC keep their models with their own dirs (`src/FDC2/Formal/Workflows/`, `src/PMW/Formal/Workflows/`) and reuse the shared modules, mirroring the markdown dependency direction. The verify scripts flatten every `.tla`/`.qnt` under `src/` so cross-protocol `EXTENDS Common` / `import Common.*` resolves by module name.
 - Add a CI job that runs SANY (syntax) on every `.tla`; TLC/Apalache model checking as a slower optional job.
 - Cross-reference each `.tla` file from the matching markdown page once the conventions stabilize.
 
