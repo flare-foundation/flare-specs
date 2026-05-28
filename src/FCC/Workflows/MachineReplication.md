@@ -101,5 +101,6 @@ For the underlying status definitions see [Concepts/Machines § Statuses](../Con
 ## Notes
 
 - Key transfer happens off-chain: the TEE machines exchange their key set via the `REPLICATE_FROM` instruction's TEE-side handling, gated by enclave-to-enclave attestation (see [`F_REG`](../Reference/Operations/F_REG.md)).
+- State transferred to the successor enclave: the identity key pair, all wallet keys and backups, and the signing-policy state (the successor inherits `initialSigningPolicyId` / `lastSigningPolicyId` and their hashes, so no separate [`UPDATE_POLICY`](../Reference/Operations/F_POLICY.md#update_policy) is required mid-replication). Machine-local nonces (configuration, pausing) do not transfer; transfer of [extension-defined state](../FCE/Concepts.md) is FCE-specific.
 - A failed `confirmReplicate` (rejected proof, mismatched extension) leaves the `Replicating` state in place; the owner can either re-attempt `replicateFrom` (the retry branch) with a fresh proof, or run `pause` on both machines and unwind.
 - After `Confirmed`, $A$'s `initialTeeId` field records the successor's original identity — useful for tracing the hardware-refresh chain.

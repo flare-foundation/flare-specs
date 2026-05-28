@@ -167,6 +167,22 @@ After unpause, a global grace window (default $\sim 2\,\mathrm{h}$) blocks only 
 
 Events: [Emergency Pause](FlareTeeManagerEvents.md#emergency-pause).
 
+## Replication
+
+`ReplicationFacet` replaces the enclave behind an existing machine without changing the machine's on-chain identity, transferring keys from old to new enclave under enclave-to-enclave attestation. Conceptual overview: [Concepts/Machines § Replication](../../Concepts/Machines.md#replication); per-machine state machine: [`MachineReplication`](../../Workflows/MachineReplication.md).
+
+Calls (the caller must own the affected machine — and both machines for `replicateFrom` / `confirmReplicate`):
+
+- `toPauseForUpgrade(teeId, claimBackAddress)` — payable; moves a `PAUSED` machine to `PAUSED_FOR_UPGRADE`. Requires $\mathrm{now} - \mathrm{lastStatusChangeTs} \geq \mathrm{pauseBeforeUpgradeMinDurationSeconds}$ (the governance-tunable dwell). Dispatches a `TO_PAUSE_FOR_UPGRADE` instruction.
+- `replicateFrom(oldTeeId, proof, teeUpgradeId, claimBackAddress)` — payable; ties a freshly-registered successor `B` to an existing `PAUSED_FOR_UPGRADE` machine `A`. `A` and `B` must share the same owner and extension; the `(A, B)` pair must match a registered upgrade path (`teeUpgradeId`); `B`'s availability proof must be `OK` with `state.systemStateVersion ≠ 0`. Records `replicatingTeeIds[A] = B`, moves `B` to `REPLICATING`, dispatches `REPLICATE_FROM` to both.
+- `confirmReplicate(newTeeId, proof)` — accepts when `A` is `PAUSED_FOR_UPGRADE`, `B` is `REPLICATING`, `replicatingTeeIds[A] = B`, and `proof` is an `OK` availability proof for `A` from the successor enclave. Copies `B`'s hardware-fingerprint fields (`initialTeeId`, `teeProxyId`, `codeHash`, `platform`, `url`, `initialSigningPolicyId`) into `A`'s slot, deletes `B`'s record, clears `replicatingTeeIds[A]`, moves `A` to `PRODUCTION`, and extends availability from the proof.
+
+View: `getReplicatingTeeId(oldTeeId)` returns the in-progress successor (or `address(0)`).
+
+Governance: `setPauseBeforeUpgradeMinDurationSeconds(seconds)` (timelocked) sets the dwell window.
+
+Events: [`TeeMachinePausedForUpgrade`](FlareTeeManagerEvents.md#teemachinepausedforupgrade), [`TeeMachineReplicationTriggered`](FlareTeeManagerEvents.md#teemachinereplicationtriggered), [`TeeMachineReplicationConfirmed`](FlareTeeManagerEvents.md#teemachinereplicationconfirmed), and [`TeeMachineStatusChanged`](FlareTeeManagerEvents.md#teemachinestatuschanged) for each transition.
+
 ## Project Management
 
 A project is created by an allowlisted [project owner](../../../Terminology/Roles.md#project-owner) calling:

@@ -10,14 +10,14 @@ A _TEE machine_ is a container running the [node app](../Reference/Components/Ma
 
 ## TEE State
 
-The TEE's state is the part of its content that a fresh replica would not share by default:
+State the enclave holds for the machine:
 
 - Identity key pair $(\mathrm{TEE}_\mathrm{pub}, \mathrm{TEE}_\mathrm{priv})$.
 - All [wallet keys](Keys.md) and key backups held for [PMW](../../PMW/README.md) or any other key-custody [FCE](../FCE/README.md).
-- System state variables — initial and current [signing policies](Policy.md), machine status, configuration nonce, pausing nonce.
+- System state variables — initial and current [signing policies](Policy.md), configuration nonce, pausing nonce.
 - Any [extension-defined state](../FCE/Concepts.md) added by the FCE the machine is registered to.
 
-On replication, the identity key pair and all wallet keys and backups transfer to the successor; machine-local nonces do not.
+For what transfers when a machine's enclave is swapped, see [Replication](#replication).
 
 ## Attestation
 
@@ -82,3 +82,11 @@ Anyone may submit a fresh proof at any time. A machine becomes permissionlessly 
 Operators must refresh availability before either bound expires to avoid downtime.
 
 For per-call rules, see [`FlareTeeManager § Management Calls`](../Reference/Contracts/FlareTeeManager.md#management-calls).
+
+## Replication
+
+A TEE machine's underlying enclave can be replaced — for hardware refresh, code upgrade, or operator-controlled migration — without changing the machine's on-chain identity. The persistent $\mathrm{TEE}_\mathrm{ID}$ stays the same; what changes is the enclave behind it.
+
+The successor enclave receives the [identity key pair](#identity), all [wallet keys](Keys.md) and backups, and the signing-policy state, so it can continue signing as the same machine without re-doing wallet setup or signing-policy installation. Machine-local nonces (configuration, pausing) do not transfer; transfer of [extension-defined state](../FCE/Concepts.md) is FCE-specific.
+
+For the per-machine state machine, see [`MachineReplication` workflow](../Workflows/MachineReplication.md); for the contract surface, see [`FlareTeeManager § Replication`](../Reference/Contracts/FlareTeeManager.md#replication).
