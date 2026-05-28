@@ -21,16 +21,16 @@ Foundational concepts used across the Flare protocol specifications.
 
 Full specification: [Epochs](../FSP/Epochs.md).
 
-## Signing Policy
-
-A _signing policy_ defines the data providers eligible to participate in a given reward epoch and their voting weights.
-A new policy is generated each reward epoch during [voter registration](../FSP/Voters.md#voter-registration).
-
-Full specification: [Signing Policy](../FSP/SigningPolicy.md).
-
 ## Weight and Vote Power
 
 - _vote power_ — a data provider's influence in protocol voting; derived from WFLR delegations and validator stakes.
 - _weight_ — vote power normalized to $[0, 1]$ for use in signing policies; a diversity factor encourages decentralization.
 
 Full specification: [Weighting](../FSP/Weighting.md).
+
+## Signing Policy
+
+A _signing policy_ defines the data providers eligible to participate in a given reward epoch and their voting weights.
+A new policy is generated each reward epoch during [voter registration](../FSP/Voters.md#voter-registration).
+
+Full specification: [Signing Policy](../FSP/SigningPolicy.md).
