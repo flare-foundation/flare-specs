@@ -43,18 +43,18 @@ Responsibilities:
 
 Eligibility is gated by a global allowlist maintained by [governance](#governance) — see [Concepts/Machines § Owner Allowlist](../FCC/Concepts/Machines.md#owner-allowlist).
 
-## Extension Emergency Pauser and Unpauser
-
-Per-extension address lists, maintained by the [extension owner](#extension-owner), authorized to flip (pauser) or clear (unpauser) the extension's [emergency-pause overlay](../FCC/Reference/Contracts/FlareTeeManager.md#emergency-pause).
-
 ## Project Owner
 
 A _project owner_ is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/Concepts/Wallets.md), controlling wallet creation, key management, and wallet configuration.
 Pause authority on the project's wallets may be delegated to per-project [wallet pauser/unpauser](#wallet-pauser-and-unpauser) lists.
 
+## Extension Emergency Pauser and Unpauser
+
+Per-extension address lists, maintained by the [extension owner](#extension-owner), authorized to [emergency-pause](../FCC/Reference/Contracts/FlareTeeManager.md#emergency-pause) or unpause the extension.
+
 ## Wallet Pauser and Unpauser
 
-Per-project address lists, maintained by the [project owner](#project-owner), authorized to pause (pauser) or unpause (unpauser) the project's [wallets](../FCC/Concepts/Wallets.md).
+Per-project address lists, maintained by the [project owner](#project-owner), authorized to pause or unpause the project's [wallets](../FCC/Concepts/Wallets.md).
 
 ## Key Admin
 

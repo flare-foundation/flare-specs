@@ -7,11 +7,10 @@ Phase 2 [cleaning](#cleaning-plan) status:
 - [x] `Images/`
 - [x] `Concepts/{Actions,Instructions,Voting,Rewarding,README,TrustModel}.md`
 - [x] `Reference/Components/RelayClient.md`
-- [x] `Reference/Operations/
 - [x] `Architecture.md`
 - [x] `README.md`
 - [x] `../Utilities/Signing.md`
-- [x] `../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md`
+- [x] `../Terminology/`
 
 ## Not Yet Cleaned
 
