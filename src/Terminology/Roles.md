@@ -45,7 +45,7 @@ Eligibility is gated by a global allowlist maintained by [governance](#governanc
 
 ## Extension Emergency Pauser and Unpauser
 
-Two per-extension address lists, maintained by the [extension owner](#extension-owner), delegate the [emergency-pause overlay](../FCC/Reference/Contracts/FlareTeeManager.md#emergency-pause) without ownership: an _extension emergency pauser_ may call `emergencyPauseExtension` to flip the overlay (after which the diamond rejects every instruction dispatch to that extension's machines), and an _extension emergency unpauser_ may call `emergencyUnpauseExtension` to clear it. The extension owner may do either regardless of list membership.
+Per-extension address lists, maintained by the [extension owner](#extension-owner), authorized to flip (pauser) or clear (unpauser) the extension's [emergency-pause overlay](../FCC/Reference/Contracts/FlareTeeManager.md#emergency-pause).
 
 ## Project Owner
 
@@ -54,7 +54,7 @@ Pause authority on the project's wallets may be delegated to per-project [wallet
 
 ## Wallet Pauser and Unpauser
 
-Two per-project address lists, maintained by the [project owner](#project-owner), delegate [wallet](../FCC/Concepts/Wallets.md) pause authority without ownership: a _wallet pauser_ may call `pauseWallets(walletIds)` to move wallets from `PRODUCTION` to `PAUSED`, and a _wallet unpauser_ may call `unpauseWallets(walletIds)` for the reverse. Both calls are batched (the list may span multiple projects) and access is checked per-wallet. The project owner may do either regardless of list membership.
+Per-project address lists, maintained by the [project owner](#project-owner), authorized to pause (pauser) or unpause (unpauser) the project's [wallets](../FCC/Concepts/Wallets.md).
 
 ## Key Admin
 
