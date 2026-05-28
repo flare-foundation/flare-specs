@@ -5,9 +5,8 @@ A _TEE machine_ is a container running the [node app](../Reference/Components/Ma
 ## Identity
 
 - _Identity key pair_ $(\mathrm{TEE}_\mathrm{pub}, \mathrm{TEE}_\mathrm{priv})$ — public and private keys generated inside the enclave at boot; $\mathrm{TEE}_\mathrm{priv}$ never leaves it.
-- $\mathrm{TEE}_\mathrm{ID}$ — the [address](../../Terminology/Concepts.md#addresses-accounts-and-keys) of $\mathrm{TEE}_\mathrm{pub}$. Distinct from the registering [TEE operator](../../Terminology/Roles.md#tee-operator)'s address (recorded separately; see [Owner Allowlist](#owner-allowlist)).
+- $\mathrm{TEE}_\mathrm{ID}$ — the [address](../../Terminology/Concepts.md#addresses-accounts-and-keys) of $\mathrm{TEE}_\mathrm{pub}$; the machine's permanent on-chain identity.
 - $\mathrm{TEE}_\mathrm{pub}$ is held as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md).
-- _Initial identity_ $\mathrm{TEE}_\mathrm{ID}^*$ — the [`initialTeeId`](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata) field: the $\mathrm{TEE}_\mathrm{ID}$ under which the enclave currently running the machine was first registered. Equal to $\mathrm{TEE}_\mathrm{ID}$ for an unreplicated machine. [Replication](../Workflows/MachineReplication.md) transfers the identity key to a fresh enclave, so $\mathrm{TEE}_\mathrm{ID}$ stays the machine's permanent on-chain identity while $\mathrm{TEE}_\mathrm{ID}^*$ becomes that enclave's own original $\mathrm{TEE}_\mathrm{ID}$ — fingerprinting the enclave now behind the machine.
 
 ## TEE State
 
@@ -27,6 +26,8 @@ A _challenger_ provides a $32$-byte challenge; the machine builds an [`Attestati
 
 The machine ABI-encodes the struct, hashes it ($\mathrm{hash}(\mathrm{Attestation})$), and passes the digest to the TEE platform's attestation service (Google for Intel TDX and AMD SEV).
 The platform's signed response binds the digest to the hardware-attested boot state.
+
+The state encoding carries the enclave's [`initialTeeId`](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata), which on-chain verifiers match against the machine record to bind the proof to the on-record enclave across any past [replication](../Workflows/MachineReplication.md).
 
 For the FDC2 attestation type that wraps this procedure into an on-chain proof, see [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
 
