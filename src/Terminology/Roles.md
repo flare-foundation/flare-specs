@@ -39,12 +39,22 @@ Responsibilities:
 - control the supported code versions.
 - manage the extension's allowlists of machine owners and project owners.
 - configure the [governance signer](#governance-signer) set.
+- delegate the [emergency-pause overlay](../FCC/Reference/Contracts/FlareTeeManager.md#emergency-pause) via per-extension [pauser/unpauser](#extension-emergency-pauser-and-unpauser) lists.
 
 Eligibility is gated by a global allowlist maintained by [governance](#governance) — see [Concepts/Machines § Owner Allowlist](../FCC/Concepts/Machines.md#owner-allowlist).
+
+## Extension Emergency Pauser and Unpauser
+
+Two per-extension address lists, maintained by the [extension owner](#extension-owner), delegate the [emergency-pause overlay](../FCC/Reference/Contracts/FlareTeeManager.md#emergency-pause) without ownership: an _extension emergency pauser_ may call `emergencyPauseExtension` to flip the overlay (after which the diamond rejects every instruction dispatch to that extension's machines), and an _extension emergency unpauser_ may call `emergencyUnpauseExtension` to clear it. The extension owner may do either regardless of list membership.
 
 ## Project Owner
 
 A _project owner_ is the Flare [address](Concepts.md#addresses-accounts-and-keys) that creates and administers an FCC [project](../FCC/Concepts/Wallets.md), controlling wallet creation, key management, and wallet configuration.
+Pause authority on the project's wallets may be delegated to per-project [wallet pauser/unpauser](#wallet-pauser-and-unpauser) lists.
+
+## Wallet Pauser and Unpauser
+
+Two per-project address lists, maintained by the [project owner](#project-owner), delegate [wallet](../FCC/Concepts/Wallets.md) pause authority without ownership: a _wallet pauser_ may call `pauseWallets(walletIds)` to move wallets from `PRODUCTION` to `PAUSED`, and a _wallet unpauser_ may call `unpauseWallets(walletIds)` for the reverse. Both calls are batched (the list may span multiple projects) and access is checked per-wallet. The project owner may do either regardless of list membership.
 
 ## Key Admin
 

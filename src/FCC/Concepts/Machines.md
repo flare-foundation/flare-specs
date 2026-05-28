@@ -68,14 +68,16 @@ An extension-wide [emergency pause](../Reference/Contracts/FlareTeeManager.md#em
 
 ### Availability Deadline
 
-Each [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof extends the machine's availability deadline.
-Anyone may submit a fresh proof at any time.
+Each [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof refreshes two freshness bounds the contract records together:
 
-After the deadline, the machine stays in `PRODUCTION` but:
+- a time deadline (`endTs`), extended by a fixed window past the proof's timestamp.
+- the [signing policy](Policy.md) the proof attested to (`lastSigningPolicyId`), considered fresh for a fixed number of reward epochs.
+
+Anyone may submit a fresh proof at any time. A machine becomes permissionlessly suspendable as soon as **either** bound expires — `endTs < now` or `lastSigningPolicyId` falls outside the signing-policy window. In that state the machine stays in `PRODUCTION` but:
 
 - its actions stop entitling its owner to [rewards](../../FSP/Rewarding.md).
 - anyone may suspend it; a fresh proof brings it back.
 
-Operators must refresh availability before expiry to avoid downtime.
+Operators must refresh availability before either bound expires to avoid downtime.
 
 For per-call rules, see [`FlareTeeManager § Management Calls`](../Reference/Contracts/FlareTeeManager.md#management-calls).

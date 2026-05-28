@@ -691,14 +691,54 @@ event WalletEnabled(
 );
 ```
 
-### WalletPaused
+### WalletsPaused
 
-Emitted by: `pauseWallet()`
+Emitted by: `pauseWallets()`
 
 ```solidity
-event WalletPaused(
-    bytes32 indexed walletId
-);
+event WalletsPaused(bytes32[] walletIds);
+```
+
+### WalletsUnpaused
+
+Emitted by: `unpauseWallets()`
+
+```solidity
+event WalletsUnpaused(bytes32[] walletIds);
+```
+
+## Wallet Pausers and Unpausers
+
+### WalletProjectPausersAdded
+
+Emitted by: `addWalletProjectPausers()`
+
+```solidity
+event WalletProjectPausersAdded(bytes32 indexed projectId, address[] addresses);
+```
+
+### WalletProjectPausersRemoved
+
+Emitted by: `removeWalletProjectPausers()`
+
+```solidity
+event WalletProjectPausersRemoved(bytes32 indexed projectId, address[] addresses);
+```
+
+### WalletProjectUnpausersAdded
+
+Emitted by: `addWalletProjectUnpausers()`
+
+```solidity
+event WalletProjectUnpausersAdded(bytes32 indexed projectId, address[] addresses);
+```
+
+### WalletProjectUnpausersRemoved
+
+Emitted by: `removeWalletProjectUnpausers()`
+
+```solidity
+event WalletProjectUnpausersRemoved(bytes32 indexed projectId, address[] addresses);
 ```
 
 ## Wallet Keys

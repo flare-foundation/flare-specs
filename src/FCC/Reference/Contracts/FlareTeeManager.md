@@ -18,7 +18,7 @@ Each concern is implemented as an independent facet:
 - `VerificationFacet`: on-chain verification of TEE attestations and FDC2 proofs.
 - `OperationFeesFacet`: per-operation fee configuration.
 - `UpgradeManagerFacet`: TEE upgrade flow.
-- `WalletManagerFacet`, `WalletKeyManagerFacet`, `WalletBackupManagerFacet`, `WalletResumeFacet`, `WalletProjectManagerFacet`: protocol-managed-wallet lifecycle (`WalletBackupManagerFacet` includes both the legacy admin-cosigner `backupRestore` and the path-list-gated `directBackup`/`directRestore`).
+- `WalletManagerFacet`, `WalletKeyManagerFacet`, `WalletBackupManagerFacet`, `WalletProjectPauseFacet`, `WalletResumeFacet`, `WalletProjectManagerFacet`: protocol-managed-wallet lifecycle (`WalletBackupManagerFacet` includes both the legacy admin-cosigner `backupRestore` and the path-list-gated `directBackup`/`directRestore`; `WalletProjectPauseFacet` adds the per-project [wallet pauser/unpauser](../../../Terminology/Roles.md#wallet-pauser-and-unpauser) lists and the batch `pauseWallets`/`unpauseWallets` actions).
 - `VrfFacet`, `SystemStateVerifierFacet`, `ReplicationFacet`: VRF, state verification, and replication.
 - `DiamondGovernanceFacet`, `OwnerAllowlistFacet`, `ExternalAddressesFacet`: governance, the extension-owner / machine-owner / project-owner allowlists, and external-address plumbing.
 
@@ -212,18 +212,17 @@ Wallet record:
 
 ### Wallet Lifecycle
 
-Status transitions and the call that triggers each (project owner only):
+Status transitions and the call that triggers each:
 
-1. `CREATED → INITIALIZED` — `closeWalletInitialization`, after every admin and every cosigner has confirmed via `confirmAdmin` / `confirmCosigner`.
-2. `INITIALIZED → PRODUCTION` — `enableWallet`, once `multisigThreshold` is set and at least that many keys are [confirmed](../../Concepts/Keys.md#tee-key-existence-proof).
-3. `PRODUCTION → PAUSED` — `pauseWallet`.
-4. `PAUSED → PRODUCTION` — `enableWallet` (no multisig recheck).
+1. `CREATED → INITIALIZED` — `closeWalletInitialization` (project owner), after every admin and every cosigner has confirmed via `confirmAdmin` / `confirmCosigner`.
+2. `INITIALIZED → PRODUCTION` — `enableWallet` (project owner), once `multisigThreshold` is set and at least that many keys are [confirmed](../../Concepts/Keys.md#tee-key-existence-proof).
+3. `PRODUCTION ↔ PAUSED` — `pauseWallets` / `unpauseWallets`, batched across any of the project's wallets and callable by the project owner **or** an address on the corresponding [wallet pauser/unpauser](../../../Terminology/Roles.md#wallet-pauser-and-unpauser) list. Each batch emits one event.
 
-Events: [`WalletCreated`](FlareTeeManagerEvents.md#walletcreated), [`WalletAdminsSet`](FlareTeeManagerEvents.md#walletadminsset), [`WalletAdminConfirmed`](FlareTeeManagerEvents.md#walletadminconfirmed), [`WalletCosignersSet`](FlareTeeManagerEvents.md#walletcosignersset), [`WalletCosignerConfirmed`](FlareTeeManagerEvents.md#walletcosignerconfirmed), [`WalletInitialized`](FlareTeeManagerEvents.md#walletinitialized), [`WalletEnabled`](FlareTeeManagerEvents.md#walletenabled), [`WalletPaused`](FlareTeeManagerEvents.md#walletpaused).
+Events: [`WalletCreated`](FlareTeeManagerEvents.md#walletcreated), [`WalletAdminsSet`](FlareTeeManagerEvents.md#walletadminsset), [`WalletAdminConfirmed`](FlareTeeManagerEvents.md#walletadminconfirmed), [`WalletCosignersSet`](FlareTeeManagerEvents.md#walletcosignersset), [`WalletCosignerConfirmed`](FlareTeeManagerEvents.md#walletcosignerconfirmed), [`WalletInitialized`](FlareTeeManagerEvents.md#walletinitialized), [`WalletEnabled`](FlareTeeManagerEvents.md#walletenabled), [`WalletsPaused`](FlareTeeManagerEvents.md#walletspaused), [`WalletsUnpaused`](FlareTeeManagerEvents.md#walletsunpaused).
 
 ### Pausing Keys at the TEE
 
-`pauseWallet` only changes on-chain status; to pause keys at their TEE machines, the project owner additionally calls (both payable; fee refundable via `claimBackAddress` if the instruction does not execute):
+`pauseWallets` only changes on-chain status; to pause keys at their TEE machines, the project owner additionally calls (both payable; fee refundable via `claimBackAddress` if the instruction does not execute):
 
 - `setPausingAddresses(walletId, pausingAddresses, claimBackAddress)` — emits `F_WALLET SET_PAUSING_ADDRESSES` to every machine holding a copy of the wallet's keys.
 - `resume(walletId, keysData, claimBackAddress)` — emits `F_WALLET RESUME` for the listed `(teeId, keyId, nonce)` triples.

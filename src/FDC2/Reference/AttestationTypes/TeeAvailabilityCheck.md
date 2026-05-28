@@ -1,65 +1,62 @@
 # TeeAvailabilityCheck
 
-The `TeeAvailabilityCheck` attestation type verifies that a registered TEE machine is available, running valid code, and has a fresh platform attestation.
+The `TeeAvailabilityCheck` attestation type proves that a registered [TEE machine](../../../FCC/Concepts/Machines.md) is reachable, running approved code, and still tied to the current [signing policy](../../../FCC/Concepts/Policy.md).
 
 ## Request
 
 Request body: [`TeeAvailabilityCheck.RequestBody`](../Types/Abi/AttestationType.md#requestbody).
 
-- `teeId`: TEE identity address of the machine to be checked.
+- `teeId`: TEE identity address of the machine to check.
 - `teeProxyId`: identity address of the paired [TEE proxy](../../../FCC/Reference/Components/Proxy.md).
 - `url`: HTTP URL of the TEE proxy.
 - `challenge`: random challenge for the attestation request.
-- `instructionId`: instruction ID of the attestation request.
+- `instructionId`: instruction ID under which the request was dispatched.
 
 ## Response
 
 Response body: [`TeeAvailabilityCheck.ResponseBody`](../Types/Abi/AttestationType.md#responsebody), using the [`AvailabilityCheckStatus`](../Types/Abi/AttestationType.md#availabilitycheckstatus) enum and [`TeeState`](../../../FCC/Reference/Types/Abi/TeeMachine.md#teestate).
 
 - `status`:
-  - `OK` — TEE machine is available and valid.
-  - `OBSOLETE` — platform state is outdated (`submods.confidential_space.support_attributes` lacks `STABLE`).
-  - `DOWN` — TEE machine is unavailable.
-- `teeTimestamp`: TEE timestamp from the proxy attestation result.
+  - `OK` — machine reachable, code accepted, attestation valid.
+  - `OBSOLETE` — production TEE running on a non-`STABLE` Confidential Space image (`submods.confidential_space.support_attributes` lacks `STABLE`).
+  - `DOWN` — TEE machine is unreachable.
+- `teeTimestamp`: local timestamp from the TEE machine.
 - `codeHash`: from the `submods.container.image_digest` JWT claim.
 - `platform`: from the `hwmodel` JWT claim (e.g. `INTEL_TDX`, `GCP_AMD_SEV`).
-- `initialSigningPolicyId`, `lastSigningPolicyId`, `state`: from the proxy attestation result.
+- `initialSigningPolicyId`, `lastSigningPolicyId`, `state`: from the machine's attestation payload.
 
-## Chain Support
-
-Currently only Google attestations in JWT-token format are supported.
+Only Google Cloud Confidential Space JWT attestations are currently supported.
 
 ## Verification
 
-The attestation result is fetched from `GET /action/result/<instructionId>` on the [TEE proxy](../../../FCC/Reference/Components/Proxy.md); the response body is the `bytes result.message` field.
+The verifier fetches the result from `GET /action/result/<instructionId>` on the [TEE proxy](../../../FCC/Reference/Components/Proxy.md) (the `result.message` bytes).
 
-### Challenge and Identity Checks
+### Challenge and Identity
 
-- The `challenge` from the request must match the challenge in the proxy info response.
-- The `teeProxyId` must match the address recovered from the proxy info response's `proxySignature`.
-- The `teeId` must match the address derived from the proxy info response's `publicKey`.
+- `challenge` matches the challenge in the proxy info response.
+- `teeProxyId` matches the address recovered from `proxySignature`.
+- `teeId` matches the address derived from the proxy info `publicKey`.
 
-### URL Validation
+### URL (SSRF Guard)
 
-Before contacting the TEE proxy, the verifier blocks private IPs, link-local and multicast addresses, cloud metadata endpoints, and Teredo tunnels (SSRF guard).
+Before fetching, private IPs, link-local and multicast addresses, cloud metadata endpoints, and Teredo tunnels are blocked.
 
-### JWT and Claims Validation
+### JWT and Claims
 
-The JWT is verified against Google Cloud Confidential Computing PKI; certificate revocation lists are checked for the leaf and intermediate certificates.
-Required claims:
+The JWT is verified against the Google Cloud Confidential Computing PKI, with CRL checks on the leaf and intermediate certificates. Required claims:
 
-1. Hash of the proxy data matches `eat_nonce`.
-2. `swname` equals `CONFIDENTIAL_SPACE`.
-3. **Production mode** (gated by the verifier's `ALLOW_TEE_DEBUG` config flag):
-   - `ALLOW_TEE_DEBUG = false` (production default): accept only TEEs with `dbgstat = disabled-since-boot`. Reject anything else.
-   - `ALLOW_TEE_DEBUG = true` (staging/E2E only): accept both production and debug TEEs. The debug path skips the security-version check below and emits a warning log; debug TEEs MUST NOT be admitted in production deployments (debugger attachable, secrets extractable).
-4. **Security version** (production TEEs only): `submods.confidential_space.support_attributes` must contain `STABLE`; if not, status downgrades to `OBSOLETE`.
+- `eat_nonce` equals the hash of the proxy data.
+- `swname` equals `CONFIDENTIAL_SPACE`.
+- _Production gate_ — `ALLOW_TEE_DEBUG = false` (default) rejects any TEE whose `dbgstat` is not `disabled-since-boot`; `ALLOW_TEE_DEBUG = true` (staging/E2E only) additionally admits debug TEEs, skipping the security-version check below and emitting a warning. Debug TEEs must not be admitted in production deployments.
+- _Security version_ (production TEEs only) — `submods.confidential_space.support_attributes` must contain `STABLE`; otherwise the status downgrades to `OBSOLETE`.
 
-### Signing Policy Check
+### Signing Policy
 
-- `data.lastSigningPolicyHash` must equal the current signing policy on-chain (`Relay.toSigningPolicyHash(rewardEpochId)`).
-- `data.initialSigningPolicyHash` must equal the initial signing policy on-chain (same contract call).
+- `data.lastSigningPolicyHash` equals the current signing policy on-chain (`Relay.toSigningPolicyHash(rewardEpochId)`).
+- `data.initialSigningPolicyHash` equals the initial signing policy on-chain (same call).
 
-## Notes
+## On-Chain Consumption
 
-- Block freshness is not a concern on Flare due to its fast deterministic finality.
+A successful `OK` proof accepted via `confirmAvailability(proof)` — or `toProduction(proof)` from `INITIALIZED` / `PAUSED` / `SUSPENDED` — advances the machine's [availability bounds](../../../FCC/Concepts/Machines.md#availability-deadline), refreshing both `endTs` and the recorded `lastSigningPolicyId`. The machine becomes permissionlessly suspendable as soon as either expires.
+
+Block freshness is not a concern on Flare due to its fast deterministic finality.

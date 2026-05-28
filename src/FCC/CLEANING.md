@@ -11,6 +11,7 @@ Phase 2 [cleaning](#cleaning-plan) status:
 - [x] `Architecture.md`
 - [x] `README.md`
 - [x] `../Utilities/Signing.md`
+- [x] `../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md`
 
 ## Not Yet Cleaned
 
@@ -324,12 +325,16 @@ Spec surfaces to touch when the off-chain catches up:
 - Singular `pauseWallet` removed in favour of batch `pauseWallets`.
 - Set-membership errors (`InvalidAddress`, `AddressAlreadyInSet`, `AddressNotInSet`, `NotOwnerOrPauser`, `NotOwnerOrUnpauser`, `NoAddresses`) lifted into `ITeeCommonErrors`; `OwnerAllowlist` and `IWalletKeyManager` rewired to share them.
 
-Spec work to do:
+Spec work — **done**:
 
-- Add a _pauser_ / _unpauser_ entry (or a single delegated-pause role) to `Terminology/Roles.md`. The project owner section in `Roles.md` should mention the delegation surface.
-- Update `Concepts/Wallets.md` lifecycle to reflect: `INITIALIZED → PRODUCTION` via `enableWallet`; `PRODUCTION ↔ PAUSED` via `pauseWallets` / `unpauseWallets`; per-project pauser/unpauser allowlists.
-- Surface the new facet in `Reference/Contracts/FlareTeeManager.md` (struct fields, management calls, batch-event semantics — `pauseWallets`/`unpauseWallets` emit one batch event per call, not one per wallet).
-- Touch `Workflows/WalletSetup.md` (and any wallet-pause workflow that emerges) to reflect the narrowed `enableWallet` and the new path.
+- `Terminology/Roles.md` gained `## Wallet Pauser and Unpauser`; the `## Project Owner` entry references the delegation surface.
+- `Reference/Contracts/FlareTeeManager.md` wallet lifecycle now shows `PRODUCTION ↔ PAUSED` via `pauseWallets` / `unpauseWallets` (project owner or list member) and the narrowed `enableWallet` (`INITIALIZED → PRODUCTION` only); `WalletProjectPauseFacet` is in the Facets list; the events file replaces `WalletPaused` with `WalletsPaused` / `WalletsUnpaused` and adds the four list-management events.
+
+Spec work — **remaining**:
+
+- Update `Concepts/Wallets.md` lifecycle to reflect the same model.
+- Touch `Workflows/WalletSetup.md` (and any wallet-pause workflow that emerges).
+- Optionally fold the WalletProjectPauseFacet management calls into a dedicated subsection of `FlareTeeManager.md` (the lifecycle line currently links them inline).
 
 #### Document per-extension emergency pause overlay
 
@@ -343,7 +348,7 @@ Behavior:
 Surface to document:
 - Methods: list management (`add/removeExtensionEmergency{Pausers,Unpausers}`, extension-owner only), `emergencyPauseExtension` / `emergencyUnpauseExtension` (extension owner **or** the relevant list member), governance-only timelocked `setEmergencyUnpauseGracePeriodSeconds`, and getters (`isExtensionEmergencyPaused`, `getLastUnpauseTs`, `getEmergencyUnpauseGracePeriodSeconds`, list/predicate getters).
 - Events: `ExtensionEmergency{Pausers,Unpausers}{Added,Removed}`, `ExtensionEmergencyPaused`, `ExtensionEmergencyUnpaused(extensionId, unpauseTs)`, `EmergencyUnpauseGracePeriodSet`. Errors: `ExtensionAlready/NotEmergencyPaused`, `EmergencyPauseActive`, `EmergencyProtectionActive`, `GracePeriodToo{Short,Long}`.
-- Spec homes — **done**: `Reference/Contracts/FlareTeeManager.md` gained a `## Emergency Pause` section (facet, management calls, grace window) + a dispatch-rejection bullet in Payload Validation + the facet in the Facets list; the seven events are in `FlareTeeManagerEvents.md § Emergency Pause`; `Concepts/Machines.md` statuses gained the overlay note. **Remaining**: the _extension emergency pauser/unpauser_ roles in `Terminology/Roles.md` (fold into the delegated-pause role work); optionally a fuller treatment in `Concepts/Instructions.md`'s dispatch path.
+- Spec homes — **done**: `Reference/Contracts/FlareTeeManager.md` gained a `## Emergency Pause` section + Facets entry + Payload-Validation rejection bullet; the seven events live in `FlareTeeManagerEvents.md § Emergency Pause`; `Concepts/Machines.md` statuses gained the overlay note; `Terminology/Roles.md` gained `## Extension Emergency Pauser and Unpauser` with the Extension Owner entry referencing the delegation surface. **Remaining**: optionally a fuller treatment in `Concepts/Instructions.md`'s dispatch path.
 
 **Upstream state**: contracts only. `tee-node@4ba38512`/`tee-proxy@3938b5d6` predate it; the overlay is an on-chain dispatch gate so off-chain may need only to surface `isExtensionEmergencyPaused`. Confirm before speccing the off-chain side.
 
@@ -351,7 +356,7 @@ Surface to document:
 
 `flare-smart-contracts-v2` `7c943318` (2026-05-27, `docs(specs)`) is an audit that corrected contract↔doc drift in **that repo's** `docs/specs/`. Its findings name the same factual areas to re-verify in our specs on each page's next pass: governance / upgrade-manager flow (`create` / `addPaths` / `finalize` / `sign`; note there is **no** `transferGovernance` / `claimGovernance`), `WalletManager` lifecycle/state machine, `Replication`, `Verification` (attestation), `Instructions`, `OperationFees`, `Extensions`, and entity counts. Diff against `git show 7c943318 -- docs/specs/FCC/<page>.md` when cleaning the matching page. (The contract refactor `4d3cbeff` in the same range is behavior-preserving — `Attestation` struct and the `TEE_ATTESTATION` hash preimage are unchanged — so no attestation-spec change is needed.)
 
-First-pass cross-check done (Verification / Instructions / Replication): our specs already match the corrected model — no stale `endRewardEpoch`, no `getReplicatingTeeId`-returns-PRODUCTION-sibling or full-group-enumeration claims, no extension-0 `sendInstructions` bypass. One concrete gap to fold into the `F_REG` / [`TeeAvailabilityCheck`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) reference pass: `AvailabilityCheckValidity` is now `(endTs, lastSigningPolicyId)`, so a machine becomes permissionlessly suspendable on **either** `endTs < now` **or** its attested `lastSigningPolicyId` falling outside `signingPolicyValidityDurationInRewardEpochs` of the current reward epoch. `Concepts/Machines.md § Availability Deadline` abstracts this as one "deadline" (acceptable for the concept); surface the dual condition in the reference.
+First-pass cross-check done (Verification / Instructions / Replication): our specs already match the corrected model — no stale `endRewardEpoch`, no `getReplicatingTeeId`-returns-PRODUCTION-sibling or full-group-enumeration claims, no extension-0 `sendInstructions` bypass. The one gap found (`AvailabilityCheckValidity` is now `(endTs, lastSigningPolicyId)` — dual expiry on time OR signing-policy staleness) is now resolved: `Concepts/Machines.md § Availability Deadline` makes the dual condition explicit and [`TeeAvailabilityCheck.md`](../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) covers the on-chain consumption.
 
 #### Fold tee-proxy observable-surface changes into the `Proxy.md` pass
 
