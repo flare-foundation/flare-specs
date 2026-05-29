@@ -16,7 +16,7 @@ For instruction actions, the per-signer arrays (`signatures`, `additionalVariabl
     "additionalVariableMessages": { "type": "array", "items": { "type": "string", "format": "bytes" }, "description": "Per-signer `additionalVariableMessage` values. Empty for direct actions." },
     "timestamps": { "type": "array", "items": { "type": "integer", "format": "uint64" }, "description": "Per-signer proxy arrival timestamps. Empty for direct actions." },
     "additionalActionData": { "type": "string", "format": "bytes", "description": "Optional proxy-supplied data for the machine." },
-    "signatures": { "type": "array", "items": { "type": "string", "format": "bytes" }, "description": "Per-signer signatures collected by [voting](../../../Concepts/Voting.md). Empty for direct actions." }
+    "signatures": { "type": "array", "items": { "type": "string", "format": "bytes" }, "description": "Per-signer signatures from [voting](../../../Concepts/Voting.md). Empty for direct actions." }
   },
   "required": ["data"]
 }
@@ -49,7 +49,7 @@ Posted by the TEE machine to the proxy's internal `/result` endpoint, and served
   "properties": {
     "result": { "$ref": "#actionresult" },
     "signature": { "type": "string", "format": "bytes", "description": "TEE-machine signature over the result; see [Action Responses](../../../Concepts/Actions.md#action-responses)." },
-    "proxySignature": { "type": "string", "format": "bytes", "description": "Proxy signature added when the proxy serves the external `/result` endpoint; see [Action Responses](../../../Concepts/Actions.md#action-responses)." }
+    "proxySignature": { "type": "string", "format": "bytes", "description": "Proxy signature over the result; present on responses served from the proxy's external `/result` endpoint. See [Action Responses](../../../Concepts/Actions.md#action-responses)." }
   },
   "required": ["result", "signature"]
 }
@@ -66,8 +66,8 @@ Posted by the TEE machine to the proxy's internal `/result` endpoint, and served
     "submissionTag": { "type": "string", "description": "Matches the originating action's `submissionTag`." },
     "status": { "type": "integer", "format": "uint8", "description": "`0` error/invalid, `1` success, `2` in-progress (async), `3+` scheduled or extension-defined." },
     "log": { "type": "string", "description": "Exception message; empty on success." },
-    "opType": { "type": "string", "format": "bytes32", "description": "Operation type from the originating action." },
-    "opCommand": { "type": "string", "format": "bytes32", "description": "Operation command from the originating action." },
+    "opType": { "type": "string", "format": "bytes32", "description": "Operation type of the originating action." },
+    "opCommand": { "type": "string", "format": "bytes32", "description": "Operation command of the originating action." },
     "additionalResultStatus": { "type": "string", "format": "bytes", "description": "Optional supplemental status; routed to proxy [result hooks](../../Components/Proxy.md#result-hooks)." },
     "version": { "type": "string", "description": "Encoding version for `data`." },
     "data": { "type": "string", "format": "bytes", "description": "Action-specific result payload. For instruction actions with `submissionTag` = `end`, contains the marshalled [`RewardingData`](#rewardingdata)." }

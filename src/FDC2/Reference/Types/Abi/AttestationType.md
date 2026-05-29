@@ -41,11 +41,11 @@ The `state` field uses the [`TeeState`](../../../../FCC/Reference/Types/Abi/TeeM
   "type": "object",
   "properties": {
     "status": { "type": "integer", "description": "AvailabilityCheckStatus enum value." },
-    "teeTimestamp": { "type": "integer", "format": "uint64", "description": "Timestamp from the TEE machine." },
-    "codeHash": { "type": "string", "format": "bytes32", "description": "Value of the submods.container.image_digest claim." },
-    "platform": { "type": "string", "format": "bytes32", "description": "Value of the hwmodel claim." },
-    "initialSigningPolicyId": { "type": "integer", "format": "uint32", "description": "From the TEE proxy attestation result." },
-    "lastSigningPolicyId": { "type": "integer", "format": "uint32", "description": "From the TEE proxy attestation result." },
+    "teeTimestamp": { "type": "integer", "format": "uint64", "description": "Local TEE machine timestamp." },
+    "codeHash": { "type": "string", "format": "bytes32", "description": "Digest of code running in the TEE." },
+    "platform": { "type": "string", "format": "bytes32", "description": "Platform identifier." },
+    "initialSigningPolicyId": { "type": "integer", "format": "uint32", "description": "ID of the first signing policy known to the TEE." },
+    "lastSigningPolicyId": { "type": "integer", "format": "uint32", "description": "ID of the most recent signing policy known to the TEE." },
     "state": { "$ref": "TeeMachine.md#teestate" }
   },
   "required": ["status", "teeTimestamp", "codeHash", "platform", "initialSigningPolicyId", "lastSigningPolicyId", "state"]

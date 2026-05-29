@@ -32,17 +32,17 @@ Carries every field of the [`TeeInstruction`](../Abi/Instruction.md#teeinstructi
   "$id": "Data",
   "type": "object",
   "properties": {
-    "instructionId": { "type": "string", "format": "bytes32", "description": "Unique index for the instruction." },
+    "instructionId": { "type": "string", "format": "bytes32", "description": "Unique instruction identifier." },
     "teeId": { "type": "string", "format": "address", "description": "Unique identity of the destination TEE machine." },
-    "timestamp": { "type": "integer", "format": "uint64", "description": "Timestamp of the block in which the instruction was issued." },
-    "rewardEpochId": { "type": "integer", "format": "uint32", "description": "ID of the reward epoch in which the instruction was issued." },
-    "opType": { "type": "string", "format": "bytes32", "description": "Operation type from the instruction event." },
-    "opCommand": { "type": "string", "format": "bytes32", "description": "Command type from the instruction event." },
+    "timestamp": { "type": "integer", "format": "uint64", "description": "Block timestamp at which the instruction was issued." },
+    "rewardEpochId": { "type": "integer", "format": "uint32", "description": "Reward epoch in which the instruction was issued." },
+    "opType": { "type": "string", "format": "bytes32", "description": "Operation type." },
+    "opCommand": { "type": "string", "format": "bytes32", "description": "Operation command." },
     "cosigners": { "type": "array", "items": { "type": "string", "format": "address" }, "description": "Optional list of cosigner addresses." },
     "cosignersThreshold": { "type": "integer", "format": "uint64", "description": "Threshold of cosigner signatures required." },
-    "originalMessage": { "type": "string", "format": "bytes", "description": "The message from the instruction event." },
+    "originalMessage": { "type": "string", "format": "bytes", "description": "Operation message payload." },
     "additionalFixedMessage": { "type": "string", "format": "bytes", "description": "Command-specific data, identical across all senders contributing to the same vote." },
-    "additionalVariableMessage": { "type": "string", "format": "bytes", "description": "Command-specific data supplied independently by each sender; not part of instructionHash." }
+    "additionalVariableMessage": { "type": "string", "format": "bytes", "description": "Command-specific data that varies per sender; not part of instructionHash." }
   },
   "required": ["instructionId", "teeId", "timestamp", "rewardEpochId", "opType", "opCommand", "cosignersThreshold", "originalMessage"]
 }

@@ -53,7 +53,7 @@ The struct ABI-encoded and hashed to produce the TEE-specific challenge for plat
   "$id": "Attestation",
   "type": "object",
   "properties": {
-    "challenge": { "type": "string", "format": "bytes32", "description": "Challenge string provided by the challenger." },
+    "challenge": { "type": "string", "format": "bytes32", "description": "Challenge value bound to this attestation." },
     "publicKey": { "$ref": "Common.md#publickey", "description": "Public key corresponding to the TEE identity." },
     "initialSigningPolicyId": { "type": "integer", "format": "uint32", "description": "ID of the first signing policy available to the TEE." },
     "initialSigningPolicyHash": { "type": "string", "format": "bytes32", "description": "Hash of the initial signing policy." },

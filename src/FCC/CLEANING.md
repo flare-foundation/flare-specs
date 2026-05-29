@@ -140,6 +140,17 @@ Remaining sweep (apply on each file's pass):
 `Terminology/Roles.md#tee-operator` defines a _TEE operator_ as the party deploying TEE machines, but `Components/RelayClient.md:4` introduces a second meaning — the relay-client operator (a data provider or cosigner whose key signs relayed instructions).
 Either rename one usage or add a relay-client-operator entry to `Roles.md` and cross-link from `RelayClient.md`.
 
+#### Apply the Type-Documentation convention (schema + invariant; producer-owned origins)
+
+Per [STYLE_GUIDE § Type Documentation](../../STYLE_GUIDE.md#type-documentation): Types/ files carry the schema plus a one-line _invariant_ per field; field _origins_ (how values are set) live with the **producer**, not in the type doc.
+
+Sweep `src/FCC/Reference/Types/Abi/*`, `src/FCC/Reference/Types/Wire/*`, `src/FDC2/Reference/Types/Abi/*`, `src/FDC2/Reference/Types/Wire/*`, and `src/PMW/Reference/Types/*` for field descriptions that contain producer-specific origin language (e.g. _"address recovered from the registration signature"_, _"challenge string provided by the challenger"_, _"copied from B in `_replicate`"_). For each:
+
+- If the origin is universal across every producer, keep it as part of the field's invariant.
+- If the origin is producer-specific, drop the origin from the type doc and ensure it's documented next to the producer — `### … Field Origins` table in the contract reference's per-call section (mirroring the existing one in `FlareTeeManager.md`), or the producing operation's reference page.
+
+Use _field origin_ as the term; not "field population" or "field source".
+
 #### Audit `Reference/Types/Abi/` and `Reference/Types/Wire/` for internal-only types
 
 Audit `Reference/Types/Abi/` and `Reference/Types/Wire/` for types that are purely internal to one component (e.g. Go-only struct names like `DataFixed`, `Data`) and remove or rename them.

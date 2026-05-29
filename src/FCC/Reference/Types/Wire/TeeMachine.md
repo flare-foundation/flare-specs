@@ -14,7 +14,7 @@ Sent by the TEE proxy to its TEE machine.
   "$id": "TeeInfoRequest",
   "type": "object",
   "properties": {
-    "challenge": { "type": "string", "format": "bytes32", "description": "Random number selected by the proxy; should be the hash of a recent block." }
+    "challenge": { "type": "string", "format": "bytes32", "description": "Random challenge value; should be the hash of a recent block." }
   },
   "required": ["challenge"]
 }
