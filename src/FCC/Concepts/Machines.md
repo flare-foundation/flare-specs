@@ -21,15 +21,11 @@ For what transfers when a machine's enclave is swapped, see [Replication](#repli
 
 ## Attestation
 
-A TEE machine attests to elements of its [state](#tee-state) when challenged.
-A _challenger_ provides a $32$-byte challenge; the machine builds an [`Attestation`](../Reference/Types/Abi/TeeMachine.md#attestation) binding that challenge to its [identity public key](#identity), the first and most recent signing policies it knows, a snapshot of its [state](#tee-state), and its local timestamp.
+A TEE machine attests to its [state](#tee-state) when challenged. The proof bundles the challenger's input with the machine's [identity public key](#identity), both the [initial and active signing policies](Policy.md) it knows, a state snapshot, and a timestamp; the TEE platform's attestation service (Google for Intel TDX and AMD SEV) signs over the bundle, anchoring the result to hardware-attested boot state.
 
-The machine ABI-encodes the struct, hashes it ($\mathrm{hash}(\mathrm{Attestation})$), and passes the digest to the TEE platform's attestation service (Google for Intel TDX and AMD SEV).
-The platform's signed response binds the digest to the hardware-attested boot state.
+On-chain verifiers match the proof's [`initialTeeId`](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata) against the machine record, binding the proof to the on-record enclave across any past [replication](#replication).
 
-The state encoding carries the enclave's [`initialTeeId`](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata), which on-chain verifiers match against the machine record to bind the proof to the on-record enclave across any past [replication](../Workflows/MachineReplication.md).
-
-For the FDC2 attestation type that wraps this procedure into an on-chain proof, see [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
+For the [`Attestation`](../Reference/Types/Abi/TeeMachine.md#attestation) struct itself, see the type doc; for the FDC2 wrapper that turns this into an on-chain proof, see [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
 
 ## Owner Allowlist
 

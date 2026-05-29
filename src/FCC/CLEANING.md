@@ -307,7 +307,7 @@ Spec surfaces to touch when the off-chain catches up:
 
 - `Reference/Types/Abi/Instruction.md` and `Reference/Types/Wire/Instruction.md` — add leading `chainId` to `Instruction`.
 - `../FDC2/Reference/Types/Abi/Fdc2.md` (and `Wire/Fdc2.md`) — add leading `chainId` to `Fdc2ResponseHeader`; note the verifier requirement.
-- `Concepts/Machines.md § Attestation`, `Reference/Operations/F_REG.md`, `Reference/Operations/F_WALLET.md` — describe the `(domain-tag, chainId, payload)` hashing shape on the relevant signatures.
+- `Reference/Operations/F_REG.md`, `Reference/Operations/F_WALLET.md` — describe the `(domain-tag, chainId, payload)` hashing shape on the relevant signatures (this is reference-level; `Concepts/Machines.md § Attestation` stays at concept level).
 - `Workflows/MachineReplication.md` (TeeUpgrade flow), the TeeUpgrade event family in `FlareTeeManagerEvents.md`, and the upgrade-related parts of `Reference/Contracts/FlareTeeManager.md` — surface the new hash preimage.
 - `Utilities/Signing.md` — consider a paragraph on the `(domain-tag, chainId, body)` convention now that it is shared across flows.
 
