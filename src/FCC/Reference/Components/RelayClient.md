@@ -5,8 +5,7 @@ It runs as either a _[data provider](../../../Terminology/Roles.md#data-provider
 
 ## Relay Flow
 
-1. Observe [`TeeInstructionsSent`](../Contracts/FlareTeeManagerEvents.md#teeinstructionssent) events from the [`FlareTeeManager`](../Contracts/FlareTeeManager.md) contract by polling an operator-run C-chain indexer database.
-   Identically-named events from other contracts are ignored.
+1. Observe [`TeeInstructionsSent`](../Contracts/FlareTeeManagerEvents.md#teeinstructionssent) events from [`FlareTeeManager`](../Contracts/FlareTeeManager.md) by polling an operator-run C-chain indexer database (identically-named events from other contracts are ignored).
 2. Filter by mode:
    - _Data provider_: accept all instructions.
    - _Cosigner_: accept only instructions whose [`cosigners` list](../../Concepts/Instructions.md#cosigners) includes the operator's address.
@@ -15,9 +14,9 @@ It runs as either a _[data provider](../../../Terminology/Roles.md#data-provider
    - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#augmentation)
 4. De-duplicate the event's `teeMachines` list and, for each remaining [`TeeMachine`](../Types/Abi/TeeMachine.md#teemachine) record, build one [`Instruction`](../Types/Wire/Instruction.md#instruction):
    - Copy from the event: `instructionId`, `rewardEpochId`, `opType`, `opCommand`, `cosigners`, `cosignersThreshold`, and the event's `message` (as `originalMessage`).
-   - Set `timestamp` to the timestamp of the block that emitted the event.
+   - Set `timestamp` to the emitting block's timestamp.
    - Set `teeId` to the record's `teeId`.
-   - Set `additionalFixedMessage` and `additionalVariableMessage` from step 3 for augmented commands; otherwise leave them empty.
+   - For augmented commands, set `additionalFixedMessage` and `additionalVariableMessage` from step 3; otherwise leave them empty.
    - Set `signature` to the [ECDSA signature](../../../Utilities/Signing.md) over [`hashForSigning`](../../Concepts/Instructions.md#hashes) with the operator's private key.
 5. Submit the resulting `Instruction` as JSON via [`POST /instruction`](Proxy.md#external-write-apis) to the record's `url`.
 

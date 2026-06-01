@@ -20,7 +20,8 @@ Each voting process runs in a _vote box_:
 
 - Keyed by the instruction's [`instructionId` and `instructionHash`](Instructions.md#hashes).
 - Opened by the first valid signature from a data provider on a previously unseen pair, then closed after a deployment-configured expiration window.
-  Cosigner-only signers cannot open a box; submissions that would do so are rejected and should be retried until a data provider has opened a matching box.
+  Cosigner-only signers cannot open a box.
+  Submissions that would do so are rejected and should retry after a data provider opens a matching box.
 - Each signer may contribute at most one vote per box.
 
 ## Pass Conditions

@@ -1,11 +1,11 @@
 # Concepts
 
-Cross-cutting concept pages — _the "what and why" of FCC_. Each page defines a concept and its invariants; precise validation rules, field schemas, and contract function surfaces live under [Reference/](../Reference/Components/README.md).
+Cross-cutting concept pages — _the "what and why" of FCC_. Each defines a concept and its invariants; validation rules, field schemas, and contract surfaces live under [Reference/](../Reference/Components/README.md).
 
 Most operations flow [Instructions](Instructions.md) → [Voting](Voting.md) → [Actions](Actions.md) → [Rewarding](Rewarding.md).
-[Direct actions](Actions.md#direct-actions) skip the first two phases and arrive at the machine immediately.
+[Direct actions](Actions.md#direct-actions) skip the first two phases and reach the machine immediately.
 
-## Reading order
+## Reading Order
 
 1. [Architecture](../Architecture.md) — participants, instruction flow, deployment topology.
 2. [Trust Model](TrustModel.md) — the integrity assumptions the rest of the spec relies on.

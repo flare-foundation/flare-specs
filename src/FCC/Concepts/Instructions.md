@@ -23,7 +23,7 @@ A _cosigner_ is any Flare [address](../../Terminology/Concepts.md#addresses-acco
 Cosigners run their [relay client](../Reference/Components/RelayClient.md) in cosigner mode and, unlike data providers, need not participate in other Flare protocols.
 
 The event's `cosigners` field lists the eligible addresses; `cosignersThreshold` is the minimum number of cosigner signatures required to pass.
-Because [a colluding super-threshold of data providers can strip these fields](TrustModel.md#honest-majority-assumption), extensions that rely on cosigners must re-enforce them at the TEE-machine layer (see [Cosigner Enforcement](../Reference/Components/Machine.md#cosigner-enforcement)).
+Because [a colluding super-threshold of data providers can strip these fields](TrustModel.md#honest-majority-assumption), extensions relying on cosigners must re-enforce them at the TEE machine (see [Cosigner Enforcement](../Reference/Components/Machine.md#cosigner-enforcement)).
 
 ## Sending Instructions
 

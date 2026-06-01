@@ -51,7 +51,7 @@ Refresh this table at the start of any new Phase 1 verification round if the sna
 
 ### Phase 2: Improve style
 
-**The two highest-leverage rules — apply aggressively, every pass:**
+_The two highest-leverage rules — apply aggressively, every pass:_
 
 - **Terseness.** Cut every word that does not carry information. If the page didn't get shorter, the pass wasn't done.
 - **Lists over prose.** If three or more items share a structure (definitions, fields, conditions, steps), they belong in a list. Reach for prose only when sentences genuinely flow.
@@ -63,16 +63,15 @@ The full checklist:
 3. Prefer lists to prose. _(See above — restructure aggressively.)_
 4. Prefer linking to other files over repeating their content.
 5. Link any term, role, concept, type, contract, or command discussed elsewhere in the docs on its first occurrence in the file.
-6. Do not document implementation details.
-   What counts as implementation detail:
-   - Internal data structures, function decompositions, libraries, language-level choices, and storage backends.
-   - Smart-contract functions that are not part of the user-facing surface.
+6. Do not document implementation details:
+   - internal data structures, function decompositions, libraries, language-level choices, storage backends;
+   - smart-contract functions outside the user-facing surface.
 
-   What is _not_ implementation detail and should be documented:
-   - Periodic triggers — name the component that owns the schedule and give an approximate cadence as a "feel for the system" cue using $\sim$ (e.g. "the proxy issues `KEY_INFO` every $\sim 60$ minutes"). The exact cadence is impl detail, but the existence of the periodic loop is part of the externally observable behavior.
-   - User-facing smart-contract interfaces — function names intended to be called by users, their parameters, ownership rules, and emitted events.
+   _Not_ implementation detail (and should be documented):
+   - periodic triggers — name the owning component and give a $\sim$cadence cue (e.g. "the proxy issues `KEY_INFO` every $\sim 60$ minutes"); the exact cadence is impl detail, but the periodic loop is observable;
+   - user-facing smart-contract interfaces — function names, parameters, ownership rules, emitted events.
 
-7. Treat each component as a black box: document only what crosses its boundary — HTTP requests/responses, on-chain calls and events, file artifacts handed to other parties, and externally observable timing or ordering guarantees (e.g. best-effort delivery, periodic refresh every $\sim X$ seconds, or that one queue's processing does not block another's).
+7. Treat each component as a black box: document what crosses its boundary — HTTP requests/responses, on-chain calls and events, file artifacts handed to other parties, observable timing/ordering guarantees (best-effort delivery, periodic refresh every $\sim X$ seconds, queues that don't block each other).
    Do not document internal structs or formats that never leave the component.
    On-chain state and events count as external — document them.
 8. Replace inline ABI and wire schemas with links into the canonical type docs (e.g. `Types/Abi/...` and `Types/Wire/...`); do not duplicate type definitions in prose.
@@ -102,7 +101,11 @@ Apply as a batch once the prose passes are settled, since they touch many inboun
 
 Canonical definitions in [`Terminology/Concepts.md § TEE Substrate`](src/Terminology/Concepts.md#tee-substrate): three terms — `enclave`, `hardware`, `TEE machine` — plus `TEE platform` for the GCC/TDX/SEV combination. (`Confidential VM` was dropped as a redundant synonym for `enclave` in Flare's TDX/SEV deployment.)
 
-Known loose usage to reconcile: `src/FCC/Workflows/MachineReplication.md` frames replication as "replacing the **hardware** behind a TEE machine" with "hardware fields", "hardware fingerprint", and "hardware-refresh chain" — these mean the enclave/instance, not raw silicon (a new enclave may land on the same physical host). Decide whether to retitle to "enclave" or keep "hardware fingerprint" as an accepted idiom, and apply the choice uniformly. A few stragglers in other files (`src/FCC/Workflows/README.md:20`, `src/FCC/Workflows/MachineLifecycle.md:121`, `src/FCC/Reference/Contracts/FlareTeeManager.md:178`, `src/FCC/Concepts/Machines.md:84` "hardware refresh", `src/FCC/FCE/Concepts.md:73` "TEE hardware platforms") want the same call.
+Known loose usage to reconcile:
+
+- `src/FCC/Workflows/MachineReplication.md` frames replication as "replacing the _hardware_ behind a TEE machine" ("hardware fields", "hardware fingerprint", "hardware-refresh chain") — these mean the enclave/instance, not raw silicon (a new enclave may land on the same physical host).
+  Decide whether to retitle to "enclave" or keep "hardware fingerprint" as an accepted idiom, then apply uniformly.
+- Stragglers in `src/FCC/Workflows/README.md:20`, `src/FCC/Workflows/MachineLifecycle.md:121`, `src/FCC/Reference/Contracts/FlareTeeManager.md:178`, `src/FCC/Concepts/Machines.md:84` ("hardware refresh"), `src/FCC/FCE/Concepts.md:73` ("TEE hardware platforms") want the same call.
 
 TEE platform: link "TEE platform" on first occurrence in each doc to [`Terminology/Concepts.md § TEE Substrate`](src/Terminology/Concepts.md#tee-substrate); the inline `(Google for Intel TDX and AMD SEV)` examples in `src/FCC/Concepts/Machines.md:24` and `src/FCC/Concepts/TrustModel.md:13` should defer to the Terminology entry rather than repeating the platform list.
 
@@ -137,7 +140,12 @@ Spot-check `src/PMW/Workflows/XrpPayment.md`, `src/FDC2/Reference/AttestationTyp
 
 #### Roles: single canonical glossary in `Terminology/Roles.md`
 
-**Policy:** `Terminology/Roles.md` is the one cross-protocol "who's who". FCC-specific roles are **not** moved into `src/FCC/Concepts/`. Role _identity and responsibilities_ live in `Roles.md`; FCC pages link to it rather than re-defining a role, and document only the FCC _mechanism_ (e.g. the allowlist gating). Rationale: several roles are genuinely cross-protocol (data provider, delegator, governance, user) and even the "FCC" ones leak across layers, so a clean per-protocol split doesn't exist; splitting would also fragment the glossary and break many `Roles.md#…` inbound links.
+_Policy:_ `Terminology/Roles.md` is the one cross-protocol "who's who".
+FCC-specific roles are _not_ moved into `src/FCC/Concepts/`.
+Role _identity and responsibilities_ live in `Roles.md`; FCC pages link to it rather than re-defining a role, and document only the FCC _mechanism_ (e.g. the allowlist gating).
+
+Rationale: several roles are genuinely cross-protocol (data provider, delegator, governance, user) and even the "FCC" ones leak across layers, so a clean per-protocol split doesn't exist.
+Splitting would also fragment the glossary and break many `Roles.md#…` inbound links.
 
 Remaining sweep (apply on each file's pass):
 
@@ -153,14 +161,12 @@ Either rename one usage or add a relay-client-operator entry to `Roles.md` and c
 
 #### Apply the Type-Documentation convention (schema + invariant; producer-owned origins)
 
-Per [STYLE_GUIDE § Wording Conventions](STYLE_GUIDE.md#wording-conventions): Types/ files carry the schema plus a one-line _invariant_ per field; field _origins_ (how values are set) live with the **producer**, not in the type doc.
+Per [STYLE_GUIDE § Wording Conventions](STYLE_GUIDE.md#wording-conventions): Types/ files carry the schema plus a one-line _invariant_ per field; field _origins_ (how values are set) live with the _producer_, not in the type doc.
 
 Sweep `src/FCC/Reference/Types/Abi/*`, `src/FCC/Reference/Types/Wire/*`, `src/FDC2/Reference/Types/Abi/*`, `src/FDC2/Reference/Types/Wire/*`, and `src/PMW/Reference/Types/*` for field descriptions that contain producer-specific origin language (e.g. _"address recovered from the registration signature"_, _"challenge string provided by the challenger"_, _"copied from B in `_replicate`"_). For each:
 
 - If the origin is universal across every producer, keep it as part of the field's invariant.
 - If the origin is producer-specific, drop the origin from the type doc and ensure it's documented next to the producer — `### … Field Origins` table in the contract reference's per-call section (mirroring the existing one in `src/FCC/Reference/Contracts/FlareTeeManager.md`), or the producing operation's reference page.
-
-Use _field origin_ as the term; not "field population" or "field source".
 
 #### Audit `src/FCC/Reference/Types/Abi/` and `src/FCC/Reference/Types/Wire/` for internal-only types
 
@@ -221,13 +227,14 @@ Known files using the deprecated terminology:
 - `src/FCC/Workflows/WalletSetup.md` (line 25)
 - `src/FCC/FCE/Workflows/Configuration.md` (lines 5, 25, 71)
 
-The acronym _FCE_ is already used in `src/FCC/Reference/Operations/Actions.md`, `TeeManagement/State.md`, and `src/FCC/FCE/System.md` but is **never expanded anywhere in the spec**.
+The acronym _FCE_ is already used in `src/FCC/Reference/Operations/Actions.md`, `TeeManagement/State.md`, and `src/FCC/FCE/System.md` but is _never expanded anywhere in the spec_.
 Introduce the expansion "Flare Compute Extension (FCE)" on first occurrence — most likely in `src/FCC/FCE/Concepts.md` or `Terminology/Concepts.md` — before propagating the rename.
 
 #### Standardize "emit" vs "produce" terminology
 
-Use _emit_ only for on-chain Solidity events (`TeeInstructionsSent`); _produce_ for off-chain artifacts (instructions, signatures, actions, receipts).
+Use _emit_ only for on-chain Solidity events (`TeeInstructionsSent`); _produce_ for off-chain artifacts (signatures, actions, receipts).
 Apply this split when cleaning the remaining docs.
+See [STYLE_GUIDE § Wording Conventions](STYLE_GUIDE.md#wording-conventions) for the full canonical split, including _build_ for instructions.
 
 #### Standardize the verb for creating an instruction
 
@@ -323,7 +330,7 @@ Spec work to do:
 - FDC2 attestation proofs (TEE availability check, PMW multisig configured, PMW payment status) gain `chainId` as a first-class leading field on `Fdc2ResponseHeader`; on-chain verifiers `require(header.chainId == block.chainid)` before recovering signers.
 - `TeeStructs.Instruction` gains a leading `chainId` field so any future code recovering signers from an `Instruction` hash gets chain binding for free.
 
-**Upstream state**: contracts are updated but `tee-node@4ba38512`, `tee-proxy@31bfb8e0`, and `tee-relay-client@3bfbb5d8` predate the change and have **not** been updated in lockstep. Do not write specs against the new layout until the off-chain side lands — track for re-verification.
+_Upstream state:_ contracts are updated but `tee-node@4ba38512`, `tee-proxy@31bfb8e0`, and `tee-relay-client@3bfbb5d8` predate the change and have _not_ been updated in lockstep. Do not write specs against the new layout until the off-chain side lands — track for re-verification.
 
 Spec surfaces to touch when the off-chain catches up:
 
@@ -349,20 +356,20 @@ Spec work:
 
 #### Document per-extension emergency pause overlay
 
-`flare-smart-contracts-v2` `d7906df7` (on `origin/tee-diamond-cut`, captured at HEAD `7c943318`, 2026-05-27) added `MachineEmergencyPauseFacet` + `MachineEmergencyPause` library (`IMachineEmergencyPause` public; governance-only grace setter on `IIMachineEmergencyPause`). A per-extension boolean overlay, **distinct from** the per-project wallet pause in [Document wallet project pauser/unpauser delegation](#document-wallet-project-pauserunpauser-delegation): it gates _instruction dispatch_, not wallet state, and uses its own per-extension pauser/unpauser lists.
+`flare-smart-contracts-v2` `d7906df7` (on `origin/tee-diamond-cut`, captured at HEAD `7c943318`, 2026-05-27) added `MachineEmergencyPauseFacet` + `MachineEmergencyPause` library (`IMachineEmergencyPause` public; governance-only grace setter on `IIMachineEmergencyPause`). A per-extension boolean overlay, _distinct from_ the per-project wallet pause in [Document wallet project pauser/unpauser delegation](#document-wallet-project-pauserunpauser-delegation): it gates _instruction dispatch_, not wallet state, and uses its own per-extension pauser/unpauser lists.
 
 Behavior:
 
-- While set, `Instructions.sendInstructions` rejects every dispatch (regular **and** system op-types) to machines in that extension with `EmergencyPauseActive(extensionId)`. Machine statuses, active sets, and the read getters (`getActiveTeeMachines`, `getRandomTeeIds`, …) are **not** mutated — off-chain "is this usable now" checks must also call `isExtensionEmergencyPaused`. Clearing the flag instantly restores dispatch.
-- After unpause, a governance-tunable grace window (bounds $30\,\mathrm{min}$–$24\,\mathrm{h}$, default $\sim 2\,\mathrm{h}$ / `7200 s`) blocks **only** the third-party expired-availability branch of `MachineManagerFacet.pause(teeId)`, so owners can refresh attestations before strangers suspend still-`PRODUCTION` machines. The window combines the machine's own extension and the system extension (id 0), since availability refresh needs `requestTeeAttestation` (own extension) **and** FDC2 attestation routed to extension-0 TEEs.
+- While set, `Instructions.sendInstructions` rejects every dispatch (regular _and_ system op-types) to machines in that extension with `EmergencyPauseActive(extensionId)`. Machine statuses, active sets, and the read getters (`getActiveTeeMachines`, `getRandomTeeIds`, …) are _not_ mutated — off-chain "is this usable now" checks must also call `isExtensionEmergencyPaused`. Clearing the flag instantly restores dispatch.
+- After unpause, a governance-tunable grace window (bounds $30\,\mathrm{min}$–$24\,\mathrm{h}$, default $\sim 2\,\mathrm{h}$ / `7200 s`) blocks _only_ the third-party expired-availability branch of `MachineManagerFacet.pause(teeId)`, so owners can refresh attestations before strangers suspend still-`PRODUCTION` machines. The window combines the machine's own extension and the system extension (id 0), since availability refresh needs `requestTeeAttestation` (own extension) _and_ FDC2 attestation routed to extension-0 TEEs.
 
 Spec work remaining: optionally a fuller treatment in `src/FCC/Concepts/Instructions.md`'s dispatch path.
 
-**Upstream state**: contracts only. `tee-node@4ba38512`/`tee-proxy@3938b5d6` predate it; the overlay is an on-chain dispatch gate so off-chain may need only to surface `isExtensionEmergencyPaused`. Confirm before speccing the off-chain side.
+_Upstream state:_ contracts only. `tee-node@4ba38512`/`tee-proxy@3938b5d6` predate it; the overlay is an on-chain dispatch gate so off-chain may need only to surface `isExtensionEmergencyPaused`. Confirm before speccing the off-chain side.
 
 #### Cross-check FCC pages against the contract-repo spec-alignment audit
 
-`flare-smart-contracts-v2` `7c943318` (2026-05-27, `docs(specs)`) is an audit that corrected contract↔doc drift in **that repo's** `docs/specs/`. Its findings name the same factual areas to re-verify in our specs on each page's next pass: governance / upgrade-manager flow (`create` / `addPaths` / `finalize` / `sign`; note there is **no** `transferGovernance` / `claimGovernance`), `WalletManager` lifecycle/state machine, `Replication`, `Verification` (attestation), `Instructions`, `OperationFees`, `Extensions`, and entity counts. Diff against `git show 7c943318 -- docs/specs/FCC/<page>.md` when cleaning the matching page. The contract refactor `4d3cbeff` in the same range is behavior-preserving — `Attestation` struct and the `TEE_ATTESTATION` hash preimage are unchanged — so no attestation-spec change is needed.
+`flare-smart-contracts-v2` `7c943318` (2026-05-27, `docs(specs)`) is an audit that corrected contract↔doc drift in _that repo's_ `docs/specs/`. Its findings name the same factual areas to re-verify in our specs on each page's next pass: governance / upgrade-manager flow (`create` / `addPaths` / `finalize` / `sign`; note there is _no_ `transferGovernance` / `claimGovernance`), `WalletManager` lifecycle/state machine, `Replication`, `Verification` (attestation), `Instructions`, `OperationFees`, `Extensions`, and entity counts. Diff against `git show 7c943318 -- docs/specs/FCC/<page>.md` when cleaning the matching page. The contract refactor `4d3cbeff` in the same range is behavior-preserving — `Attestation` struct and the `TEE_ATTESTATION` hash preimage are unchanged — so no attestation-spec change is needed.
 
 #### Fold tee-proxy observable-surface changes into the `Proxy.md` pass
 

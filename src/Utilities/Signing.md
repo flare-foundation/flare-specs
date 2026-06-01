@@ -13,7 +13,7 @@ In Flare protocols, `h` is always the keccak256 digest of the underlying message
 
 ## Encoding Conventions
 
-The signature has three components — a 32-byte $r$, a 32-byte $s$, and a 1-byte recovery ID $v$ — packaged in one of three conventions depending on context:
+The signature has three components — 32-byte $r$, 32-byte $s$, 1-byte recovery ID $v$ — packaged in three conventions:
 
 - **Off-chain** — every signature produced or consumed off-chain (HTTP payloads, file artifacts, persistent off-chain state) is the 65-byte concatenation $r \,\|\, s \,\|\, v$ with $v \in \{0, 1\}$.
 - **On-chain struct** — every signature consumed on-chain as a Solidity tuple is `{v, r, s}` with $v \in \{27, 28\}$.

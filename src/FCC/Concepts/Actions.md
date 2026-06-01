@@ -11,7 +11,7 @@ The TEE machine [executes the action](../Reference/Components/Machine.md#action-
 ## Instruction Actions
 
 An instruction action is built by the proxy when a [vote box](Voting.md#vote-boxes) [passes](Voting.md#pass-conditions) or closes.
-It carries one [`TeeInstruction`](../Reference/Types/Abi/Instruction.md#teeinstruction) (identical for every [signer](Instructions.md#signers)) plus three parallel per-signer lists collected during voting.
+It carries one [`TeeInstruction`](../Reference/Types/Abi/Instruction.md#teeinstruction) (identical for every [signer](Instructions.md#signers)) plus three parallel per-signer lists.
 
 The proxy populates each [`Action`](../Reference/Types/Wire/Action.md#action) field as follows:
 
@@ -72,7 +72,7 @@ It populates each field as follows:
 
 ### Custom Extension Commands
 
-Custom extension commands run in an external extension HTTP service alongside the TEE machine; the TEE machine acts as a relay.
+Custom extension commands run in the extension's HTTP service alongside the TEE machine, which acts as a relay.
 
 For `threshold` and `submit` actions:
 

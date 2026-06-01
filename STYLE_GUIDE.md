@@ -47,8 +47,8 @@ Indices use $i$, $j$ (and $k$ only when three are needed in one file). Some cros
 
 - Sentence bullets end with a full stop.
 - Non-sentence bullets omit it, except the last.
-- Named bullets: bold name + colon, list numbered, next word capitalized — e.g. "1. **Name**:".
-- Exception: when the name is already in backticks or math mode (addresses, functions, variables), skip the bold — e.g. "1. `Address`:" or "1. $object$:".
+- Named bullets: bold lead-in followed by a separator (colon, em-dash, or period) — e.g. `**Name**: Description.`, `**Name** — description.`, or `**Name.** Description.`.
+- Exception: when the lead-in is in backticks or math mode (addresses, functions, variables), skip the bold — e.g. `` `Address`: ... `` or `$object$ — ...`.
 
 ## Line Breaks
 

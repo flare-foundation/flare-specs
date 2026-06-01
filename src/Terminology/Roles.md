@@ -1,6 +1,6 @@
 # Roles
 
-Roles and actors that appear across the Flare protocol specifications.
+Roles and actors across the Flare protocol specs.
 
 ## Governance
 

@@ -1,6 +1,6 @@
 # Trust Model
 
-FCC's integrity rests on a small number of explicit assumptions about what can and cannot be trusted.
+FCC's integrity rests on a small number of explicit trust assumptions.
 
 ## Honest-Majority Assumption
 

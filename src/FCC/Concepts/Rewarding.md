@@ -1,6 +1,7 @@
 # Rewarding
 
-After each accepted vote, the [TEE proxy](../Reference/Components/Proxy.md) returns a signed receipt that extends a per-instruction hash chain; when voting ends, the [TEE machine](../Reference/Components/Machine.md) signs the final hash and emits it in the action result.
+After each accepted vote, the [TEE proxy](../Reference/Components/Proxy.md) returns a signed receipt extending a per-instruction hash chain.
+When voting ends, the [TEE machine](../Reference/Components/Machine.md) signs the final hash and emits it in the action result.
 
 These artifacts are intended to feed reward attribution, but the consuming mechanism is not yet implemented or specified.
 

@@ -1,6 +1,6 @@
 # Concepts
 
-Foundational concepts used across the Flare protocol specifications.
+Foundational concepts shared across Flare protocol specs.
 
 ## Addresses, Accounts, and Keys
 

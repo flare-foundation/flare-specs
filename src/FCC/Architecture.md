@@ -8,7 +8,7 @@ FCC has three kinds of participants:
 
 1. **Smart contracts on Flare** — govern [extension](FCE/README.md) management, [TEE machine](Concepts/Machines.md) [registration and attestation](Workflows/MachineRegistration.md), [instruction](Concepts/Instructions.md) issuance, and [private key](Concepts/Keys.md) administration. The on-chain hub is the [`FlareTeeManager`](Reference/Contracts/FlareTeeManager.md) diamond.
 2. **[Data providers](../Terminology/Roles.md#data-provider)** — off-chain operators that run a [relay client](Reference/Components/RelayClient.md): they observe [instruction events](Concepts/Instructions.md#sending-instructions) on the Flare C-chain, sign them, and forward them to the destination [TEE proxies](Reference/Components/Proxy.md).
-3. **[TEE machines](Concepts/Machines.md)** — enclaves that execute [actions](Concepts/Actions.md) derived from relayed instructions or from [direct actions](Concepts/Actions.md#direct-actions), and sign the result with either their [identity key](Concepts/Machines.md#identity) or a [wallet key](Concepts/Keys.md).
+3. **[TEE machines](Concepts/Machines.md)** — enclaves that execute [actions](Concepts/Actions.md) from relayed instructions or [direct actions](Concepts/Actions.md#direct-actions), signing the result with their [identity key](Concepts/Machines.md#identity) or a [wallet key](Concepts/Keys.md).
 
 ## Instruction Flow
 
