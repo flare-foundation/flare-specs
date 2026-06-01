@@ -59,7 +59,7 @@ Criteria for the transaction:
 - It is not coinbase transaction.
 - The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference).
 - The transaction has exactly one output with the specified address.
-- The value of the output with the specified address minus the sum of values of all inputs with the specified address is greater than `amount` (in practice the sum of all values of the inputs with the specified address is zero).
+- The value of the output with the specified address minus the sum of values of all inputs with the specified address is greater or equal to `amount` (in practice the sum of all values of the inputs with the specified address is zero).
 - If `checkSourceAddresses` is set to true, sourceAddressesRoot of the transaction matches the specified `sourceAddressesRoot`.
 
 Timestamp is `mediantime`.
@@ -72,11 +72,11 @@ For XRPL, the sufficient number of confirmations is at least 3.
 
 Criteria for the transaction:
 
-- The transaction is of type payment.
+- The transaction is of type Payment is a Direct XRP payment (sending and receiving XRP).
 - The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference),
 - One of the following is true:
-  - Transaction status is `SUCCESS` and the amount received by the specified destination address is greater than the specified `value`.
-  - Transaction status is `RECEIVER_FAILURE` and the specified destination address would receive an amount greater than the specified `value` had the transaction been successful.
+  - Transaction status is `SUCCESS` (`TransactionResult` is `tesSUCCESS`) and the amount received by the specified destination address is greater or equal to the specified `amount`.
+  - Transaction status is `RECEIVER_FAILURE` (`TransactionResult` is either `tecDST_TAG_NEEDED`, `tecNO_DST`, or `tecNO_DST_INSUF_XRP` or `tecNO_PERMISSION` and transaction has no DomainID) and the specified destination address would receive an amount greater or equal to the specified `amount` had the transaction been successful.
 - If `checkSourceAddresses` is set to true, sourceAddressesRoot of the transaction matches the specified `sourceAddressesRoot`.
 
 Timestamp is `close_time` converted to UNIX time.

@@ -11,11 +11,11 @@ The provable payments emulate traditional banking payments from entity A to enti
 
 ## Request body
 
-| Field           | Solidity type | Description                                                                                                            |
-| --------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `transactionId` | `bytes32`     | ID of the transaction.                                                                                                 |
-| `inUtxo`        | `uint256`     | For UTXO chains, if the value is less than 2**16, this field is the index of the transaction input with the source address. Otherwise, it represents the `standardAddressHash` of the input address for which the payment proof will be constructed. For non-UTXO chains, this is always 0.    |
-| `utxo`          | `uint256`     |  For UTXO chains, if the value is less than 2**16, this field is the index of the transaction output with the receiving address. Otherwise, it represents the `standardAddressHash` of the output address for which the payment proof will be constructed. For non-UTXO chains, this is always 0. |
+| Field           | Solidity type | Description                                                                                                                                                                                                                                                                                        |
+| --------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transactionId` | `bytes32`     | ID of the transaction.                                                                                                                                                                                                                                                                             |
+| `inUtxo`        | `uint256`     | For UTXO chains, if the value is less than 2\*\*16, this field is the index of the transaction input with the source address. Otherwise, it represents the `standardAddressHash` of the input address for which the payment proof will be constructed. For non-UTXO chains, this is always 0.      |
+| `utxo`          | `uint256`     | For UTXO chains, if the value is less than 2\*\*16, this field is the index of the transaction output with the receiving address. Otherwise, it represents the `standardAddressHash` of the output address for which the payment proof will be constructed. For non-UTXO chains, this is always 0. |
 
 ## Response body
 
@@ -87,7 +87,7 @@ For example, let’s use addresses `A` (source) and `B` (receiver). The followin
 
 ### XRPL
 
-Only transactions of type [`Payment`](https://xrpl.org/docs/references/protocol/transactions/types/payment) are considered.
+Only transactions of type [`Payment`](https://xrpl.org/docs/references/protocol/transactions/types/payment) that are [`Direct XRP payments`](https://xrpl.org/docs/concepts/payment-types/direct-xrp-payments) (sending and receiving XRP).
 If a transaction is of a different type, the request is rejected.
 
 `BlockTimestamp` is close time of the ledger converted to UNIX time.
@@ -101,7 +101,10 @@ The following codes indicate a failure that was the receiver's fault:
 - `tecDST_TAG_NEEDED`: A destination tag is required by the target address, but is not provided. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions that require a destination tag.
 - `tecNO_DST`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded.
 - `tecNO_DST_INSUF_XRP`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded.
-- `tecNO_PERMISSION`: The source address does not have permission to transfer the target address. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions to the accounts that require "DepositAuth".
+
+The `tecNO_PERMISSION` is considered as receiver's fault only if the transactions has no DomainID.
+**IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions to the accounts that require "DepositAuth".
+If a transaction failed with `tecNO_PERMISSION` and has a DomainID, it is considered as sender's fault.
 
 The rest of the tags indicate the sender's fault.
 
