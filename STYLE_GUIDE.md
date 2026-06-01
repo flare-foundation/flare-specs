@@ -30,6 +30,8 @@ When introducing a function call in Solidity on a new line, a colon is required 
 - Docker is always capitalized.
 - keccak256 is lowercase, no hyphen, no backticks in prose; written $\mathrm{keccak256}$ in equations.
 - secp256k1 is lowercase, no backticks.
+- `instructionsSender` in backticks for the literal field/argument; "instructions sender" (plural, no hyphen) in prose.
+- `opType` / `opCommand` in backticks for the literal fields; "operation type" / "operation command" in prose; "op-type" / "op-command" hyphenated only as compound modifiers.
 
 ## Indexing
 
@@ -83,14 +85,10 @@ This also applies to objects being informally defined during text.
 - $\mathrm{TEE}_{\mathrm{ID}}$ is the standard formatting for TEE_ID.
 - Functions using TEE in the name are called with tee all lower case at the start, e.g. `teeExistenceProof`.
 
-## Producing Artifacts
+## Wording Conventions
 
-- _emit_: on-chain Solidity events only (e.g. `TeeInstructionsSent`).
-- _produce_: off-chain artifacts (instructions, signatures, actions, receipts).
-- _build_: relay-client construction of instructions.
-
-## Naming for Solidity / Go Identifiers
-
-- `instructionsSender` in backticks for the literal field/argument; "instructions sender" (plural, no hyphen) in prose; _italic_ on first occurrence.
-- `opType` / `opCommand` in backticks for the literal fields; "operation type" / "operation command" in prose; "op-type" / "op-command" hyphenated only as compound modifiers.
+- _emit_: on-chain Solidity events only.
+- _produce_: off-chain artifacts (signatures, actions, receipts).
+- _build_: instructions.
+- _field origin_ (not "field population" or "field source"): how a field's value is set; documented with the producer, not in the type doc.
 

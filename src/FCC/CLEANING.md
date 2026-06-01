@@ -2,7 +2,7 @@
 
 ## Cleaned Files
 
-Phase 2 [cleaning](#cleaning-plan) status:
+Files marked as cleaned have completed all four phases of the [cleaning plan](#cleaning-plan):
 
 - [x] `Images/`
 - [x] `Concepts/{Actions,Instructions,Voting,Rewarding,README,TrustModel}.md`
@@ -12,14 +12,16 @@ Phase 2 [cleaning](#cleaning-plan) status:
 - [x] `../Utilities/Signing.md`
 - [x] `../Terminology/`
 
+All other files under `FCC/`, `../PMW/`, and `../FDC2/` have completed phases 1 and 2; some are partially through phase 3.
+
 ## Not Yet Cleaned
 
-Files not listed in [Cleaned Files](#cleaned-files) have not been through a full Phase 1 + Phase 2 pass.
+Files outside the protocols listed above (`FCC/`, `../PMW/`, `../FDC2/`, the cleaned `../Utilities/`, `../Terminology/`) have not been through any cleaning phase.
 Mechanical fixes (link updates, naming, event corrections, type-ref updates) made during refactors of other files do not count as a cleaning pass.
 
 ## Cleaning Plan
 
-For each `FCC/` file, work in two phases.
+For each spec file, work in four phases.
 
 ### Phase 1: Verify content
 
@@ -56,7 +58,7 @@ Refresh this table at the start of any new Phase 1 verification round if the sna
 
 The full checklist:
 
-1. Apply the [style guide](../../STYLE_GUIDE.md) and [conventions](../../CONVENTIONS.md).
+1. Apply the [style guide](../../STYLE_GUIDE.md).
 2. Make content as terse as possible without losing information. _(See above — the primary goal of every pass.)_
 3. Prefer lists to prose. _(See above — restructure aggressively.)_
 4. Prefer linking to other files over repeating their content.
@@ -75,6 +77,18 @@ The full checklist:
    On-chain state and events count as external — document them.
 8. Replace inline ABI and wire schemas with links into the canonical type docs (e.g. `Types/Abi/...` and `Types/Wire/...`); do not duplicate type definitions in prose.
 9. Repair any broken inbound anchor links in other files when section anchors change.
+
+### Phase 3: Detailed human review
+
+Reconsider each section, sentence, and word. Identify and revise:
+
+- Sections that mix concerns or sit at the wrong abstraction level.
+- Sentences that are unclear, ambiguous, or factually wrong.
+- Word choices that conflate concepts or break repo-wide conventions.
+
+### Phase 4: Repeat Phase 2
+
+Re-apply the Phase 2 checklist after Phase 3's edits, since human review often adds prose that benefits from another style pass.
 
 ## Remaining
 
@@ -139,7 +153,7 @@ Either rename one usage or add a relay-client-operator entry to `Roles.md` and c
 
 #### Apply the Type-Documentation convention (schema + invariant; producer-owned origins)
 
-Per [CONVENTIONS § Type Documentation](../../CONVENTIONS.md#type-documentation): Types/ files carry the schema plus a one-line _invariant_ per field; field _origins_ (how values are set) live with the **producer**, not in the type doc.
+Per [STYLE_GUIDE § Wording Conventions](../../STYLE_GUIDE.md#wording-conventions): Types/ files carry the schema plus a one-line _invariant_ per field; field _origins_ (how values are set) live with the **producer**, not in the type doc.
 
 Sweep `src/FCC/Reference/Types/Abi/*`, `src/FCC/Reference/Types/Wire/*`, `src/FDC2/Reference/Types/Abi/*`, `src/FDC2/Reference/Types/Wire/*`, and `src/PMW/Reference/Types/*` for field descriptions that contain producer-specific origin language (e.g. _"address recovered from the registration signature"_, _"challenge string provided by the challenger"_, _"copied from B in `_replicate`"_). For each:
 
