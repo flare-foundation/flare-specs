@@ -1,11 +1,11 @@
 # Flare Specs Consistency Guide
 
-This document lists suggestions for formatting choices in the Flare Specs documentation.
+Suggestions for formatting and wording in the Flare Specs documentation.
 
 ## Labelling Contract and Function Calls
 
-Objects should be formatted with backticks e.g. `smartContract`.
-When introducing a function call in Solidity on a new line, a colon is required e.g. This is my function:
+Objects use backticks (e.g. `smartContract`).
+A Solidity block on a new line is introduced with a colon, e.g.:
 
 ```solidity
 …
@@ -13,46 +13,42 @@ When introducing a function call in Solidity on a new line, a colon is required 
 
 ## Formatting of Specific Words and Grammar
 
-- Flare network has a lower case n but Flare Foundation has an upper case F.
-- Off-chain and on-chain contain dashes (e.g. not offchain).
-- ID should always be written in uppercase.
+- Flare network has a lower case n; Flare Foundation an upper case F.
+- Off-chain and on-chain contain dashes (not offchain).
+- ID is always uppercase.
 - Bit-vote and bit-vector contain dashes.
-- Bit and byte lengths of numbers are written with dashes e.g. 32-bit and 32-byte.
-- The FTSO feeds are called anchor and block-latency feeds (note these are typically uncapitalized).
-- Names of phases within protocols are also typically uncapitalized as they are intended to be descriptive.
+- Bit and byte lengths use dashes (e.g. 32-bit, 32-byte).
+- FTSO feeds (anchor, block-latency) are typically uncapitalized.
+- Phase names within protocols are typically uncapitalized (descriptive labels).
 - abi-encoded is all lower case and contains a dash.
 - JSON-encoded uses uppercase JSON, a hyphen, and lowercase encoded.
 - Data provider is two words without a hyphen, even as a compound modifier (e.g. "data provider weight", not "data-provider weight").
-- uint should be formatted in $\mathrm{uint}$.
-- Oxford commas should be used (e.g. "a, b, and c" not "a, b and c").
-- Protocols should be introduced with a "the" e.g. "participation in the FSP" rather than "participation in FSP".
-- Avoid filler modifiers ("underlying", "relevant", "appropriate", "respective", "carrying X") that add no information: prefer a specific noun (e.g. "destination TEE proxy" rather than "relevant TEE proxy") or drop the modifier when context already establishes the referent.
+- uint is formatted as $\mathrm{uint}$.
+- Oxford commas are used (e.g. "a, b, and c", not "a, b and c").
+- Protocols take "the" (e.g. "the FSP", not "FSP").
+- Avoid filler modifiers ("underlying", "relevant", "appropriate", "respective", "carrying X"); use a specific noun or drop the modifier when context establishes the referent (e.g. "destination TEE proxy", not "relevant TEE proxy").
 - Docker is always capitalized.
-- keccak256 is lowercase, no hyphen, no backticks in prose; written $\mathrm{keccak256}$ in equations.
+- keccak256 is lowercase, no hyphen, no backticks in prose; $\mathrm{keccak256}$ in equations.
 - secp256k1 is lowercase, no backticks.
-- `instructionsSender` in backticks for the literal field/argument; "instructions sender" (plural, no hyphen) in prose.
-- `opType` / `opCommand` in backticks for the literal fields; "operation type" / "operation command" in prose; "op-type" / "op-command" hyphenated only as compound modifiers.
+- TEE_ID is formatted as $\mathrm{TEE}_{\mathrm{ID}}$.
+- `instructionsSender`: "instructions sender" in prose (plural, no hyphen).
+- `opType` / `opCommand`: "operation type" / "operation command" in prose; "op-type" / "op-command" as compound modifiers.
 
 ## Indexing
 
-Indexes are used for various objects across the specs, for temporal numbering such as epoch numbers and round numbers, and provider number.
-To avoid going beyond standard indexes ($i$, $j$), some inconsistency is allowed e.g. $i$ may refer to provider number in one document and round number in another.
-Try to stick to the following convention where possible:
+Indices use $i$, $j$ (and $k$ only when three are needed in one file). Some cross-document inconsistency is allowed (e.g. $i$ may refer to providers in one doc and rounds in another):
 
-- Each individual file must be internally consistent.
-- Only use $k$ if three indexes are needed in the same file.
+- Each file is internally consistent.
 - Providers are indexed by $i$.
-- Voting rounds, epochs etc. are indexed by $j$; $i$ can be used if another object that is not data providers needs to be indexed or if voting rounds are the only object being enumerated in a given file.
-- Occasionally, reward epochs and voting epochs are both enumerated in the same doc.
-  Try to use very clear indexing for this e.g. $j$ for voting epochs and $r$ for reward epoch or similar; legibility should be more important than style.
-  This rule is probably the hardest one to enforce; for this unusual case a certain amount of discretion in picking something that looks nice is better than global consistency.
+- Voting rounds and epochs by $j$ (or $i$ if no provider index is needed or rounds are the only enumerated object).
+- When both reward and voting epochs appear in the same doc, use distinct letters (e.g. $j$ for voting epochs, $r$ for reward epochs) — clarity over consistency.
 
 ## Bullet Points
 
-- Bullet points consisting of sentences should all be ended with a full stop.
-- Bullet point lists of things that are not sentences should not be ended with a full stop, except the final bullet point.
-- Bullet points where each point has a name should be formatted so that the name is in bold, followed by a colon, and the list should be numbered, e.g. "1. **Name**:" with the next word capitalized.
-- An exception is made for lists where the names are formatted in backticks or math mode (e.g. they are addresses, functions, variables etc.), in which case the required formatting does not need to be augmented with bold script so that it should be e.g. "1. `Address`:" or "1. $object$:".
+- Sentence bullets end with a full stop.
+- Non-sentence bullets omit it, except the last.
+- Named bullets: bold name + colon, list numbered, next word capitalized — e.g. "1. **Name**:".
+- Exception: when the name is already in backticks or math mode (addresses, functions, variables), skip the bold — e.g. "1. `Address`:" or "1. $object$:".
 
 ## Line Breaks
 
@@ -64,26 +60,20 @@ Inside a bullet point, continue subsequent sentences on indented lines under the
 
 ## Emphasis
 
-Emphasis should be done in _italics_ (rather than **bold**) and should be called with `_text_` (rather than `\textit{text}`).
-This also applies to objects being informally defined during text.
+Emphasis uses _italics_, not **bold**; write `_text_`, not `\textit{text}`. Same for informal definitions of objects.
 
 ## Math Formatting
 
-- Equations that end a sentence should be proceeded by a full stop.
-- Multiplication of text objects (e.g. $\mathrm{Variable Name}$) should always be formatted with a $*$, regardless of whether the other object(s) are text objects or variables, numbers, etc. Other multiplication can be formatted with $\cdot$ e.g. $a \cdot b$.
-- The "$i$th reward epoch" should have $i$ formatted in math mode (rather than just writing ith).
-- Numbers in text should be formatted in math mode e.g. $10$, with the following exceptions:
-  - If a column of a table entirely consists of numbers without text (e.g. each entry is x%), this does not apply and the numbers should not be formatted in maths mode.
-  - Another exception is made for giving the byte/bit length of integers e.g. "32-bit integer" is written without calling maths mode.
-  - Very large and round numbers in text e.g. in the millions should be written as e.g. $1$ million.
-  - When referring to an element of a numbered list e.g. "step 3 of the above algorithm" math mode is not used.
-- $\dfrac{}{}$ is preferable to $\frac{}{}$ during text for legibility.
-- We currently use a mix of `\mathrm` and `\text` in maths mode. Using `\mathrm` is preferable, but the output looks the same (except that `\mathrm` removes spaces) so this is of low importance.
-
-## TEEs
-
-- $\mathrm{TEE}_{\mathrm{ID}}$ is the standard formatting for TEE_ID.
-- Functions using TEE in the name are called with tee all lower case at the start, e.g. `teeExistenceProof`.
+- Equations that end a sentence are followed by a full stop.
+- Multiplication involving a text object (e.g. $\mathrm{VariableName}$) uses $*$; other multiplication uses $\cdot$ (e.g. $a \cdot b$).
+- "$i$th reward epoch" has $i$ in math mode (not "ith").
+- Numbers in text use math mode (e.g. $10$), except:
+  - table columns that are entirely numbers (e.g. percentages),
+  - bit/byte lengths of integers (e.g. "32-bit integer"),
+  - very large round numbers (e.g. $1$ million),
+  - references to numbered-list elements (e.g. "step 3 of the above algorithm").
+- $\dfrac{}{}$ is preferable to $\frac{}{}$ in text for legibility.
+- Prefer `\mathrm` over `\text` (output is nearly identical — `\mathrm` removes spaces — so the preference is mild).
 
 ## Wording Conventions
 
@@ -91,4 +81,3 @@ This also applies to objects being informally defined during text.
 - _produce_: off-chain artifacts (signatures, actions, receipts).
 - _build_: instructions.
 - _field origin_ (not "field population" or "field source"): how a field's value is set; documented with the producer, not in the type doc.
-
