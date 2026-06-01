@@ -109,6 +109,8 @@ Known loose usage to reconcile:
 
 TEE platform: link "TEE platform" on first occurrence in each doc to [`Terminology/Concepts.md § TEE Substrate`](src/Terminology/Concepts.md#tee-substrate); the inline `(Google for Intel TDX and AMD SEV)` examples in `src/FCC/Concepts/Machines.md:24` and `src/FCC/Concepts/TrustModel.md:13` should defer to the Terminology entry rather than repeating the platform list.
 
+Record any new vocabulary distinctions in [src/Terminology/Concepts.md § TEE Substrate](src/Terminology/Concepts.md#tee-substrate).
+
 #### Standardize "instructions sender" terminology
 
 Current docs mix _instruction sender_ (singular), _instructions sender_ (plural), `instructionsSender` (backticks), `_teeExtensionInstructionsSender` (Solidity arg), and _instructions-sender_ (hyphenated).
@@ -127,6 +129,8 @@ Once those anchors exist, add links in `src/FCC/Reference/Operations/Instruction
 
 - _system instructions sender_ → its dedicated subsection in `src/FCC/FCE/Concepts.md` (where governance whitelisting via `registerSystemInstructionsSenders` is documented).
 - an _extension's instructions sender_ → the `instructionsSender` field in `src/FCC/FCE/Concepts.md`'s extension data structure, and the registration call that sets it.
+
+Once finalized, record the canonical forms in [STYLE_GUIDE](STYLE_GUIDE.md).
 
 #### Light sweep for `opType` / `opCommand` terminology
 
@@ -154,10 +158,14 @@ Remaining sweep (apply on each file's pass):
 - Sweep the remaining FCC concept/workflow pages (`Wallets.md`, `Instructions.md` cosigner/signer prose, `src/FCC/FCE/Concepts.md`) for any role re-definition and converge on links.
 - Naming: `src/FCC/Concepts/Machines.md#owner-allowlist` is the canonical home for the _machine owner_ allowlist term; `Roles.md#tee-operator` is the actor. Settle the machine-owner ↔ TEE-operator relationship as part of the operator disambiguation below.
 
+Once the policy is applied across the FCC pages, record the role-naming convention in [STYLE_GUIDE](STYLE_GUIDE.md).
+
 #### Disambiguate the term _operator_
 
 `Terminology/Roles.md#tee-operator` defines a _TEE operator_ as the party deploying TEE machines, but `Components/RelayClient.md:4` introduces a second meaning — the relay-client operator (a data provider or cosigner whose key signs relayed instructions).
 Either rename one usage or add a relay-client-operator entry to `Roles.md` and cross-link from `RelayClient.md`.
+
+Record the chosen disambiguation in [src/Terminology/Roles.md](src/Terminology/Roles.md) once resolved.
 
 #### Apply the Type-Documentation convention (schema + invariant; producer-owned origins)
 
@@ -172,6 +180,8 @@ Sweep `src/FCC/Reference/Types/Abi/*`, `src/FCC/Reference/Types/Wire/*`, `src/FD
 
 Audit `src/FCC/Reference/Types/Abi/` and `src/FCC/Reference/Types/Wire/` for types that are purely internal to one component (e.g. Go-only struct names like `DataFixed`, `Data`) and remove or rename them.
 
+If any rename conventions emerge, record them in [STYLE_GUIDE](STYLE_GUIDE.md).
+
 #### Reconcile `$id` / `$ref` casing in JSON-Schema docs
 
 Schemas across `src/FCC/Reference/Types/Abi/` and `src/FCC/Reference/Types/Wire/` use PascalCase `$id` (e.g. `"Data"`, `"PublicKey"`, `"SignedKeyExistenceProof"`) but lowercase `$ref` (e.g. `"#data"`, `"#publickey"`).
@@ -182,6 +192,7 @@ Settle on one of:
 - Switch to PascalCase `$ref` matching `$id`, breaking the markdown-anchor coincidence but yielding strictly valid JSON Schema.
 
 Whichever is chosen, apply uniformly across all `Types/` files.
+Record the casing convention in [STYLE_GUIDE](STYLE_GUIDE.md) once resolved.
 
 #### Math-mode pass for variables, numbers, and set notation
 
@@ -229,6 +240,7 @@ Known files using the deprecated terminology:
 
 The acronym _FCE_ is already used in `src/FCC/Reference/Operations/Actions.md`, `TeeManagement/State.md`, and `src/FCC/FCE/System.md` but is _never expanded anywhere in the spec_.
 Introduce the expansion "Flare Compute Extension (FCE)" on first occurrence — most likely in `src/FCC/FCE/Concepts.md` or `Terminology/Concepts.md` — before propagating the rename.
+Record the canonical FCE expansion there once introduced.
 
 #### Standardize "emit" vs "produce" terminology
 
@@ -247,6 +259,8 @@ Redis is the chosen backend for the proxy's persistent stores, but the spec only
 Sweep `src/FCC/Reference/Components/Proxy.md`, `src/FCC/Reference/Operations/Actions.md`, and any leaf docs that mention Redis by name and rewrite as "key-value store" (or similar) unless the reference is to a specific operational concern (e.g. a deployment-doc context outside the spec).
 Section title `### Redis-Backed Stores` in `TeeProxy.md` should become `### Persistent Stores` or similar; keep TTLs and the keying schema because those are observable behavior.
 
+Record the chosen phrasing in [STYLE_GUIDE](STYLE_GUIDE.md) once resolved.
+
 #### Rewrite implementation-specific code snippets as equations
 
 Specs should be implementation-agnostic.
@@ -254,6 +268,8 @@ Code snippets in implementation languages (Go, JavaScript, Python, etc.) that de
 Solidity snippets are an exception — they are themselves the on-chain contract spec and remain as-is.
 
 Examples to look for: Go function references (`accounts.TextHash`, `crypto.Keccak256Hash`, ...), JavaScript or CLI snippets, helper-function references in `flare-system-client`.
+
+Record the pseudocode style choice in [STYLE_GUIDE](STYLE_GUIDE.md) if not already covered.
 
 #### Refactor on-chain packed wire format details out of `src/Utilities/Signing.md`
 
@@ -298,6 +314,10 @@ When each file is cleaned, evaluate whether a Mermaid diagram (or, where renderi
 ## File-specific TODOs
 
 Single-file fixes to apply when the listed FCC/ file is cleaned, or as one-off updates to already-cleaned files.
+
+#### Re-review last two sections of `src/FCC/Concepts/Rewarding.md`
+
+`## RewardingData` and `## Reconstructing the Vote Ordering` need another Phase 3 human-review pass.
 
 #### Consider specs or references for `C-chain indexer`, `Redis`, and the relay client's external signer
 
