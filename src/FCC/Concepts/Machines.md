@@ -4,7 +4,7 @@ A _TEE machine_ is a container running the [node app](../Reference/Components/Ma
 
 ## Identity
 
-- _Identity key pair_ $(\mathrm{TEE}_\mathrm{pub}, \mathrm{TEE}_\mathrm{priv})$ — public and private keys generated inside the enclave at boot; $\mathrm{TEE}_\mathrm{priv}$ never leaves it.
+- _Identity key pair_ $(\mathrm{TEE}_\mathrm{pub}, \mathrm{TEE}_\mathrm{priv})$ — public and private keys generated inside the enclave at boot; $\mathrm{TEE}_\mathrm{priv}$ is never exposed outside an attested enclave.
 - $\mathrm{TEE}_\mathrm{ID}$ — the [address](../../Terminology/Concepts.md#addresses-accounts-and-keys) of $\mathrm{TEE}_\mathrm{pub}$; the machine's permanent on-chain identity.
 - $\mathrm{TEE}_\mathrm{pub}$ is held as a [`PublicKey`](../Reference/Types/Abi/Common.md#publickey) struct on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md).
 

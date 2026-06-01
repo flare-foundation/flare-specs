@@ -10,7 +10,7 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 - The caller controls a funded Flare address.
 - The FCE's TEE-machine Docker image has a reproducible `codeHash`.
 - A TEE proxy server is deployed (or planned) so machines can be paired with it.
-- For Step `provisionTeeMachine`, a TEE machine is running inside a Confidential VM (or in local-dev mode with `MODE=1`), with the Configuration API reachable.
+- For Step `provisionTeeMachine`, a TEE machine is running inside an enclave (or in local-dev mode with `MODE=1`), with the Configuration API reachable.
 
 ## States
 

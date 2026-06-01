@@ -1,6 +1,6 @@
 # MachineRegistration
 
-State machine for one TEE machine from a freshly-booted Confidential VM to on-chain `PRODUCTION` status.
+State machine for one TEE machine from a freshly-booted enclave to on-chain `PRODUCTION` status.
 For ongoing operations on a registered machine, see [MachineLifecycle](MachineLifecycle.md); for the underlying concepts, [Concepts/Machines](../Concepts/Machines.md).
 
 ## Preconditions
@@ -12,7 +12,7 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 
 ## States
 
-- `Booted` — the Confidential VM is running; the TEE machine has generated its identity key pair and `teeId` is the derived address. No proxy URL, no initial owner, no extension ID is configured locally yet.
+- `Booted` — the enclave is running; the TEE machine has generated its identity key pair and `teeId` is the derived address. No proxy URL, no initial owner, no extension ID is configured locally yet.
 - `LocallyConfigured` — proxy URL, initial owner, and extension ID are set on the machine (via the Configuration API on port `5500` or environment variables) and the machine is paired with its proxy.
 - `Initialized` — `register(...)` has run; `wallet.status = INITIALIZED`; the contract has auto-enqueued a [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) instruction.
 - `Attested` — the [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) FDC2 sub-workflow has produced a valid `OK` proof for the machine.

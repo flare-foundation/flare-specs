@@ -56,7 +56,7 @@ Refresh this table at the start of any new Phase 1 verification round if the sna
 
 The full checklist:
 
-1. Apply the [style guide](../../STYLE_GUIDE.md).
+1. Apply the [style guide](../../STYLE_GUIDE.md) and [conventions](../../CONVENTIONS.md).
 2. Make content as terse as possible without losing information. _(See above — the primary goal of every pass.)_
 3. Prefer lists to prose. _(See above — restructure aggressively.)_
 4. Prefer linking to other files over repeating their content.
@@ -84,16 +84,11 @@ Per-page leaf cleaning of `Reference/Components/{Machine,Proxy}.md`, `Reference/
 
 Apply as a batch once the prose passes are settled, since they touch many inbound links.
 
-#### Standardize TEE substrate vocabulary (`enclave` / `hardware` / `Confidential VM` / `TEE machine`)
+#### Standardize TEE substrate vocabulary
 
-The repo uses four near-synonyms for "the thing running in a TEE" with an implicit, mostly-consistent split. Make it explicit and sweep the whole repo (`src/`) so each word carries one meaning:
+Canonical definitions in [`Terminology/Concepts.md § TEE Substrate`](../Terminology/Concepts.md#tee-substrate): three terms — `enclave`, `hardware`, `TEE machine` — plus `TEE platform` for the GCC/TDX/SEV combination. (`Confidential VM` was dropped as a redundant synonym for `enclave` in Flare's TDX/SEV deployment.)
 
-- _enclave_ — the attested instance that boots, generates the identity key, runs the code, and registers. Use it for the **actor** (the thing that boots / generates keys / registers / is swapped on replication).
-- _hardware_ — the **physical substrate** only ("the key never leaves the hardware", "hardware isolation", "hardware-attested"). Do not use it as the actor that registers or runs (hardware doesn't register; an enclave does).
-- _Confidential VM_ — the concrete cloud deployment form of an enclave. Reserve for registration/deployment/platform contexts (`Workflows/MachineRegistration.md`, `FCE/Reference/Api.md`, `Components/README.md`).
-- _TEE machine_ — the persistent logical entity / on-chain identity. Never use it for the swappable instance; that is what the enclave/Confidential-VM terms are for.
-
-Known loose usage to reconcile: `Workflows/MachineReplication.md` frames replication as "replacing the **hardware** behind a TEE machine" with "hardware fields", "hardware fingerprint", and "hardware-refresh chain" — these mean the enclave/instance, not raw silicon (a new enclave may land on the same physical host). Decide whether to retitle these to "enclave" or keep "hardware fingerprint" as an accepted idiom, and apply the choice uniformly. Record the chosen split in `STYLE_GUIDE.md`.
+Known loose usage to reconcile: `Workflows/MachineReplication.md` frames replication as "replacing the **hardware** behind a TEE machine" with "hardware fields", "hardware fingerprint", and "hardware-refresh chain" — these mean the enclave/instance, not raw silicon (a new enclave may land on the same physical host). Decide whether to retitle to "enclave" or keep "hardware fingerprint" as an accepted idiom, and apply the choice uniformly. A few stragglers in other files (`Workflows/README.md:20`, `MachineLifecycle.md:121`, `FlareTeeManager.md:178`, `Machines.md:84` "hardware refresh", `FCE/Concepts.md:73` "TEE hardware platforms") want the same call.
 
 #### Standardize "instructions sender" terminology
 
@@ -142,7 +137,7 @@ Either rename one usage or add a relay-client-operator entry to `Roles.md` and c
 
 #### Apply the Type-Documentation convention (schema + invariant; producer-owned origins)
 
-Per [STYLE_GUIDE § Type Documentation](../../STYLE_GUIDE.md#type-documentation): Types/ files carry the schema plus a one-line _invariant_ per field; field _origins_ (how values are set) live with the **producer**, not in the type doc.
+Per [CONVENTIONS § Type Documentation](../../CONVENTIONS.md#type-documentation): Types/ files carry the schema plus a one-line _invariant_ per field; field _origins_ (how values are set) live with the **producer**, not in the type doc.
 
 Sweep `src/FCC/Reference/Types/Abi/*`, `src/FCC/Reference/Types/Wire/*`, `src/FDC2/Reference/Types/Abi/*`, `src/FDC2/Reference/Types/Wire/*`, and `src/PMW/Reference/Types/*` for field descriptions that contain producer-specific origin language (e.g. _"address recovered from the registration signature"_, _"challenge string provided by the challenger"_, _"copied from B in `_replicate`"_). For each:
 

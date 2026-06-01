@@ -1,7 +1,7 @@
 # Extension API
 
 HTTP contract between a [TEE machine](../../Reference/Components/Machine.md) and its co-resident FCE process.
-The TEE machine and the extension run inside the same confidential VM and communicate over a local HTTP loopback.
+The TEE machine and the extension run inside the same enclave and communicate over a local HTTP loopback.
 The TEE machine is the FCE's only client and only inbound caller; outbound results from the FCE flow back through the same machine.
 
 The contract has two directions:
@@ -63,4 +63,4 @@ Custom FCE actions are dispatched _without_ any cosigner check by the machine: t
 
 ## Connection
 
-A reference deployment runs the FCE on `http://localhost:<port>` inside the same confidential VM as the TEE machine. The exact port is FCE-specific; the TEE machine reads it from its startup configuration. Outside-the-VM access to either endpoint is not part of the contract and is blocked at the network layer in production deployments.
+A reference deployment runs the FCE on `http://localhost:<port>` inside the same enclave as the TEE machine. The exact port is FCE-specific; the TEE machine reads it from its startup configuration. Access from outside the enclave to either endpoint is not part of the contract and is blocked at the network layer in production deployments.

@@ -21,6 +21,7 @@ When introducing a function call in Solidity on a new line, a colon is required 
 - The FTSO feeds are called anchor and block-latency feeds (note these are typically uncapitalized).
 - Names of phases within protocols are also typically uncapitalized as they are intended to be descriptive.
 - abi-encoded is all lower case and contains a dash.
+- JSON-encoded uses uppercase JSON, a hyphen, and lowercase encoded.
 - Data provider is two words without a hyphen, even as a compound modifier (e.g. "data provider weight", not "data-provider weight").
 - uint should be formatted in $\mathrm{uint}$.
 - Oxford commas should be used (e.g. "a, b, and c" not "a, b and c").
@@ -81,3 +82,15 @@ This also applies to objects being informally defined during text.
 
 - $\mathrm{TEE}_{\mathrm{ID}}$ is the standard formatting for TEE_ID.
 - Functions using TEE in the name are called with tee all lower case at the start, e.g. `teeExistenceProof`.
+
+## Producing Artifacts
+
+- _emit_: on-chain Solidity events only (e.g. `TeeInstructionsSent`).
+- _produce_: off-chain artifacts (instructions, signatures, actions, receipts).
+- _build_: relay-client construction of instructions.
+
+## Naming for Solidity / Go Identifiers
+
+- `instructionsSender` in backticks for the literal field/argument; "instructions sender" (plural, no hyphen) in prose; _italic_ on first occurrence.
+- `opType` / `opCommand` in backticks for the literal fields; "operation type" / "operation command" in prose; "op-type" / "op-command" hyphenated only as compound modifiers.
+
