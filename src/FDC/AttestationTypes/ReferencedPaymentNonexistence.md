@@ -17,7 +17,7 @@ This type of attestation can be used to, e.g., provide grounds to liquidate fund
 | `deadlineBlockNumber`      | `uint64`      | The blockNumber to be included in the search range.                                                                   |
 | `deadlineTimestamp`        | `uint64`      | The timestamp to be included in the search range.                                                                     |
 | `destinationAddressHash`   | `bytes32`     | The [standard address hash](./Reference.md#standard-address-hash) of the address to which the payment had to be done. |
-| `amount`                   | `uint256`     | The requested amount in minimal units that had to be payed.                                                           |
+| `amount`                   | `uint256`     | The requested amount in minimal units that had to be paid.                                                           |
 | `standardPaymentReference` | `bytes32`     | The requested standard payment reference.                                                                             |
 | `checkSourceAddresses`     | `bool`        | If true, the source address root is checked (only full match).                                                        |
 | `sourceAddressesRoot`      | `bytes32`     | The root of the Merkle tree of the source addresses.                                                                  |
@@ -33,7 +33,7 @@ The `standardPaymentReference` should not be zero (as a 32-byte sequence).
 | `firstOverflowBlockTimestamp` | `uint64`      | The timestamp of the firstOverflowBlock. |
 
 `firstOverflowBlock` is the first block that has block number higher than `deadlineBlockNumber` and timestamp later than `deadlineTimestamp`.
-The specified search range are blocks between heights including `minimalBlockNumber` and excluding `firstOverflowBlockNumber`.
+The specified search range consists of the blocks between heights including `minimalBlockNumber` and excluding `firstOverflowBlockNumber`.
 
 ## Lowest Used Timestamp
 
@@ -44,22 +44,22 @@ For `lowestUsedTimestamp`, `minimalBlockTimestamp` is used.
 If zero `standardPaymentReference` is provided, the request is rejected.
 
 If `firstOverflowBlock` cannot be determined or does not have a sufficient number of confirmations (block at the tip has number of confirmations 1), the attestation request is rejected.
-If `minimalBlockNumber` is higher or equal to `firstOverflowBlockNumber`, the request is rejected.
-The search range are blocks between heights including `minimalBlockNumber` and excluding `firstOverflowBlockNumber`.
+If `minimalBlockNumber` is higher than or equal to `firstOverflowBlockNumber`, the request is rejected.
+The search range consists of the blocks between heights including `minimalBlockNumber` and excluding `firstOverflowBlockNumber`.
 If the verifier does not have a view of all blocks from `minimalBlockNumber` to `firstOverflowBlockNumber`, the attestation request is rejected.
 The request is confirmed if no transaction meeting the specified criteria is found in the search range.
 The criteria and timestamp are chain specific.
 
 ### UTXO (Bitcoin and Dogecoin)
 
-For Bitcoin, the sufficient number of confirmations is at least 6, for Doge it is 60.
+For Bitcoin, a sufficient number of confirmations is at least 6; for Dogecoin, it is 60.
 
 Criteria for the transaction:
 
-- It is not coinbase transaction.
+- It is not a coinbase transaction.
 - The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference).
 - The transaction has exactly one output with the specified address.
-- The value of the output with the specified address minus the sum of values of all inputs with the specified address is greater or equal to `amount` (in practice the sum of all values of the inputs with the specified address is zero).
+- The value of the output with the specified address minus the sum of values of all inputs with the specified address is greater than or equal to `amount` (in practice the sum of all values of the inputs with the specified address is zero).
 - If `checkSourceAddresses` is set to true, sourceAddressesRoot of the transaction matches the specified `sourceAddressesRoot`.
 
 Timestamp is `mediantime`.
@@ -68,15 +68,15 @@ Timestamp is `mediantime`.
 
 ### XRPL
 
-For XRPL, the sufficient number of confirmations is at least 3.
+For XRPL, a sufficient number of confirmations is at least 3.
 
 Criteria for the transaction:
 
-- The transaction is of type Payment is a Direct XRP payment (sending and receiving XRP).
-- The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference),
+- The transaction is of type `Payment` and is a Direct XRP payment (sending and receiving XRP).
+- The transaction has the specified [standardPaymentReference](./Reference.md#standard-payment-reference).
 - One of the following is true:
-  - Transaction status is `SUCCESS` (`TransactionResult` is `tesSUCCESS`) and the amount received by the specified destination address is greater or equal to the specified `amount`.
-  - Transaction status is `RECEIVER_FAILURE` (`TransactionResult` is either `tecDST_TAG_NEEDED`, `tecNO_DST`, or `tecNO_DST_INSUF_XRP` or `tecNO_PERMISSION` and transaction has no DomainID) and the specified destination address would receive an amount greater or equal to the specified `amount` had the transaction been successful.
+  - Transaction status is `SUCCESS` (`TransactionResult` is `tesSUCCESS`) and the amount received by the specified destination address is greater than or equal to the specified `amount`.
+  - Transaction status is `RECEIVER_FAILURE` (`TransactionResult` is one of `tecDST_TAG_NEEDED`, `tecNO_DST`, or `tecNO_DST_INSUF_XRP`, or is `tecNO_PERMISSION` while the transaction has no `DomainID`) and the specified destination address would receive an amount greater than or equal to the specified `amount` had the transaction been successful.
 - If `checkSourceAddresses` is set to true, sourceAddressesRoot of the transaction matches the specified `sourceAddressesRoot`.
 
 Timestamp is `close_time` converted to UNIX time.
