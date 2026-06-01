@@ -70,6 +70,6 @@ Functions exposed by `FlareTeeManager` for managing extensions:
 
 ### Governance (system extension only)
 
-- `addSystemSupportedPlatforms(platforms)`: Adds TEE hardware platforms.
+- `addSystemSupportedPlatforms(platforms)`: Adds supported `platform` values for machine registration.
 - `addSystemSupportedKeyTypesAndSigningAlgos(keyTypes, signingAlgosByKeyType)`: Registers key types and matching [signing algorithms](../Concepts/Keys.md#signing-algorithms) for the system extension.
 - `registerSystemInstructionsSenders(instructionsSenders)`, `unregisterSystemInstructionsSenders(instructionsSenders)`: Manage the system-instructions-sender whitelist.

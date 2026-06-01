@@ -1,6 +1,6 @@
 # MachineReplication
 
-State machine for replacing the hardware behind a TEE machine while preserving its on-chain identity. A successor machine takes over an existing $\mathrm{TEE}_\mathrm{ID}$'s state — key set, signing policy, wallet bindings — so all references to the original $\mathrm{TEE}_\mathrm{ID}$ continue to work after the swap.
+State machine for replacing the enclave behind a TEE machine while preserving its on-chain identity. A successor machine takes over an existing $\mathrm{TEE}_\mathrm{ID}$'s state — key set, signing policy, wallet bindings — so all references to the original $\mathrm{TEE}_\mathrm{ID}$ continue to work after the swap.
 
 For the underlying status definitions see [Concepts/Machines § Statuses](../Concepts/Machines.md#statuses); for the contract surface, [`FlareTeeManager § Replication`](../Reference/Contracts/FlareTeeManager.md#management-calls).
 
@@ -18,7 +18,7 @@ For the underlying status definitions see [Concepts/Machines § Statuses](../Con
 - `Paused` — $A$ has been paused; the upgrade dwell timer is running.
 - `PausedForUpgrade` — $A$ is in `PAUSED_FOR_UPGRADE` after the dwell, awaiting `replicateFrom`.
 - `Replicating` — $A$ in `PAUSED_FOR_UPGRADE`, $B$ in `REPLICATING`; `replicatingTeeIds[A] = B`; the `REPLICATE_FROM` instruction has been dispatched to both machines.
-- `Confirmed` — `confirmReplicate` accepted; $A$'s slot now holds $B$'s hardware fields, $B$'s slot is deleted, $A$ is back in `PRODUCTION`.
+- `Confirmed` — `confirmReplicate` accepted; $A$'s slot now holds $B$'s enclave fields, $B$'s slot is deleted, $A$ is back in `PRODUCTION`.
 
 ## Initial State
 
@@ -81,7 +81,7 @@ For the underlying status definitions see [Concepts/Machines § Statuses](../Con
   - $A$.owner = $B$.owner; $A$.extensionId = $B$.extensionId.
   - $B$'s `(codeHash, platform)` is supported.
 - **Effects**:
-  - $A$'s slot copies hardware fields from $B$: `initialTeeId = B`, `teeProxyId`, `codeHash`, `platform`, `url`, `initialSigningPolicyId`.
+  - $A$'s slot copies enclave fields from $B$: `initialTeeId = B`, `teeProxyId`, `codeHash`, `platform`, `url`, `initialSigningPolicyId`.
   - $B$'s slot is deleted.
   - `replicatingTeeIds[A]` is cleared.
   - $A$.status = `PRODUCTION`; availability deadline extended from `proof_A`.
@@ -91,16 +91,16 @@ For the underlying status definitions see [Concepts/Machines § Statuses](../Con
 
 - `replicatingTeeIds[A] = B` ⟺ exactly one machine is in `REPLICATING` and points to $A$.
 - A machine in `REPLICATING` has been reached only via `replicateFrom`, never via `register`.
-- The persistent on-chain identity $A$ is preserved across the entire workflow; only its hardware fingerprint (`initialTeeId`, `codeHash`, `platform`, `teeProxyId`, `url`) changes.
+- The persistent on-chain identity $A$ is preserved across the entire workflow; only its enclave fingerprint (`initialTeeId`, `codeHash`, `platform`, `teeProxyId`, `url`) changes.
 - The owner address of $A$ never changes during replication (enforced by both `replicateFrom` and `confirmReplicate`).
 
 ## Terminal State
 
-`Confirmed`. $A$ is in `PRODUCTION` backed by $B$'s hardware; $B$'s slot is gone. From here $A$ resumes its position in [MachineLifecycle](MachineLifecycle.md).
+`Confirmed`. $A$ is in `PRODUCTION` backed by $B$'s enclave; $B$'s slot is gone. From here $A$ resumes its position in [MachineLifecycle](MachineLifecycle.md).
 
 ## Notes
 
 - Key transfer happens off-chain: the TEE machines exchange their key set via the `REPLICATE_FROM` instruction's TEE-side handling, gated by enclave-to-enclave attestation (see [`F_REG`](../Reference/Operations/F_REG.md)).
 - State transferred to the successor enclave: the identity key pair, all wallet keys and backups, and the signing-policy state (the successor inherits `initialSigningPolicyId` / `lastSigningPolicyId` and their hashes, so no separate [`UPDATE_POLICY`](../Reference/Operations/F_POLICY.md#update_policy) is required mid-replication). Machine-local nonces (configuration, pausing) do not transfer; transfer of [extension-defined state](../FCE/Concepts.md) is FCE-specific.
 - A failed `confirmReplicate` (rejected proof, mismatched extension) leaves the `Replicating` state in place; the owner can either re-attempt `replicateFrom` (the retry branch) with a fresh proof, or run `pause` on both machines and unwind.
-- After `Confirmed`, $A$'s `initialTeeId` field records the successor's original identity — useful for tracing the hardware-refresh chain.
+- After `Confirmed`, $A$'s `initialTeeId` field records the successor's original identity — useful for tracing the successor chain.

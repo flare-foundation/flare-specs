@@ -1,6 +1,6 @@
 # Machines
 
-A _TEE machine_ is a container running the [node app](../Reference/Components/Machine.md) (and, for custom extensions, an [extension app](../Reference/Components/Machine.md)) inside a hardware-attested enclave on a cloud TEE platform.
+A _TEE machine_ is a container running the [node app](../Reference/Components/Machine.md) (and, for custom extensions, an [extension app](../Reference/Components/Machine.md)) inside a hardware-attested enclave on a cloud [TEE platform](../../Terminology/Concepts.md#tee-substrate).
 
 ## Identity
 
@@ -21,7 +21,7 @@ For what transfers when a machine's enclave is swapped, see [Replication](#repli
 
 ## Attestation
 
-A TEE machine attests to its [state](#tee-state) when challenged. The proof bundles the challenger's input with the machine's [identity public key](#identity), both the [initial and active signing policies](Policy.md) it knows, a state snapshot, and a timestamp; the TEE platform's attestation service (Google for Intel TDX and AMD SEV) signs over the bundle, anchoring the result to hardware-attested boot state.
+A TEE machine attests to its [state](#tee-state) when challenged. The proof bundles the challenger's input with the machine's [identity public key](#identity), both the [initial and active signing policies](Policy.md) it knows, a state snapshot, and a timestamp; the TEE platform's attestation service signs over the bundle, anchoring the result to hardware-attested boot state.
 
 On-chain verifiers match the proof's [`initialTeeId`](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata) against the machine record, binding the proof to the on-record enclave across any past [replication](#replication).
 

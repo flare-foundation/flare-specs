@@ -34,3 +34,10 @@ A _signing policy_ defines the data providers eligible to participate in a given
 A new policy is generated each reward epoch during [voter registration](../FSP/Voters.md#voter-registration).
 
 Full specification: [Signing Policy](../FSP/SigningPolicy.md).
+
+## TEE Substrate
+
+- _enclave_ — the attested instance that boots, generates the identity key, and runs the code.
+- _hardware_ — the chip (currently Intel TDX or AMD SEV).
+- _TEE machine_ — the on-chain identity.
+- _TEE platform_ — the cloud service deploying the enclave (currently Google Confidential Compute).

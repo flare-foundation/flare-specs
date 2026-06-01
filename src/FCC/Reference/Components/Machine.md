@@ -1,6 +1,6 @@
 # TEE Machine
 
-A _TEE machine_ is a hardware-attested enclave (Intel TDX, AMD SEV, etc.) on a cloud TEE platform, running one or two application processes:
+A _TEE machine_ is a hardware-attested enclave on a cloud [TEE platform](../../../Terminology/Concepts.md#tee-substrate), running one or two application processes:
 
 - The _node app_ — Flare's [`tee-node`](https://gitlab.com/flarenetwork/tee/tee-node) binary, which implements the FCC infrastructure (registration, key custody, signing-policy updates) and the [system FCE](../../FCE/System.md)'s built-in PMW and FDC2 application code.
 - An _extension app_ — present only for [custom FCEs](../../FCE/Concepts.md#system-vs-custom-extensions); the extension's application code runs as a separate process colocated with the node app and communicates with it over a [local HTTP interface](../../FCE/Reference/Api.md).

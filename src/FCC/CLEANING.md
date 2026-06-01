@@ -90,6 +90,8 @@ Canonical definitions in [`Terminology/Concepts.md § TEE Substrate`](../Termino
 
 Known loose usage to reconcile: `Workflows/MachineReplication.md` frames replication as "replacing the **hardware** behind a TEE machine" with "hardware fields", "hardware fingerprint", and "hardware-refresh chain" — these mean the enclave/instance, not raw silicon (a new enclave may land on the same physical host). Decide whether to retitle to "enclave" or keep "hardware fingerprint" as an accepted idiom, and apply the choice uniformly. A few stragglers in other files (`Workflows/README.md:20`, `MachineLifecycle.md:121`, `FlareTeeManager.md:178`, `Machines.md:84` "hardware refresh", `FCE/Concepts.md:73` "TEE hardware platforms") want the same call.
 
+TEE platform: link "TEE platform" on first occurrence in each doc to [`Terminology/Concepts.md § TEE Substrate`](../Terminology/Concepts.md#tee-substrate); the inline `(Google for Intel TDX and AMD SEV)` examples in `Concepts/Machines.md:24` and `Concepts/TrustModel.md:13` should defer to the Terminology entry rather than repeating the platform list.
+
 #### Standardize "instructions sender" terminology
 
 Current docs mix _instruction sender_ (singular), _instructions sender_ (plural), `instructionsSender` (backticks), `_teeExtensionInstructionsSender` (Solidity arg), and _instructions-sender_ (hyphenated).

@@ -10,7 +10,7 @@ Wallet-key operations are protected regardless: [cosigner enforcement](../Refere
 
 ## TEE Platform Trust
 
-FCC trusts the TEE platform operator (Google for Intel TDX and AMD SEV) and its attestation chain to:
+FCC trusts the [TEE platform](../../Terminology/Concepts.md#tee-substrate) operator and its attestation chain to:
 
 - bind the on-chain `codeHash` to the actual code running inside the enclave.
 - enforce enclave isolation so the TEE secret key is never exposed outside an attested enclave.
