@@ -11,11 +11,11 @@ The provable payments emulate traditional banking payments from entity A to enti
 
 ## Request body
 
-| Field           | Solidity type | Description                                                                                                            |
-| --------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `transactionId` | `bytes32`     | ID of the transaction.                                                                                                 |
-| `inUtxo`        | `uint256`     | For UTXO chains, if the value is less than 2**16, this field is the index of the transaction input with the source address. Otherwise, it represents the `standardAddressHash` of the input address for which the payment proof will be constructed. For non-UTXO chains, this is always 0.    |
-| `utxo`          | `uint256`     |  For UTXO chains, if the value is less than 2**16, this field is the index of the transaction output with the receiving address. Otherwise, it represents the `standardAddressHash` of the output address for which the payment proof will be constructed. For non-UTXO chains, this is always 0. |
+| Field           | Solidity type | Description                                                                                                                                                                                                                                                                                        |
+| --------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transactionId` | `bytes32`     | ID of the transaction.                                                                                                                                                                                                                                                                             |
+| `inUtxo`        | `uint256`     | For UTXO chains, if the value is less than 2\*\*16, this field is the index of the transaction input with the source address. Otherwise, it represents the `standardAddressHash` of the input address for which the payment proof will be constructed. For non-UTXO chains, this is always 0.      |
+| `utxo`          | `uint256`     | For UTXO chains, if the value is less than 2\*\*16, this field is the index of the transaction output with the receiving address. Otherwise, it represents the `standardAddressHash` of the output address for which the payment proof will be constructed. For non-UTXO chains, this is always 0. |
 
 ## Response body
 
@@ -31,9 +31,9 @@ The provable payments emulate traditional banking payments from entity A to enti
 | `intendedSpentAmount`          | `int256`      | Amount in minimal units to be spent by the source address. Relevant if the transaction status is unsuccessful.                                                                                  |
 | `receivedAmount`               | `int256`      | Amount in minimal units received by the receiving address.                                                                                                                                      |
 | `intendedReceivedAmount`       | `int256`      | Amount in minimal units intended to be received by the receiving address. Relevant if the transaction is unsuccessful.                                                                          |
-| `standardPaymentReference`     | `bytes32`     | [Standard payment reference](/specs/attestations/external-chains/standardPaymentReference.md) of the transaction. If the transaction has no reference, zero value is returned.                  |
+| `standardPaymentReference`     | `bytes32`     | [Standard payment reference](./Reference.md#standard-payment-reference) of the transaction. If the transaction has no reference, zero value is returned.                  |
 | `oneToOne`                     | `bool`        | Indicator whether only one source and one receiver are involved in the transaction.                                                                                                             |
-| `status`                       | `uint8`       | [Success status](/specs/attestations/external-chains/transactions.md#transaction-success-status) of the transaction: 0 - success, 1 - failed by sender's fault, 2 - failed by receiver's fault. |
+| `status`                       | `uint8`       | Success status of the transaction: 0 - success, 1 - failed by sender's fault, 2 - failed by receiver's fault. |
 
 ## Lowest Used Timestamp
 
@@ -45,15 +45,15 @@ The transaction with `transactionId` is fetched from the relevant source.
 If the transaction cannot be fetched or the transaction is in a block that does not have a sufficient number of confirmations, the attestation request is rejected.
 Relevant fields are extracted from the transaction.
 
-**IMPORTANT** As the field `standardPaymentReference` is set to zero value if the transaction has no standard payment reference, zero value should not be used as a valid by the smart contracts.
+**IMPORTANT**: As the field `standardPaymentReference` is set to zero value if the transaction has no standard payment reference, the zero value should not be treated as a valid reference by the smart contracts.
 
 ### Bitcoin and Dogecoin
 
-For Bitcoin a sufficient number of confirmations is at least 6, for Dogecoin it is 60.
+For Bitcoin, a sufficient number of confirmations is at least 6; for Dogecoin, it is 60.
 
 `BlockTimestamp` is the mediantime of the block in which the transaction is included.
 
-If the inducted input or output does not exist, the request is rejected.
+If the indicated input or output does not exist, the request is rejected.
 Both the indicated input and output must have an address (they must have a standard locking script), called source and receiving address respectively, otherwise the request is rejected.
 In particular, requests for coinbase transactions are rejected.
 If a transaction has additional outputs with the receiving address, the request is rejected.
@@ -87,35 +87,38 @@ For example, let’s use addresses `A` (source) and `B` (receiver). The followin
 
 ### XRPL
 
-Only transactions of type [`Payment`](https://xrpl.org/docs/references/protocol/transactions/types/payment) are considered.
+Only transactions of type [`Payment`](https://xrpl.org/docs/references/protocol/transactions/types/payment) that are [`Direct XRP payments`](https://xrpl.org/docs/concepts/payment-types/direct-xrp-payments) (sending and receiving XRP) are provable by this attestation type.
 If a transaction is of a different type, the request is rejected.
 
-`BlockTimestamp` is close time of the ledger converted to UNIX time.
+`BlockTimestamp` is the close time of the ledger converted to UNIX time.
 
-On XRPL, some transactions that failed (based on the reason for failure) can be included in a confirmed block.
+On XRPL, some failed transactions can be included in a confirmed block, depending on the reason for the failure.
 The [success of the transaction](https://xrpl.org/look-up-transaction-results.html#case-included-in-a-validated-ledger) included in a confirmed block is described by the `TransactionResult` field.
-A successful transaction is labeled by `tesSUCCESS`.
+A successful transaction is labeled by `tesSUCCESS` and has `status` 0.
 If a transaction fails but is included in a block, the [`tec`-class](https://xrpl.org/tec-codes.html) code is used to indicate the reason for the failure.
-The following codes indicate a failure that was the receiver's fault:
+The following codes indicate a failure that was the receiver's fault (`status` 2):
 
-- `tecDST_TAG_NEEDED`: A destination tag is required by the target address, but is not provided. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions that require a destination tag.
+- `tecDST_TAG_NEEDED`: A destination tag is required by the target address, but is not provided. **IMPORTANT**: tagging this as the receiver's fault means that the payment attestation type does not (fully) support transactions that require a destination tag.
 - `tecNO_DST`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded.
 - `tecNO_DST_INSUF_XRP`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded.
-- `tecNO_PERMISSION`: The source address does not have permission to transfer the target address. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions to the accounts that require "DepositAuth".
 
-The rest of the tags indicate the sender's fault.
+The `tecNO_PERMISSION` is considered the receiver's fault only if the transaction has no DomainID.
+**IMPORTANT**: tagging this as the receiver's fault means that the payment attestation type does not (fully) support transactions to accounts that require "DepositAuth".
+If a transaction failed with `tecNO_PERMISSION` and has a DomainID, it is considered the sender's fault.
+
+The rest of the tags indicate the sender's fault (`status` 1).
 
 In transactions of type Payment, there is exactly one sender and at most one receiver.
 If a transaction is not successful, there is no receiver.
 If it is successful, there is exactly one receiver.
 Thus the transaction is always `oneToOne`.
 
-`SpentAmount` is the value for which the balance of the `sourceAddress` has been lowered.
+`SpentAmount` is the value by which the balance of the `sourceAddress` has been lowered.
 `IntendedSpentAmount` is `Amount + Fee` of the transaction.
 It is the same as `spentAmount` if the `transactionStatus` is `SUCCESS`.
 
 `ReceivingAddress` is the address whose balance has been increased by the transaction.
-`ReceivedAmount` is the value for which the balance of the `receivingAddress` has been increased.
+`ReceivedAmount` is the value by which the balance of the `receivingAddress` has been increased.
 `IntendedReceivingAddress` is the Destination of the transaction.
 `IntendedReceivedAmount` is `Amount` of the transaction.
 
