@@ -53,6 +53,10 @@ Shared cryptographic and mathematical utilities used across protocols:
 - [Merkle Tree](src/Utilities/MerkleTree.md)
 - [Signing](src/Utilities/Signing.md)
 
+## Security
+
+- [FSP Attack Surface](src/Security/FspThreatModel.md) — trust boundaries, deployment topology, and per-service attack surface for security reviews
+
 ## Status
 
 This repository is actively maintained and updated.
