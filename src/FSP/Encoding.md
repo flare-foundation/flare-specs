@@ -55,10 +55,15 @@ This signature type is currently used for FTSO and FDC protocols.
 
 | **Field**   | **Size (bytes)** | **Description**                                    |
 | ----------- | ---------------- | -------------------------------------------------- |
-| `v`         | 1                | Adjusted by subtracting `27`.                      |
+| `v`         | 1                | ECDSA recovery identifier in canonical Ethereum form (`27` or `28`), as accepted by `ecrecover`. |
 | `r`         | 32               | ECDSA `r` value.                                   |
 | `s`         | 32               | ECDSA `s` value.                                   |
 | SignerIndex | 2                | Index of the signer address in the signing policy. |
+
+> Note: `v` is the canonical recovery id (`27`/`28`), not the `0`/`1` form
+> some signing libraries return internally. The `flare-system-client`
+> producer adds `27` before encoding, and the on-chain `Relay` contract
+> passes the byte to `ecrecover` unmodified, which only accepts `27`/`28`.
 
 ## SigningPolicy
 
