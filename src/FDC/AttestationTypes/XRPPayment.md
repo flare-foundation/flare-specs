@@ -20,10 +20,9 @@ The provable payments emulate traditional banking payments from entity A to enti
 | Field                          | Solidity type | Description                                                                                                                                                                                     |
 | ------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `blockNumber`                  | `uint64`      | Number of the block in which the transaction is included.                                                                                                                                       |
-| `blockTimestamp`               | `uint64`      | The timestamp of the block in which the transaction is included.                                                                                                                               |
+| `blockTimestamp`               | `uint64`      | The timestamp (`close_time` converted to UNIX time) of the block in which the transaction is included.                                                                                                                               |
 | `sourceAddress`            | `string`     | The source address.                                                                                                                                 |
 | `sourceAddressHash`            | `bytes32`     | Standard address hash of the source address.                                                                                                                                                    |
-| `sourceAddressesRoot`          | `bytes32`     | The root of the Merkle tree of the source addresses.                                                                                                                                            |
 | `receivingAddressHash`         | `bytes32`     | Standard address hash of the receiving address. The zero 32-byte string if there is no receivingAddress (if `status` is not success).                                                           |
 | `intendedReceivingAddressHash` | `bytes32`     | Standard address hash of the intended receiving address. Relevant if the transaction is unsuccessful.                                                                                           |
 | `spentAmount`                  | `int256`      | Amount in minimal units spent by the source address.                                                                                                                                            |
@@ -50,8 +49,6 @@ Relevant fields are extracted from the transaction.
 Only transactions of type [`Payment`](https://xrpl.org/docs/references/protocol/transactions/types/payment) that send and receive XRP are considered.
 If a transaction is of a different type, or does not send XRP, the request is rejected.
 
-`BlockTimestamp` is close time of the ledger converted to UNIX time.
-
 On XRPL, some transactions that failed (based on the reason for failure) can be included in a confirmed block.
 The [success of the transaction](https://xrpl.org/look-up-transaction-results.html#case-included-in-a-validated-ledger) included in a confirmed block is described by the `TransactionResult` field.
 A successful transaction is labeled by `tesSUCCESS`.
@@ -61,12 +58,9 @@ The following codes indicate a failure that was the receiver's fault:
 - `tecDST_TAG_NEEDED`: A destination tag is required by the target address, but is not provided. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions that require a destination tag.
 - `tecNO_DST`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded and the transaction has no field DomainID.
 - `tecNO_DST_INSUF_XRP`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded.
-- `tecNO_PERMISSION`: The source address does not have permission to transfer the target address. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions to the accounts that require "DepositAuth".
+- `tecNO_PERMISSION`: This failure is considered to be the receiver's fault only if the transaction has no domainID. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions to the accounts that require "DepositAuth".
 
 The rest of the tags indicate the sender's fault.
-
-In transactions of type Payment, there is exactly one sender and at most one receiver.
-If a transaction is not successful, there is no receiver.
 
 `SpentAmount` is the value for which the balance of the `sourceAddress` has been lowered.
 `IntendedSpentAmount` is `Amount + Fee` of the transaction.
