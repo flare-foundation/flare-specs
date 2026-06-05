@@ -3,12 +3,12 @@
 Rewards for provider participation in the FDC are gathered from two sources: firstly, fees gathered from attestation requests are distributed among contributing providers.
 Secondly, a proportion of Flare's inflationary funds are allocated to the rewarding of the FDC.
 Rewards are distributed for participation in voting and in finalization.
-For the $j$th round of the the FDC, let $R_\mathrm{fee}(j)$ denote the total collected fees, and $R_\mathrm{IFDC}(j)$ denote the inflation assigned to the FDC.
+For the $j$th round of the FDC, let $R_\mathrm{fee}(j)$ denote the total collected fees, and $R_\mathrm{IFDC}(j)$ denote the inflation assigned to the FDC.
 Then, the total reward $R_\mathrm{FDC}(j)$ available for the FDC in the round, referred to as the _value_ of the round, is the sum
 
 $$R_\mathrm{FDC}(j) = R_\mathrm{IFDC}(j) + R_{\mathrm{fee}}(j).$$
 
-The value of the round is then split in to two sources of rewards: rewards for participating in the voting and attestation process, and rewards for finalization.
+The value of the round is then split into two sources of rewards: rewards for participating in the voting and attestation process, and rewards for finalization.
 These rewards are parameterized by $R_\mathrm{att}(j)$ and $R_\mathrm{fin}(j)$, which satisfy
 
 $$R_\mathrm{FDC}(j) = R_\mathrm{att}(j) + R_{\mathrm{fin}}(j)$$
@@ -42,7 +42,7 @@ $$R_\mathrm{IFDC}(r) = \sum_{a \in A_G(r)} R_a(r) \cdot R_{\text{max}}(r).$$
 
 ## Attestation Rewards
 
-Assuming correct participation in the attestation and voting processes of the FDC, data providers are eligible to an amount of rewards proportional to their weight.
+Assuming correct participation in the attestation and voting processes of the FDC, data providers are eligible for an amount of rewards proportional to their weight.
 In cases of only partially successful participation, some of their rewards will be withheld; for provider $i$ in round $j$ this information is stored as a success coefficient $S(i,j) \in [0,1]$.
 Thus, a provider $i$ with a fraction of total weight $W_{i, \mathrm{sign}}$ with success coefficients $S(i,j)$ in round $j$ is eligible for
 
@@ -67,7 +67,7 @@ A partially successful provider still receives rewards if it only provided a sig
 - Signed the (later) finalized Merkle root with signingPolicyAddress and provided its signature in the grace period.
 
 In such case, the success coefficient is $S(i,j) = 0.8$.
-If the provider was unsuccessful in either of the above criteria, it receives no rewards e.g. $S(i,j) = 0$.
+If the provider was unsuccessful in either of the above criteria, it receives no rewards i.e. $S(i,j) = 0$.
 In cases where $S(i,j) < 1$, remaining rewards that would be allocated to the provider are burnt.
 
 ## Finalization Rewards
@@ -83,7 +83,7 @@ Note that each provider's reward is fixed regardless of the number of providers 
 
 ## Penalization
 
-As well as rewarded for contributing to the FDC, data providers are punished for inappropriate behaviour, regardless of whether or not the misbehaviour was malicious or an honest mistake.
+As well as being rewarded for contributing to the FDC, data providers are punished for inappropriate behaviour, regardless of whether the misbehaviour was malicious or an honest mistake.
 Providers receive a penalization if they completed any of the following actions:
 
 - Provided a signature of a Merkle root that was different from the finalized one, including providing signatures of multiple Merkle roots.

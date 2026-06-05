@@ -1,7 +1,7 @@
 # Voting protocol
 
 The FDC protocol operates in a sequence of _voting rounds_, sometimes referred to as attestation rounds.
-In each voting round, many attestation requests are collected and put up for vote in a single voting round.
+In each voting round, many attestation requests are collected and put up for vote in a single batch.
 Flare's data providers then vote on a package of attestation requests to confirm from among the requests that arrived in that round.
 Using a Merkle tree, hashes of all verified attestation responses can be assembled into a single hash (Merkle root) that is used for finalization.
 

@@ -1,6 +1,6 @@
 # Attestation Requests
 
-The FDC is a request-based protocol, bringing external data on to Flare in response to valid requests made by users.
+The FDC is a request-based protocol, bringing external data onto Flare in response to valid requests made by users.
 This section summarizes how to format and submit a request to the FDC.
 
 ## Request Format
@@ -10,14 +10,14 @@ Attestations must conform to one of the pre-defined types, known as _attestation
 Formally, an attestation request is a byte sequence encoding of the following structure:
 
 1. **attestationType**: ($32$ bytes) attestation type identifier (ATI).
-  States which attestation type the request is of.
+   States which attestation type the request is of.
 2. **sourceId**: ($32$ bytes) data source identifier (DSI).
-  Unambiguously identifies the origin data source.
-  For example, if the data is the existence of a specific BTC transaction, the DSI will specify the Bitcoin blockchain.
+   Unambiguously identifies the origin data source.
+   For example, if the data is the existence of a specific BTC transaction, the DSI will specify the Bitcoin blockchain.
 3. **messageIntegrityCode**: ($32$ bytes) message integrity code (MIC).
-  A hash of the expected response salted with the default string "Flare".
+   A hash of the expected response salted with the default string "Flare".
 4. **requestBody** - Solidity struct containing the data of the request body.
-  The definition of the struct depends on the attestation type.
+   The definition of the struct depends on the attestation type.
 
 Additionally, each attestation request must be submitted with a fee.
 This fee will be awarded to providers if the request is confirmed; if not, it is burnt.
@@ -66,11 +66,12 @@ that accepts encoded requests from users.
 It requires that the value sent with the request is greater than or equal to the required minimal fee for the attestation type and source of the request.
 If the minimal fee is not configured for the attestation type and source of the request, the request is rejected.
 
-If a request is successfully made the following event is emitted:
+If a request is successfully made, the following event is emitted:
 
 ```Solidity
 event AttestationRequest(bytes data, uint256 fee);
 ```
+
 ## Attestation Response
 
 The format of a response to an attestation request varies by attestation type.
@@ -90,8 +91,8 @@ struct Response {
 1. **attestationType**: (32 bytes) attestation type identifier (ATI).
 2. **sourceId**: (32 bytes) source identifier (DSI).
 3. **votingRound**: (8 bytes) voting round in which the attestation was confirmed.
-4. **lowestUsedTimestamp**: (8 bytes) the timestamp in Unix epoch format which indicates what was the timestamp of the earliest data that was needed to confirm the response.
-  This is explained in further detail below.
+4. **lowestUsedTimestamp**: (8 bytes) the timestamp in Unix epoch format which indicates the timestamp of the earliest data that was needed to confirm the response.
+   This is explained in further detail below.
 5. **requestBody**: copied from the request.
 6. **responseBody**: Solidity struct containing the data of the response body.
 
@@ -142,7 +143,7 @@ where Response is the Solidity struct defined by the attestation type.
 
 ## Attestation Hash
 
-For each confirmed attestation request, the hash of its full response, including correctly set voting round, is computed.
+For each confirmed attestation request, the hash of its full response, including the correctly set voting round, is computed.
 This hash is computed in Solidity by the following code:
 
 ```solidity
@@ -150,4 +151,4 @@ keccak256(abi.encode(response));
 ```
 
 where the response is a struct of type Response that is defined by the attestation type.
-The hashes of the confirmed attestation are used to construct the [Merkle tree](../Utilities/MerkleTree.md) and the Merkle root is used for voting in the voting round.
+The hashes of the confirmed attestations are used to construct the [Merkle tree](../Utilities/MerkleTree.md) and the Merkle root is used for voting in the voting round.

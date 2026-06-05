@@ -10,7 +10,7 @@ A relay of a transaction from an EVM chain.
 
 | Field                   | Solidity type | Description                                                                                                                                                                                                                                                                                                                  |
 | ----------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `transactionHash`       | `bytes32`     | Hash of the transaction(transactionHash).                                                                                                                                                                                                                                                                                    |
+| `transactionHash`       | `bytes32`     | Hash of the transaction (transactionHash).                                                                                                                                                                                                                                                                                   |
 | `requiredConfirmations` | `uint16`      | The depth at which a block is considered confirmed by the requestor.                                                                                                                                                                                                                                                         |
 | `provideInput`          | `bool`        | If true, "input" field is included in the response.                                                                                                                                                                                                                                                                          |
 | `listEvents`            | `bool`        | If true, events indicated by `logIndices` are included in the response. Otherwise, no events are included in the response.                                                                                                                                                                                                   |
@@ -27,20 +27,20 @@ with respect to the set specifications.
 | `blockNumber`      | `uint64`      | Number of the block in which the transaction is included.                                                                                         |
 | `timestamp`        | `uint64`      | Timestamp of the block in which the transaction is included.                                                                                      |
 | `sourceAddress`    | `address`     | The address (from) that signed the transaction.                                                                                                   |
-| `isDeployment`     | `bool`        | Indicate whether it is a contract creation transaction.                                                                                           |
+| `isDeployment`     | `bool`        | Indicates whether it is a contract creation transaction.                                                                                          |
 | `receivingAddress` | `address`     | The address (to) of the receiver of the initial transaction. Zero address if `isDeployment` is `true`.                                            |
 | `value`            | `uint256`     | The value transferred by the initial transaction in wei.                                                                                          |
-| `input`            | `bytes`       | If `provideInput`, this is the data send along with the initial transaction. Otherwise it is the default value `0x00`.                            |
-| `status`           | `uint8`       | Status of the transaction 1 - success, 0 - failure.                                                                                               |
+| `input`            | `bytes`       | If `provideInput`, this is the data sent along with the initial transaction. Otherwise it is the default value `0x00`.                            |
+| `status`           | `uint8`       | Status of the transaction: 1 - success, 0 - failure.                                                                                              |
 | `events`           | `Event[]`     | If `listEvents` is `true`, an array of the requested events. Sorted by the logIndex in the same order as `logIndices`. Otherwise, an empty array. |
 
-The fields are in line with [transaction](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactionbyhash) provided by EVM node.
+The fields are in line with [transaction](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactionbyhash) provided by an EVM node.
 
 An `Event` is a struct with the following fields:
 
 | Field            | Solidity type | Description                                                                                         |
 | ---------------- | ------------- | --------------------------------------------------------------------------------------------------- |
-| `logIndex`       | `uint32`      | The consecutive number of the event in block.                                                       |
+| `logIndex`       | `uint32`      | The consecutive number of the event in the block.                                                   |
 | `emitterAddress` | `address`     | The address of the contract that emitted the event.                                                 |
 | `topics`         | `bytes32[]`   | An array of up to four 32-byte strings of indexed log arguments.                                    |
 | `data`           | `bytes`       | Concatenated 32-byte strings of non-indexed log arguments. At least 32 bytes long.                  |
@@ -54,15 +54,14 @@ For `lowestUsedTimestamp`, `timestamp` is used.
 
 ## Verification
 
-If a transaction with the `transactionId` is in a block on the main branch with at least `requiredConfirmations`, the specified data is relayed.
-The block at the tip is has $1$ confirmation.
+If a transaction with the `transactionHash` is in a block on the main branch with at least `requiredConfirmations`, the specified data is relayed.
+The block at the tip has $1$ confirmation.
 If any indicated event does not exist, the request is rejected.
-
 
 `LowestUsedTimestamp` is limited depending on usual node configurations on different chains.
 
-| Source | `LowestUsedTimestamp` limit |
-| ---------------- | ------------- | 
-| ETH | 26400000 (2_200_000 blocks * 12 sec (usually nodes keep 2_300_000 blocks)) |
-| SGB | unlimited |
-| FLR | unlimited |
+| Source | `LowestUsedTimestamp` limit                                                 |
+| ------ | --------------------------------------------------------------------------- |
+| ETH    | 26400000 (2_200_000 blocks \* 12 sec (usually nodes keep 2_300_000 blocks)) |
+| SGB    | unlimited                                                                   |
+| FLR    | unlimited                                                                   |

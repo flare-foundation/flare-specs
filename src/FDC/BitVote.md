@@ -36,7 +36,7 @@ The consensus bit-vector then determines the set of requests that are contained 
 
 ## Bit Vote Algorithm
 
-The goal of Bit Vote algorithm is to to find a set $R$ of request that fulfills the following: Let
+The goal of the Bit Vote algorithm is to find a set $R$ of requests that fulfills the following: Let
 
 $T$ be the total weight of the data providers,
 $S_R$ be the weight of the providers supporting all the requests in set $R$,
@@ -49,7 +49,7 @@ V_R = \min{\{0.8 \times T, S_R\}} \times F_R
 $$
 
 we want to find the set with the highest $V_R$.
-The search space can be very large thus we use Branch and Bound technique.
+The search space can be very large, so we use Branch and Bound technique.
 
 ### Inputs and Outputs
 
@@ -196,18 +196,15 @@ The bit voting algorithm proceeds as follows:
 
 3.  The first method is run in parallel with $2$ orderings and no initial CurrentBound.
     The strategies for branch and bound on votes are:
-
     - (a) Order votes in order of descending value ($\mathrm{weight}  * \mathrm{supportedFees}$) and at depth $k$ first explore child1 - branches where $k$th vote is included.
     - (b) Order votes in order of ascending value and at depth $k$ first explore child0 - branches where $k$th vote is not included.
 
     For branch and bound on bits, the strategies are:
-
     - (a) Order bits in order of descending value ($\mathrm{cappedSupport} * \mathrm{fee}$), with ties broken in order of uncapped support, and at depth $k$ first explore child1 - branches where $k$th bit is included.
     - (b) Order bits in order of ascending value and at depth k first explore child0 - branches where $k$th bit is not included.
 
     Run the first branch and bound, and if the whole space is searched before the maximal number of steps is reached, return the solution, which is the optimal consensus bit-vector according to value.
     If the whole space is not searched, the following procedure is added:
-
     - For branch and bound on votes, if an unincluded vote supports all included bits, the vote is added and the value is updated.
     - For branch and bound on bits, if an unincluded bit is supported by all the included votes, the bit is added and the value is updated.
 
@@ -219,4 +216,3 @@ The bit voting algorithm proceeds as follows:
     In the case of a tie, the solution from the first method is returned.
 
 5.  Return the candidate consensus bit-vector with the highest value according to steps 3 and 4.
-    $$

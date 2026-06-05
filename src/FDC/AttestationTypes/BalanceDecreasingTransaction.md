@@ -50,9 +50,9 @@ Once the transaction is received, the response fields are extracted if the trans
 
 - `sourceAddressIndicator` is the [standard address hash](./Reference.md#standard-address-hash) of the address whose balance has been decreased.
   If the address indicated by `sourceAddressIndicator` is not the account that initiated the transaction and the balance of the address was not lowered in the transaction, the attestation request is rejected.
-- `spentAmount` is the difference between the balance of the indicated address after and before the transaction.
+- `spentAmount` is the difference between the balance of the indicated address before and after the transaction.
   Can be negative.
 - `blockTimestamp` is the close_time of a ledger converted to unix time.
 - `standardPaymentReference` is zero-valued for transactions of type other than `Payment`.
 
-`LowestUsedTimestamp` limit for Bitcoin and Dogecoin is $1209600$ (2 weeks).
+`LowestUsedTimestamp` limit for XRPL is $1209600$ (2 weeks).

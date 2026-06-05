@@ -109,7 +109,7 @@ The address is validated as follows:
 1. The address contains only characters from the dictionary.
 2. The address is 26-34 characters long. The address in hex is 25 bytes long.
 3. The address starts with a valid leading byte.
-   As a consequence, the fist letter of the address on mainnet can only be `D`, `A`, or `9` (`n`, `m`, or `2` on testnet).
+   As a consequence, the first letter of the address on mainnet can only be `D`, `A`, or `9` (`n`, `m`, or `2` on testnet).
 4. The address satisfies the checksum.
 
 ### XRP
