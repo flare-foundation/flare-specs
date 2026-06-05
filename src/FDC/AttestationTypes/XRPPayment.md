@@ -58,7 +58,7 @@ The following codes indicate a failure that was the receiver's fault:
 - `tecDST_TAG_NEEDED`: A destination tag is required by the target address, but is not provided. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions that require a destination tag.
 - `tecNO_DST`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded and the transaction has no field DomainID.
 - `tecNO_DST_INSUF_XRP`: This failure is considered to be the receiver's fault if the specified address does not exist or is unfunded.
-- `tecNO_PERMISSION`: This failure is considered to be the receiver's fault only if the transaction has no domainID. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions to the accounts that require "DepositAuth".
+- `tecNO_PERMISSION`: This failure is considered to be the receiver's fault only if the transaction has no domainID. **IMPORTANT**: tagging this as the receiver's fault means that payment attestation type does not (fully) support transactions to the accounts that require "DepositAuth". If a transaction failed with tecNO_PERMISSION and has a DomainID, it is considered the sender's fault.
 
 The rest of the tags indicate the sender's fault.
 
