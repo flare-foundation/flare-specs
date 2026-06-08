@@ -19,21 +19,21 @@ The provable payments emulate traditional banking payments from entity A to enti
 
 ## Response body
 
-| Field                          | Solidity type | Description                                                                                                                                                                                     |
-| ------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `blockNumber`                  | `uint64`      | Number of the block in which the transaction is included.                                                                                                                                       |
-| `blockTimestamp`               | `uint64`      | The timestamp of the block in which the transaction is included.                                                                                                                                |
-| `sourceAddressHash`            | `bytes32`     | Standard address hash of the source address.                                                                                                                                                    |
-| `sourceAddressesRoot`          | `bytes32`     | The root of the Merkle tree of the source addresses.                                                                                                                                            |
-| `receivingAddressHash`         | `bytes32`     | Standard address hash of the receiving address. The zero 32-byte string if there is no receivingAddress (if `status` is not success).                                                           |
-| `intendedReceivingAddressHash` | `bytes32`     | Standard address hash of the intended receiving address. Relevant if the transaction is unsuccessful.                                                                                           |
-| `spentAmount`                  | `int256`      | Amount in minimal units spent by the source address.                                                                                                                                            |
-| `intendedSpentAmount`          | `int256`      | Amount in minimal units to be spent by the source address. Relevant if the transaction status is unsuccessful.                                                                                  |
-| `receivedAmount`               | `int256`      | Amount in minimal units received by the receiving address.                                                                                                                                      |
-| `intendedReceivedAmount`       | `int256`      | Amount in minimal units intended to be received by the receiving address. Relevant if the transaction is unsuccessful.                                                                          |
-| `standardPaymentReference`     | `bytes32`     | [Standard payment reference](./Reference.md#standard-payment-reference) of the transaction. If the transaction has no reference, zero value is returned.                  |
-| `oneToOne`                     | `bool`        | Indicator whether only one source and one receiver are involved in the transaction.                                                                                                             |
-| `status`                       | `uint8`       | Success status of the transaction: 0 - success, 1 - failed by sender's fault, 2 - failed by receiver's fault. |
+| Field                          | Solidity type | Description                                                                                                                                              |
+| ------------------------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockNumber`                  | `uint64`      | Number of the block in which the transaction is included.                                                                                                |
+| `blockTimestamp`               | `uint64`      | The timestamp of the block in which the transaction is included.                                                                                         |
+| `sourceAddressHash`            | `bytes32`     | Standard address hash of the source address.                                                                                                             |
+| `sourceAddressesRoot`          | `bytes32`     | The root of the Merkle tree of the source addresses.                                                                                                     |
+| `receivingAddressHash`         | `bytes32`     | Standard address hash of the receiving address. The zero 32-byte string if there is no receivingAddress (if `status` is not success).                    |
+| `intendedReceivingAddressHash` | `bytes32`     | Standard address hash of the intended receiving address. Relevant if the transaction is unsuccessful.                                                    |
+| `spentAmount`                  | `int256`      | Amount in minimal units spent by the source address.                                                                                                     |
+| `intendedSpentAmount`          | `int256`      | Amount in minimal units to be spent by the source address. Relevant if the transaction status is unsuccessful.                                           |
+| `receivedAmount`               | `int256`      | Amount in minimal units received by the receiving address.                                                                                               |
+| `intendedReceivedAmount`       | `int256`      | Amount in minimal units intended to be received by the receiving address. Relevant if the transaction is unsuccessful.                                   |
+| `standardPaymentReference`     | `bytes32`     | [Standard payment reference](./Reference.md#standard-payment-reference) of the transaction. If the transaction has no reference, zero value is returned. |
+| `oneToOne`                     | `bool`        | Indicator whether only one source and one receiver are involved in the transaction.                                                                      |
+| `status`                       | `uint8`       | Success status of the transaction: 0 - success, 1 - failed by sender's fault, 2 - failed by receiver's fault.                                            |
 
 ## Lowest Used Timestamp
 
@@ -106,7 +106,7 @@ The `tecNO_PERMISSION` is considered the receiver's fault only if the transactio
 **IMPORTANT**: tagging this as the receiver's fault means that the payment attestation type does not (fully) support transactions to accounts that require "DepositAuth".
 If a transaction failed with `tecNO_PERMISSION` and has a DomainID, it is considered the sender's fault.
 
-The rest of the tags indicate the sender's fault (`status` 1).
+The rest of the codes indicate the sender's fault (`status` 1).
 
 In transactions of type Payment, there is exactly one sender and at most one receiver.
 If a transaction is not successful, there is no receiver.
