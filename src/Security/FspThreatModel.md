@@ -89,7 +89,6 @@ How the stack is deployed narrows the real surface a lot.
 flowchart LR
     subgraph pub["Public / attacker-reachable"]
         CHAIN[("C-chain<br/>Submission · FdcHub · Relay · FastUpdater")]:::att
-        DA["DA instances<br/>(fdc-client, ftso-scaling)<br/>dedicated, isolated, public"]:::semi
     end
 
     subgraph host["Voter host — one Docker Compose, private network, NO published ports"]
@@ -104,7 +103,6 @@ flowchart LR
 
     CHAIN --> IDX
     CHAIN -->|RPC, bypasses the DB| FU
-    CHAIN -. same chain events .-> DA
 
     classDef att fill:#ffd9d9,stroke:#cc0000,color:#000;
     classDef semi fill:#fff2cc,stroke:#cc9900,color:#000;
@@ -117,8 +115,6 @@ All of a voter's FSP services run on one host, in a single Docker Compose projec
 - **The only externally reachable entry points are on-chain** — the contracts (`Submission`, `FdcHub`, `Relay`, `FastUpdater`) and the chain data the indexer and `fast-updates` read from them. Everything else is behind the host boundary.
 - **Internal API keys are not a defence against the external attacker.** Those routes aren't publicly bound, and the verifier's only caller (fdc-client) is trusted; a key matters only against a service already inside the host (post-compromise). "Needs a valid API key" is not a mitigation here, and "an internal route has no rate limit" is not an external threat.
 - **An off-chain weakness is exploitable only if it can be driven through an on-chain entry point.** Either it's on-chain-reachable — the attacker shapes data on-chain and a trusted component carries it inward (`submit*` calldata → indexer → clients; `requestAttestation` → fdc-client → the verifier request it forwards; chain volume → indexer DB) — or it's internal-only, needing a direct call to an internal route like the `/fsp/*` provider API that only the co-located system-client uses (post-compromise / defence-in-depth).
-
-The DA (data-availability) layer is the apparent exception: both fdc-client and ftso-scaling run a dedicated, public DA instance serving round-derived data and Merkle proofs to downstream consumers (attestation responses for FDC; median results and feeds-with-proof for FTSO). Each runs separately from the provider-critical instance, with its own round state rebuilt from chain events, so overloading one costs only that read service's availability — no effect on provider operation or finalization. The DA instances are distinct, lower-criticality targets.
 
 ### 2.2 On-chain inputs: actionable, gated, and protocol-emitted
 
@@ -133,7 +129,8 @@ Every untrusted input arrives as an on-chain transaction or event — captured b
 | `submit3` | Submission | **anyone** | caller | Another submit marker, with the same persist-even-if-unregistered property. |
 | `submitSignatures` | Submission | **anyone** | caller | The substrate for the listener-stall concern; gated by `ecrecover` to a registered voter. Sender = submitSignatures address. |
 | `requestAttestation` → `AttestationRequest` | FdcHub | **anyone (fee-gated)** | requester | The requester fully controls the request body — type, source, block window, confirmations, destination, Web2 headers. The event is contract-emitted, but its content is attacker-shaped, which makes it the FDC fan-out injection vector. |
-| reward / incentive offers (`offerRewards`, FastUpdate incentives) | FtsoRewardOffersManager, FastUpdateIncentiveManager | anyone (payable) | offerer | Paid levers over reward amounts and fast-update cadence; they feed the out-of-scope reward side, not a soundness or availability surface. |
+| `offerRewards` → `RewardsOffered` | FtsoRewardOffersManager | anyone (payable, ≥ min per offer) | offerer | Community FTSO reward offers for the *next* epoch; the attacker picks each `feedId` and amount. The event content is attacker-shaped and **defines the round's canonical feed set/order**, so it's an availability lever — not just a reward-side input ([§5.5](#55-ftso-scaling)). |
+| FastUpdate incentives | FastUpdateIncentiveManager | anyone (payable) | offerer | Pays to raise the fast-update rate — cadence plus the out-of-scope reward side ([§5.8](#58-fast-updates)). |
 
 **(B) Gated entry points.** Callable by anyone, but a successful call needs a credential — without it the call reverts, and a valid call is just honest protocol behaviour. Not anonymous vectors; only each one's residual angle matters.
 
@@ -163,17 +160,13 @@ Category (A) is the anonymous injection surface and the focus below. (B) is call
 
 ---
 
-## 3. Assets and security goals
+## 3. Security goals
 
-| Asset | Security goal |
-|---|---|
-| **Availability of finalization** | No anonymous input can stall a voter's signing or finalization path long enough to miss the round's deadlines — concretely, the `submitSignatures` listener should never stall for more than a few seconds within the ~90 s round. |
-| **Soundness of attestations** | A verifier response faithfully reflects chain reality; no attacker-shaped request yields a proof that misrepresents it. |
-| **Soundness of the FTSO median** | No anonymous on-chain input changes a finalized median; only registered-voter reveals count. |
-| **Integrity of signatures / finalization messages** | A finalization is only ever accepted as a valid threshold-signed message from the registered voter set, for the round it was produced for. |
-| **Operator resources (CPU / memory / DB)** | No attacker-controlled volume can drive unbounded memory, CPU, or DB growth on a voter's provider-critical host. |
-| **Downstream fund safety** | A finalized root can't be abused to move funds in FAssets or bridges that an honest round wouldn't have authorised. |
-| **DA read-service availability** | The public DA instances (FDC and FTSO) stay responsive — a distinct, lower-criticality goal, decoupled from finalization. |
+The properties every threat below is measured against. Two matter, plus a downstream corollary:
+
+- **Availability** — a voter keeps participating. No anonymous input should stall its finalization path past the round's deadlines (the ~90 s round, with signature/finalize deadlines around 56–65 s), crash-loop a client, or exhaust the host's CPU, memory, or DB. This is tiered: finalization availability is provider-critical, while the indexer's disk footprint is lower-criticality.
+- **Soundness** — a finalized output reflects only eligible-voter inputs. No anonymous on-chain data changes a finalized FTSO median or FDC result; no attacker-shaped attestation request yields a proof that misrepresents chain reality; and a finalization is only ever accepted as a valid threshold-signed message from the round's registered voter set.
+- **Downstream fund safety** (corollary) — FAssets and bridges act on the relayed root, so soundness plus availability of finalization is what keeps a finalized root from authorising movements an honest round wouldn't.
 
 ---
 
@@ -204,7 +197,7 @@ Per service: where untrusted input enters, what constrains it, and where the res
 External entry: the `submitSignatures` listener (polls the indexer, walks each matching tx's calldata), the finalizer queue, and the signing-policy / voter-registry consumers. Every indexed `submitSignatures` payload is attacker-controlled until proven otherwise. Gates: each signature must `ecrecover` to a registered voter with non-zero weight or it's dropped; finalization is idempotent (re-reads `ProtocolMessageRelayed`); missing critical metadata panics by design (peers can't reach it). Residual risk: the work done per attacker tx *before the signer is known* — calldata decode, payload extraction, and any buffering keyed on attacker-controlled sender/round/protocol ahead of the `ecrecover` gate; how ECDSA-recovery cost scales with distinct funded senders; whether the listener/queue/policy goroutines survive a panic; threshold-raise and slashing-window timing under a stalled listener.
 
 ### 5.2 fdc-client
-External entry: `AttestationRequestListener`, `BitVoteListener`, and the queue workers, fed by `AttestationRequest` events and `submit2` calldata. The `/fsp/*` provider API is internal-only (the system-client is its only caller); the `/da/*` API is public but runs as a separate, isolated instance ([§2.1](#21-deployment-topology--what-is-actually-exposed)). Gates: the per-round attestation count hard-errors above 65,535, branch-and-bound is operation-capped and gated on that (unreachable) ceiling, the gas budget keeps requests well under it, and bit-votes are weight-aggregated. Residual: request bytes stored verbatim before validation (including minimal-length requests that enter round state before rejection); uncached, repeatable round-derived computation (Merkle tree, bit-vote sort); goroutines without panic recovery. On the DA instance these affect only its own availability.
+External entry: `AttestationRequestListener`, `BitVoteListener`, and the queue workers, fed by `AttestationRequest` events and `submit2` calldata. The `/fsp/*` provider API is internal-only (the system-client is its only caller). Gates: the per-round attestation count hard-errors above 65,535, branch-and-bound is operation-capped and gated on that (unreachable) ceiling, the gas budget keeps requests well under it, and bit-votes are weight-aggregated. Residual: request bytes stored verbatim before validation (including minimal-length requests that enter round state before rejection); uncached, repeatable round-derived computation (Merkle tree, bit-vote sort); goroutines without panic recovery.
 
 ### 5.3 verifier-indexer-api (per verifier type)
 Entry: `POST <type-URL>/<AttestationType>/verifyFDC`. The endpoint is internal but its surface is external — the request content is anonymous on-chain `requestAttestation` data the trusted fdc-client forwards verbatim, so the API key gates nothing. The attacker controls the full request body (block window, `requiredConfirmations`, `listEvents`/`logIndices`, destination/amount, Web2Json headers/query). Gates: fdc-client's outbound rate limit is the only throttle for non-Web2Json types; only Web2Json has a worker pool and backpressure; the Web2 SSRF base is solid (DNS / private-IP checks, HTTPS, near-zero redirects, host/path/method allowlist, JSON depth/key bounds). Residual: any requester field that drives an unbounded DB range scan or large in-memory set (wide windows, low-selectivity filters, missing `LIMIT`); event/list truncation that silently changes a proof; a missing confirmation-depth floor; requester headers/query forwarded upstream (tenant, cache, method-override, forwarding); per-type latency under load with no global throttler.
@@ -213,7 +206,11 @@ Entry: `POST <type-URL>/<AttestationType>/verifyFDC`. The endpoint is internal b
 Entry: JSON-RPC block polling and the MySQL tables both Go clients read. Attacker input: the volume and size of matching txs/events it must store (spam `submit*` and `requestAttestation`). It filters by `(to_address, selector)` / `(address, topic0)`, has per-table watermarks, and benefits from the chain-level prioritised-calldata cap. The defining gap is the absence of a sender filter — all anonymous spam calldata is stored and re-read, the substrate every downstream listener inherits. Other residual: unbounded calldata/data columns and unbounded query result sets; DB retention footprint under sustained spam; reorg handling for signing-policy-derived state (latent today, load-bearing once any indexer-side voter-set filter ships).
 
 ### 5.5 ftso-scaling (median / reward libs)
-Entry: reveal ingestion from `submit2` calldata, feeding median and Merkle-root computation; the input is anonymous `submit2` calldata claiming any `(protocolId, roundId, payload)`. Gates are good: reveals are filtered by registered-voter eligibility (keyed on the real tx sender, not forgeable payload data) before the median, the median is weight-bounded, and empty/absent reveals contribute nothing. Like fdc-client, ftso-scaling also runs a public, isolated DA instance (median results, feeds-with-proof) — overloading it costs only that read service's availability. Residual: whether every aggregation path (median, random, weight sum) consumes only the eligibility-filtered set; determinism of duplicate/out-of-order/tie handling across nodes; precision of the median/weight arithmetic.
+Entry: reveal ingestion from `submit2` calldata, feeding median and Merkle-root computation; the input is anonymous `submit2` calldata claiming any `(protocolId, roundId, payload)`. Gates are good: reveals are filtered by registered-voter eligibility (keyed on the real tx sender, not forgeable payload data) before the median, the median is weight-bounded, and empty/absent reveals contribute nothing.
+
+A second input shapes the round itself. The epoch's **canonical feed order** — the set and ordering of feeds every round prices, medians, and Merkle-roots — is derived (`rewardEpochFeedSequence`) from inflation offers (governance) plus community `RewardsOffered` (`offerRewards`, permissionless, ≥ `minimalRewardsOfferValueWei` per offer, community feeds ordered by total offered value). So for the next reward epoch an attacker can add arbitrary `feedId`s and reorder the non-inflation feeds. It's deterministic on-chain (all nodes agree — no consensus split) and per-feed medians stay independent (an unpriced attacker feed resolves to empty, not poisoning real ones), so the impact is availability/resource, not soundness: every added feed is fetched from the feed value provider, medianed, and added as a Merkle leaf on every round for the whole epoch, across all voters — a one-time payment (≥ min × feed count, paid into the reward pool) amplified over the epoch. There is no feed-count cap in the canonical-order builder; the only gate is the per-offer minimum.
+
+Residual: whether every aggregation path (median, random, weight sum) consumes only the eligibility-filtered set; determinism of duplicate/out-of-order/tie handling across nodes; precision of the median/weight arithmetic; and the feed-list inflation above.
 
 ### 5.6 go-flare-common (shared library)
 Provides the DB query builders, priority queue, and signing-policy types, in the trust path of both Go clients — so a weakness here is inherited by every consumer. Relevant areas: the query builders' filtering and result-set bounds (the shared root of the indexer-substrate concerns), bounds-checking in the payload and bit-vote parsers, and integer-width handling in weight/index accumulation.
@@ -231,13 +228,14 @@ A separate subprotocol with its own client (`fast-updates`, Go) and contracts (`
 Two concerns span services:
 
 - **Goroutine crash-resistance.** An unrecovered panic on any goroutine crashes the whole Go process — none of the Go clients (flare-system-client, fdc-client, fast-updates) wrap their goroutine entry points in `defer recover()`. Because every service runs under Docker `restart: unless-stopped` ([§2.1](#21-deployment-topology--what-is-actually-exposed)), a one-off crash auto-restarts, costing only the rounds missed during restart and catch-up — not a permanent halt. The sharper risk is a *replayable* attacker-triggered panic: an input re-read from the indexer on every restart would crash-loop despite the restart policy. No such reachable panic is currently known (the data-path parsers are bounds-checked), so `defer recover()` is defense-in-depth — but the restart policy makes it the crash-loop containment, which is where its value lies if a reachable panic is ever found.
-- **Unbounded resources keyed on attacker-controlled volume.** The recurring pattern: maps, DB queries, and serialization sized by attacker volume with no cap or `LIMIT`, plus uncached per-round recompute. Fix with a cap/`LIMIT` at the ingest or query boundary and caching of round-derived computation; prioritise the externally reachable, finalization-impacting cases over the isolated DA / internal-only ones.
+- **Unbounded resources keyed on attacker-controlled volume.** The recurring pattern: maps, DB queries, and serialization sized by attacker volume with no cap or `LIMIT`, plus uncached per-round recompute. Fix with a cap/`LIMIT` at the ingest or query boundary and caching of round-derived computation; prioritise the externally reachable, finalization-impacting cases over the internal-only ones.
 
 ---
 
 ## 7. Out of scope
 
 - **Reward-amount fairness and reward-calculation correctness** — the post-epoch reward calculator is separate; in-weight insider griefing is caught there.
+- **Data-availability (DA) instances** — fdc-client and ftso-scaling can each run a dedicated public DA read API (attestation responses; median results / feeds-with-proof) for downstream consumers. These are accessory services on separate, isolated instances with their own round state, so overloading one affects only that read service's availability — never FSP provider operation or finalization. Audit separately if exposed.
 - **Validator and chain-level concerns the FSP team doesn't own** — block storage, mempool sizing, Avalanche consensus, `avalanchego`/`coreth` internals.
 - **Operator-trusted inputs** — a voter's own subprotocol HTTP responses (`ftso-scaling`, `fdc-client`, feed value provider) run on the trusted host. The drop-on-`EMPTY` obligation and the verifier-as-oracle assumption are boundary obligations, not attack surface.
 - **Critical-metadata panics by design** — panicking on missing signing-policy / voter-registry data is intentional fail-loud; peer spam can't reach it.
