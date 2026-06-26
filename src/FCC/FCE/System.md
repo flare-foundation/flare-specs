@@ -1,7 +1,7 @@
 # System Extension
 
 The _system extension_ is the [FCE](Concepts.md) with `extensionId = 0`.
-It is implemented and maintained by Flare itself, and hosts two applications: the [Flare TEE Data Connector v2 (FDC2)](../../FDC2/README.md) and the [Protocol Managed Wallet (PMW)](../../PMW/README.md) infrastructure.
+It is implemented as part of FCC, and hosts two applications: the [Flare TEE Data Connector v2 (FDC2)](../../FDC2/README.md) and the [Protocol Managed Wallet (PMW)](../../PMW/README.md) infrastructure.
 Both leverage Flare's [data providers](../../Terminology/Roles.md#data-provider) for additional compute and data provision.
 
 Its code versions, instructions sender, and supported key types are managed at the system level via the [governance-only calls](Concepts.md#governance-system-extension-only) on `FlareTeeManager`.
@@ -10,7 +10,7 @@ Custom extensions use the per-extension equivalents and operate independently.
 ## Operation Types
 
 System operations are distinguished by the `F_` prefix in their `opType`.
-The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only be sent by the system extension's instructions sender or by a [system instructions sender](Concepts.md#instructions-senders); custom extensions cannot use this prefix.
+The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only be sent by the system extension's instructions sender or by a [system instructions sender](Concepts.md#instructions-senders).
 
 | Operation Type | Description |
 |---|---|
@@ -21,7 +21,7 @@ The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only b
 | `F_XRP`    | XRP payment and reissue operations. |
 | `F_FDC2`   | FDC2 attestation proof generation. |
 
-Operation references live under [Reference/Operations](../Reference/Operations/README.md) (infrastructure) and the application-specific directories under [PMW/Reference/Operations](../../PMW/Reference/Operations/README.md) and [FDC2/Reference/Operations](../../FDC2/Reference/Operations/README.md).
+Operation references live under [Reference/Operations](../Reference/Operations/README.md) and the application-specific directories under [PMW/Reference/Operations](../../PMW/Reference/Operations/README.md) and [FDC2/Reference/Operations](../../FDC2/Reference/Operations/README.md).
 
 ## FDC2
 

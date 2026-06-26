@@ -63,4 +63,3 @@ For the FSP side, see [`SigningPolicy`](../../FSP/SigningPolicy.md); for the ope
 
 - A machine that fails to install before the next epoch's instructions arrive rejects them as stale; the proxy retries `push` until the machine is caught up or until the next epoch overtakes it.
 - Cross-protocol coupling: this workflow depends on the FSP's signing-policy lifecycle, which is out of scope here (see [FSP § SigningPolicy](../../FSP/SigningPolicy.md)).
-- During [MachineReplication](MachineReplication.md), the successor inherits `lastSigningPolicyId` and `lastSigningPolicyHash` along with the rest of the state, so no separate `UPDATE_POLICY` is required mid-replication.

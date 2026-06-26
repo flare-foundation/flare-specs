@@ -6,7 +6,6 @@ Types related to the [Flare TEE Data Connector](../../../README.md) (FDC2).
 
 Wrapper for an FDC2 attestation request, containing a header and a type-specific request body.
 
-
 ```json
 {
   "$id": "Fdc2AttestationRequest",
@@ -31,7 +30,7 @@ Header for an FDC2 attestation request.
   "properties": {
     "attestationType": { "type": "string", "format": "bytes32", "description": "Attestation type identifier." },
     "sourceId": { "type": "string", "format": "bytes32", "description": "Source chain identifier." },
-    "thresholdBIPS": { "type": "integer", "format": "uint16", "description": "Weight of data provider signatures required, in basis points. Must exceed 40%." },
+    "thresholdBIPS": { "type": "integer", "format": "uint16", "description": "Weight of data provider signatures required, in BIPS. Must exceed 40% of total weight." },
     "proofOwner": { "type": "string", "format": "address", "description": "Address that owns the proof; zero address indicates a public proof." }
   },
   "required": ["attestationType", "sourceId", "thresholdBIPS", "proofOwner"]
@@ -51,7 +50,7 @@ Extends the request header with cosigner information and a timestamp.
   "properties": {
     "attestationType": { "type": "string", "format": "bytes32", "description": "Attestation type identifier." },
     "sourceId": { "type": "string", "format": "bytes32", "description": "Source chain identifier." },
-    "thresholdBIPS": { "type": "integer", "format": "uint16", "description": "Weight of data provider signatures required, in basis points." },
+    "thresholdBIPS": { "type": "integer", "format": "uint16", "description": "Weight of data provider signatures required, in BIPS." },
     "proofOwner": { "type": "string", "format": "address", "description": "Proof owner address." },
     "cosigners": { "type": "array", "items": { "type": "string", "format": "address" }, "description": "Cosigner addresses." },
     "cosignersThreshold": { "type": "integer", "format": "uint64", "description": "Cosigners threshold." },

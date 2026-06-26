@@ -1,11 +1,13 @@
 # Fdc2Hub
 
-The `Fdc2Hub` contract is the FDC2-side on-chain hub.
+The `Fdc2Hub` contract is the FDC2 on-chain hub.
 It receives attestation requests from users, routes them to the TEE machines registered to the [system extension](../../../FCC/FCE/System.md) via [`FlareTeeManager.sendInstructions`](../../../FCC/Reference/Contracts/FlareTeeManager.md#sending-instructions) as [`F_FDC2 PROVE`](../Operations/Prove.md) instructions, and later verifies the assembled proofs on-chain for downstream consumers.
 
 The op-type is the constant `bytes32("F_FDC2")`.
 
-For the user-facing semantics — request flow, signature computation, on-chain proof assembly — see [FDC2 Concepts](../../Concepts.md). For on-machine processing, see [`F_FDC2 PROVE`](../Operations/Prove.md). Request/response types live in [Types/Abi/Fdc2](../Types/Abi/Fdc2.md) and [Types/Wire/Fdc2](../Types/Wire/Fdc2.md).
+For the user-facing semantics, such as request flow, signature computation, and on-chain proof assembly,  see [FDC2 Concepts](../../Concepts.md).
+For on-machine processing, see [`F_FDC2 PROVE`](../Operations/Prove.md).
+Request/response types live in [Types/Abi/Fdc2](../Types/Abi/Fdc2.md) and [Types/Wire/Fdc2](../Types/Wire/Fdc2.md).
 
 ## Attestation Requests
 
@@ -20,24 +22,26 @@ function requestAttestation(
 ) external payable;
 ```
 
-Submits an attestation request. Payable; `msg.value` must cover the configured fee for the request's `(attestationType, sourceId)` pair (see [Fee Configuration](#fee-configuration)).
+Submits an attestation request.
+Payable; `msg.value` must cover the configured fee for the request's `(attestationType, sourceId)` pair (see [Fee Configuration](#fee-configuration)).
 
 | Argument | Description |
 |---|---|
-| `_attestationRequest` | The [`Fdc2AttestationRequest`](../Types/Abi/Fdc2.md#fdc2attestationrequest) — header (`attestationType`, `sourceId`, optional `thresholdBIPS` override, optional `proofOwner`) plus the type-specific `requestBody`. |
+| `_attestationRequest` | The [`Fdc2AttestationRequest`](../Types/Abi/Fdc2.md#fdc2attestationrequest): header (`attestationType`, `sourceId`, optional `thresholdBIPS` override, optional `proofOwner`) plus the type-specific `requestBody`. |
 | `_numberOfTees` | Number of TEE machines to dispatch the request to. If `0`, falls back to the configured default (see [Governance](#governance)). If `_teeIds` is non-empty, must equal `_teeIds.length`. |
-| `_teeIds` | Optional explicit list of destination TEE machines. Empty means the contract picks `_numberOfTees` machines from the registered set. |
+| `_teeIds` | Optional explicit list of destination TEE machines. Empty means the contract picks `_numberOfTees` machines from the registered set at random. |
 | `_cosigners` | Optional cosigner address set; recovered against `recoverCosigners` at verification time. |
 | `_cosignersThreshold` | Cosigner threshold; must be `0` if `_cosigners` is empty. |
 | `_claimBackAddress` | Optional address that may reclaim the fee if the instructions fail to execute. |
 
-The `header.thresholdBIPS` value, when non-zero, overrides the data-provider [voting threshold](../../../FCC/Concepts/Voting.md#pass-conditions) for this specific request; `0` falls back to the signing-policy default (subject to [`setMinThresholdBIPS`](#governance)).
+The `header.thresholdBIPS` value, when non-zero, overrides the data provider [voting threshold](../../../FCC/Concepts/Voting.md#pass-conditions) for this specific request; `0` falls back to the signing-policy default (subject to [`setMinThresholdBIPS`](#governance)).
 
 Emits [`AttestationRequested`](#events) followed by [`TeeInstructionsSent`](../../../FCC/Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) via `FlareTeeManager`.
 
 ## Verification
 
-After the TEE machines have produced a signed [`ProveResponse`](../Types/Wire/Fdc2.md#proveresponse), downstream consumers verify it using these on-chain views. The `Fdc2Hub` implements `IFdc2Verification`.
+After the TEE machines have produced a signed [`ProveResponse`](../Types/Wire/Fdc2.md#proveresponse), downstream consumers verify it using these on-chain views.
+The `Fdc2Hub` implements `IFdc2Verification`.
 
 ```solidity
 function verifySigningPolicySignatures(
@@ -46,7 +50,7 @@ function verifySigningPolicySignatures(
 ) external returns (uint256 _rewardEpochId);
 ```
 
-Verifies a batch of data-provider signatures (packed in [relay format](../../../FSP/Encoding.md)) against `_messageHash` using the corresponding signing policy. Returns the reward-epoch id of the policy that reached threshold.
+Verifies a batch of data provider signatures (packed in [relay format](../../../FSP/Encoding.md)) against `_messageHash` using the corresponding signing policy. Returns the reward epoch ID of the policy.
 
 ```solidity
 function verifyTeeSignature(
@@ -60,7 +64,8 @@ function verifyTeeSignatures(
 ) external view returns (address[] memory _signingTeeIds);
 ```
 
-Recover the signing TEE machine address from one or several TEE signatures and validate that each is a currently-attested machine of the system extension. Reverts with `TeeMachineNotAvailable`, `InvalidTeeMachineExtensionId`, or `DuplicatedTeeId` on failure.
+Recover the signing TEE machine addresses from one or several TEE signatures and validate that each is a currently attested machine of the system extension.
+Reverts with `TeeMachineNotAvailable`, `InvalidTeeMachineExtensionId`, or `DuplicatedTeeId` on failure.
 
 ```solidity
 function recoverCosigners(
@@ -69,7 +74,8 @@ function recoverCosigners(
 ) external view returns (address[] memory _cosigners);
 ```
 
-Recovers cosigner addresses from signatures and checks for duplicates. Performs no policy validation — the caller must compare the result against the cosigner set committed in `Fdc2ResponseHeader`.
+Recovers cosigner addresses from signatures and checks for duplicates.
+Performs no policy validation, so the caller must compare the result against the cosigner set committed in `Fdc2ResponseHeader`.
 
 ## Fee Configuration
 
@@ -80,7 +86,9 @@ function getTypeAndSourceFee(
 ) external view returns (uint256);
 ```
 
-Returns the base fee in wei for an `(attestationType, sourceId)` pair. Reverts with `TypeAndSourceCombinationNotSupported` if the pair has no configured fee. Governance sets the fee per pair, emitting [`TypeAndSourceFeeSet`](#events) / [`TypeAndSourceFeeRemoved`](#events).
+Returns the base fee in wei for an `(attestationType, sourceId)` pair.
+Reverts with `TypeAndSourceCombinationNotSupported` if the pair has no configured fee.
+Governance sets the fee per pair, emitting [`TypeAndSourceFeeSet`](#events) / [`TypeAndSourceFeeRemoved`](#events).
 
 ## Governance
 
@@ -89,10 +97,10 @@ function setMinThresholdBIPS(uint16 _minThresholdBIPS) external;
 function setDefaultNumberOfTees(uint8 _defaultNumberOfTees) external;
 ```
 
-- `setMinThresholdBIPS` — lower bound on `header.thresholdBIPS` overrides. `0` means no minimum (signing-policy default applies). Emits [`MinThresholdBIPSSet`](#events).
-- `setDefaultNumberOfTees` — default `_numberOfTees` when callers pass `0`. Must be non-zero. Emits [`DefaultNumberOfTeesSet`](#events).
+- `setMinThresholdBIPS`: lower bound on `header.thresholdBIPS` overrides. `0` means no minimum (signing policy default applies). Emits [`MinThresholdBIPSSet`](#events).
+- `setDefaultNumberOfTees`: default `_numberOfTees` when callers pass `0`. Must be non-zero. Emits [`DefaultNumberOfTeesSet`](#events).
 
-Both are governance-only.
+Both calls are governance-only.
 
 ## Events
 

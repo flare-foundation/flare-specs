@@ -1,7 +1,7 @@
 # Flare TEE Data Connector (FDC2)
 
 FDC2 is a TEE-based variant of the [FDC](../FDC/Introduction.md), implemented as an application on the [system extension](../FCC/FCE/System.md) and managed via the `Fdc2Hub` smart contract.
-Users submit attestation requests as [instructions](../FCC/Concepts/Instructions.md); participating TEE machines, on reaching the data-provider vote threshold, sign the attestation response with their identity key.
+Users submit attestation requests as [instructions](../FCC/Concepts/Instructions.md); on reaching the data provider vote threshold, participating TEE machines sign the attestation response with their identity key.
 The signed attestation is served by the [TEE proxy](../FCC/Reference/Components/Proxy.md) and can be published on Flare.
 
 | Page | Contents |

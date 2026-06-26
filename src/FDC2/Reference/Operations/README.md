@@ -5,4 +5,4 @@ For the cross-FCE infrastructure operations, see [Reference/Operations](../../..
 
 | `opType` | `opCommand` | Kind | Description |
 |---|---|---|---|
-| `F_FDC2` | [`PROVE`](Prove.md) | Instruction | Processes an FDC2 attestation request, collecting data-provider signatures and producing a signed proof. |
+| `F_FDC2` | [`PROVE`](Prove.md) | Instruction | Processes an FDC2 attestation request, collecting data provider signatures and producing a signed proof. |

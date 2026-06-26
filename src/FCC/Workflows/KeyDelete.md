@@ -45,7 +45,7 @@ The on-chain key definition (admins, multisig threshold) survives; only the bind
 - **Effects**:
   - For each entry of `key.teeIds` whose machine is not in `PRODUCTION`, removes the entry.
   - Emits [`WalletKeyDeleted`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeydeleted) for each removed entry.
-  - Does not touch the TEE machines themselves (they may already be paused, banned, or replicated).
+  - Does not touch the TEE machines themselves (they may already be paused, or banned).
 
 ## Invariants
 

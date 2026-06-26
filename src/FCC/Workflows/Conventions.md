@@ -41,8 +41,6 @@ Auxiliary explanations (rationale, edge cases, FAQ) live in a final **Notes** se
 | `PRODUCTION` | Operational. |
 | `SUSPENDED` | Auto-suspended on stale availability or non-`OK` proof. |
 | `PAUSED` | Owner-initiated or settings-update stop. |
-| `PAUSED_FOR_UPGRADE` | Owner has scheduled a [replication](MachineReplication.md); awaiting `replicateFrom`. |
-| `REPLICATING` | Successor machine is taking over an existing $\mathrm{TEE}_\mathrm{ID}$. |
 | `BANNED` | Extension-owner stop. |
 
 See [Concepts/Machines § Statuses](../Concepts/Machines.md#statuses) for the on-chain definitions.

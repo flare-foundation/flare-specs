@@ -3,7 +3,7 @@
 ## Description
 
 Signs an XRP Ledger multisig payment from a PMW wallet using one or more TEE-managed private keys.
-Emitted as an instruction when a user calls [`TeePayments.pay`](../../Transactions.md#submitting-a-payment) (directly or through a batched call from the same wallet).
+Emitted as an instruction when a user calls [`TeePayments.pay`](../../Transactions.md#submitting-a-payment).
 
 - If `amount = 0` and the recipient address equals the sender, the TEE signs an empty `AccountSet` (nullification) transaction; the payment reference is still attached. See [Nullification](../../Transactions.md#nullification).
 - If `tokenId` is zero-valued, the transaction is a direct XRP payment. Other token IDs are reserved for future use.
@@ -45,4 +45,4 @@ The TEE machine validates the instruction before signing:
 - The machine's own TEE ID appears in `teeIdKeyIdPairs`.
 - The key type is `XRP` and the signing algorithm is `sha512half-secp256k1-ecdsa`.
 - The key exists on the machine and is in active status.
-- [Cosigner](../../../FCC/Concepts/Instructions.md#cosigners) signatures are verified per key when the wallet has cosigners configured.
+- [Cosigner](../../../FCC/Concepts/Instructions.md#cosigners) signatures are verified per key if the wallet has cosigners configured.

@@ -118,4 +118,3 @@ None of the running states are terminal — the machine can be cycled through th
 
 - The "batch pause" idiom is simply calling `pauseByOwner` or `pauseOnDeadlineExpiry` over many machines in one transaction or many; the contract has no dedicated bulk entry.
 - The `confirmAvailability` deadline refresh is what keeps a `PRODUCTION` machine reward-eligible; operators typically automate it on a schedule shorter than the deadline window.
-- For enclave replacement that preserves the same $\mathrm{TEE}_\mathrm{ID}$, use [MachineReplication](MachineReplication.md). For wholesale replacement (banned or unrecoverable machine, no identity continuity needed), use [KeyRestore](KeyRestore.md) and [MachineRegistration](MachineRegistration.md) on a fresh $\mathrm{TEE}_\mathrm{ID}$ before deleting state from the original.

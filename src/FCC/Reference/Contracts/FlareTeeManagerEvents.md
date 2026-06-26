@@ -54,16 +54,15 @@ Emitted by: `addTeeVersion()`
 ```solidity
 event TeeVersionAdded(
     uint256 indexed extensionId,
-    string version,
+    bytes32 version,
     bytes32 indexed codeHash,
-    bytes32[] platforms,
-    bytes32 governanceHash
+    bytes32[] platforms
 );
 ```
 
 ### CodeHashPlatformDisabled
 
-Emitted by: `disableCodeHashPlatform()`
+Emitted by: `disableCodeHashPlatforms()`
 
 ```solidity
 event CodeHashPlatformDisabled(
@@ -841,4 +840,3 @@ event VrfAuthorizationAddressSet(
     address authorizationAddress
 );
 ```
-

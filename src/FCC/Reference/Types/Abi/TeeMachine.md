@@ -94,7 +94,7 @@ TEE machine registration data included in attestation instructions.
   "type": "object",
   "properties": {
     "teeId": { "type": "string", "format": "address", "description": "TEE machine ID." },
-    "initialTeeId": { "type": "string", "format": "address", "description": "Initial TEE machine ID (differs from teeId for replicated machines)." },
+    "initialTeeId": { "type": "string", "format": "address", "description": "Initial TEE machine ID (for future use)" },
     "url": { "type": "string", "description": "TEE machine URL." },
     "codeHash": { "type": "string", "format": "bytes32", "description": "Hash of the code running in the TEE." },
     "platform": { "type": "string", "format": "bytes32", "description": "Platform identifier (e.g., INTEL_TDX, GCP_AMD_SEV)." }

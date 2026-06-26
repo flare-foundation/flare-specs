@@ -12,10 +12,11 @@ The event message is the [`Fdc2AttestationRequest`](../Types/Abi/Fdc2.md#fdc2att
 
 The instruction event additionally carries:
 
-- `teeIds`: TEE machines to vote on the request.
-- `cosigners`, `cosignersThreshold` (optional): [cosigner](../../../FCC/Concepts/Instructions.md#cosigners) set and threshold. When set, both the data-provider and cosigner thresholds must be reached before the TEE machine signs.
+- `teeIds`: TEE machines to sign the request.
+- `cosigners`, `cosignersThreshold` (optional): [cosigner](../../../FCC/Concepts/Instructions.md#cosigners) set and threshold. When set, both the data provider and cosigner thresholds must be reached before the TEE machine signs.
 
-The request header's `thresholdBIPS` field overrides the signing policy's default data-provider voting threshold for this instruction; a value of $0$ falls back to the policy default. See [Signing Threshold Resolution](../../../FCC/Reference/Components/Proxy.md#signing-threshold-resolution).
+The request header's `thresholdBIPS` field overrides the signing policy's default data provider voting threshold for this instruction; a value of $0$ falls back to the policy default.
+See [Signing Threshold Resolution](../../../FCC/Reference/Components/Proxy.md#signing-threshold-resolution).
 
 ## Fixed Message
 
@@ -23,7 +24,7 @@ The request header's `thresholdBIPS` field overrides the signing policy's defaul
 
 ## Variable Message
 
-- `signature`: data-provider signature over the [attestation response hash](../../Concepts.md#signature-computation).
+- `signature`: data provider signature over the [attestation response hash](../../Concepts.md#signature-computation).
 
 ## Augmentation Procedure
 
@@ -46,5 +47,5 @@ The action result is a [`ProveResponse`](../Types/Wire/Fdc2.md#proveresponse) (w
 
 ## Notes
 
-- **Signed digest:** The TEE constructs the signed hash using the [FDC2 signature computation](../../Concepts.md#signature-computation) — ABI-encode and hash the response header, request body, and response body separately, combine the three hashes, prepend the $6$-byte protocol prefix `0x010000000000`, and hash again.
-- **Data-provider signature format:** `DataProviderSignatures` in `ProveResponse` are encoded in [relay format](../../../Utilities/Signing.md) against the current signing policy.
+- **Signed digest:** The TEE constructs the signed hash using the [FDC2 signature computation](../../Concepts.md#signature-computation); ABI-encode and hash the response header, request body, and response body separately, combine the three hashes, prepend the $6$-byte protocol prefix `0x010000000000`, and hash again.
+- **Data provider signature format:** `DataProviderSignatures` in `ProveResponse` are encoded in [relay format](../../../Utilities/Signing.md) against the current signing policy.

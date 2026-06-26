@@ -1,7 +1,8 @@
 # FDC2 Verifier Server
 
 The FDC2 verifier server validates attestation requests on behalf of [data providers](../Terminology/Roles.md#data-provider) as part of the [FDC2](README.md) protocol.
-Each data provider runs one verifier instance per supported attestation type — a single process loads one attestation-type module at startup.
+Each data provider runs one verifier instance per supported attestation type.
+A single process loads one attestation type module at startup.
 
 ## HTTP Endpoints
 
@@ -33,7 +34,7 @@ All endpoints except `GET /api/health` require API-key authentication via the `X
 
 ## Security
 
-- **API-key authentication** — required on every verification endpoint.
-- **Security headers** — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
-- **SSRF guards** — proxy URLs are validated before being contacted; private IP ranges, link-local and multicast addresses, cloud metadata endpoints, and Teredo tunnels are blocked.
-- **CRL checking** — certificate revocation lists are fetched and cached (LRU, $4$-hour TTL, max $100$ entries) so revoked attestation certificates are rejected.
+- **API-key authentication**: required on every verification endpoint.
+- **Security headers**: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
+- **SSRF guards**: proxy URLs are validated before being contacted; private IP ranges, link-local and multicast addresses, cloud metadata endpoints, and Teredo tunnels are blocked.
+- **CRL checking**: certificate revocation lists are fetched and cached (LRU, $4$-hour TTL, max $100$ entries) so revoked attestation certificates are rejected.

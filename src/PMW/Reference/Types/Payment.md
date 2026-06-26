@@ -4,8 +4,7 @@ Types related to [PMW transactions](../../Transactions.md).
 
 ## PaymentInstructionMessage
 
-Instruction message for a payment on an external chain.
-
+Instruction message for a payment on an external account-based chain.
 
 ```json
 {
@@ -20,12 +19,11 @@ Instruction message for a payment on an external chain.
     "tokenId": { "type": "string", "format": "bytes", "description": "Token identifier (variable length); zero-valued for native token." },
     "amount": { "type": "string", "format": "uint256", "description": "Amount of token transferred." },
     "maxFee": { "type": "string", "format": "uint256", "description": "Maximum fee for the transaction." },
+    "projectId": { "type": "integer", "format": "bytes32", "description": "Project ID for the wallet." },
     "feeSchedule": { "type": "string", "format": "bytes", "description": "Encoded fee schedule for progressive fee escalation." },
     "paymentReference": { "type": "string", "format": "bytes32", "description": "Payment reference." },
-    "nonce": { "type": "integer", "format": "uint64", "description": "Batch nonce of the transaction." },
-    "subNonce": { "type": "integer", "format": "uint64", "description": "Sequence number of the payment instruction." },
-    "batchEndTs": { "type": "integer", "format": "uint64", "description": "Batch end timestamp." }
+    "nonce": { "type": "integer", "format": "uint64", "description": "Nonce of the transaction." },
+    "paymentId": { "type": "integer", "format": "uint64", "description": "Payment id of the transaction." }
   },
-  "required": ["walletId", "teeIdKeyIdPairs", "sourceId", "senderAddress", "recipientAddress", "tokenId", "amount", "maxFee", "feeSchedule", "paymentReference", "nonce", "subNonce", "batchEndTs"]
+  "required": ["walletId", "teeIdKeyIdPairs", "sourceId", "senderAddress", "recipientAddress", "tokenId", "amount", "maxFee", "projectID", "feeSchedule", "paymentReference", "nonce", "paymentId"]
 }
-```

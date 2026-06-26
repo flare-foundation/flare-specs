@@ -4,7 +4,7 @@ The `PMWMultisigAccountConfigured` attestation type proves that a multisig accou
 
 ## Request
 
-Request body: [`PMWMultisigAccountConfigured.RequestBody`](../Types/Abi/AttestationType.md#requestbody-3).
+Request body:
 
 - `accountAddress`: address of the multisig account.
 - `publicKeys`: public keys of the multisig account owners (concatenated `pubkey.X | pubkey.Y`).
@@ -13,20 +13,18 @@ Request body: [`PMWMultisigAccountConfigured.RequestBody`](../Types/Abi/Attestat
 
 ## Response
 
-Response body: [`PMWMultisigAccountConfigured.ResponseBody`](../Types/Abi/AttestationType.md#responsebody-3), using the [`PMWMultisigAccountStatus`](../Types/Abi/AttestationType.md#pmwmultisigaccountstatus) enum.
+Response body:
 
 - `status`:
-  - `OK` ($0$) — account is correctly configured.
-  - `ERROR` ($1$) — account is misconfigured or an RPC validation check failed.
+  - `OK` ($0$): account is correctly configured.
+  - `ERROR` ($1$):  account is misconfigured or an RPC validation check failed.
 - `sequence` (`uint64`): account sequence number. Set to $0$ when `status = ERROR`.
 
 ## Chain Support
 
-Currently, `PMWMultisigAccountConfigured` is used for XRP.
+Currently, `PMWMultisigAccountConfigured` is only used for XRP.
 
 ## Verification
-
-### XRP Ledger
 
 1. Query [`account_info`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_info) on an XRP node for the given `accountAddress`, with `ledger_index: "validated"` and `signer_lists: true`.
 
@@ -49,8 +47,6 @@ Currently, `PMWMultisigAccountConfigured` is used for XRP.
 
 6. **Retrieve sequence:**
    - `sequence` = `result.account_data.Sequence`
-
-### Result
 
 - If all checks pass: `status` = `OK`, `sequence` = `result.account_data.Sequence`.
 - If any validation check fails: `status` = `ERROR`, `sequence` = $0$. The response is still returned successfully (not an HTTP error).
