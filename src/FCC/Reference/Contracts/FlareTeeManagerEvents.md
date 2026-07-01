@@ -13,7 +13,7 @@ event TeeInstructionsSent(
     uint256 indexed extensionId,
     bytes32 indexed instructionId,
     uint32 indexed rewardEpochId,
-    IMachineManagerFacet.TeeMachine[] teeMachines,
+    IMachineManager.TeeMachine[] teeMachines,
     bytes32 opType,
     bytes32 opCommand,
     bytes message,
@@ -65,10 +65,10 @@ event TeeVersionAdded(
 Emitted by: `disableCodeHashPlatforms()`
 
 ```solidity
-event CodeHashPlatformDisabled(
+event CodeHashPlatformsDisabled(
     uint256 indexed extensionId,
     bytes32 indexed codeHash,
-    bytes32 indexed platform
+    bytes32[] platforms
 );
 ```
 
@@ -104,6 +104,18 @@ event NewOwnerProposed(
     address indexed oldOwner,
     address indexed newOwner
 );
+```
+
+### ExtensionOperatorSet
+
+Emitted by: `setExtensionOperator()`
+
+```solidity
+event ExtensionOperatorSet(
+    uint256 indexed extensionId, 
+    address indexed oldOperator, 
+    address indexed newOperator
+    );
 ```
 
 ### NewOwnerConfirmed
@@ -147,6 +159,16 @@ event SystemSupportedPlatformsAdded(
 );
 ```
 
+### SystemSupportedPlatformsRemoved
+
+Emitted by: `removeSystemSupportedPlatforms()`
+
+```solidity
+event SystemSupportedPlatformsRemoved(
+    bytes32[] platforms
+);
+```
+
 ### SystemSupportedKeyTypesAndSigningAlgosAdded
 
 Emitted by: `addSystemSupportedKeyTypesAndSigningAlgos()`
@@ -154,10 +176,20 @@ Emitted by: `addSystemSupportedKeyTypesAndSigningAlgos()`
 ```solidity
 event SystemSupportedKeyTypesAndSigningAlgosAdded(
     bytes32[] keyTypes,
-    bytes32[][] _signingAlgosByKeyType
+    bytes32[][] signingAlgosByKeyType
 );
 ```
 
+### SystemSupportedKeyTypesAndSigningAlgosRemoved
+
+Emitted by: `removeSystemSupportedKeyTypesAndSigningAlgos()`
+
+```solidity
+event SystemSupportedKeyTypesAndSigningAlgosRemoved(
+    bytes32[] keyTypes,
+    bytes32[][] signingAlgosByKeyType
+);
+```
 ## Machine Registry
 
 ### TeeMachineRegistered
@@ -172,7 +204,8 @@ event TeeMachineRegistered(
     uint256 extensionId,
     string url,
     bytes32 codeHash,
-    bytes32 platform
+    bytes32 platform,
+    bytes32 governanceHash
 );
 ```
 
@@ -224,52 +257,102 @@ event NewOwnerConfirmed(
 
 ## Owner Allowlist
 
+AllowedExtensionOwnersAdded(address[] owners), AllowedExtensionOwnersRemoved(address[] owners), AllExtensionOwnersAllowed(), AllExtensionOwnersDisallowed()
+
+### AllowedExtensionOwnersAdded
+
+```solidity
+event AllowedExtensionOwnersAdded(
+    address[] Owners
+);
+```
+
+### AllowedExtensionOwnersRemoved
+
+```solidity
+event AllowedExtensionOwnersRemoved(
+    address[] Owners
+);
+```
+
+### AllExtensionOwnersAllowed
+
+```solidity
+event AllExtensionOwnersAllowed();
+```
+
+### AllExtensionOwnersRemoved
+
+```solidity
+event AllExtensionOwnersRemoved();
+```
+
 ### AllowedTeeMachineOwnersAdded
 
 ```solidity
-event AllowedTeeMachineOwnersAdded(uint256 extensionId, address[] owners);
+event AllowedTeeMachineOwnersAdded(
+    uint256 indexed extensionId, 
+    address[] owners
+    );
 ```
 
 ### AllowedTeeMachineOwnersRemoved
 
 ```solidity
-event AllowedTeeMachineOwnersRemoved(uint256 extensionId, address[] owners);
+event AllowedTeeMachineOwnersRemoved(
+    uint256 indexed extensionId, 
+    address[] owners
+    );
 ```
 
 ### AllowedTeeWalletProjectOwnersAdded
 
 ```solidity
-event AllowedTeeWalletProjectOwnersAdded(uint256 extensionId, address[] owners);
+event AllowedTeeWalletProjectOwnersAdded(
+    uint256 indexed extensionId, 
+    address[] owners
+    );
 ```
 
 ### AllowedTeeWalletProjectOwnersRemoved
 
 ```solidity
-event AllowedTeeWalletProjectOwnersRemoved(uint256 extensionId, address[] owners);
+event AllowedTeeWalletProjectOwnersRemoved(
+    uint256 indexed extensionId, 
+    address[] owners
+    );
 ```
 
 ### AllTeeMachineOwnersAllowed
 
 ```solidity
-event AllTeeMachineOwnersAllowed(uint256 extensionId);
+event AllTeeMachineOwnersAllowed(
+    uint256 indexed extensionId
+    );
 ```
 
 ### AllTeeMachineOwnersDisallowed
 
 ```solidity
-event AllTeeMachineOwnersDisallowed(uint256 extensionId);
+event AllTeeMachineOwnersDisallowed(
+    uint256 indexed extensionId
+    );
 ```
 
 ### AllTeeWalletProjectOwnersAllowed
 
 ```solidity
-event AllTeeWalletProjectOwnersAllowed(uint256 extensionId);
+event AllTeeWalletProjectOwnersAllowed(
+    uint256 indexed extensionId
+    );
 ```
 
 ### AllTeeWalletProjectOwnersDisallowed
 
 ```solidity
-event AllTeeWalletProjectOwnersDisallowed(uint256 extensionId);
+event AllTeeWalletProjectOwnersDisallowed(
+    uint256 indexed extensionId
+    );
 ```
 
 ## Emergency Pause
@@ -352,31 +435,6 @@ event NewTeeGovernanceSet(
 );
 ```
 
-### NewPausingAddressesSet
-
-Emitted by: `setTeePausingAddresses()`
-
-```solidity
-event NewPausingAddressesSet(
-    uint256 indexed extensionId,
-    uint256 indexed nonce,
-    address[] pausingAddresses
-);
-```
-
-### NewPausingAddressesSigned
-
-Emitted by: `signTeePausingAddresses()`
-
-```solidity
-event NewPausingAddressesSigned(
-    uint256 indexed extensionId,
-    uint256 indexed nonce,
-    address indexed signer,
-    Signature signature
-);
-```
-
 ## Verification
 
 ### TeeAttestationRequested
@@ -446,119 +504,6 @@ event OperationFeesSet(
     bytes32[] opTypes,
     bytes32[] opCommands,
     uint256[] fees
-);
-```
-
-## Replication
-
-### PauseBeforeUpgradeMinDurationSecondsSet
-
-Emitted by: `setPauseBeforeUpgradeMinDurationSeconds()`
-
-```solidity
-event PauseBeforeUpgradeMinDurationSecondsSet(
-    uint256 pauseBeforeUpgradeMinDurationSeconds
-);
-```
-
-### TeeMachinePausedForUpgrade
-
-Emitted by: `toPauseForUpgrade()`
-
-```solidity
-event TeeMachinePausedForUpgrade(
-    address indexed teeId
-);
-```
-
-### TeeMachineReplicationTriggered
-
-Emitted by: `replicateFrom()`
-
-```solidity
-event TeeMachineReplicationTriggered(
-    address indexed oldTeeId,
-    address indexed newTeeId,
-    uint256 teeUpgradeId
-);
-```
-
-### TeeMachineReplicationConfirmed
-
-Emitted by: `confirmReplicate()`
-
-```solidity
-event TeeMachineReplicationConfirmed(
-    address indexed oldTeeId,
-    address indexed newTeeId
-);
-```
-
-## Upgrade
-
-### TeeUpgradeStarted
-
-Emitted by: `startUpgrade()`
-
-```solidity
-event TeeUpgradeStarted(
-    uint256 indexed extensionId,
-    uint256 indexed teeUpgradeId,
-    bytes32 sourceTeeGovernanceHash,
-    bytes32 targetTeeGovernanceHash
-);
-```
-
-### TeeUpgradePathsAdded
-
-Emitted by: `addUpgradePaths()`
-
-```solidity
-event TeeUpgradePathsAdded(
-    uint256 indexed teeUpgradeId,
-    TeeUpgradePath[] upgradePaths
-);
-```
-
-### TeeUpgradeFinalized
-
-Emitted by: `finalizeUpgrade()`
-
-```solidity
-event TeeUpgradeFinalized(
-    uint256 indexed teeUpgradeId
-);
-```
-
-### TeeUpgradeSourceSignatureAdded
-
-Emitted by: `signUpgradeAsSource()`
-
-```solidity
-event TeeUpgradeSourceSignatureAdded(
-    uint256 indexed teeUpgradeId,
-    address indexed signer
-);
-```
-
-### TeeUpgradeTargetSignatureAdded
-
-Emitted by: `signUpgradeAsTarget()`
-
-```solidity
-event TeeUpgradeTargetSignatureAdded(
-    uint256 indexed teeUpgradeId,
-    address indexed signer
-);
-```
-
-### TeeUpgradeSigned
-
-Emitted by: `signUpgradeAsSource()`, `signUpgradeAsTarget()` (when both source and target thresholds are met)
-
-```solidity
-event TeeUpgradeSigned(
-    uint256 indexed teeUpgradeId
 );
 ```
 
@@ -801,7 +746,7 @@ event WalletKeysNotAvailable(
 );
 ```
 
-## Wallet Backups
+## Backups
 
 ### BackupRestoreTriggered
 
@@ -816,6 +761,92 @@ event BackupRestoreTriggered(
 );
 ```
 
+### DirectBackupTriggered
+
+Emitted by: `directBackup()`
+
+```solidity
+event DirectBackupTriggered(
+    address indexed sourceTeeId,
+    address indexed destinationTeeID,
+    bytes32 indexed walletId,
+    uint64 indexed keyId,
+    bytes32 backupInstructionId
+);
+```
+
+### DirectRestoreTriggered
+
+Emitted by: `directRestore()`
+
+```solidity
+event DirectRestoreTriggered(
+    address indexed destinationTeeID,
+    bytes32 indexed walletId,
+    uint64 indexed keyId,
+    uint256 destinationNonce,
+    bytes32 backupInstructionId
+);
+```
+
+### MachinePathListStarted
+
+Emitted by: `createNewMachinePathList()`
+
+```solidity
+event MachinePathListStarted(
+    uint256 indexed extensionId,
+    uint256 indexed nonce
+);
+```
+
+### MachinePathsAdded
+
+Emitted by: `addMachinePaths()`
+
+```solidity
+event MachinePathsAdded(
+    uint256 indexed extensionId,
+    uint256 indexed nonce,
+    MachinePath[] paths
+);
+```
+### MachinePathListFinalized
+
+Emitted by: `finalizeMachinePathList()`
+
+```solidity
+event MachinePathListFinalized(
+    uint256 indexed extensionId,
+    uint256 indexed nonce,
+    bytes32[] involvedGovernanceHashes
+);
+```
+
+### MachinePathListSignatureAdded
+
+Emitted by: `signMachinePathList()`
+
+```solidity
+event MachinePathListSignatureAdded(
+    uint256 indexed extensionId,
+    uint256 indexed nonce,
+    address indexed signer,
+    bytes32[] countedGovernanceHashes
+);
+```
+
+### MachinePathListSigned
+
+Emitted by: `signMachinePathList()`
+
+```solidity
+event MachinePathListSigned(
+    uint256 indexed extensionId,
+    uint256 indexed nonce
+);
+```
+
 ## VRF
 
 ### VrfRequested
@@ -825,8 +856,8 @@ Emitted by: `requestVrf()`
 ```solidity
 event VrfRequested(
     bytes32 indexed walletId,
-    uint64 keyId,
-    bytes32 instructionId
+    uint64 indexed keyId,
+    bytes32 indexed instructionId
 );
 ```
 

@@ -12,6 +12,8 @@ It runs as either a _[data provider](../../../Terminology/Roles.md#data-provider
 3. For [augmented](../../Concepts/Instructions.md#augmentation) commands, run the per-command procedure:
    - [`F_FDC2 PROVE`](../../../FDC2/Reference/Operations/Prove.md#augmentation-procedure)
    - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#augmentation)
+   - [`F_WALLET KEY_DIRECT_RESTORE`](../Operations/F_WALLET.md#augmentation)
+
 4. De-duplicate the event's `teeMachines` list and, for each remaining [`TeeMachine`](../Types/Abi/TeeMachine.md#teemachine) record, build one [`Instruction`](../Types/Wire/Instruction.md#instruction):
    - Copy from the event: `instructionId`, `rewardEpochId`, `opType`, `opCommand`, `cosigners`, `cosignersThreshold`, and the event's `message` (as `originalMessage`).
    - Set `timestamp` to the emitting block's timestamp.

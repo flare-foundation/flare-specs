@@ -33,6 +33,8 @@ Where a type appears in both contexts, the ABI page defines the canonical struct
 - [KeyExistence](Abi/Key.md#keyexistence) — Proof of key existence (ABI-encoded; see [wire form](Wire/Key.md#signedkeyexistenceproof)).
 - [KeyDelete](Abi/Key.md#keydelete) — Key deletion instruction message.
 - [BackupId](Abi/Key.md#backupid) — Key backup identifier.
+- [KeyDirectBackup](Abi/Key.md#keydirectbackup) - Key direct backup instruction message.
+- [KeyDirectRestore](Abi/Key.md) - Key direct restore instruction message
 - [KeyDataProviderRestore](Abi/Key.md#keydataproviderrestore) — Key restoration instruction message.
 - [VrfInstructionMessage](Abi/Key.md#vrfinstructionmessage) — VRF proof generation instruction.
 

@@ -52,6 +52,7 @@ Contains the same logical fields as the [Attestation](../Abi/TeeMachine.md#attes
   "$id": "TeeInfo",
   "type": "object",
   "properties": {
+    "chainID": { "type": "integer", "format": "uint256", "description": "ID of the chain the TEE is deployed to e.g. Flare, Songbird." },
     "challenge": { "type": "string", "format": "bytes32", "description": "Challenge used for attestation." },
     "publicKey": { "$ref": "Common.md#publickey", "description": "Identity public key." },
     "initialSigningPolicyId": { "type": "integer", "format": "uint32", "description": "Initial signing policy ID (never changes)." },
@@ -59,9 +60,11 @@ Contains the same logical fields as the [Attestation](../Abi/TeeMachine.md#attes
     "lastSigningPolicyId": { "type": "integer", "format": "uint32", "description": "Last signing policy ID." },
     "lastSigningPolicyHash": { "type": "string", "format": "bytes32", "description": "Last signing policy hash." },
     "state": { "$ref": "#teestate" },
-    "teeTimestamp": { "type": "integer", "format": "uint64", "description": "Local TEE machine timestamp." }
+    "teeTimestamp": { "type": "integer", "format": "uint64", "description": "Local TEE machine timestamp." },
+    "machinePathListNonce": { "type": "integer", "format": "uint256", "description": "Nonce of the machine path list known to the TEE." },
+    "machinePathListHash": { "type": "integer", "format": "bytes32", "description": "Nonce of the machine path list known to the TEE." }
   },
-  "required": ["challenge", "publicKey", "initialSigningPolicyId", "initialSigningPolicyHash", "lastSigningPolicyId", "lastSigningPolicyHash", "state", "teeTimestamp"]
+  "required": ["chainID", "challenge", "publicKey", "initialSigningPolicyId", "initialSigningPolicyHash", "lastSigningPolicyId", "lastSigningPolicyHash", "state", "teeTimestamp", "machinePathListNonce", "machinePathListHash"]
 }
 ```
 
@@ -98,8 +101,9 @@ Machine registration data included in [TeeInfoResponse](#teeinforesponse).
     "initialOwner": { "type": "string", "format": "address", "description": "Address of the initial owner." },
     "codeHash": { "type": "string", "format": "bytes32", "description": "Digest of code running in the TEE." },
     "platform": { "type": "string", "format": "bytes32", "description": "Platform identifier." },
-    "publicKey": { "$ref": "Common.md#publickey", "description": "Identity public key." }
+    "publicKey": { "$ref": "Common.md#publickey", "description": "Identity public key." },
+    "governanceHash": { "type": "integer", "format": "bytes32", "description": "Stored governance hash." }
   },
-  "required": ["extensionId", "initialOwner", "codeHash", "platform", "publicKey"]
+  "required": ["extensionId", "initialOwner", "codeHash", "platform", "publicKey", "governanceHash"]
 }
 ```

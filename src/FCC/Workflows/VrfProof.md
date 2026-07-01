@@ -31,7 +31,6 @@ For canonical VRF key semantics, see [Concepts/Keys § VRF Keys](../Concepts/Key
 - **Caller**: the wallet's VRF authorisation address.
 - **Guards**:
   - `wallet.status = PRODUCTION`
-  - `key.signingAlgo = keccak256-secp256k1-vrf`
   - `nonce` is non-empty
   - `key.teeIds` contains at least one machine in `PRODUCTION`
   - `msg.value ≥ fee(F_WALLET, VRF)`

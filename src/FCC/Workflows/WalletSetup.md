@@ -94,21 +94,27 @@ Per-key sub-state for each requested `keyId`: see [KeyAdd § States](KeyAdd.md#s
 
 - Each `keyId` is governed by the [KeyAdd](KeyAdd.md) sub-state-machine; the wallet stays in `WalletInitialized` until `enableWallet`.
 
-### enableWallet: WalletInitialized | WalletPaused → WalletProduction
+### enableWallet: WalletInitialized → WalletProduction
 
 - **Action**: `FlareTeeManager.enableWallet(walletId)`.
 - **Caller**: project owner.
 - **Guards**:
-  - `wallet.status ∈ {INITIALIZED, PAUSED}`.
+  - `wallet.status` is `INITIALIZED`.
   - `multisigThreshold` has been set.
   - At least `multisigThreshold` keys are in `Confirmed` ([KeyAdd terminal state](KeyAdd.md#terminal-states)).
 - **Effects**: `wallet.status = PRODUCTION`; emits [`WalletEnabled`](../Reference/Contracts/FlareTeeManagerEvents.md#walletenabled).
 
-### pauseWallet: WalletProduction → WalletPaused
+### pauseWallets: WalletProduction → WalletPaused
 
-- **Action**: `FlareTeeManager.pauseWallet(walletId)`.
-- **Caller**: project owner.
-- **Effects**: `wallet.status = PAUSED`; emits [`WalletPaused`](../Reference/Contracts/FlareTeeManagerEvents.md#walletpaused). The wallet stops accepting payment instructions on chain. TEE-side key pausing requires the separate [`setPausingAddresses` / `resume`](../Reference/Contracts/FlareTeeManager.md#pausing-keys-at-the-tee) flow.
+- **Action**: `FlareTeeManager.pauseWallets(walletIds)`.
+- **Caller**: project owner or allowlisted project pauser.
+- **Effects**: `wallet.status = PAUSED` for each `walletId` in `walletIds`; emits [`WalletsPaused`](../Reference/Contracts/FlareTeeManagerEvents.md#walletspaused). The wallet stops accepting payment instructions on chain. TEE-side key pausing requires the separate [`setPausingAddresses` / `resume`](../Reference/Contracts/FlareTeeManager.md#pausing-keys-at-the-tee) flow.
+
+### unpauseWallets: WalletPaused → WalletProducation
+
+- **Action**: `FlareTeeManager.unpauseWallets(walletIds)`.
+- **Caller**: project owner or allowlisted project pauser.
+- **Effects**: `wallet.status = PRODUCTION` for each `walletId` in `walletIds`; emits [`WalletsUnpaused`](../Reference/Contracts/FlareTeeManagerEvents.md#walletsunpaused). The wallet stops accepting payment instructions on chain. TEE-side key pausing requires the separate [`setPausingAddresses` / `resume`](../Reference/Contracts/FlareTeeManager.md#pausing-keys-at-the-tee) flow.
 
 ## Invariants
 

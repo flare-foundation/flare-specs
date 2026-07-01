@@ -33,7 +33,7 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 - **Caller**: machine operator (with network access to the machine's port `5500`).
 - **Guards**:
   - `initialOwner` is immutable once set.
-  - `extensionId` becomes immutable after the first successful [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof.
+  - `extensionId` it immutable once set.
 - **Effects**:
   - The machine connects to the proxy and starts polling for actions.
   - The proxy's `GET /info` endpoint now serves a `SignedTeeInfoResponse` carrying `(teeId, publicKey, codeHash, platform, extensionId, initialOwner, attestation, dataSignature, proxySignature)` — the inputs to `register` come from here.
@@ -49,6 +49,7 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
   - `teeProxyId ≠ 0`, `url` non-empty.
   - `teeId` (the address of `machineData.publicKey`) is not already registered.
   - `msg.value` covers the auto-enqueued attestation request.
+  - `machineData.governanceHash` equals the extension's current governance hash (or is $0$).
 - **Effects**:
   - Creates the machine record with `status = INITIALIZED`.
   - Auto-emits a [`TEE_ATTESTATION`](../Reference/Operations/F_REG.md#tee_attestation) request via [`requestTeeAttestation`](#requestteeattestation-initialized--initialized-fresh-challenge); the corresponding [`TeeInstructionsSent`](../Reference/Contracts/FlareTeeManagerEvents.md#teeinstructionssent) and [`TeeAttestationRequested`](../Reference/Contracts/FlareTeeManagerEvents.md#teeattestationrequested) events fire.
@@ -86,7 +87,7 @@ For ongoing operations on a registered machine, see [MachineLifecycle](MachineLi
 ## Invariants
 
 - The on-chain `teeId` is bit-equal to the address derived from the TEE-generated `publicKey`; the registration `signature` is the only proof that the off-chain operator controls the corresponding private key.
-- `initialOwner` is immutable from `LocallyConfigured` onward; `extensionId` is immutable from `Attested` onward.
+- `initialOwner` is immutable from `LocallyConfigured` onward; `extensionId` is immutable once set.
 - Reaching `Production` requires a `TeeAvailabilityCheck` proof from the FDC2 sub-workflow; no other path exists.
 
 ## Terminal States

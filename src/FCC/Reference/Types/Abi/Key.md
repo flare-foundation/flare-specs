@@ -113,6 +113,45 @@ The backup hash is defined as $\mathrm{hash}(\mathrm{ABI.encode}(\mathrm{BackupI
 }
 ```
 
+## KeyDirectBackup
+
+Instruction message for creating a direct key backup.
+
+```json
+{
+  "$id": "KeyDirectBackup",
+  "type": "object",
+  "properties": {
+    "sourceTeeID": { "type": "string", "format": "address", "description": "TEE machine on which the key is held."},
+    "walletId": { "type": "string", "format": "bytes32", "description": "Wallet ID of the key." },
+    "keyId": { "type": "integer", "format": "uint64", "description": "Key ID of the key." },
+    "destinationTeePublicKey": { "type": "string", "format": "address", "description": "TEE machine on which the key can be restored." },
+    "machinePathListNonce": { "type": "string", "format": "uint256", "description": "Replay-protection nonce for the machine path list on which the source/destination pair is found." }
+  },
+  "required": ["sourceTeeId", "walletId", "keyId", "destinationTeePublicKey", "machinePathListNonce"]
+}
+```
+
+## KeyDirectRestore
+
+Instruction message for directly restoring a key onto a TEE machine.
+
+```json
+{
+  "$id": "KeyDirectRestore",
+  "type": "object",
+  "properties": {
+    "sourceTeeID": { "type": "string", "format": "address", "description": "TEE machine from which the backup was created."},
+    "sourceProxyUrl": { "type": "string", "format": "bytes32", "description": "URL of the proxy of the source machine." },
+    "backupId": { "type": "integer", "format": "uint64", "description": "ID of the backup to be restored." },
+    "backupInstructionId": { "type": "string", "format": "bytes32", "description": "ID of the instruction on which the backup was issued." },
+    "destinationNonce": { "type": "string", "format": "uint256", "description": "Replay-protection nonce for use in attesting the key once restored."}
+    "machinePathListNonce": { "type": "string", "format": "uint256", "description": "Replay-protection nonce for the machine path list on which the source/destination pair is found." }
+  },
+  "required": ["sourceTeeId", "sourceProxyUrl", "backupId", "backupInstructionId", "destinationNonce", "machinePathListNonce"]
+}
+```
+
 ## KeyDataProviderRestore
 
 Instruction message for restoring a previously backed-up key onto a target TEE machine.

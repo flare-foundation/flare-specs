@@ -53,6 +53,7 @@ The struct ABI-encoded and hashed to produce the TEE-specific challenge for plat
   "$id": "Attestation",
   "type": "object",
   "properties": {
+    "chainID": { "type": "integer", "format": "uint256", "description": "ID of the chain the TEE is deployed to e.g. Flare, Songbird." },
     "challenge": { "type": "string", "format": "bytes32", "description": "Challenge value bound to this attestation." },
     "publicKey": { "$ref": "Common.md#publickey", "description": "Public key corresponding to the TEE identity." },
     "initialSigningPolicyId": { "type": "integer", "format": "uint32", "description": "ID of the first signing policy available to the TEE." },
@@ -60,9 +61,11 @@ The struct ABI-encoded and hashed to produce the TEE-specific challenge for plat
     "lastSigningPolicyId": { "type": "integer", "format": "uint32", "description": "ID of the most recent signing policy available to the TEE." },
     "lastSigningPolicyHash": { "type": "string", "format": "bytes32", "description": "Hash of the most recent signing policy." },
     "state": { "$ref": "#teestate" },
-    "teeTimestamp": { "type": "integer", "format": "uint64", "description": "Local timestamp at the TEE machine at time of attestation." }
+    "teeTimestamp": { "type": "integer", "format": "uint64", "description": "Local timestamp at the TEE machine at time of attestation." },
+    "machinePathListNonce": { "type": "integer", "format": "uint256", "description": "Nonce of the machine path list known to the TEE." },
+    "machinePathListHash": { "type": "integer", "format": "bytes32", "description": "Nonce of the machine path list known to the TEE." }
   },
-  "required": ["challenge", "publicKey", "initialSigningPolicyId", "initialSigningPolicyHash", "lastSigningPolicyId", "lastSigningPolicyHash", "state", "teeTimestamp"]
+  "required": ["chainID" "challenge", "publicKey", "initialSigningPolicyId", "initialSigningPolicyHash", "lastSigningPolicyId", "lastSigningPolicyHash", "state", "teeTimestamp", "machinePathListNonce", "machinePathListHash"]
 }
 ```
 
@@ -97,8 +100,9 @@ TEE machine registration data included in attestation instructions.
     "initialTeeId": { "type": "string", "format": "address", "description": "Initial TEE machine ID (for future use)" },
     "url": { "type": "string", "description": "TEE machine URL." },
     "codeHash": { "type": "string", "format": "bytes32", "description": "Hash of the code running in the TEE." },
-    "platform": { "type": "string", "format": "bytes32", "description": "Platform identifier (e.g., INTEL_TDX, GCP_AMD_SEV)." }
+    "platform": { "type": "string", "format": "bytes32", "description": "Platform identifier (e.g., INTEL_TDX, GCP_AMD_SEV)." },
+    "governanceHash": { "type": "integer", "format": "bytes32", "description": "Stored governance hash." }
   },
-  "required": ["teeId", "initialTeeId", "url", "codeHash", "platform"]
+  "required": ["teeId", "initialTeeId", "url", "codeHash", "platform", "governanceHash"]
 }
 ```

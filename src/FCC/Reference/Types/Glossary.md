@@ -14,6 +14,6 @@ This page defines each format and its JSON wire representation.
 | `uint16` | `uint16` | JSON number | `4000` |
 | `uint8` | `uint8` | JSON number | `1` |
 
-All byte and hash values use lowercase hex with a `0x` prefix.
+All byte and hash values use lowercase hex.
 Integer types up to $64$ bits are represented as JSON numbers.
 The `uint256` type may appear as either a JSON number or a decimal string depending on context.

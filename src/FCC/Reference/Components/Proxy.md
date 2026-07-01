@@ -10,7 +10,7 @@ Each proxy holds an identity key pair generated at deployment.
 The public part — $\mathrm{Proxy}_\mathrm{ID}$ — is registered on Flare against the machine's `teeId` at [registration](../../Concepts/Machines.md), and the proxy uses the private part to sign its receipts and action responses.
 
 Both proxy and machine are owned by the same operator.
-To prevent the operator from silently dropping requests at the proxy layer, every external-write API returns a receipt signed by the TEE machine itself.
+To prevent the operator from silently dropping requests at the proxy layer, every external-write API returns a receipt signed by the TEE proxy.
 Until a caller holds that receipt, it has no guarantee that the proxy forwarded the request.
 
 ## Signing Policy
@@ -98,7 +98,7 @@ Transient statuses are therefore monotonically increasing and final statuses are
 A small set of successful system operation results trigger proxy-side follow-up before storage:
 
 1. [`UPDATE_POLICY`](../Operations/F_POLICY.md#update_policy): the proxy enqueues a [`TEE_BACKUP`](../Operations/F_GET.md#tee_backup) action on the backup queue for every stored wallet key.
-2. [`KEY_GENERATE`](../Operations/F_WALLET.md#key_generate), [`KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#key_data_provider_restore), [`KEY_DELETE`](../Operations/F_WALLET.md#key_delete): the proxy updates its tracked keys; additions also enqueue a `TEE_BACKUP` for the new key.
+2. [`KEY_GENERATE`](../Operations/F_WALLET.md#key_generate), [`KEY_DATA_PROVIDER_RESTORE`](../Operations/F_WALLET.md#key_data_provider_restore), [`KEY_DIRECT_RESTORE`](../Operations/F_WALLET.md#key_direct_restore), [`KEY_DELETE`](../Operations/F_WALLET.md#key_delete): the proxy updates its tracked keys; additions also enqueue a `TEE_BACKUP` for the new key.
 3. [`TEE_BACKUP`](../Operations/F_GET.md#tee_backup): the produced backup is made available via the [external backup APIs](#external-read-apis).
 
 ## Proxy State
@@ -108,7 +108,7 @@ A small set of successful system operation results trigger proxy-side follow-up 
 Survive proxy restarts; held in a key-value store that supports queues (Redis in the reference deployment, any equivalent backend works).
 Retention is per record.
 
-- **Action store**: `(actionId, submissionTag) → actionData`. Tracks the action payload that was queued for the machine. Retained for $30$ days.
+- **Action store**: `(actionId, submissionTag) → actionData`. Tracks the action payload that was queued for the machine. Retained for $14$ days.
 - **Action result store**: `(actionId, submissionTag) → actionResult`. Tracks the result returned by the machine. Retained for $14$ days; `submit`-tag results for $30$ minutes. Subject to [override rules](#result-store-override-rules).
 - **Backup store**: `backupIdHash → backupData`. Holds extracted key backups produced by [`TEE_BACKUP`](../Operations/F_GET.md#tee_backup), triggered by [`UPDATE_POLICY`](../Operations/F_POLICY.md#update_policy) and key generation/restoration. Retained for $8$ days.
 - **Backup index store**: `(walletId, keyId) → backupIdHash`. Resolves a wallet key to the latest backup. Retained for $8$ days.
@@ -131,18 +131,21 @@ All APIs return standard HTTP responses.
 A successful response is `200 OK` with a JSON body.
 Error responses include a `description` field for diagnostics.
 Malformed input returns `400 Bad Request`.
+Oversized input returns `413 Content Too Large`.
 
 ### External Write APIs
 
 Used by [data providers](../../../Terminology/Roles.md#data-provider) and other external callers.
-Every request carries a random challenge; responses return a receipt signed by the TEE machine.
+Every request carries a random challenge; responses return a receipt signed by the TEE proxy.
 
 - **`POST /instruction`** — submits a signed [`Instruction`](../Types/Wire/Instruction.md#instruction).
   The proxy validates the target TEE ID, the operation pair, and the signer identity before accepting or advancing the vote; queued actions land on the [main queue](#processing-queues).
   Responses:
   - **$200$ OK**: receipt with `instructionHash`, `sequence`, `signature`, `additionalVariableMessageHash`, `timestamp`, `voteHash`, and a proxy signature.
-  - **$400$ Bad Request**: instruction malformed or over the [size limits](#size-constraints).
+  - **$400$ Bad Request**: instruction malformed.
   - **$403$ Forbidden**: sender is not allowed to start a voting process (not a data provider); the client may retry after a short delay.
+  - **$410$ Gone**: vote process has already ended.
+  - **$413$ Content Too Large**: instruction over the [size limits](#size-constraints).
   - **$429$ Too Many Requests**: per-data-provider [open-vote cap](#per-provider-open-vote-cap) reached; the [relay client](RelayClient.md) should retry.
   - **$500$ Internal Server Error**: other error; details in `description`.
 
@@ -150,15 +153,15 @@ Every request carries a random challenge; responses return a receipt signed by t
   Optionally enabled per deployment and may require API-key authentication.
   System (`F_`-prefixed) operations are rejected.
   Responses:
-  - **$200$ OK**: receipt with `directInstruction` and `actionId`, signed by the proxy identity.
+  - **$200$ OK**: receipt with `directInstruction` and `actionId`.
   - **$400$ Bad Request**: system op-type submitted to the external endpoint.
-  - **$429$ Too Many Requests**: the corresponding action is or was already in the queue.
+  - **$401$ Unauthorized**: wrong or missing API key.
   - **$500$ Internal Server Error**: other error.
 
 ### External Read APIs
 
 - **`GET /info`** — latest TEE attestation. Reads from the cached [`TEE_INFO`](../Operations/F_GET.md#tee_info) result.
-  - **$200$ OK**: `teeInfo` (`challenge`, `publicKey`, `initialSigningPolicyId`, `initialSigningPolicyHash`, `lastSigningPolicyId`, `lastSigningPolicyHash`, `state`, `teeTimestamp`, `platform`, `attestation`, `proxySignature`).
+  - **$200$ OK**: `teeInfo` (`challenge`, `publicKey`, `initialSigningPolicyId`, `initialSigningPolicyHash`, `lastSigningPolicyId`, `lastSigningPolicyHash`, `chainId`, `state`, `teeTimestamp`, `machinePathListNonce`, `machinePathListHash`), `machineData`, `dataSignature`, `attestation`, and `proxySignature`.
   - **$503$ Service Unavailable**: proxy not yet initialized.
 
 - **`GET /wallet/<walletId>/<keyId>`** — latest [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) and decoded [`KeyData`](../Types/Wire/Key.md) for the key.
@@ -166,22 +169,26 @@ Every request carries a random challenge; responses return a receipt signed by t
   - **$400$ Bad Request**: malformed `walletId` or `keyId`.
   - **$404$ Not Found**: no data for the given key.
 
+- **`GET /wallet/<walletId>/<keyId>`** — latest wallet and key counts and their relationship.
+  - **$200$ OK**: `wallets`, `keys` (counts) and `pairs` (mapping of `walletId`, `keyId` pairs).
+  - **$404$ Not Found**: no data.
+
 - **`GET /action/result/<actionId>?submissionTag=<tag>`** — action result. Default `submissionTag = threshold`.
-  - **$200$ OK**: `data` (the action result) and `proxySignature` over `hash(data.data)`.
+  - **$200$ OK**: `result` (the action result) and `proxySignature` over `hash(hash(data), id, hash(submissionTag),status)`.
   - **$400$ Bad Request**: malformed `actionId` or `submissionTag`.
   - **$404$ Not Found**: no data for the key.
 
 - **`GET /action/status/<rewardEpochId>/<instructionId>`** — diagnostic view of the voting processes for an instruction.
-  - **$200$ OK**: `instructionId`, `finalizedHash` (zero if none finalized), and `voteResults` (`instructionHash`, `weight`, `threshold`, `cosigners`, `cosignersThreshold`, `finalized`, `start`, `end` per process).
+  - **$200$ OK**: `instructionId`, `finalizedHash` (zero if none finalized), and `status` (`instructionHash`, `weight`, `threshold`, `cosigners`, `cosignersThreshold`, `finalized`, `deleted`, `start`, `end` per process).
   - **$400$ Bad Request**: malformed `rewardEpochId` or `instructionId`.
   - **$404$ Not Found**: no data.
 
 - **`GET /backup/<backupIdHash>`** — backup package by backup ID hash.
-  - **$200$ OK**: `backupId` and JSON-encoded `backup`.
+  - **$200$ OK**: `backupId` and JSON-encoded `walletBackup`.
   - **$404$ Not Found**: no data.
 
 - **`GET /backup/<walletId>/<keyId>`** — latest backup for a given private key.
-  - **$200$ OK**: `backupId` and JSON-encoded `backup`.
+  - **$200$ OK**: `backupId` and JSON-encoded `walletBackup`.
   - **$404$ Not Found**: no data.
 
 ### Internal APIs
@@ -194,7 +201,7 @@ Behind a firewall; accessible only to the owner and the paired TEE machine.
 
 - **`POST /result`** — pushes an [`ActionResponse`](../Types/Wire/Action.md#actionresponse) back to the proxy.
   The proxy verifies the response's signature against the paired TEE machine before storing it.
-  - **$200$ OK**: stored.
+  - **$200$ OK**: accepted.
 
 - **`GET /healthy`** — health probe.
 - **`GET /startup`** — startup probe (returns `200 OK` once startup completes).

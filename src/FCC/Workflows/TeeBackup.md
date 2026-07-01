@@ -1,6 +1,7 @@
 # TeeBackup
 
-Lifecycle of one wallet-key backup from creation inside a TEE machine to consumption during a [KeyRestore](KeyRestore.md). A single backup may be created once, stored externally, and consumed any number of times — each consumption restores the key onto a different TEE machine.
+Lifecycle of one wallet-key backup from creation inside a TEE machine to consumption during a [KeyRestore](KeyRestore.md).
+A single backup may be created once, stored externally, and consumed any number of times; each consumption restores the key onto a different TEE machine.
 
 For the cryptographic construction (Shamir secret sharing + ECIES under the data providers' public keys), see [Concepts/Keys § Backup Procedure](../Concepts/Keys.md#backup-procedure); for the operations, [`F_GET TEE_BACKUP`](../Reference/Operations/F_GET.md#tee_backup) and [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#key_data_provider_restore).
 
@@ -43,7 +44,7 @@ For the cryptographic construction (Shamir secret sharing + ECIES under the data
 
 ### restore: Stored → Consumed
 
-- **Action**: [`TeeWalletBackupManager.backupRestore(teeId_target, backupId, backupUrl, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#wallet-management) — payable.
+- **Action**: [`FlareTeeeManager.backupRestore(teeId_target, backupId, backupUrl, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#wallet-management) — payable.
 - **Caller**: `backupManager` of the wallet's project.
 - **Guards**:
   - `backupId.walletId` exists; the key is not already available on `teeId_target`.

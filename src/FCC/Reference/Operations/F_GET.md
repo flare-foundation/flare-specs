@@ -6,7 +6,7 @@
 
 Liveness and state polling.
 The proxy issues it periodically (every $\sim 10$ seconds), with a challenge derived from the latest C-chain block hash; the result feeds the [last-attestation cache](../Components/Proxy.md#in-memory-stores) served at `GET /info`.
-The TEE machine signs an [`Attestation`](../Types/Abi/TeeMachine.md#attestation) struct over the supplied challenge and returns it together with platform attestation data.
+The TEE machine signs an [`Attestation`](../Types/Abi/TeeMachine.md#attestation) struct over its machine data and returns it together with platform attestation data.
 
 **Action message:** [`TeeInfoRequest`](../Types/Wire/TeeMachine.md#teeinforequest).
 
@@ -31,6 +31,8 @@ Issued during the proxy's periodic [`KEY_INFO`](#key_info) sync, batched for pai
 **Action result:** a JSON array of [`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof), in the same order as the request.
 
 **Validation.** The TEE machine rejects the request if any requested `(walletId, keyId)` is not currently stored on the machine.
+
+>**Note:** Currently unsuitable to use in production code due to a lack of replay protection.
 
 ## TEE_BACKUP
 

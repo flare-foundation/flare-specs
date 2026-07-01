@@ -36,6 +36,7 @@ where $V$ is the set of voting data providers, $W_i$ their weights under that si
 The cosigner term is vacuous when the instruction lists no cosigners.
 
 $t$ is the [signing policy's threshold](../../FSP/SigningPolicy.md#normalized-weights) for every command (including all user-defined commands) except [`F_FDC2 PROVE`](../../FDC2/Reference/Operations/Prove.md), which may carry a per-instruction override.
+If $t$ is set at $50\%$ of cosigner weight or below, then $C$ additionally needs to exceed half the total number of possible cosigners.
 
 If the box closes without these conditions ever holding, it is silently dropped.
 

@@ -42,7 +42,7 @@ For the FSP side, see [`SigningPolicy`](../../FSP/SigningPolicy.md); for the ope
 - **Caller**: TEE machine (`F_POLICY` handler).
 - **Guards**:
   - signed-by-prior-policy chain valid: the new policy's signatures recover under the machine's _current_ `lastSigningPolicyId` voter set with the prior policy's threshold.
-  - `rewardEpochId > lastSigningPolicyId`.
+  - `rewardEpochId` = `lastSigningPolicyId` + 1.
 - **Effects**: machine's `lastSigningPolicyId` and `lastSigningPolicyHash` advance to the new policy; subsequent instruction verification uses the new voter set and thresholds.
 
 ### refresh: Adopted → Active

@@ -48,12 +48,13 @@ The instruction carries two fields the signer may populate per command:
 1. `additionalFixedMessage`: Lies inside `TeeInstruction`, is part of [`instructionHash`](#hashes), and must be identical across all signers contributing to the same vote.
 2. `additionalVariableMessage`: Lies alongside `TeeInstruction` in `data`, is hashed and signed separately, and may differ per signer.
 
-Two system operations populate them via a per-command procedure run by the relay client:
+Certain system operations populate them via a per-command procedure run by the relay client:
 
 - [`F_FDC2 PROVE`](../../FDC2/Reference/Operations/Prove.md#augmentation-procedure)
 - [`F_WALLET KEY_DATA_PROVIDER_RESTORE`](../Reference/Operations/F_WALLET.md#augmentation)
+- `F_WALLET KEY_DIRECT_RESTORE`
 
-All other instructions — including every custom extension instruction — leave both fields empty.
+All other instructions, including every custom extension instruction, leave both fields empty.
 
 ## Hashes
 
@@ -65,14 +66,21 @@ $$
 
 where $n$ is the number of previous instructions sent for the extension and $b$ is the emitting block number.
 
-`instructionHash` is identical only across signers who agree on every field of `TeeInstruction`.
+`instructionHash` is identical only across signers who agree on every field of `TeeInstruction`:
 
 $$
-\mathrm{instructionHash} = \mathrm{keccak256}(\mathrm{abi.encode}(\mathit{TeeInstruction}))
+\mathrm{instructionHash} = \mathrm{keccak256}(\mathrm{abi.encode}(\mathrm{TeeInstruction}))
 $$
 
 `hashForSigning` is what the signer signs.
+It is computed in two stages.
+First, an inner hash is computed as:
 
 $$
-\mathrm{hashForSigning} = \mathrm{keccak256}(\mathrm{instructionHash} \,\|\, \mathrm{keccak256}(\mathrm{additionalVariableMessage}))
+\mathrm{innerHash} = \mathrm{keccak256}(\mathrm{instructionHash} \,\|\, \mathrm{keccak256}(\mathrm{additionalVariableMessage}))
 $$
+then,
+$$
+\mathrm{hashForSigning} = \mathrm{keccak256}(\mathrm{Prefix}, \mathrm{ChainID}, \mathrm{innerHash})
+$$
+where $\mathrm{Prefix}$ is a `bytes32` prefix "TEE_INSTRUCTION" stating that the payload is a TEE instruction.

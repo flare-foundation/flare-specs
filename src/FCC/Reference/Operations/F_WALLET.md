@@ -65,7 +65,7 @@ Before signing the instruction, the [relay client](../Components/RelayClient.md)
 
 1. Fetch the backup package from `backupUrl`. The instruction is dropped if the fetch fails.
 2. Verify that the package's metadata matches every field of the instruction's [`BackupId`](../Types/Abi/Key.md#backupid); any mismatch drops the instruction.
-3. Verify that the target TEE machine (identified by the `BackupId.teeId` recipient address) is registered, currently attested, and not running banned code.
+3. Verify that the target TEE machine's public key matches `BackupId.teeId`.
 4. Extract the holder backup package(s) addressed to the relay client's public key. The key may appear in the data-provider pool, the admin pool, or both; if in both, both packages are extracted. If in neither, the instruction is dropped.
 5. Decrypt each extracted share with the relay client's private key.
 6. Re-encrypt the share(s) under the target TEE's `teePublicKey` (from the instruction) using ECIES. When step 4 produced two shares, both are bundled into a single ciphertext.
@@ -96,6 +96,51 @@ The TEE machine rejects the instruction unless all of the following hold:
 - The result is signed with the same `KeyExistence` format as [`KEY_GENERATE`](#key_generate), so on-chain `KeyExistence` attestations are interchangeable between fresh keys and restored ones.
 - On the `end` submission tag the machine re-checks that the wallet now exists and that its nonce matches the one consumed at `threshold`.
 
+## KEY_DIRECT_BACKUP
+
+Triggers a TEE machine to create a direct backup for a restored key.
+
+**Event message:** [`KeyDirectBackup`](../Types/Abi/Key.md#keydirectbackup).
+
+### Action result
+
+A signed `keyDirectBackupPayload` containing the `backupId`, the encrypted private key to be backed up, and the configuration of the wallet.
+
+### Validation
+The TEE machine rejects the instruction unless all of the following hold:
+
+- `sourceTeeId` must equal this TEE's identity
+- `machinePathListNonce` must equal the node's current nonce
+- `destinationTeeId` must parse, and the current path list must authorize transfer between source and destination machine.
+
+## KEY_DIRECT_RESTORE
+
+Restores a previously direct backed-up key onto a target TEE machine.
+The target TEE machine is pre-determined by the backup.
+
+**Event message:** [`KeyDirectRestore`](../Types/Abi/Key.md#keydirectrestore), referencing [`BackupId`](../Types/Abi/Key.md#backupid) and [`PublicKey`](../Types/Abi/Common.md#publickey).
+
+### Augmentation
+
+1. Fetch the backup package from `sourceProxyURL`. The instruction is dropped if the fetch fails.
+2. Verify the `sourceId`, `backupId` pair is on the appropriate `machinePathList`.3. Place the action response from the `backupInstructionId` returned by the TEE proxy into `additionalFixedMessage`.
+
+### Action result
+
+[`SignedKeyExistenceProof`](../Types/Wire/Key.md#signedkeyexistenceproof) over a [`KeyExistence`](../Types/Abi/Key.md#keyexistence) record whose `restored` field is set.
+
+### Validation
+The TEE machine rejects the instruction unless all of the following hold:
+
+- `BackupId.teeId` equals `sourceTeeId`.
+- `machinePathNonce` does not exceed the machine's current nonce.
+- The current path must authorize transfer between the source machine and this machine.
+- The signature over the envelope is a valid signature from `sourceTeeId`.
+- The backup's `rewardEpoch` is current.
+
+### Notes
+- The result is signed with the same `KeyExistence` format as [`KEY_GENERATE`](#key_generate), so on-chain `KeyExistence` attestations are interchangeable between fresh keys and restored ones.
+
 ## VRF
 
 Produces a verifiable randomness proof using a stored VRF key.
@@ -110,16 +155,17 @@ The final random value is $\mathrm{keccak256}(\gamma_x \,\|\, \gamma_y)$, where 
 
 - `walletId`, `keyId`, `nonce`: copied from the request.
 - `proof`: an object with the following fields ($G$ is the secp256k1 generator, $\mathrm{sk}$ the private key, $\mathrm{pk}$ the public key, $H = \mathrm{HashToCurve}(\mathrm{nonce})$, $N$ the curve order, $P$ the field prime):
-  - `gamma`: a curve point $\gamma = \mathrm{sk} * H$ (the VRF output).
-  - `c`: the challenge scalar.
-  - `s`: the response scalar, $s = k - \mathrm{sk} * c \mod N$.
-  - `u`: witness point $c * \mathrm{pk} + s * G$.
-  - `cGamma`: witness point $c * \gamma$.
-  - `v`: witness point $c * \gamma + s * H$.
-  - `zInv`: field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
+  - `Gamma`: a curve point $\gamma = \mathrm{sk} * H$ (the VRF output).
+  - `C`: the challenge scalar.
+  - `S`: the response scalar, $s = k - \mathrm{sk} * c \mod N$.
+  - `U`: witness point $c * \mathrm{pk} + s * G$.
+  - `CGamma`: witness point $c * \gamma$.
+  - `V`: witness point $c * \gamma + s * H$.
+  - `ZInv`: field element $(\mathrm{cGamma}_x - v_x)^{-1} \mod P$.
 
 **Validation.**
 
 - The `(walletId, keyId)` must identify a key stored on the machine.
 - That key's `signingAlgo` must be `keccak256-secp256k1-vrf`.
 - `nonce` must be non-empty.
+- Cosigners and cosigner threshold must match the key's record.

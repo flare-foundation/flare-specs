@@ -17,7 +17,7 @@ Each concern is implemented as an independent facet:
 - `VerificationFacet`: on-chain verification of TEE attestations and FDC2 proofs.
 - `OperationFeesFacet`: per-operation fee configuration.
 - `WalletManagerFacet`, `WalletKeyManagerFacet`, `WalletBackupManagerFacet`, `WalletProjectPauseFacet`, `WalletProjectManagerFacet`: project, wallet, and key management.
-- `VrfFacet`, `SystemStateVerifierFacet`: VRF, state verification.
+- `VrfFacet`: VRF.
 - `DiamondGovernanceFacet`, `OwnerAllowlistFacet`, `ExternalAddressesFacet`: governance, the extension owner/machine owner/project owner allowlists, and external address plumbing.
 
 Event signatures are listed in [Events](FlareTeeManagerEvents.md).
@@ -94,6 +94,16 @@ Immediate [governance](../../../Terminology/Roles.md#governance) manages the glo
 
 - `addAllowedExtensionOwners`, `removeAllowedExtensionOwners`, `allowAllExtensionOwners`, `disallowAllExtensionOwners`.
 
+## Machine Path Manager
+
+Extension governance-signed allow list of authorized `(sourceTeeIds[], destinationTeeIds[])` paths for direct upgrades.
+Extension governance manages the path list:
+
+- `createNewMachinePathList`, `getMachinePathList`, `finalizeMachinePathList`, `signMachinePathList`,  `isMachinePathListFinalized`, `isMachinePathListSigned`.
+- `getMachinePathListMessageHash`, `getActiveMachinePathListNonce`, `getMachinePathListsCount`, `getMachinePathListSignatureCount`.
+- `addMachinePaths`, `isMachinePathValid`.
+- `getMachinePaths`.
+
 ## Machine Management
 
 ### Registration
@@ -129,7 +139,7 @@ Per-machine state stored in a `TeeMachineState` record:
 - `codeHash`, `platform`.
 - `status`, `lastStatusChangeTs`.
 
-Inspection: `getTeeMachine(teeId)`, `getAllActiveTeeMachines()`, `getActiveTeeMachines(extensionId)`.
+Inspection: `getTeeMachine(teeId)`, `getAllActiveTeeMachines(start, end)`, `getActiveTeeMachines(extensionId)`.
 
 ### Management Calls
 
@@ -243,15 +253,15 @@ For each `(walletId, keyId)` the contract tracks:
 
 Calls:
 
-- `addKey(walletId, keyDataPerTee, claimBackAddress)`: payable; emits a `KEY_GENERATE` instruction to each listed machine and assigns a sequential `keyId`.
-- `confirmKey(proof)`: on-chain entry for a signed [key existence proof](../../Concepts/Keys.md#tee-key-existence-proof). The first confirmation fixes `publicKey`; later machines join `teeIds`.
-- `deleteKey(walletId, keyId, teeId, claimBackAddress)`: payable; emits `KEY_DELETE` for the specified `(walletId, keyId)` on the target machine and removes the machine from `teeIds`.
+- `addKey(teeId, walletId, claimBackAddress)`: payable; emits a `KEY_GENERATE` instruction to the listed machine and assigns a sequential `keyId`.
+- `confirmKey(proof, teeSignature)`: on-chain entry for a signed [key existence proof](../../Concepts/Keys.md#tee-key-existence-proof). The first confirmation fixes `publicKey`; later machines join `teeIds`.
+- `deleteKey(teeId, walletId, keyId, claimBackAddress)`: payable; emits `KEY_DELETE` for the specified `(walletId, keyId)` on the target machine and removes the machine from `teeIds`.
 - `cleanUpTeeIds(walletId, keyId)`: drops machines from `teeIds` whose nonces show the key is no longer present.
 
 Key restoration is initiated via:
 
 ```solidity
-backupRestore(backupId, backupURL, teeId, randomNonce)
+backupRestore(teeId, backupId, backupURL, claimBackAddress)
 ```
 
 Callable by the project owner or its `backupManager`. 

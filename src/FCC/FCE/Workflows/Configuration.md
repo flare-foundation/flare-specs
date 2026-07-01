@@ -55,9 +55,8 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
   - `version` non-empty.
   - `codeHash ≠ 0` and not already registered for this extension.
   - `platforms` non-empty, no duplicates, each one is system supported.
-  - `governanceHash` matches the latest one for the extension (or is `0`).
 - **Effects**:
-  - Records the `(codeHash, version, platforms, governanceHash)` tuple.
+  - Records the `(codeHash, version, platforms)` tuple.
   - Each `(codeHash, platform)` pair is now eligible for [machine registration](../../Workflows/MachineRegistration.md).
   - Emits [`TeeVersionAdded`](../../Reference/Contracts/FlareTeeManagerEvents.md#teeversionadded).
 
@@ -82,6 +81,8 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
   - `POST /proxy`: set the paired TEE proxy URL.
   - `POST /initial-owner`: set the machine's initial owner address. Immutable once set.
   - `POST /extension-id`: set the extension ID. Fixed after a successful [`TeeAvailabilityCheck`](../../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
+  - `POST /chain-ID`: the ID of the chain (e.g. Flare, Songbird) for the machine.
+  - `POST /governance`: the governance signers and threshold for the machine.
 - **Caller**: TEE machine owner (with network access to the machine's Configuration API).
 - **Effects**: no on-chain state. The TEE machine now knows where to fetch actions, which address to register under, and which extension to join. [MachineRegistration](../../Workflows/MachineRegistration.md) can proceed.
 
@@ -106,5 +107,5 @@ For the framework concepts, see [FCE Concepts](../Concepts.md); contract surface
 ## Notes
 
 - After [`register`](#register-unregistered--registered), the deployed `instructionsSender` contract must learn its own `extensionId` (typically via a `setExtensionId` call) before it can forward user calls to `FlareTeeManager.sendInstructions`.
-- All three TEE machine configuration endpoints can be supplied via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`) at boot instead of via the Configuration API.
+- All TEE machine configuration endpoints can be supplied via environment variables (`PROXY_URL`, `INITIAL_OWNER`, `EXTENSION_ID`, `CHAIN_ID`, `GOVERNANCE`) at boot instead of via the Configuration API.
 - The same allowlist and key type calls are also used by the [system extension](../System.md) via its governance entry points.

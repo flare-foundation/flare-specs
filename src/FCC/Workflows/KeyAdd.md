@@ -47,6 +47,11 @@ For the underlying [key custody concepts](../Concepts/Keys.md) and the [wallet b
   - `teeMachine.status = PRODUCTION`
   - `proof` references the previously-assigned `(walletId, keyId)`
   - `proof` is consistent with the wallet's on-chain admins/cosigners ([cosigner enforcement](../Reference/Components/Machine.md#cosigner-enforcement))
+  - `proof` is consistent with project's signing algorithms and key types
+  - `proof` settings and settings versions are empty
+  - `proof.extensionID` matches the TEE machine's extension ID.
+  - `proof.restored = FALSE`
+  - `proof.nonce = 0`
   - `teeSignature` recovers to `teeMachine.publicKey`
 - **Effects**:
   - On the first valid confirmation, stores `proof.publicKey` as the key's canonical `publicKey`.

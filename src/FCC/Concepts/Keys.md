@@ -38,19 +38,18 @@ The eligible signing algorithms are each identified by a `bytes32` hash of their
 
 Independently of the above key data, every TEE machine maintains a per-key variable record that persists for the machine's lifetime (even after the key is deleted):
 
-$$(\mathrm{walletId},\ \mathrm{keyId}) \Rightarrow (\mathrm{nonce},\ \mathrm{pauseNonce},\ \mathrm{status},\ \mathrm{expiry})$$
+$$(\mathrm{walletId},\ \mathrm{keyId}) \Rightarrow (\mathrm{nonce},\ \mathrm{pauseNonce},\ \mathrm{status})$$
 
 - `nonce`: replay-protection counter for state-changing operations (e.g. [`KEY_DELETE`](../Reference/Operations/F_WALLET.md#key_delete)).
 - `pauseNonce`: random nonce reserved for [`PAUSE`](../Reference/Operations/F_WALLET.md) / [`RESUME`](../Reference/Operations/F_WALLET.md) operations.
 - `status`: e.g. `active`, `paused`.
-- `expiry`: TEE-side expiry time for the key. After this timestamp the key is deleted automatically.
 
 These variables are local to the TEE machine and are not included in its [backups](#key-backup).
 
 ## TEE Key Existence Proof
 
 On key generation, the TEE machine produces a [`SignedKeyExistenceProof`](../Reference/Types/Wire/Key.md#signedkeyexistenceproof) for the new key in the form of a [`KeyExistence`](../Reference/Types/Abi/Key.md#keyexistence) struct signed by the TEE's identity key.
-The proof binds the `(teeId, walletId, keyId, publicKey)` tuple together with the key's nonce, restored flag, and [`configConstants`](../Reference/Types/Abi/Key.md#keyconfigconstants).
+The proof binds the `(teeId, walletId, keyId, publicKey, keyType, signingAlgo, settingsVersion, settings)` tuple together with the key's nonce, restored flag, and [`configConstants`](../Reference/Types/Abi/Key.md#keyconfigconstants).
 On-chain confirmation of the proof via `confirmKey` then writes the public key into the wallet's record (see [Wallets](Wallets.md#wallet-keys)).
 
 The [TEE proxy](../Reference/Components/Proxy.md#key-data-store) refreshes its cached proofs for the machine's keys by combining [`KEY_INFO`](../Reference/Operations/F_GET.md#key_info) (returns `(walletId, keyId, nonce)` triples) with [`KEY_PROOF`](../Reference/Operations/F_GET.md#key_proof) (returns signed proofs for triples whose nonce changed since the last sync).
@@ -112,7 +111,7 @@ Recipients fetch their package from the TEE proxy's [backup API](../Reference/Co
 
 ### Key Restoration
 
-Restoration is initiated by an authorized address (the wallet's [project owner](../../Terminology/Roles.md#project-owner) or its `backupManager`) calling [`backupRestore`](../Reference/Contracts/FlareTeeManager.md#key-custody) on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) with the backup identifier, the URL to fetch it from, the destination TEE machine (must differ from the original), and the nonce used at backup time.
+Restoration is initiated by an authorized address (the wallet's [project owner](../../Terminology/Roles.md#project-owner) or its `backupManager`) calling [`backupRestore`](../Reference/Contracts/FlareTeeManager.md#key-custody) on [`FlareTeeManager`](../Reference/Contracts/FlareTeeManager.md) with the backup identifier, the URL to fetch it from, and the destination TEE machine (must differ from the original)..
 
 The flow:
 
@@ -126,5 +125,24 @@ The flow:
 
 The TEE proxy cannot tell whether a submitted share is valid until decryption; that is why step $6$ surfaces the bad-share list.
 If too many shares were invalid, recovery fails and the action response reports it.
+[Wallet key variables](#wallet-key-variables) (`nonce`, `pauseNonce`, `status`) are machine-local and are _not_ restored; they start fresh on the destination machine.
 
-> **Note:** [Wallet key variables](#wallet-key-variables) (`nonce`, `pauseNonce`, `status`, `expiry`) are machine-local and are _not_ restored; they start fresh on the destination machine.
+> **Note:** The wallet backup metadata received by the destination machine is unsigned. However, this does not present a security issue: to install incorrect backup meta data during restoration, malicious parties would require access to enough Shamir shares to issue a key restore action with incorrect metadata. However, such a large number of collaborating malicious parties is already ruled out by the security model; the secret shares required to do this would already be sufficient to recover the key directly.
+
+## Direct Backup/Restore
+
+A second backup and restore mechanism, known as direct backup and restore, allows for a key to be directly migrated between two TEE machines.
+It is gated by a machine-path list signed by the [extension's](../FCE/Concepts.md#extension-data-structure) governance, designating pairs `source teeId, destination teeID` of machines for which direct backup and restore is permitted.
+
+### Backup
+
+The wallet owner or backup manager calls the `directBackup` function, specifying the source TEE machine, key to be backed up, and destination TEE machine.
+Both machines must be registered to the extension.
+A [`KEY_DIRECT_BACKUP`](../Reference/Operations/F_WALLET.md#key_direct_backup) instruction is submitted, with the source machine preparing an encrypted backup package for the destination machine.
+The source TEE machine returns a `DirectBackupTriggered` event, returning the `instructionId` required to complete the restore process.
+
+### Restore
+The wallet owner or backup manager this time calls the `directRestore` function, including as arguments the `instructionID` as `BackupInstructionId` and the destination $\mathrm{TEE}_\mathrm{ID}$.
+This dispatches a [`KEY_DIRECT_RESTORE`](../Reference/Operations/F_WALLET.md#key_direct_restore) instruction to the destination TEE machine.
+The destination machine's proxy fetches the backup package from the source TEE machine and submits it to the destination machine, which returns a fresh [key existence proof](#tee-key-existence-proof) for the restored key.
+

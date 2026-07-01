@@ -19,7 +19,7 @@ Dispatches one inbound [`Action`](../../Reference/Types/Wire/Action.md#action) t
 
 - **Request body**: the JSON [`Action`](../../Reference/Types/Wire/Action.md#action) as received from the [TEE proxy](../../Reference/Components/Proxy.md). The machine forwards it verbatim, with the restriction that the FCE only ever sees actions whose `submissionTag` is `threshold` (instruction action) or `submit` (direct action). `end` actions are built by the TEE machine locally (they always emit the [`RewardingData`](../../Concepts/Rewarding.md#rewardingdata) payload), so the extension is never consulted for them.
 - **Response body**: a JSON-encoded [`ActionResult`](../../Reference/Types/Wire/Action.md#actionresult).
-- **Failure**: any non-2xx response, malformed JSON, or HTTP-level error causes the TEE machine to fabricate a `status = 0` (error) `ActionResult` and proceed.
+- **Failure**: request-timeout or deadline-exceeded errors fabricate a `status = 3` `ActionResult` leaving the action overridable. Any 2xx response except 200, malformed JSON, or HTTP-level error causes the TEE machine to fabricate a `status = 0` (error) `ActionResult` and proceed.
 
 The TEE machine takes the returned `ActionResult` verbatim and wraps it in an [`ActionResponse`](../../Concepts/Actions.md#action-responses) signed with the machine's identity key, then posts it to the proxy.
 

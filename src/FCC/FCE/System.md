@@ -10,7 +10,7 @@ Custom extensions use the per-extension equivalents and operate independently.
 ## Operation Types
 
 System operations are distinguished by the `F_` prefix in their `opType`.
-The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only be sent by the system extension's instructions sender or by a [system instructions sender](Concepts.md#instructions-senders).
+The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only be sent by a [system instructions sender](Concepts.md#instructions-senders).
 
 | Operation Type | Description |
 |---|---|
@@ -20,6 +20,7 @@ The `FlareTeeManager` contract enforces that `F_`-prefixed operations can only b
 | `F_POLICY` | [Signing policy](../../FSP/SigningPolicy.md) initialization and updates. |
 | `F_XRP`    | XRP payment and reissue operations. |
 | `F_FDC2`   | FDC2 attestation proof generation. |
+| `F_GOVERNANCE`   | Machine path list operations. |
 
 Operation references live under [Reference/Operations](../Reference/Operations/README.md) and the application-specific directories under [PMW/Reference/Operations](../../PMW/Reference/Operations/README.md) and [FDC2/Reference/Operations](../../FDC2/Reference/Operations/README.md).
 

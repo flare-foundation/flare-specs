@@ -30,7 +30,7 @@ A Project is identified by a unique `projectID` and has the following on-chain s
 - `keyType` and `signingAlgo`: shared by every wallet in the project; immutable, constrained to the [pairs the FCE supports](Keys.md#signing-algorithms).
 - `backupManager`: optional second address authorized to trigger [key restoration](Keys.md#key-restoration).
 
-Both owner roles are checked against the FCE's [owner allowlist](Machines.md#owner-allowlist) at every state-changing call.
+The project owner role is checked against the FCE's [owner allowlist](Machines.md#owner-allowlist) at every state-changing call.
 
 ## Wallets
 
@@ -40,7 +40,7 @@ A wallet lives inside a project, is identified by a unique `walletID` and has th
 - `adminsPublicKeys` and `adminsThreshold`: the [key admin](../../Terminology/Roles.md#key-admin) public keys and the $k$-of-$n$ threshold over them; set during creation.
 - `cosigners` and `cosignersThreshold`: optional [cosigner](Instructions.md#cosigners) address set and its signing threshold; set during creation.
 - `multisigThreshold`: minimum number of confirmed keys required to sign with the wallet.
-- `status`: one of `CREATED`, `INITIALIZED`, `PRODUCTION`, `PAUSED`.
+- `status`: one of `NONE`, `CREATED`, `INITIALIZED`, `PRODUCTION`, `PAUSED`.
 
 Once a wallet leaves `CREATED`, its admins, cosigners, and their thresholds are immutable.
 A copy of these is also written into every TEE-side [`configConstants`](Keys.md#wallet-private-key-data-structure) record at key generation.
@@ -52,8 +52,8 @@ A wallet moves through four statuses, gated by the project owner:
 
 1. `CREATED → INITIALIZED`: once every admin and every cosigner has confirmed participation from its own address.
 2. `INITIALIZED → PRODUCTION`: once `multisigThreshold` is set and at least that many keys have been [confirmed](Keys.md#tee-key-existence-proof).
-3. `PRODUCTION → PAUSED`: triggered by an owner-initiated stop.
-4. `PAUSED → PRODUCTION`: triggered by an owner-initiated resumption; the multisig check is not re-run.
+3. `PRODUCTION → PAUSED`: triggered by an owner-initiated stop or by a designated pausing address.
+4. `PAUSED → PRODUCTION`: triggered by an owner-initiated resumption or by a designated pausing address; the multisig check is not re-run.
 
 ## Wallet Keys
 
@@ -64,6 +64,6 @@ For each `(walletId, keyId)` the contract tracks:
 
 1. `publicKey`: set when the first TEE machine [confirms](Keys.md#tee-key-existence-proof) the generated key.
 2. `teeIds`: the set of TEE machines that hold a copy.
-3. `nonces`: per-machine replay counters used by state-changing commands (`KEY_DELETE`, `RESUME`).
+3. `nonces`: per-machine replay counters used by state-changing commands (`KEY_DELETE`).
 
 See [Keys](Keys.md) for off-chain key generation, the existence-proof construction, and the backup/restoration procedures.

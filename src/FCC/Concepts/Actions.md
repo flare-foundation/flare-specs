@@ -17,7 +17,7 @@ The proxy populates each [`Action`](../Reference/Types/Wire/Action.md#action) fi
 
 1. `data.id`: The instruction's `instructionId`.
 2. `data.type`: `"instruction"`.
-3. `data.submissionTag`: `"threshold"` or `"end"` per [voting outcomes](Voting.md#outcomes).
+3. `data.submissionTag`: `"threshold"` or `"end"` or `"submit"` per [voting outcomes](Voting.md#outcomes).
 4. `data.message`: JSON-encoded `TeeInstruction`.
 5. `signatures`: Per-signer [signatures](../../Utilities/Signing.md), ordered by arrival at the proxy.
 6. `additionalVariableMessages`: Each signer's [`additionalVariableMessage`](Instructions.md#augmentation), ordered to match `signatures`.
@@ -55,17 +55,18 @@ Field population depends on whether the action belongs to a system [command](../
 
 ### System Commands
 
-The TEE machine processes system operations locally — both the [infrastructure operations](../Reference/Operations/README.md) and the system extension's application operations ([PMW](../../PMW/Reference/Operations/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../../FDC2/Reference/Operations/README.md) `F_FDC2 PROVE`).
+The TEE machine processes system operations locally: both the [infrastructure operations](../Reference/Operations/README.md) and the system extension's application operations ([PMW](../../PMW/Reference/Operations/README.md) `F_XRP PAY`/`F_XRP REISSUE` and [FDC2](../../FDC2/Reference/Operations/README.md) `F_FDC2 PROVE`).
 It populates each field as follows:
 
 - `id`, `submissionTag`: copied from the inbound `Action.data`.
 - `opType`, `opCommand`: copied from the `TeeInstruction` or `DirectInstruction` parsed from `Action.data.message`.
 - `version`: `"1.0.0"`.
 - `status`: a `uint8`:
-  - `0` — error/invalid (action rejected or processing error).
-  - `1` — success.
-  - `2` — in-progress (awaiting the final result; produced by async commands whose work has not yet completed).
-  - `3` — deadline exceeded.
+  - `0`: error/invalid (action rejected or processing error).
+  - `1`: success.
+  - `2`: in-progress (awaiting the final result; produced by async commands whose work has not yet completed).
+  - `3`: deadline exceeded.
+  - `3,4,5...`: incremental-progress status.
 - `log`: human-readable message for non-success statuses; empty on success.
 - `additionalResultStatus`: optional supplemental status set by some commands.
 - `data`: a JSON-encoded payload: the [`RewardingData`](Rewarding.md#rewardingdata) for `end` actions; a command-specific structure otherwise.
@@ -94,8 +95,11 @@ It carries three fields:
 - `signature`: the TEE machine's signature over `result`, produced with its $\mathrm{TEE}_{\mathrm{ID}}$ key:
 
   $$
-  \mathrm{Hash}(r) = \mathrm{keccak256}(\mathrm{keccak256}(r.\mathrm{data}) \,\|\, r.\mathrm{id} \,\|\, \mathrm{keccak256}(r.\mathrm{submissionTag}) \,\|\, r.\mathrm{status}),
+  \mathrm{result} = \mathrm{keccak256}(\mathrm{Prefix}, \mathrm{ChainID}, \mathrm{Hash}(r))
   $$
-
+  where $\mathrm{Prefix}$ is a `bytes32` encoding of "TEE_ACTION_RESULT", $\mathrm{ChainID}$ is the ID of the chain the action was issued on, and
+  $$
+  \mathrm{Hash}(r) = \mathrm{keccak256}(\mathrm{keccak256}(r.\mathrm{data}), r.\mathrm{id}, \mathrm{keccak256}(r.\mathrm{submissionTag}), r.\mathrm{status}),
+  $$
   where $r$ is `result`.
-- `proxySignature`: added by the [proxy](../Reference/Components/Proxy.md) on the [external result API](../Reference/Components/Proxy.md#external-read-apis); produced with the proxy's identity key over $\mathrm{keccak256}(r.\mathrm{data})$, so external consumers can authenticate the proxy as well as the machine.
+- `proxySignature`: added by the [proxy](../Reference/Components/Proxy.md) on the [external result API](../Reference/Components/Proxy.md#external-read-apis); produced with the proxy's identity key over $\mathrm{keccak256}(\mathrm{Prefix}, \mathrm{ChainID}, \mathrm{keccak256}(r.\mathrm{data}))$ where $\mathrm{Prefix}$ is a `bytes32` encoding of "PROXY_ACTION_RESULT" and $\mathrm{ChainID}$ the ID of the chain the action was issued on. This allows external consumers can authenticate the proxy as well as the machine.

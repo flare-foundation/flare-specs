@@ -115,10 +115,10 @@ Action result for the [`TEE_BACKUP`](../../Operations/F_GET.md#tee_backup) comma
   "$id": "TeeBackupResponse",
   "type": "object",
   "properties": {
-    "BackupID": { "$ref": "#walletbackupid", "description": "Identifier of the produced backup." },
-    "WalletBackup": { "type": "string", "format": "bytes", "description": "JSON-encoded backup package, with the TEE signature over the backup hash embedded inside (not exposed as a top-level field)." }
+    "backupId": { "$ref": "#walletbackupid", "description": "Identifier of the produced backup." },
+    "walletBackup": { "type": "string", "format": "bytes", "description": "JSON-encoded backup package, with the TEE signature over the backup hash embedded inside (not exposed as a top-level field)." }
   },
-  "required": ["BackupID", "WalletBackup"]
+  "required": ["backupId", "walletBackup"]
 }
 ```
 

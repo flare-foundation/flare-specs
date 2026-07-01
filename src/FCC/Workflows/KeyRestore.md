@@ -26,7 +26,7 @@ Restoration is the recovery path when a TEE is paused, banned, decommissioned, o
 
 ### backupRestore: NotTriggered → Triggered
 
-- **Action**: [`FlareTeeManager.backupRestore(backupId, backupUrl, teeId, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — payable.
+- **Action**: [`FlareTeeManager.backupRestore(teeId, backupId, backupUrl, claimBackAddress)`](../Reference/Contracts/FlareTeeManager.md#key-custody) — payable.
 - **Caller**: project owner or `project.backupManager`.
 - **Guards**:
   - `key.publicKey ≠ 0` and `backupId.publicKey = key.publicKey`
@@ -69,11 +69,12 @@ Restoration is the recovery path when a TEE is paused, banned, decommissioned, o
 - **Caller**: project owner or `project.backupManager`.
 - **Guards**:
   - `proof.publicKey = key.publicKey` (matches existing definition).
+  - `proof.nonce > 0`
+  - `proof.restored = TRUE`
   - `teeId ∉ key.teeIds` (no duplicate insertion).
   - `teeSignature` recovers to `teeMachine(target).publicKey`.
 - **Effects**:
   - Adds the target `teeId` to `key.teeIds`.
-  - Stores the target machine's per-key nonce on chain for replay protection.
   - Emits [`WalletKeyConfirmed`](../Reference/Contracts/FlareTeeManagerEvents.md#walletkeyconfirmed).
 
 ## Invariants

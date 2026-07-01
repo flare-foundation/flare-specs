@@ -85,9 +85,13 @@ The witness points (`u`, `cGamma`, `v`, `zInv`) are computed off-chain by the TE
 | `GammaNotOnCurve` | `gamma` does not satisfy $y^2 = x^3 + 7$. |
 | `COutOfRange` | Challenge scalar $c$ is zero or $\geq N$. |
 | `SOutOfRange` | Response scalar $s$ is $\geq N$. |
-| `DegenerateInput` | $H_x \geq N$, which would make the `ecrecover` shortcut unsound. |
+| `HXUnverifiable` | $H_x \geq N$, which would make the `ecrecover` shortcut unsound. |
+| `PkXUnverifiable` | $Pk \geq N$, which would make the `ecrecover` shortcut unsound. |
+| `GammaXUnverifiable` | $`gamma` \geq N$, which would make the `ecrecover` shortcut unsound. |
 | `InvalidUWitness` | $u \neq c \cdot \mathrm{pk} + s \cdot G$. |
 | `InvalidCGammaWitness` | $\mathrm{cGamma} \neq c \cdot \gamma$. |
 | `InvalidZInv` | $\mathrm{zInv} \neq \mathrm{modInv}(\mathrm{cGamma}_x - v_x,\ P)$. |
 | `InvalidVWitness` | $v \neq c \cdot \gamma + s \cdot H$. |
 | `HashToCurveExceededIterationLimit` | Iterative hash-to-curve failed to find a valid point within $256$ tries (expected probability $\approx 2^{-256}$). |
+
+require(_pkX < N, PkXUnverifiable()); and require(_proof.gamma.x < N, GammaXUnverifiable());; declared in IVrfVerifier.sol:41-48.

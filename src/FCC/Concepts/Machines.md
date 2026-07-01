@@ -24,7 +24,7 @@ The enclave holds the following state for the TEE machine:
 A TEE machine attests to its [state](#tee-state) when challenged.
 The proof bundles the challenger's input with the machine's [identity public key](#identity), both its [initial and active signing policies](Policy.md), a snapshot of its state, and a timestamp; the TEE platform's attestation service signs over the bundle, anchoring the result to hardware-attested boot state.
 
-On-chain verifiers match the proof's [`initialTeeId`](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata) against the machine record, binding the proof to the on-record enclave.
+On-chain verifiers match the [proof](../Reference/Types/Abi/TeeMachine.md#teemachinewithattestationdata) against the machine record, binding the proof to the on-record enclave.
 
 For the [`Attestation`](../Reference/Types/Abi/TeeMachine.md#attestation) struct itself, see the type doc; for the FDC2 wrapper that turns this into an on-chain proof, see [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md).
 
@@ -70,7 +70,7 @@ Each [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabil
 - The active [signing policy](Policy.md) on the machine, attested to by the proof (`lastSigningPolicyId`) and considered fresh for a fixed number of reward epochs.
 
 Anyone may submit a fresh proof at any time.
-A machine becomes permissionlessly suspendable as soon as **either** bound expires: either `endTs < now` or `lastSigningPolicyId` falls outside the signing-policy window.
+A machine becomes permissionlessly suspendable as soon as `endTs < now`.
 In that state the machine stays in `PRODUCTION` but:
 
 - Its actions stop entitling its owner to [rewards](../../FSP/Rewarding.md).

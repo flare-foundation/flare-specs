@@ -49,7 +49,7 @@ The status the machine has at the moment the workflow starts — usually `PRODUC
 
 - **Action**: [`FlareTeeManager.pause(teeId)`](../Reference/Contracts/FlareTeeManager.md#management-calls) — non-payable.
 - **Caller**: anyone.
-- **Guards**: `status = PRODUCTION` and `block.timestamp > availabilityCheckValidityEndTs`.
+- **Guards**: `status = PRODUCTION` and `block.timestamp > availabilityCheckValidityEndTs`. If the caller is not the machine owner, also requires that the extension is not emergency paused or in a post-unpause grace window.
 - **Effects**: status → `SUSPENDED`; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
 
 ### pauseWithProof: PRODUCTION → SUSPENDED
@@ -58,7 +58,7 @@ The status the machine has at the moment the workflow starts — usually `PRODUC
 - **Caller**: anyone with a non-`OK` [`TeeAvailabilityCheck`](../../FDC2/Reference/AttestationTypes/TeeAvailabilityCheck.md) proof for the machine.
 - **Guards**:
   - `status = PRODUCTION`.
-  - `proof.timestamp ≥ lastStatusChangeTs` and is no older than $10$ minutes.
+  - `proof.timestamp ≥ lastStatusChangeTs`.
   - Proof either fails verification or carries a non-`OK` `responseBody.status` (e.g. `DOWN`).
 - **Effects**: status → `SUSPENDED`; emits [`TeeMachineStatusChanged`](../Reference/Contracts/FlareTeeManagerEvents.md#teemachinestatuschanged).
 - **Procedure**: obtain the proof by running the [Fdc2Attestation](../../FDC2/Workflows/Fdc2Attestation.md) sub-workflow with `attestationType = TeeAvailabilityCheck` targeting the suspect machine.
@@ -106,7 +106,7 @@ The status the machine has at the moment the workflow starts — usually `PRODUC
 ## Invariants
 
 - `lastStatusChangeTs` updates on every status transition.
-- A machine is in the active set exactly when its `status = PRODUCTION` and `block.timestamp ≤ availabilityCheckValidityEndTs`.
+- A machine is in the active set exactly when its `status = PRODUCTION`.
 - `BANNED` is reachable from `{PRODUCTION, SUSPENDED, PAUSED}` and exits only to `PAUSED` via `unban`.
 - After `updateSettings` from `PRODUCTION`/`SUSPENDED`, an availability proof is mandatory to return to `PRODUCTION`.
 
