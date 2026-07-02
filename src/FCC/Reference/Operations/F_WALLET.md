@@ -104,26 +104,29 @@ Triggers a TEE machine to create a direct backup for a restored key.
 
 ### Action result
 
-A signed `keyDirectBackupPayload` containing the `backupId`, the encrypted private key to be backed up, and the configuration of the wallet.
+A signed [`keyDirectBackupPayload`](../Types/Wire/Key.md#KeyDirectBackupPayload).
 
 ### Validation
 The TEE machine rejects the instruction unless all of the following hold:
 
-- `sourceTeeId` must equal this TEE's identity
-- `machinePathListNonce` must equal the node's current nonce
-- `destinationTeeId` must parse, and the current path list must authorize transfer between source and destination machine.
+- `sourceTeeId` must equal the TEE's identity
+- `machinePathListNonce` must equal the TEE node's current nonce
+- `destinationTeeId` must parse, and the current path list must authorize transfer between source and destination machine IDs.
+- `rewardEpoch` of the instruction must match the TEE's current signing policy.
+- The key's `signingAlgo` is one of `keccak256-secp256k1-ecdsa`, `sha512half-secp256k1-ecdsa`, or `keccak256-secp256k1-vrf`.
 
 ## KEY_DIRECT_RESTORE
 
 Restores a previously direct backed-up key onto a target TEE machine.
 The target TEE machine is pre-determined by the backup.
 
-**Event message:** [`KeyDirectRestore`](../Types/Abi/Key.md#keydirectrestore), referencing [`BackupId`](../Types/Abi/Key.md#backupid) and [`PublicKey`](../Types/Abi/Common.md#publickey).
+**Event message:** [`KeyDirectRestore`](../Types/Abi/Key.md#keydirectrestore), referencing [`BackupId`](../Types/Abi/Key.md#backupid), backupInstructionId, and [`keyDirectBackupPayload`](../Types/Wire/Key.md#KeyDirectBackupPayload)..
 
 ### Augmentation
 
 1. Fetch the backup package from `sourceProxyURL`. The instruction is dropped if the fetch fails.
-2. Verify the `sourceId`, `backupId` pair is on the appropriate `machinePathList`.3. Place the action response from the `backupInstructionId` returned by the TEE proxy into `additionalFixedMessage`.
+2. Verify the `sourceId`, `backupId` pair is on the appropriate `machinePathList`.
+3. Place the action response from the `backupInstructionId` returned by the TEE proxy into `additionalFixedMessage`.
 
 ### Action result
 
@@ -132,11 +135,13 @@ The target TEE machine is pre-determined by the backup.
 ### Validation
 The TEE machine rejects the instruction unless all of the following hold:
 
-- `BackupId.teeId` equals `sourceTeeId`.
+- `BackupId.teeId` equals `sourceTeeId` and matches the `backupID` in the `KeyDirectBackupPayload`.
+- `sourceTeeId` is not the machine's own identity.
 - `machinePathNonce` does not exceed the machine's current nonce.
 - The current path must authorize transfer between the source machine and this machine.
 - The signature over the envelope is a valid signature from `sourceTeeId`.
-- The backup's `rewardEpoch` is current.
+- The backup's `rewardEpoch` is either equal to or one less than that of the TEE machine's current signing policy.
+- The key's on-chain nonce is fresh.
 
 ### Notes
 - The result is signed with the same `KeyExistence` format as [`KEY_GENERATE`](#key_generate), so on-chain `KeyExistence` attestations are interchangeable between fresh keys and restored ones.

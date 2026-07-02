@@ -122,6 +122,29 @@ Action result for the [`TEE_BACKUP`](../../Operations/F_GET.md#tee_backup) comma
 }
 ```
 
+## KeyDirectBackupPayload
+
+Action result for the [`KEY_DIRECT_BACKUP`](../../Operations/F_WALLET.md#key_direct_backup) command.
+
+```json
+{
+  "$id": "KeyDirectBackupPayload",
+  "type": "object",
+  "properties": {
+    "backupId": { "$ref": "#walletbackupid", "description": "Identifier of the produced backup." },
+    "EncryptedPrivateKey": { "type": "string", "format": "bytes32", "description": "Encryption of the private part of the key being backed up." },
+    "AdminPublicKeys": { "type": "array", "items": { "type": "string", "format": "address" }, "description": "Public keys of the key admin set for the backed up key." },
+    "AdminsThreshold": { "type": "string", "format": "bytes32", "description": "Required number of admin signatures for the backed up key." },
+    "cosigners": { "type": "array", "items": { "type": "string", "format": "address" }, "description": "Optional list of cosigner addresses." },
+    "cosignersThreshold": { "type": "integer", "format": "uint64", "description": "Threshold of cosigner signatures required." },
+    "settingsVersion": { "type": "string", "format": "bytes32", "description": "Settings version hash." },
+    "settings": { "type": "string", "format": "bytes", "description": "Encoded settings." },
+    "status": {"type": "integer", "format": "uint8", "description": "Wallet status of the wallet storing the key."}
+  },
+  "required": ["backupId", "EncryptedPrivateKey", "AdminPublicKeys", "AdminsThrehsold", "cosigners", "cosignersThreshold", "settingsVersion", "settings", "status"]
+}
+```
+
 ## WalletBackupID
 
 Identifies a key backup in TEE proxy backup API responses (`GET /backup/<backupIdHash>` and `GET /backup/<walletId>/<keyId>`).
