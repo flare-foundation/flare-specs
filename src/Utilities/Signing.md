@@ -1,12 +1,24 @@
-## Signing
+# Signing
 
-The signing process for a `message` by an entity with `signingPolicyAddress` is as follows:
-1. Hash the `message` using `keccak256`.
-2. Prepend the hash with the string `"\x19Ethereum Signed Message:\n32"`, converted to bytes using UTF-8 encoding (where `\x19` becomes 0x19 and `\n` becomes 0x0A).
-3. Hash the prepended result again with `keccak256` (this prepending and hashing is implemented in the go-ethereum `TextAndHash` function).
-4. Sign the final hash using the `signingPolicyAddress` with ECDSA, producing a signature that is the concatenation of:
-    - v (1 byte) - expected to be 27 or 28 in decimal
-    - r (32 bytes)
-    - s (32 bytes)
+Given a 32-byte input `h` and a secp256k1 private key `privKey`, the signature is
 
-See [flare-system-client](https://github.com/flare-foundation/flare-system-client/blob/main/client/epoch/system_manager_utils.go#L107-L116) for an example implementation in Go.
+$$
+\mathrm{ECDSA}(\mathrm{keccak256}(\mathrm{prefix} \,\|\, h),\ \mathrm{privKey}),
+$$
+
+where $\mathrm{prefix}$ is the byte sequence `\x19Ethereum Signed Message:\n32` (`\x19` is `0x19`, `\n` is `0x0A`; the rest is ASCII).
+This is [EIP-191](https://eips.ethereum.org/EIPS/eip-191) with version byte `0x45`.
+
+In Flare protocols, `h` is always the keccak256 digest of the underlying message.
+
+## Encoding Conventions
+
+The signature has three components — 32-byte $r$, 32-byte $s$, 1-byte recovery ID $v$ — packaged in three conventions:
+
+- **Off-chain** — every signature produced or consumed off-chain (HTTP payloads, file artifacts, persistent off-chain state) is the 65-byte concatenation $r \,\|\, s \,\|\, v$ with $v \in \{0, 1\}$.
+- **On-chain struct** — every signature consumed on-chain as a Solidity tuple is `{v, r, s}` with $v \in \{27, 28\}$.
+- **On-chain packed wire format** — several FSP-defined formats pack the same components into raw `bytes` for cheap calldata parsing:
+  - FSP [`SignatureType0`](../FSP/Encoding.md#signaturetype0) (deprecated) and [`SignatureType1`](../FSP/Encoding.md#signaturetype1) — submission payloads, each wrapping a single 65-byte ECDSA signature inside a [`PayloadMessage`](../FSP/Encoding.md#payloadmessage).
+  - FSP [`ECDSASignatureWithIndex`](../FSP/Encoding.md#ecdsasignaturewithindex) — 67-byte $v \,\|\, r \,\|\, s \,\|\, \mathit{signerIndex}$ entry, used by the `Relay` contract in finalization payloads and embedded in FDC2 [`Fdc2Signatures.signingPolicySignatures`](../FDC2/Reference/Types/Abi/Fdc2.md#fdc2signatures).
+
+Off-chain ↔ on-chain-struct conversion at the boundary is trivial: $r$ and $s$ are identical; $v_{\mathrm{onchain}} = v_{\mathrm{offchain}} + 27$.

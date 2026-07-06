@@ -1,0 +1,82 @@
+<svg width="1360" height="410" viewBox="0 0 1360 410" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .heading { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; }
+    .subtext { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 400; }
+    .label { fill: #c10f45; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 600; }
+
+    .box { fill: none; stroke: #c10f45; stroke-width: 2; }
+    .external-entity { fill: none; stroke: #c10f45; stroke-width: 1.5; stroke-dasharray: 4 2; }
+
+    .connector { stroke: #c10f45; stroke-width: 1.2; fill: none; }
+    .arrowhead { fill: #c10f45; }
+  </style>
+
+  <defs>
+    <marker id="crimsonArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" class="arrowhead" />
+    </marker>
+  </defs>
+
+  <!-- Boxes row (120px gaps between all) -->
+  <!-- FCC contracts: x=50..270 (w=220) -->
+  <rect x="50" y="130" width="220" height="115" rx="4" class="box" />
+  <text x="160" y="156" text-anchor="middle" class="heading">FCC contracts</text>
+  <text x="160" y="176" text-anchor="middle" class="subtext">Extensions</text>
+  <text x="160" y="192" text-anchor="middle" class="subtext">Registration &amp; attestation</text>
+  <text x="160" y="208" text-anchor="middle" class="subtext">Instruction emission</text>
+  <text x="160" y="224" text-anchor="middle" class="subtext">Private key administration</text>
+
+  <!-- Data providers: x=390..640 (w=250), gap=120 -->
+  <rect x="390" y="130" width="250" height="115" rx="4" class="box" />
+  <text x="515" y="156" text-anchor="middle" class="heading">Data providers &amp; cosigners</text>
+  <text x="515" y="186" text-anchor="middle" class="subtext">Instruction relay, augmentation,</text>
+  <text x="515" y="202" text-anchor="middle" class="subtext">and signing</text>
+
+  <!-- TEE machines: x=760..1000 (w=240), gap=120 -->
+  <rect x="760" y="130" width="240" height="115" rx="4" class="box" />
+  <text x="880" y="156" text-anchor="middle" class="heading">TEE machines</text>
+  <text x="880" y="176" text-anchor="middle" class="subtext">Identity</text>
+  <text x="880" y="192" text-anchor="middle" class="subtext">Relayed instruction verification</text>
+  <text x="880" y="208" text-anchor="middle" class="subtext">Private key management</text>
+  <text x="880" y="224" text-anchor="middle" class="subtext">Custom logic per extension</text>
+
+  <!-- External world: cx=1230, gap=120 (left edge 1120, TEE right 1000) -->
+  <ellipse cx="1230" cy="188" rx="110" ry="40" class="external-entity" />
+  <text x="1230" y="183" text-anchor="middle" class="heading">External world</text>
+  <text x="1230" y="200" text-anchor="middle" class="subtext">Blockchains, Web2, etc.</text>
+
+  <!-- Users: centered below boxes -->
+  <ellipse cx="515" cy="340" rx="90" ry="35" class="external-entity" />
+  <text x="515" y="345" text-anchor="middle" class="heading">Users</text>
+
+  <!-- Users → FCC contracts (Contract calls): left then up -->
+  <path d="M425 340 H160 V245" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="290" y="333" text-anchor="middle" class="label">Contract calls</text>
+
+  <!-- Users → TEE machines (Direct action requests): right then up -->
+  <path d="M605 330 H870 V245" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="730" y="323" text-anchor="middle" class="label">Direct action requests</text>
+
+  <!-- TEE machines → Users (Action results): down then left -->
+  <path d="M890 245 V350 H600" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="730" y="367" text-anchor="middle" class="label">Action results</text>
+
+  <!-- FCC contracts → Data providers (Instructions): 120px gap -->
+  <path d="M270 190 H390" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="330" y="183" text-anchor="middle" class="label">Instructions</text>
+
+  <!-- Data providers → TEE machines (Signed instructions): 120px gap -->
+  <path d="M640 190 H760" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="700" y="183" text-anchor="middle" class="label">Signed instructions</text>
+
+  <!-- TEE machines → External world (External operations): 120px gap -->
+  <path d="M1000 188 H1120" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="1060" y="178" text-anchor="middle" class="label">External operations</text>
+
+  <!-- TEE machines → FCC contracts (Registration & attestation) -->
+  <path d="M880 130 V55 H160 V130" class="connector" marker-end="url(#crimsonArrow)" />
+  <text x="520" y="48" text-anchor="middle" class="label">Registration &amp; attestation</text>
+
+  <!-- Data providers join to registration arrow (centered with box) -->
+  <path d="M515 130 V55" class="connector" />
+</svg>

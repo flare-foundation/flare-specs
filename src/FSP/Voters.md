@@ -33,7 +33,7 @@ In addition to this, this sub-protocol uses dedicated accounts for submitting pr
 ## Voter Definition
 
 An entity can become a _voter_ by registering through the [VoterRegistry](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/protocol/implementation/VoterRegistry.sol) smart contract.
-A voter is able to participate in sub-protocols by [submitting](Submission.md) and [finalizing](./Finalization.md) voting round data, obtaining [rewards](Rewarding.md) for high quality submissions and honest behaviour.
+A voter is able to participate in sub-protocols by [submitting](Submission.md) and [finalizing](Finalization.md) voting round data, obtaining [rewards](Rewarding.md) for high quality submissions and honest behaviour.
 
 ## Voter Registration
 
@@ -50,7 +50,7 @@ Entities can register through the `VoterRegistry` smart contract using the funct
 ```
 
 It can be called from any address.
-The `_voter` parameter should be the `identityAddress` of the entity, while `_signature` is an ECDSA signature of `abi.encode(rewardEpochId, _voter)` [signed](../Utilities/Signing.md) by the entity's `signingPolicyAddress` key.
+The `_voter` parameter should be the `identityAddress` of the entity, while `_signature` is an ECDSA signature of `keccak256(abi.encode(rewardEpochId, _voter))` [signed](../Utilities/Signing.md) by the entity's `signingPolicyAddress` key.
 
 On successful registration the [VoterRegistered](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/userInterfaces/IVoterRegistry.sol#L23) event is emitted.
 

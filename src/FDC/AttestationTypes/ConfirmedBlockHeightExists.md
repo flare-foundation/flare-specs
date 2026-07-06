@@ -31,7 +31,7 @@ For `lowestUsedTimestamp`, `lowestQueryWindowBlockTimestamp` is used.
 
 ## Verification
 
-It is checked that the block with `blockNumber` is confirmed by at least [`numberOfConfirmations`](./Reference.md#confirmation-number).
+It is checked that the block with `blockNumber` is confirmed by at least [`numberOfConfirmations`](Reference.md#confirmation-number).
 If it is not, the request is rejected.
 We note a block on the tip of the chain is confirmed by 1 block.
 Then `lowestQueryWindowBlock` is determined and its number and timestamp are extracted.

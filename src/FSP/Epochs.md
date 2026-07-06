@@ -48,6 +48,6 @@ $$
      \text{id}_\text{epoch}(v) = \left\lfloor \frac{v - R_{\text{0}}}{V_{\text{epoch}}} \right\rfloor.
 $$
 
-The actual start of the reward epoch is defied by its [Signing Policy](./SigningPolicy.md).
+The actual start of the reward epoch is defied by its [Signing Policy](SigningPolicy.md).
 A reward epoch begins with the voting epoch specified in its signing policy and ends at the start of the next reward epoch, as defined by the subsequent signing policy.
 A reward epoch cannot start before its designated starting voting epoch.

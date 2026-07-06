@@ -45,6 +45,35 @@ This repository contains the technical specifications for Flare's core protocols
 - [Rewarding](src/FTSO/Rewarding.md)
 - [Encoding Reference](src/FTSO/Encoding.md)
 
+### [Flare Confidential Compute (FCC)](src/FCC/README.md)
+
+- [Architecture](src/FCC/Architecture.md)
+- [Concepts](src/FCC/Concepts/)
+- [Flare Compute Extension](src/FCC/FCE/)
+- [Reference](src/FCC/Reference/)
+- [Workflows](src/FCC/Workflows/)
+
+### [Protocol Managed Wallets (PMW)](src/PMW/README.md)
+
+- [Concepts](src/PMW/Concepts.md)
+- [Transactions](src/pmw/Transactions.md)
+- [Reference](src/pmw/Reference/)
+- [Workflows](src/PMW/Workflows/)
+
+### [Flare Data Connector 2 (FDC2)](src/FDC2/README.md)
+
+- [Concepts](src/FDC2/Concepts.md)
+- [Verifier](src/FDC2/Verifier.md)
+- [Reference](src/FDC2/Reference/)
+- [Workflows](src/FDC2/Workflows/)
+
+## Terminology
+
+Cross-cutting definitions used across protocols:
+
+- [Roles](src/Terminology/Roles.md)
+- [Concepts](src/Terminology/Concepts.md)
+
 ## Utilities
 
 Shared cryptographic and mathematical utilities used across protocols:

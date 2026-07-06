@@ -1,0 +1,80 @@
+<svg width="780" height="310" viewBox="0 0 780 310" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .heading { fill: #595959; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; }
+    .box { fill: none; stroke: #c10f45; stroke-width: 2; rx: 6; }
+    .dashed-box { fill: none; stroke: #c10f45; stroke-width: 2; stroke-dasharray: 8 4; rx: 8; }
+    .external-entity { fill: none; stroke: #c10f45; stroke-width: 1.5; stroke-dasharray: 4 2; }
+    .connector { stroke: #c10f45; stroke-width: 1.5; fill: none; }
+    .arrowhead { fill: #c10f45; }
+  </style>
+
+  <defs>
+    <marker id="crimsonArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" class="arrowhead" />
+    </marker>
+    <marker id="crimsonArrowStart" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" class="arrowhead" />
+    </marker>
+  </defs>
+
+  <!-- Firewall boundary (gap in right edge around TEE proxy label) -->
+  <path d="M28 25 H460 V148 M460 168 V285 H20 V25 H28" class="dashed-box" />
+  <text x="230" y="45" text-anchor="middle" class="heading">Firewall</text>
+
+  <!-- TEE machine -->
+  <rect x="40" y="55" width="280" height="80" class="box" />
+  <text x="55" y="75" class="heading">TEE machine (single container)</text>
+
+  <rect x="55" y="88" width="90" height="40" rx="4" stroke="#c10f45" stroke-width="1" stroke-dasharray="3 2" fill="none" />
+  <text x="100" y="103" text-anchor="middle" class="heading">Extension</text>
+  <text x="100" y="118" text-anchor="middle" class="heading">app</text>
+
+  <rect x="210" y="88" width="90" height="40" rx="4" stroke="#c10f45" stroke-width="1" stroke-dasharray="3 2" fill="none" />
+  <text x="255" y="103" text-anchor="middle" class="heading">Node</text>
+  <text x="255" y="118" text-anchor="middle" class="heading">app</text>
+
+  <!-- TEE proxy (straddling the firewall, equal spacing to firewall top/bottom) -->
+  <rect x="400" y="35" width="120" height="240" class="box" />
+  <text x="460" y="158" text-anchor="middle" class="heading">TEE proxy</text>
+
+  <!-- Infrastructure -->
+  <rect x="40" y="165" width="120" height="50" class="box" />
+  <text x="100" y="195" text-anchor="middle" class="heading">C-chain node</text>
+
+  <rect x="220" y="165" width="100" height="50" class="box" />
+  <text x="270" y="188" text-anchor="middle" class="heading">C-chain</text>
+  <text x="270" y="203" text-anchor="middle" class="heading">indexer</text>
+
+  <rect x="220" y="240" width="100" height="40" class="box" />
+  <text x="270" y="265" text-anchor="middle" class="heading">Redis</text>
+
+  <!-- External entities (centered symmetrically around diagram middle y=155) -->
+  <ellipse cx="680" cy="90" rx="75" ry="40" class="external-entity" />
+  <text x="680" y="80" text-anchor="middle" class="heading">Users, data</text>
+  <text x="680" y="98" text-anchor="middle" class="heading">providers,</text>
+  <text x="680" y="116" text-anchor="middle" class="heading">cosigners</text>
+
+  <ellipse cx="660" cy="220" rx="55" ry="22" class="external-entity" />
+  <text x="660" y="225" text-anchor="middle" class="heading">Owner</text>
+
+  <!-- Extension app ↔ Node app (bidirectional) -->
+  <path d="M145 108 H210" class="connector" marker-start="url(#crimsonArrowStart)" marker-end="url(#crimsonArrow)" />
+
+  <!-- Node app ↔ TEE proxy (bidirectional) -->
+  <path d="M300 108 H400" class="connector" marker-start="url(#crimsonArrowStart)" marker-end="url(#crimsonArrow)" />
+
+  <!-- C-chain indexer → TEE proxy (data flow) -->
+  <path d="M320 190 H400" class="connector" marker-end="url(#crimsonArrow)" />
+
+  <!-- TEE proxy ↔ Redis (bidirectional) -->
+  <path d="M400 260 H320" class="connector" marker-start="url(#crimsonArrowStart)" marker-end="url(#crimsonArrow)" />
+
+  <!-- C-chain node → C-chain indexer -->
+  <path d="M160 190 H220" class="connector" marker-end="url(#crimsonArrow)" />
+
+  <!-- Users/providers ↔ TEE proxy (bidirectional) -->
+  <path d="M605 90 H520" class="connector" marker-start="url(#crimsonArrowStart)" marker-end="url(#crimsonArrow)" />
+
+  <!-- Owner ↔ TEE proxy (bidirectional) -->
+  <path d="M605 220 H520" class="connector" marker-start="url(#crimsonArrowStart)" marker-end="url(#crimsonArrow)" />
+</svg>

@@ -37,7 +37,7 @@ The selection proceeds as follows:
 
 1. Set $x = \mathrm{seed} \mod W$.
    Let $i$ be the smallest integer such that $x \leq T(i)$.
-   If $i \notin S$, add $i$ to $S$ and update $\mathrm{seed} := \mathrm{keccak}255(\mathrm{seed})$.
+   If $i \notin S$, add $i$ to $S$ and update $\mathrm{seed} := \mathrm{keccak256}(\mathrm{seed})$.
 2. If $\sum_{i  \in S} W_{i, \mathrm{sign}} \geq t$, return $S$.
 3. Otherwise, return to step 1.
 

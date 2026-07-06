@@ -12,7 +12,7 @@ Hence, even one problematic request could disrupt agreement on the correct Merkl
 To mitigate against this problem, the following synchronization and safety mechanisms are applied:
 
 1. **Message Integrity Code**: The request format is specified so that each request contains the hash of the expected response, so that there is only a single valid response to each request.
-2. **Bit voting**: The [bit voting](./BitVote.md) process helps data providers see each others' view of the attestation requests, thus ensuring that they each answer the same set of requests in the round.
+2. **Bit voting**: The [bit voting](BitVote.md) process helps data providers see each others' view of the attestation requests, thus ensuring that they each answer the same set of requests in the round.
 3. **Lowest used timestamp**: Attestation providers collectively agree on which data is too old to be used to assemble attestation responses.
 
 Additionally, data providers vote on which requests to confirm by publishing their signatures of the Merkle root, rather than the root itself.
@@ -29,7 +29,7 @@ The $i$th round of the FDC starts at the beginning of the $i$th [voting epoch](.
 2. Choose phase: $[t_{\text{start}}(i + 1), t_{\text{reveal}}(i + 1) )$.
    In this phase, providers finish verification of the requests collected in the previous phase and compute their individual bit vector for the bit vote.
    The bit vector is submitted on-chain using the `submit2` function of the [`Submission`](../FSP/Submission.md) smart contract.
-   This process is explained in more detail in [Bitvote](./BitVote.md).
+   This process is explained in more detail in [Bitvote](BitVote.md).
 3. Resolution phase: $[t_{\text{reveal}}(i + 1), t_{\text{start}}(i + 2) )$.
    During this phase, data providers who can verify all requests stored in the consensus bit vote submit their signature of the corresponding Merkle root.
    The signature data is submitted to the chain using the `submitSignatures` function of the [`Submission`](../FSP/Submission.md) smart contract.

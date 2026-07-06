@@ -24,7 +24,7 @@ This fee will be awarded to providers if the request is confirmed; if not, it is
 The size of the fee is at the discretion of the user, except that it must exceed a minimum amount for the attestation type and data source, a parameter set by governance.
 The minimum fee can be queried by users on the `FdcRequestFeeConfigurations` smart contract.
 Larger fees increase the chance of requests being responded to in the round, particularly for requests that not all data providers may be able to respond to.
-See [BitVote](./BitVote.md) for more details.
+See [BitVote](BitVote.md) for more details.
 
 ## Attestation Types
 
