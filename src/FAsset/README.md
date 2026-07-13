@@ -17,3 +17,12 @@ The information is organized into the following files:
 - [Liquidation](Liquidation.md)
 - [Core Vault](CoreVault.md)
 - [Upgrading, Pausing, and Winding down](PauseAndUpgrade.md)
+
+Additionally, API references for the various smart contracts may be found at:
+
+- [IAgentVault](api/IAgentVault.md)
+- [IAssetManager](api/IAssetManager.md)
+- [ICollateralPool](api/ICollateralPool.md)
+- [ICollateralPoolToken](api/ICollateralPoolToken.md)
+- [IFAsset](api/IFAsset.md)
+- [IMintingTagManager](api/IMintingTagManager.md)
