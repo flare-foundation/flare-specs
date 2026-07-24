@@ -104,7 +104,8 @@ U(A_P) \cdot \vert A_P \vert
 $$
 of the FLR stored in the collateral pool.
 
-Note that this process it not automatic; the provider has to withdraw them manually (before or after exit) by calling `withdrawFees`.
+Note that exiting the collateral pool does not automatically withdraw a provider's fees.
+They still must be withdrawn manually by the provider (before or after exit) by calling `withdrawFees`.
 
 ### Exit Availability and CRs
 A user can only exit if the [collateral ratio](Collateral.md#collateral-ratio) (CR) of the pool is high enough.

@@ -53,14 +53,14 @@ These processes are laid out in more detail below.
 6. The agent (or any entity) presents a proof of payment to the Asset Manager contract via `confirmReturnFromCoreVault`, with the proof obtained via the FDC.
 7. A redemption ticket $(\text{id}, A_v, x)$ is created for the agent, and the agent can redeem FAssets
 
-Note that before the return request is processed, the agent can cancel it via `cancelReturnFromCoreVault` at the Core Vault Manager contract, releasing the reserved collateral.
+Note that before the return request is processed, the agent can cancel it via `cancelReturnFromCoreVault` at the Asset Manager contract, releasing the reserved collateral.
 
 ### Redeeming from the CV directly
 1. The user calls `redeemFromCoreVault` on the Asset Manager contract, including as arguments $(\ell, U_C)$ the number of lots to redeem and user's underlying address on $C$.
 2. The FAsset system burns $\ell$ lots of the user's FAssets. If the user does not have enough FAssets to cover this burn, the redemption fails at this stage.
 3. A `CoreVaultRedemptionRequested` event is triggered, containing the triplet $(\ell, U_C, \text{ref})$ storing the redemption information and a unique payment reference.
 4. The request is forwarded to the Core Vault Manager contract. At this stage, the redemption request may be batched together with other open requests to the same address. Nominally, the CV has unlimited time to honor redemptions, facilitating this batching.
-5. The CV transfers an amount $(\ell \cdot \ell_x) \cdot (1 - \text{redemptionFeeBIPS})$ of the asset to $U_C$ on $C$. Here, $\ell_x$ is the number of units of the asset $x$ in a lot and `redemptionFeeBIPS` defines the redemption fee.
+5. The CV transfers an amount $(\ell \cdot \ell_x) \cdot (1 - \text{coreVaultRedemptionFeeBIPS})$ of the asset to $U_C$ on $C$. Here, $\ell_x$ is the number of units of the asset $x$ in a lot and `coreVaultRedemptionFeeBIPS` defines the redemption fee.
 
 The value $\ell$ must exceed an amount `minimumRedeemLots`, stored on the CV contract, unless the total funds in the CV is below this bound. 
 

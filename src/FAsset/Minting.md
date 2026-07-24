@@ -11,8 +11,8 @@ Thus, minting creates the user FAssets in return for a payment on the source cha
 
 Formally, to mint an amount $x$ of an FAsset copy of an asset from chain $C$, the user $U$ completes the following process:
 
-1. The user selects an FAsset agent address $A_C$ from the list of $L_{\mathrm{agents}}$ of FAsset agents.
-2. The minter calls `reserveCollateral` on the Asset Manager contract, starting a Collateral Reservation Transaction (CRT), with parameters $\mathrm{CRT}(A, l_x, \mathrm{fee}, E)$. The minter includes a collateral reservation fee $\text{CRF}_U(x)$ payment, paid in Flare, as part of the CRT. The CRT returns a reservation id $\text{CR}_\text{id}$. The parameters indicate:
+1. The user selects an FAsset agent address $A_C$ from the list $L_{\mathrm{agents}}$ of FAsset agents.
+2. The minter calls `reserveCollateral` on the Asset Manager contract, starting a Collateral Reservation Transaction (CRT), with parameters $\mathrm{CRT}(A, l_x, \mathrm{fee}, E)$. The minter includes a collateral reservation fee $\text{CRF}_U(x)$ payment, paid in Flare, as part of the CRT. The CRT returns a reservation ID $\text{CR}_\text{id}$. The parameters indicate:
     - $A$: The vault address of the chosen agent.
     - $l_x$: The amount to be minted, denoted in number of required [lots](#lots-and-dust).
     - $\mathrm{fee}$: The maximum minting fee the user will accept, in BIPS (`_maxMintingFeeBIPS`). The transaction reverts if the agent's fee exceeds this.
@@ -27,21 +27,21 @@ Formally, to mint an amount $x$ of an FAsset copy of an asset from chain $C$, th
     - $t = (B_t, T_t)$: The last underlying block and timestamp by which the user must pay the agent on $C$, both inclusive.
 5. Once the CRR is issued, the minter initiates a transaction, denoted $\mathrm{dep}(C_x)$, on $C$ transferring the amount $C_x$ to the agent address $A_C$. Included in this transaction is the payment reference $\text{ref}$. This transaction is referred to as the *deposit*, and must be completed in the timeframe indicated by $t$.
 6. Once the deposit is completed, the minter (or executor) submits an attestation request $\mathrm{FDC}(\mathrm{dep}_x)$ to the FDC, returning `proof`, confirming the existence of the transaction $\mathrm{dep}_x$ on $C$.
-7. Once the FDC confirms the existence of the deposit transaction, the minter can call the `executeMinting` function at the Asset Manager contract, with inputs (`proof`, $\text{CR}_\text{id})$. This credits the user's account with an amount $x'$ of the FAsset, the minted amount minus a small [fee](#minting-fees). At this stage, minting is completed for the user.
+7. Once the FDC confirms the existence of the deposit transaction, the minter can call the `executeMinting` function at the Asset Manager contract, with inputs (`proof`, $\text{CR}_\text{id})$. This credits the user's account with the amount $x$ of the FAsset. At this stage, minting is completed for the user.
 8. Once FAssets are minted, the Asset Manager creates a [redemption ticket](#redemption-tickets) for the minting.
 9. Once minting is executed, the minting fee $\text{MF}(x)$ for minting $x$ of the FAsset is split between the agent and the agent's pool:
     - The agent is paid by increasing the free balance on the agent’s underlying address by an amount $\text{MF}_{\mathrm{agent}}(x)$.
     - The pool share gets minted as an amount $\text{MF}_{\mathrm{pool}}(x)$ of FAssets and credited to the collateral pool contract.
 
 ## Minting Fees
-The amount minted and paid by the user is impacted by minting fees.
-The minting user specifies an amount $x$ of FAssets to mint, but must pay a slightly higher amount $C_x$ to pay an agent fee on the chain.
-Similarly, they receive an amount $x' < x$ of the FAsset after minting, with the rest deducted to pay the collateral pool.
+The amount paid by the user is impacted by minting fees.
+The minting user specifies an amount $x$ of FAssets to mint, but must pay a slightly higher amount $C_x$ to cover agent fees on the source chain.
+Similarly, they pay a CRF on Flare to cover fees earned by the collateral pool.
 The agent receives fees as free underlying on the vault address, and the pool receives fees as FAssets minted from the pool share of the paid fee.
 
 ### Minter Perspective
 The rest of this section lays out the fees from the perspective of the agent and its [collateral pool](#collateral-pool), who receive them.
-To simplify exposition, this subsection lays out fees from the user perspective.
+To simplify exposition for FAsset owners, this subsection lays out fees from the user perspective.
 
 The user pays fees in two parts: `collateralReservationFeeBIPS` and `feeBIPS`.
 Both are expressed as a percentage of the value of $x$ of the asset.
@@ -50,10 +50,10 @@ $$
 \text{collateralReservationFeeBips} \cdot \text{FTSO}_{X, \text{FLR}}(x)
 $$
 in FLR, where $\text{FTSO}_{X, \text{FLR}}(x)$ denotes the FTSO value of the amount $x$ of asset $X$ in FLR.
-Then, they pay an amount $C_x$ on $C$ to the agent and receive an amount $x'$ of FAsset.
-The fee $C_x - x'$ as a percentage of the value $x$ is determined by `feeBIPS`, with
+Then, they pay an amount $C_x$ on $C$ to the agent and receive an amount $x$ of FAsset.
+The fee $C_x - x$ as a percentage of the value $x$ is determined by `feeBIPS`, with
 $$
-\text{feeBIPS} \cdot x = C_x - x'
+\text{feeBIPS} = \frac{C_x - x}{x}
 $$.
 Thus, the total fee paid by the user to mint an amount $x$ of the FAsset is
 $$
@@ -217,7 +217,7 @@ The permitted executor can be restricted by the minter in three possible ways, d
 - For direct minting with memo field, instead of a $32$-byte standard payment reference, the $48$-byte format is used. In this format, there is an 8$$-byte prefix, followed by a $20$-byte recipient address and finally a $20$-byte executor address.
 - For direct minting to a smart account, the smart account manager may restrict the executor directly.
 
-If the allowed executor doesn't execute the transaction in the permitted time window after the initial minting transaction (managed by the function `othersCanExecuteAfterSeconds`), then anybody can execute the minting.
+If the allowed executor doesn't execute the transaction in the permitted time window after the initial minting transaction (managed by the function `setOthersCanExecuteAfterSeconds`), then anybody can execute the minting.
 
 When direct mintings are performed to a specified address, the executor fee is constant, as defined by `directMintingExecutorFeeUBA`.
 For direct minting to a smart account, the executor fee is calculated and charged by the smart account manager.
