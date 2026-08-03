@@ -40,14 +40,14 @@ At the same time, the revealed $\mathrm{rand}_i$ values are combined to produce 
 #### Anchor Feed Values
 
 To compute the weighted median, data providers first order the submissions $\mathrm{Anchor}_i(j)$ from lowest to highest.
-Let $W_m = \sum_{i = 1}^{i = m} W_{i,C}$ denote the sum of the [calculation weights](../FSP/Weighting#ftso-calculation-weight) of the providers who submitted the $m$ lowest values, and let $W_C$ denote the combined calculation weight of all providers.
+Let $W_m = \sum_{i = 1}^{i = m} W_{i,\text{sign}}$ denote the sum of the [signing weights](../FSP/Weighting.md) of the providers who submitted the $m$ lowest values, and let $W_{\text{sign}}$ denote the combined calculation weight of all providers.
 Then, for each anchor feed, the final price $\mathrm{Anchor}(j)$ is computed as
 
-$$ \mathrm{Anchor}(j) = \argmin_{m : W_m \geq \lceil{W_C/2}\rceil} \mathrm{Anchor}_m(j)$$
-if $W_C$ is even and
+$$ \mathrm{Anchor}(j) = \argmin_{m : W_m \geq \lceil{W_{\text{sign}}/2}\rceil} \mathrm{Anchor}_m(j)$$
+if $W_{\text{sign}}$ is even and
 
-$$ \mathrm{Anchor}(j) = \argmin_{m : W_m \geq \lceil{W_C/2}\rceil} (\mathrm{Anchor}_m(j) + \mathrm{Anchor}_{m+1}(j))/2$$
-if $W_C$ is odd.
+$$ \mathrm{Anchor}(j) = \argmin_{m : W_m \geq \lceil{W_\text{sign}/2}\rceil} (\mathrm{Anchor}_m(j) + \mathrm{Anchor}_{m+1}(j))/2$$
+if $W_{\text{sign}}$ is odd.
 
 #### Round Random Number
 

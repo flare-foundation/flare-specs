@@ -15,6 +15,9 @@ $$R_\mathrm{FDC}(j) = R_\mathrm{att}(j) + R_{\mathrm{fin}}(j)$$
 
 and are set by governance; finalization rewards typically make up around $10\%$ of the total FDC rewards.
 
+This file explains how these rewards are assigned to participating data providers, with the $i$th provider receiving an amount $R_{\mathrm{FDC}}(i,j)$ of rewards for participating in the FDC in the $j$th reward epoch.
+Rewards assigned to data providers are further distributed between the provider and its delegators, as described in the [FSP rewarding](../FSP/Rewarding.md#delegations-and-rewards) documentation.
+
 ## Triggering Rewards
 
 The quantities $R_{\mathrm{IFDC}}(j)$ and $R_\mathrm{fee}(j)$ are not fixed, but instead determined by events occurring in the round $j$, corresponding to the $j$th voting epoch, and in the reward epoch $r$ containing the $j$th round.

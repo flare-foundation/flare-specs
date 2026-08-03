@@ -315,3 +315,54 @@ The `noOfWeightBasedClaims` parameter is the number of claims with `type > 1`, i
 A reward hash signature is generated using the [Signing](../Utilities/Signing.md) method.
 
 Once the total weight of submitted signatures for the same hash reaches the signing policy threshold, rewards for the epoch can be claimed.
+
+## Delegations and Rewards
+
+Flare token holders can [delegate](Voters.md#staking-and-delegation) their funds to an entity to increase the entity's [weight](Weighting.md).
+In return, a proportion of the entity's rewards are assigned to its delegators.
+Delegators are entitled to a proportion of the entity's rewards proportional to the amount of stake and WFLR delegated, minus a fee charged by the entity for its services.
+
+This applies to both FSP rewards and those of other sub-protocols such as the FTSO and FDC.
+The distribution of rewards between and entity an its delegators is covered in this section.
+
+### Staking and Delegation Fees
+Entities have separate fees for staking and delegation rewards, with each entity able to set their own value for the fees.
+These settings determine a percentage of the rewards that would be entitled to the delegator that are instead assigned to the entity.
+
+The staking fee for an entity is set (on the P-chain) during the node's initial staking as a parameter `fee` and is immutable, expressing a percentage of staking rewards claimed by the entity from stakers.
+
+The delegation fee for an entity is determined by the parameter `feePercentageBIPS`, defining the percentage (in BIPS) of delegation rewards that the entity takes from its delegator.
+This parameter can be set by the entity be calling
+```Solidity
+function setVoterFeePercentage(uint16 _feePercentageBIPS) external returns (uint256);
+```
+on the `WNatDelegationFee` contract.
+
+There is a global minimum value `minFeeBIPS` which no entity can set their staking or delegation fee below.
+It is currently set to $20\%$ as of FIP.16.
+
+### Distributing Entity Rewards
+For an entity assigned a total reward amount $R$ across all protocols in a given reward epoch, let $W_{S}$ denote the amount of FLR staked to its nodes, $W_{D}$ denote the amount of WFLR delegated, and ${W_{D}}^* = \min(W_{D_i}, W_{D\max})$ its [capped](Weighting.md#processing-signing-weight) WFLR delegation.
+
+The reward $R$ is split into stake and delegation shares as:
+
+$$
+R_{\text{stake}} = \frac{5 \cdot W_S}{5 \cdot W_S + {W_D}^*}
+$$
+and
+$$
+R_{\text{del}} = \frac{{W_D}^*}{5 \cdot W_S + {W_D}^*}.
+$$
+
+Thus, a user $i$ who has staked $S_i$ FLR and delegated $D_i$ to the entity is assigned an amount of rewards:
+
+$$
+R_i = (\frac{S_i}{W_S} \cdot R_{\text{stake}})\cdot (1 - \text{stakeFee}) + (\frac{D_i}{W_D} \cdot R_{\text{del}}) \cdot (1 - \text{delFee})
+$$
+for its delegations to the entity, where $\text{stakeFee}$ and $\text{delFee}$ denote the node's staking and delegation fees each expressed as a percentage.
+
+The provider itself recevies a total amount of rewards $R'$ consisting of the rewards for its own staking and self-delegation as well as all fees accrued from its delegators, or equivalently:
+$$
+R' = R - \sum_{i \in D} R_i
+$$
+where $D$ is the set of all users (except itself) who have staked or delegated to the provider.

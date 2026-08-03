@@ -3,34 +3,36 @@
 The FSP and other enshrined protocols are stake-based: the relative contribution made by each provider is not always equal, but instead proportional to their weight.
 Weight can be acquired in two ways: firstly, provider stake, the amount of FLR tokens owned and staked by the provider itself, as well as stake delegations to the provider.
 Secondly, providers gain weight according to WFLR tokens delegated to their address, typically by other users.
-Different protocols within the Flare network use different definitions of weight, which are described in this page.
 
 In order to ensure that the system remains sufficiently decentralized, caps and other controls are enforced on the weights of providers, rather than just directly considering stake and delegation.
-The use cases for distinct weights have slightly different security requirements, and the corresponding control measures vary: these control measures are also laid out here.
+The computation of weight and control measures are laid out in this page.
 
 ## Stake and Delegation Values
 
-An entitie's weight is acquired through a mix of staked FLR and delegated WFLR.
+An entity's weight is acquired through a mix of staked FLR and delegated WFLR.
 However, these quantities fluctuate during the reward epoch, and thus during the validity of each successive signing policy.
 Thus, a snapshot of the state of these values is taken and used for the duration of a signing policy.
 
 In the $j$th reward epoch, the values defining the stake and delegation quantities of each provider correspond to those values in the randomly selected `VotePowerBlock` in the $j-1$th reward epoch, as described in [SigningPolicy](SigningPolicy.md#vote-power-block-selection).
 Then, the stake of the $i$th provider $W_{S_i}$ is the amount of FLR staked to their node IDs in this block<!-- (as shown by [todo: cite P-Chain mirroring]) -->, while the delegation $W_{D_i}$ is the amount of WFLR delegated to their `delegationAddress` in this block.
 
+The values $W_{S_i}$ and $W_{D_i}$ include both the amount contributed by the entity itself and other token owners who have staked or [delegated](Voters.md#staking-and-delegation) to the appropriate entity addresses.
+For the purposes of weight computation, tokens staked or delegated by other users have the same value as those owned by the entity itself.
+
 ## Signing Weight
 
-The most commonly used weight across all protocols in the Flare network is the _signing weight_, equivalent to the registration weight.
+The weight used across all protocols in the Flare network is the _signing weight_, equivalent to the registration weight.
 The signing weight of a provider corresponds to the proportion of staked and delegated weight registered to the provider address.
 However, this correspondence is not direct: controls are applied to maintain decentralization of the system.
 
 Explicitly, the signing weight $W_{i, \mathrm{sign}}$ of the $i$th provider can be calculated as
 
-$$W_{i, \mathrm{sign}} = (W_{S_i} + \min(W_{D_i}, W_{D\max}))^{3/4}$$
+$$W_{i, \mathrm{sign}} = (5 \cdot W_{S_i} + \min(W_{D_i}, W_{D\max}))^{3/4}$$
 
 where $W_{S_i}$ denotes the stake of the provider and $W_{D_i}$ the amount of WFLR delegated to them.
 The capping term $W_{D\max}$ and the exponent are explained below.
 
-### Processing Signing Weight
+## Processing Signing Weight
 
 A two-step control process is applied, the goal of which is to trade off-decentralization against the possibility of disruption from many low-weight addresses.
 
@@ -46,9 +48,9 @@ $$
 W_{i, \mathrm{sign}} = \mathrm{floor}\left(\mathrm{floor}\left(W_i^\frac{1}{2}\right)^\frac{1}{2}\right)\mathrm{floor}\left(W_i^\frac{1}{2}\right),
 $$
 
-where $W_i = W_{S_i} + \min(W_{D_i}, W_{D\max,})$.
+where $W_i = 5 \cdot W_{S_i} + \min(W_{D_i}, W_{D\max,})$.
 
-### Normalization
+## Normalization
 
 In many use cases, this weight will be normalized; since normalization is implicit, if the cap is active (e.g. some providers have too much delegated WFLR) then the weight removed by the cap is essentially redistributed across all providers proportionally to their post-capped stake.
 When needed explicitly, the normalized signing weight ${W_{i, \mathrm{sign}}}^*$ of the $i$th provider is defined as
@@ -56,16 +58,3 @@ When needed explicitly, the normalized signing weight ${W_{i, \mathrm{sign}}}^*$
 $${W_{i, \mathrm{sign}}}^* = \frac{W_{i, \mathrm{sign}}}{W_{s, tot}}$$
 
 where $W_{s,\mathrm{tot}}$ denotes the total post-processed signing weight of all entities, $W_{s,\mathrm{tot}} = \sum_i {W_{i,\mathrm{sign}}}$.
-
-## FTSO Calculation Weight
-
-The median calculation for the FTSO protocol uses a separate weight measure, only considering the delegation weight of the provider.
-If staking weight were taken into account, stake within the network held by providers inactive in the protocol would dilute the impact of WFLR delegation to active providers, potentially compromising the accuracy of the FTSO outputs.
-Delegation weight is capped as before, to ensure that no individual provider has too much vote power.
-
-Thus, for provider $i$ with weight $W_{D_i}$ of delegated tokens, the FTSO calculation weight $W_{i,C}$ of the provider is equal to
-
-$$W_{i,C} = \min(W_{D_i}, W_{D\max}),$$
-
-where as before the cap is set at $2.5\%$.
-This weight is used for both the FTSO computation itself as well as when calculating the rewards on offer for successful FTSO participation.

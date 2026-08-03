@@ -14,7 +14,7 @@ An entity is defined by the following set of addresses:
 2. `submitAddress`: Used for submitting protocol-specific data during voting rounds.
 3. `submitSignaturesAddress`: Used for submitting signed voting round result data transactions for finalization.
 4. `signingPolicyAddress`: Used for signing policy-related operations.
-5. `delegationAddress`: Used for receiving WFLR token delegation from users.
+5. `delegationAddress`: Used for receiving WFLR token delegation (see below) from users.
 
 ## Entity Registration
 
@@ -70,3 +70,24 @@ The requirements on the inputs are the same as for the `registerVoter` function 
 On successful pre-registration the [VoterPreRegistered](https://github.com/flare-foundation/flare-smart-contracts-v2/blob/main/contracts/userInterfaces/IVoterPreRegistry.sol#L9C11-L9C29) event is emitted.
 
 The actual registration of pre-registered entities is triggered by the [Daemon](https://gitlab.com/flarenetwork/flare-smart-contracts/-/blob/master/docs/specs/flareDaemon.md) smart contract immediately after the `VoterPowerBlockSelected` event is [emitted](SigningPolicy.md#vote-power-block-selection).
+
+## Staking and Delegation
+Owners of FLR can assign their funds to voters to help secure the network and its underlying protocols.
+They can do so in two ways:
+
+- FLR can be locked and staked to the voter's node address on the P-chain.
+- WFLR can be delegated to the voter's `delegationAddress` on the C-chain.
+
+C-chain delegations are handled on the `WNat` smart contract using the function:
+
+``` Solidity
+function delegate(address _to, uint256 _bips) external;
+```
+which delegates the percentage indicated by `bips` of the callers funds to the indicated address.
+Similarly,
+```Solidity
+function batchDelegate(address[] memory _delegatees, uint256[] memory _bips) external;
+```
+delegates to each address in `delegatees` the amount indicated in the corresponding entry of `bips`.
+
+Staked and delegated funds contribute to the voters [weight](Weighting.md) used in various protocols, in return for which the delegating users receive a corresponding share of the voter's [rewards](Rewarding.md#Delegations).
