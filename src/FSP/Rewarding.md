@@ -320,29 +320,30 @@ Once the total weight of submitted signatures for the same hash reaches the sign
 
 Flare token holders can [delegate](Voters.md#staking-and-delegation) their funds to an entity to increase the entity's [weight](Weighting.md).
 In return, a proportion of the entity's rewards are assigned to its delegators.
-Delegators are entitled to a proportion of the entity's rewards proportional to the amount of stake and WFLR delegated, minus a fee charged by the entity for its services.
+Delegators are entitled to a proportion of the entity's rewards corresponding to the amount of stake and WFLR delegated, minus a fee charged by the entity for its services.
 
 This applies to both FSP rewards and those of other sub-protocols such as the FTSO and FDC.
-The distribution of rewards between and entity an its delegators is covered in this section.
+The distribution of rewards between an entity an its delegators is covered in this section.
 
 ### Staking and Delegation Fees
-Entities have separate fees for staking and delegation rewards, with each entity able to set their own value for the fees.
+Entities have separate fees for staked and delegated funds, with each entity able to set their own value for the fees.
 These settings determine a percentage of the rewards that would be entitled to the delegator that are instead assigned to the entity.
 
-The staking fee for an entity is set (on the P-chain) during the node's initial staking as a parameter `fee` and is immutable, expressing a percentage of staking rewards claimed by the entity from stakers.
+The staking fee for an entity is set (on the P-chain) on a per-node basis during the node's initial staking as a parameter `fee` and is immutable, expressing a percentage of staking rewards claimed by the entity from stakers.
+It has a minimum value of $20\%$.
 
 The delegation fee for an entity is determined by the parameter `feePercentageBIPS`, defining the percentage (in BIPS) of delegation rewards that the entity takes from its delegator.
-This parameter can be set by the entity be calling
+This parameter can be set by the entity by calling
 ```Solidity
 function setVoterFeePercentage(uint16 _feePercentageBIPS) external returns (uint256);
 ```
 on the `WNatDelegationFee` contract.
 
-There is a global minimum value `minFeeBIPS` which no entity can set their staking or delegation fee below.
+There is a global minimum value `minFeeBIPS` which no entity can set their delegation fee below.
 It is currently set to $20\%$ as of FIP.16.
 
 ### Distributing Entity Rewards
-For an entity assigned a total reward amount $R$ across all protocols in a given reward epoch, let $W_{S}$ denote the amount of FLR staked to its nodes, $W_{D}$ denote the amount of WFLR delegated, and ${W_{D}}^* = \min(W_{D_i}, W_{D\max})$ its [capped](Weighting.md#processing-signing-weight) WFLR delegation.
+For an entity assigned a total reward amount $R$ across all protocols managed by the FSP (e.g. all rewards except validator rewards as listed [above](#reward-sources)) in a given reward epoch, let $W_{S}$ denote the amount of FLR staked to its nodes, $W_{D}$ denote the amount of WFLR delegated, and ${W_{D}}^* = \min(W_{D_i}, W_{D\max})$ its [capped](Weighting.md#processing-signing-weight) WFLR delegation.
 
 The reward $R$ is split into stake and delegation shares as:
 
@@ -366,3 +367,12 @@ $$
 R' = R - \sum_{i \in D} R_i
 $$
 where $D$ is the set of all users (except itself) who have staked or delegated to the provider.
+
+### Entities with Multiple Node Fees
+Note that the above computation assumes that the entity has the same staking fee for each node it operates; if this is not the case, the computation of $R_i$ requires a separate term
+$$
+(\frac{S_{i,j}}{W_{S_j}} \cdot R_{\text{stake}})\cdot (1 - \text{stakeFee}_j)
+$$
+for each of the $j$ nodes run by the provider.
+In this case, $S_{i,j}$ denotes the amount of stake the delegator has staked at the $j$th node, which holds a total of $W_{S_j}$ stake at fee $\text{stakeFee}_j$.
+Note that this includes the equalities $S_i = \sum_j S_{i,j}$ and $W_S = \sum_j W_{S_j}$
