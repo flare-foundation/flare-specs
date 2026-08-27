@@ -31,6 +31,9 @@ To do so, they each complete a _reveal transaction_, revealing all inputs to the
 Each provider reveals its estimates _data_ and its random number _rand_.
 A reveal transaction is valid as long as the hash of the revealed data matches up with the hash commitment of the provider; validity of the reveal transaction can be confirmed off-chain, and also requires that the block timestamp of the transaction lies within the reveal phase.
 
+Note that as an edge case, provider's are permitted to commit and reveal to only the random value $\mathrm{rand}$, without any associated $\mathrm{data}$.
+In this case, the anchor feed value calculation (see below) ignores the providers submission.
+
 ### Signing Phase
 
 The sign phase begins as soon as the reveal phase finishes.
@@ -40,14 +43,14 @@ At the same time, the revealed $\mathrm{rand}_i$ values are combined to produce 
 #### Anchor Feed Values
 
 To compute the weighted median, data providers first order the submissions $\mathrm{Anchor}_i(j)$ from lowest to highest.
-Let $W_m = \sum_{i = 1}^{i = m} W_{i,\text{sign}}$ denote the sum of the [signing weights](../FSP/Weighting.md) of the providers who submitted the $m$ lowest values, and let $W_{\text{sign}}$ denote the combined calculation weight of all providers.
+Let $W_m = \sum_{i = 1}^{i = m} {W_{i, \mathrm{sign}}}^*$ denote the sum of the [signing policy weights](../FSP/Weighting.md#normalization) of the providers who submitted the $m$ lowest values, and let $W_{\text{sign}}$ denote the combined calculation weight of all providers who submitted feed values.
 Then, for each anchor feed, the final price $\mathrm{Anchor}(j)$ is computed as
 
 $$ \mathrm{Anchor}(j) = \argmin_{m : W_m \geq \lceil{W_{\text{sign}}/2}\rceil} \mathrm{Anchor}_m(j)$$
-if $W_{\text{sign}}$ is even and
+if $W_{\text{sign}}$ is odd and
 
 $$ \mathrm{Anchor}(j) = \argmin_{m : W_m \geq \lceil{W_\text{sign}/2}\rceil} (\mathrm{Anchor}_m(j) + \mathrm{Anchor}_{m+1}(j))/2$$
-if $W_{\text{sign}}$ is odd.
+if $W_{\text{sign}}$ is even.
 
 #### Round Random Number
 

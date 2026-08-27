@@ -3,7 +3,7 @@
 Rewards for provider participation in the FDC are gathered from two sources: firstly, fees gathered from attestation requests are distributed among contributing providers.
 Secondly, a proportion of Flare's inflationary funds are allocated to the rewarding of the FDC.
 Rewards are distributed for participation in voting and in finalization.
-For the $j$th round of the FDC, let $R_\mathrm{fee}(j)$ denote the total collected fees, and $R_\mathrm{IFDC}(j)$ denote the inflation assigned to the FDC.
+For the $j$th round of the FDC, let $R_\mathrm{fee}(j)$ denote the total rewards collected from fees, and $R_\mathrm{IFDC}(j)$ denote the inflation assigned to the FDC.
 Then, the total reward $R_\mathrm{FDC}(j)$ available for the FDC in the round, referred to as the _value_ of the round, is the sum
 
 $$R_\mathrm{FDC}(j) = R_\mathrm{IFDC}(j) + R_{\mathrm{fee}}(j).$$
@@ -25,7 +25,9 @@ These events are summarized below.
 
 ### Fee Based Rewards
 
-The fee reward $R_{\mathrm{fee}}(j)$ is determined on a per-round basis, and is the sum of the fees of all _confirmed_ attestation requests in voting round $j$, based on the consensus bit vector and corresponding Merkle root described in [BitVote](BitVote.md).
+The fee reward $R_{\mathrm{fee}}(j)$ is determined on a per-round basis.
+For each _confirmed_ attestation request, $10\%$ of the fee is assigned to the FDC reward pool, with the remaining $90\%$ assigned for [FIRE](https://proposals.flare.network/FIP/FIP_16.html).
+The term $R_{\mathrm{fee}}(j)$ is the sum of the $10\%$ fraction of the fee for each request confirmed in round $j$, based on the consensus bit vector and corresponding Merkle root described in [BitVote](BitVote.md).
 Fees for requests in round $j$ that were not confirmed are burnt.
 
 ### Inflationary Rewards

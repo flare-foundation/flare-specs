@@ -323,7 +323,7 @@ In return, a proportion of the entity's rewards are assigned to its delegators.
 Delegators are entitled to a proportion of the entity's rewards corresponding to the amount of stake and WFLR delegated, minus a fee charged by the entity for its services.
 
 This applies to both FSP rewards and those of other sub-protocols such as the FTSO and FDC.
-The distribution of rewards between an entity an its delegators is covered in this section.
+The distribution of rewards between an entity and its delegators is covered in this section.
 
 ### Staking and Delegation Fees
 Entities have separate fees for staked and delegated funds, with each entity able to set their own value for the fees.
@@ -343,16 +343,17 @@ There is a global minimum value `minFeeBIPS` which no entity can set their deleg
 It is currently set to $20\%$ as of FIP.16.
 
 ### Distributing Entity Rewards
+
 For an entity assigned a total reward amount $R$ across all protocols managed by the FSP (e.g. all rewards except validator rewards as listed [above](#reward-sources)) in a given reward epoch, let $W_{S}$ denote the amount of FLR staked to its nodes, $W_{D}$ denote the amount of WFLR delegated, and ${W_{D}}^* = \min(W_{D_i}, W_{D\max})$ its [capped](Weighting.md#processing-signing-weight) WFLR delegation.
 
 The reward $R$ is split into stake and delegation shares as:
 
 $$
-R_{\text{stake}} = \frac{5 \cdot W_S}{5 \cdot W_S + {W_D}^*}
+R_{\text{stake}} = \frac{\text{stakingFactor} \cdot W_S}{\text{stakingFactor} \cdot W_S + {W_D}^*} \cdot R
 $$
 and
 $$
-R_{\text{del}} = \frac{{W_D}^*}{5 \cdot W_S + {W_D}^*}.
+R_{\text{del}} = \frac{{W_D}^*}{\text{stakingFactor} \cdot W_S + {W_D}^*} \cdot R.
 $$
 
 Thus, a user $i$ who has staked $S_i$ FLR and delegated $D_i$ to the entity is assigned an amount of rewards:
@@ -362,17 +363,18 @@ R_i = (\frac{S_i}{W_S} \cdot R_{\text{stake}})\cdot (1 - \text{stakeFee}) + (\fr
 $$
 for its delegations to the entity, where $\text{stakeFee}$ and $\text{delFee}$ denote the node's staking and delegation fees each expressed as a percentage.
 
-The provider itself recevies a total amount of rewards $R'$ consisting of the rewards for its own staking and self-delegation as well as all fees accrued from its delegators, or equivalently:
+The provider itself receives a total amount of rewards $R'$ consisting of the rewards for its own staking and self-delegation as well as all fees accrued from its delegators, or equivalently:
 $$
 R' = R - \sum_{i \in D} R_i
 $$
 where $D$ is the set of all users (except itself) who have staked or delegated to the provider.
 
 ### Entities with Multiple Node Fees
+
 Note that the above computation assumes that the entity has the same staking fee for each node it operates; if this is not the case, the computation of $R_i$ requires a separate term
 $$
 (\frac{S_{i,j}}{W_{S_j}} \cdot R_{\text{stake}})\cdot (1 - \text{stakeFee}_j)
 $$
 for each of the $j$ nodes run by the provider.
 In this case, $S_{i,j}$ denotes the amount of stake the delegator has staked at the $j$th node, which holds a total of $W_{S_j}$ stake at fee $\text{stakeFee}_j$.
-Note that this includes the equalities $S_i = \sum_j S_{i,j}$ and $W_S = \sum_j W_{S_j}$
+Note that this includes the equalities $S_i = \sum_j S_{i,j}$ and $W_S = \sum_j W_{S_j}$.

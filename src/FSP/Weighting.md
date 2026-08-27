@@ -27,9 +27,9 @@ However, this correspondence is not direct: controls are applied to maintain dec
 
 Explicitly, the signing weight $W_{i, \mathrm{sign}}$ of the $i$th provider can be calculated as
 
-$$W_{i, \mathrm{sign}} = (5 \cdot W_{S_i} + \min(W_{D_i}, W_{D\max}))^{3/4}$$
+$$W_{i, \mathrm{sign}} = (\text{stakingFactor} \cdot W_{S_i} + \min(W_{D_i}, W_{D\max}))^{3/4}$$
 
-where $W_{S_i}$ denotes the stake of the provider and $W_{D_i}$ the amount of WFLR delegated to them.
+where $W_{S_i}$ denotes the stake of the provider, $W_{D_i}$ the amount of WFLR delegated to them, and `stakingFactor` a governance defined multiplier currently set to $5%.
 The capping term $W_{D\max}$ and the exponent are explained below.
 
 ## Processing Signing Weight
@@ -48,13 +48,12 @@ $$
 W_{i, \mathrm{sign}} = \mathrm{floor}\left(\mathrm{floor}\left(W_i^\frac{1}{2}\right)^\frac{1}{2}\right)\mathrm{floor}\left(W_i^\frac{1}{2}\right),
 $$
 
-where $W_i = 5 \cdot W_{S_i} + \min(W_{D_i}, W_{D\max,})$.
+where $W_i = \text{stakingFactor} \cdot W_{S_i} + \min(W_{D_i}, W_{D\max,})$.
 
 ## Normalization
+In many use cases, this weight will be normalized.
+The normalized weight signing weight ${W_{i, \mathrm{sign}}}^*$ of the $i$th provider, also known as the signing policy weight, is defined as
 
-In many use cases, this weight will be normalized; since normalization is implicit, if the cap is active (e.g. some providers have too much delegated WFLR) then the weight removed by the cap is essentially redistributed across all providers proportionally to their post-capped stake.
-When needed explicitly, the normalized signing weight ${W_{i, \mathrm{sign}}}^*$ of the $i$th provider is defined as
-
-$${W_{i, \mathrm{sign}}}^* = \frac{W_{i, \mathrm{sign}}}{W_{s, tot}}$$
+$${W_{i, \mathrm{sign}}}^* = \lfloor \frac{W_{i, \mathrm{sign}} \cdot 65535}{W_{s, tot}} \rfloor $$
 
 where $W_{s,\mathrm{tot}}$ denotes the total post-processed signing weight of all entities, $W_{s,\mathrm{tot}} = \sum_i {W_{i,\mathrm{sign}}}$.

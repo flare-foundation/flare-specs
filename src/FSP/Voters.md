@@ -90,4 +90,4 @@ function batchDelegate(address[] memory _delegatees, uint256[] memory _bips) ext
 ```
 delegates to each address in `delegatees` the amount indicated in the corresponding entry of `bips`.
 
-Staked and delegated funds contribute to the voters [weight](Weighting.md) used in various protocols, in return for which the delegating users receive a corresponding share of the voter's [rewards](Rewarding.md#Delegations).
+Staked and delegated funds contribute to the voters [weight](Weighting.md) used in various protocols, in return for which the delegating users receive a corresponding share of the voter's [rewards](Rewarding.md#delegations-and-rewards).

@@ -44,7 +44,7 @@ The majority ($80\%$) of available rewards are allocated for submitting accurate
 FTSO accuracy rewards are allocated according to two criteria: rewards for submitting a value within the weighted interquartile range (called the primary reward band) of submitted values, and rewards for submitting a value within a fixed percentage interval around the weighted median value (referred to as the secondary reward band), whose width is determined by a parameter $q$ set by governance that varies by feed.
 Denote these reward bands
 
-$${IQR}(j) = [\argmin_{k: W_k > \lfloor W_{\text{sign}}/4 \rfloor} \mathrm{Anchor}_k(j), \argmax_{k: W_k < \lceil 3 \cdot W_{\text{sign}}/4 \rceil} \mathrm{Anchor}_k(j)] $$
+$${IQR}(j) = [\argmin_{k: W_k > \lfloor W_{\text{sign}}/4 \rfloor} \mathrm{Anchor}_k(j), \argmax_{k: W_k \leq \lceil 3 \cdot W_{\text{sign}}/4 \rceil} \mathrm{Anchor}_k(j)] $$
 
 and
 
