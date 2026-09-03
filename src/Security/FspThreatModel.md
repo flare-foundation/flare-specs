@@ -180,7 +180,7 @@ Two attacker kinds matter, separated by capability. The first is a funded anonym
 A funded, identity-less account; everything is a matter of paying gas and fees. Two vectors, differing only in cost and target:
 
 - **`submit*` calldata** to `Submission`, from any number of EOAs — the tx succeeds and is indexed regardless of sender. Gas-only, so the listener / finalizer / indexer paths are the cheapest to attack.
-- **Attestation requests** via `requestAttestation`, paying the per-`(type, source)` fee (1 FLR/SGB most types, 20 for XRP-payment, 100 for Web2Json), shaping the whole request body (type, source, block window, confirmations, destination, Web2 headers); every fdc-client picks it up. Gas + fee; ~$42/round (≈2,100 requests), ~$40K/day sustained.
+- **Attestation requests** via `requestAttestation`, paying the per-`(type, source)` fee (1 FLR/SGB most types, 20 for XRP-payment), shaping the whole request body (type, source, block window, confirmations, destination, Web2 headers); every fdc-client picks it up. Gas + fee; ~$42/round (≈2,100 requests), ~$40K/day sustained.
 
 It can also *call* the gated entry points (`relay()`, `submitUpdates()`, `registerVoter`), but they revert without the right credential — not vectors ([§2.2](#22-on-chain-inputs-actionable-gated-and-protocol-emitted)). It cannot `ecrecover` to a registered voter, force a `VALID` verifier response, escape the weighted bit-vote consensus, choose what gets indexed, or exceed the gas budget.
 

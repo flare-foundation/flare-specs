@@ -5,7 +5,9 @@
 An attestation type that fetches JSON data from the given URL, applies a jq filter to transform the returned result, and
 finally returns the structured data encoded with the provided ABI type specification.
 
-**Supported sources:** [Mainnet](https://github.com/flare-foundation/verifier-indexer-api/blob/main/src/config/web2/web2-json-sources.ts), [Testnet](https://github.com/flare-foundation/verifier-indexer-api/blob/main/src/config/web2/web2-json-test-sources.ts)
+> ℹ️ `Web2Json` is available on the Coston and Coston2 test networks only.
+
+**Supported sources:** [Testnet](https://github.com/flare-foundation/verifier-indexer-api/blob/main/src/config/web2/web2-json-test-sources.ts)
 
 ## Request body
 
