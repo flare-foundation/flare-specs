@@ -101,6 +101,12 @@ Shared cryptographic and mathematical utilities used across protocols:
 
 - [FSP Attack Surface](src/Security/FspThreatModel.md) — trust boundaries, deployment topology, and per-service attack surface for security reviews
 
+## Migrations
+
+Consensus-breaking changes, for implementations that are not the Flare reference stack: what changes, when it takes effect per network, and how to verify an implementation against it.
+
+- [Relay v2](src/Migrations/RelayV2.md) — source-bound signature digests, the random number Merkle proof in `relay()` calldata, and signature canonicalization
+
 ## Status
 
 This repository is actively maintained and updated.
