@@ -23,12 +23,11 @@ The signing policy for the cutover epoch is generated at the end of the previous
 | --- | --- | --- | --- | --- |
 | Coston | 16 | 5991 | `0xEcD0B60Ea5E01e4D0bFd621c8920B40A32389b83` | `0x051f214D346Cfd97B107BECb87E2B35D1b4287E9` |
 | Coston2 | 114 | 6047 | `0x5017728F117501A24EF9C3756C07f0d564598596` | `0xa10B672D1c62e5457b17af63d4302add6A99d7dE` |
-| Songbird | 19 | TBA | `0xc1BC89b717Af42AE27497C9FFb996002D3AC5031` | `0xCB86E8Be709001e01897Bf59847406853da8f14b` |
-| Flare | 14 | TBA | `0x5A2Eb0cdB4Aa8253924a488A77EdfD24Bb64407f` | `0xCcF30790A93F15e24EB909548a2C58a9b0a7FBd4` |
+| Songbird | 19 | 437 | `0xc1BC89b717Af42AE27497C9FFb996002D3AC5031` | `0xCB86E8Be709001e01897Bf59847406853da8f14b` |
+| Flare | 14 | 441 | `0x5A2Eb0cdB4Aa8253924a488A77EdfD24Bb64407f` | `0xCcF30790A93F15e24EB909548a2C58a9b0a7FBd4` |
 
 Each address is fixed by `Create3Factory` ahead of time, so it can be configured now.
-Both testnets have switched; the Songbird and Flare contracts hold no code until the epoch before their own cutover.
-Of the mainnets, Songbird switches first and Flare follows.
+Both testnets have switched. The Songbird and Flare contracts hold no code until the epoch before their own cutover, and their boundary rounds are known only once each is deployed.
 
 ## 2. Changes
 
