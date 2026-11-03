@@ -11,6 +11,9 @@ $$R_\mathrm{FTSO}(j) = R_\mathrm{anchor}(j) + R_\mathrm{block}(j),$$
 
 are set by governance, and can be modified by a governance vote.
 
+This file explains how these rewards are assigned to participating data providers, with the $i$th provider receiving an amount $R_{\mathrm{FTSO}}(i,j)$ of rewards for participating in the FTSO in the $j$th reward epoch.
+Rewards assigned to data providers are further distributed between the provider and its delegators, as described in the [FSP rewarding](../FSP/Rewarding.md#delegations-and-rewards) documentation.
+
 ## Selecting a Rewarded Feed
 
 Each round, corresponding to a voting epoch, rewards for both types of feed are determined according to performance in a single randomly selected data feed, rather than an aggregation of performance across all anchor feeds.
@@ -41,7 +44,7 @@ The majority ($80\%$) of available rewards are allocated for submitting accurate
 FTSO accuracy rewards are allocated according to two criteria: rewards for submitting a value within the weighted interquartile range (called the primary reward band) of submitted values, and rewards for submitting a value within a fixed percentage interval around the weighted median value (referred to as the secondary reward band), whose width is determined by a parameter $q$ set by governance that varies by feed.
 Denote these reward bands
 
-$${IQR}(j) = [\argmin_{k: W_k > \lfloor W_C/4 \rfloor} \mathrm{Anchor}_k(j), \argmax_{k: W_k < \lceil 3 \cdot W_C/4 \rceil} \mathrm{Anchor}_k(j)] $$
+$${IQR}(j) = [\argmin_{k: W_k > \lfloor W_{\text{sign}}/4 \rfloor} \mathrm{Anchor}_k(j), \argmax_{k: W_k \leq \lceil 3 \cdot W_{\text{sign}}/4 \rceil} \mathrm{Anchor}_k(j)] $$
 
 and
 
@@ -54,20 +57,20 @@ Note that providers can be eligible for both rewards for the same submission, an
 Denote by $R_\mathrm{IQR}(j)$ the rewards available for submissions within the primary band and $R_\mathrm{PCT}(j)$ for those in the secondary, satisfying $R_\mathrm{med}(j) = R_\mathrm{IQR}(j) + R_\mathrm{PCT}(j)$.
 Let
 
-$$\Sigma_\mathrm{IQR}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in \mathrm{IQR}(j)}W_{i,C}$$
+$$\Sigma_\mathrm{IQR}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in \mathrm{IQR}(j)}W_{i,\text{sign}}$$
 
 and
 
-$$\Sigma_\mathrm{PCT}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in \mathrm{PCT}(j)}W_{i,C}$$
+$$\Sigma_\mathrm{PCT}(j) = \sum_{i : \mathrm{Anchor}_i(j) \in \mathrm{PCT}(j)}W_{i,\text{sign}}$$
 
-denote the total calculation weight of providers whose submissions lie in the primary and secondary band for the round respectively.
-Then, an individual provider $i$ with weight ${W_{i,C}}$ whose submission lies within the primary band gets reward ${R_\mathrm{IQR}}(i,j)$ defined as
+denote the total signing weight of providers whose submissions lie in the primary and secondary band for the round respectively.
+Then, an individual provider $i$ with weight ${W_{i,\text{sign}}}$ whose submission lies within the primary band gets reward ${R_\mathrm{IQR}}(i,j)$ defined as
 
-$${R_\mathrm{IQR}}(i,j) = \frac{{W_{i,C}}}{\Sigma_\mathrm{IQR}(j)} \cdot R_\mathrm{IQR}(j),$$
+$${R_\mathrm{IQR}}(i,j) = \frac{{W_{i,\text{sign}}}}{\Sigma_\mathrm{IQR}(j)} \cdot R_\mathrm{IQR}(j),$$
 
 and similarly reward ${R_\mathrm{PCT}}(i,j)$ for submissions within the secondary band
 
-$${R_\mathrm{PCT}}(i,j) = \frac{{W_{i,C}}}{\Sigma_\mathrm{PCT}(j)} \cdot R_\mathrm{PCT}(j).$$
+$${R_\mathrm{PCT}}(i,j) = \frac{{W_{i,\text{sign}}}}{\Sigma_\mathrm{PCT}(j)} \cdot R_\mathrm{PCT}(j).$$
 
 In the very unlikely case that the secondary band is empty, which is a theoretical possibility, secondary band rewards for the round are burnt.
 
@@ -148,9 +151,9 @@ Regardless of the root cause, this is disincentivized by a slashing a chunk of t
 
 Each mismatched reveal or excess signature is punished in the same way: by burning a lump sum of provider rewards.
 The size of the sum is determined by the combination of a system parameter $R_\mathrm{pen}$, the weight of the provider, and the total available accuracy rewards for the round.
-A provider with (normalized) calculation weight ${W_{i,C}}^*$ who requires penalization in a voting round with accuracy rewards $R_{\mathrm{anchor}}(j)$ is penalized by subtracting an amount
+A provider with (normalized) weight ${W_{i,\text{sign}}}^*$ who requires penalization in a voting round with accuracy rewards $R_{\mathrm{anchor}}(j)$ is penalized by subtracting an amount
 
-$${R_{\mathrm{pen}}}(i,j) = R_\mathrm{pen} \cdot ( {W_{i,C}}^* \cdot R_{\mathrm{anchor}}(j))$$
+$${R_{\mathrm{pen}}}(i,j) = R_\mathrm{pen} \cdot ( {W_{i,\text{sign}}}^* \cdot R_{\mathrm{anchor}}(j))$$
 
 of their rewards for the round for each penalization accrued.
 Penalizations are applied at the end of each reward epoch, so that the maximum penanalization cannot exceed the provider's earnings for the round.

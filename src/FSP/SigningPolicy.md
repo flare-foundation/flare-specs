@@ -89,14 +89,3 @@ is emitted, indicating the removal of the entity with `voter` corresponding to t
 
 On the first block for which voter registration is no longer enabled, the signing policy for the next reward epoch is initialized, containing the chosen random seed and registered entities.
 This causes the `SigningPolicyInitialized` event to be emitted by the `Relay` smart contract.
-
-### Normalized weights
-
-Let $\mathrm{weightSum}$ be the sum of [registrationWeights](Weighting.md#signing-weight) of all registered entities.
-The normalized weight of an entity is
-
-$$\mathrm{normalizedWeight} = \mathrm{registrationWeight} * \mathrm{max} \, \mathrm{uint}16 /  \mathrm{weightSum},$$
-
-where integer division is used.
-
-The signing threshold is then defined as one half of the sum of the normalized weights, rounded up.
