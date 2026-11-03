@@ -54,5 +54,5 @@ Criteria for the transaction:
 - The transaction is of type `Payment` and sends and receives XRP.
 - The transaction has the specified first memo data hash and/or destination tag, as determined by the `bool` fields in the request body.
 - One of the following is true:
-  - Transaction status is `SUCCESS` (`TransactionResult` is `tesSUCCESS`)and the amount received by the specified destination address is greater than the specified `value`.
+  - Transaction status is `SUCCESS` (`TransactionResult` is `tesSUCCESS`) and the amount received by the specified destination address is greater than or equal to the specified `value`.
   - Transaction status is `RECEIVER_FAILURE` (`TransactionResult` is one of `tecDST_TAG_NEEDED`, `tecNO_DST`, or `tecNO_DST_INSUF_XRP`, or is `tecNO_PERMISSION` while the transaction has no `DomainID`) and the specified destination address would receive an amount greater than the specified `value` had the transaction been successful.
